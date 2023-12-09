@@ -16,6 +16,10 @@ snakemake \
         output.txt
 """
 
+''' this one worked"
+snakemake -s snakefile.smk --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
+'''
+"""
 import hello_world
 
 rule HelloSnake:
@@ -40,4 +44,4 @@ rule stitch_split_nii:
         current_fly
     run:
         find_split_files(input)
-        """
+

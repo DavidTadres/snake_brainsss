@@ -18,3 +18,7 @@ source .env_snakemake/bin/activate
 pip install snakemake
 pip install nibabel
 pip install natsort
+
+to use:
+ml python/3.9.0
+source .env_snakemake/bin/activate
