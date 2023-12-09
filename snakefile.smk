@@ -1,4 +1,21 @@
 ## Testing ##
+"""
+snakemake \
+    --s snakefile.smk \
+    --jobs 1 \
+    --default-resource mem_mb=100\
+    --cluster '
+        sbatch \
+            --partition trc
+            --cpus-per-task 16
+            --ntasks 1
+            --output ./logs/stitchlog3.out
+            --open-mode append
+            --mail-type=ALL
+        ` \
+        output.txt
+"""
+
 import hello_world
 
 rule HelloSnake:
