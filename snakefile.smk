@@ -1,12 +1,13 @@
 ## Testing ##
-#import hello_world
+import hello_world
 
-#rule HelloSnake:
+rule HelloSnake:
     #shell:
     #    "python3 hello_world.py"
-    #run:
-    #    hello_world.print_hi('test')
+    run:
+        hello_world.print_hi('test')
 
+"""
 import pathlib
 from stitch_split_nii import find_split_files
 
@@ -22,5 +23,4 @@ rule stitch_split_nii:
         current_fly
     run:
         find_split_files(input)
-
-
+        """
