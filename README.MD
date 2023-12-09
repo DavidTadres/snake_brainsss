@@ -10,11 +10,11 @@ To activate env:
 # Better
 https://github.com/pimentel/sherlock-notes/blob/master/README.md
 
-(sherlock) module load python/3.XXXX
+ml python/3.9.0 (on sherlock only)
 make an environemnt and then do pip3 install snakemake
 
-python3 -m venv .snakemake
-source .snakemake/bin/activate
+python3 -m venv .env_snakemake # Local Mac is 'snakemake'
+source .env_snakemake/bin/activate
 pip install snakemake
 pip install nibabel
 pip install natsort

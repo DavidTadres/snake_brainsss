@@ -11,7 +11,7 @@ import pathlib
 from stitch_split_nii import find_split_files
 
 # David's datapaths
-original_data_path = '/Volumes/groups/trc/data/David/Bruker/imports'
+original_data_path = '/oak/stanford/groups/trc/data/David/Bruker/imports'
 #target_data_path = '/Volumes/groups/trc/data/David/Bruker/preprocessed'
 
 current_fly = pathlib.Path(original_data_path, '20231201')
