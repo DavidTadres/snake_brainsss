@@ -53,6 +53,8 @@ import hello_world
 rule HelloSnake:
     #shell:
     #    "python3 hello_world.py"
+    log:
+        "logs/hellosnake.out"
     run:
         hello_world.print_hi(args='test', arg2='test2')
 
