@@ -54,29 +54,47 @@ def nii_stitcher(x_resolution, y_resolution, frames_per_stack, no_of_stacks,
     gc.collect()  # extra delete from memory
     time.sleep(30)  ##to give to time to delete
 
-
-# get to files
-#dates = ['20231201']  # must be a string
-
 folder_name_to_target = 'func' # All my folders with functional imaging are called func, e.g. 'func1', 'func2' etc.
 
 buggy_brukerbridge = False # early version of brukerbridge omitted one sequence (z-stack) per split file. Account for this
 
 def find_split_files(dataset_path):
-    #for current_date in dates:
-    #     print('STARTING DATE:', str(current_date))
-        #dataset_path = Path("/oak/stanford/groups/trc/data/David/Bruker/imports/", current_date)
-        #dataset_path = Path("/Volumes/groups/trc/data/David/Bruker/imports", current_date)
+    """
+    Assumes folder structure like this:
+    #/20220307
+    #    /fly_0
+    #         /func0
+    #               /T-Series
+    #               /SingleImage
+    #         /anat0
+    #    /fly_1
+    #        /func0
+    #        /anat0
+
+    The shape of the resulting nii file is calculated based on the xml
+    file from the microscope. An empty numpy array is pre-allocated and
+    filled up as the split nii files are read.
+    If anything from the split nii doesn't fit, the code will throw an error
+    and break.
+
+
+    :param dataset_path: example string would be:
+        '/oak/stanford/groups/trc/data/David/Bruker/imports/20231201'
+    """
 
     for current_fly_folder in Path(str(dataset_path)).iterdir():
         print(current_fly_folder.name)
-        #directory = os.path.join(dataset_path, fly)
+        # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2
+
         # Find folders that are called 'func1', 'func2' etc.
         for current_func_dir in current_fly_folder.iterdir():
             if folder_name_to_target in current_func_dir.name:
                 #print(current_func_dir)
+                # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2/func1
                 for tseries_folder in Path(current_func_dir).iterdir():
                     if 'TSeries' in tseries_folder.name:
+                        # print(tseries_folder)
+                        # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2/func1/TSeries-12172018-1322-003
 
                         files = os.listdir(tseries_folder)
                         channel_1_list = []
@@ -100,7 +118,6 @@ def find_split_files(dataset_path):
                                 ch1_already_stitched = True
                             if 'ch2_stitched.nii' in file:
                                 ch2_already_stitched = True
-
 
                         # How many sequences does the microscope report on having have recorded
                         xml_file = ET.parse(Path(tseries_folder, xml_file_name)).getroot()
@@ -133,7 +150,7 @@ def find_split_files(dataset_path):
                         print('sorted_channel_2_list', sorted_channel_2_list)
 
                         ########
-                        # Channel 1
+                        # Stitch Channel 1
                         ########
                         if len(sorted_channel_1_list) > 0 and not ch1_already_stitched:
                             print('loading split files for Ch1 in ' + str(tseries_folder) )
