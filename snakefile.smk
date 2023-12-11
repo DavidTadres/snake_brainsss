@@ -48,6 +48,13 @@ original_data_path = '/oak/stanford/groups/trc/data/David/Bruker/imports'
 
 current_fly = pathlib.Path(original_data_path, '20231201')
 print(current_fly)
+import hello_world
+
+rule HelloSnake:
+    #shell:
+    #    "python3 hello_world.py"
+    run:
+        hello_world.print_hi(args='test', arg2='test2')
 
 """rule stitch_split_nii:
     input:
