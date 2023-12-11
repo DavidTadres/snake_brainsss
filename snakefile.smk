@@ -56,7 +56,7 @@ print(current_fly)
         find_split_files(input)
         """
 
-rule fly_builder:
+rule fly_builder_rule:
     run:
         fly_builder(user=current_user,
                     dirs_to_build=['20231201']
