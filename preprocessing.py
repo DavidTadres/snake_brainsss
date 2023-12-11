@@ -25,10 +25,12 @@ def fly_builder(user, dirs_to_build ):
         # Copied stuff from preprocess
         import time
         width = 120  # width of print log
+        print('before logfile')
         logfile = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
         printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
         sys.stderr = brainsss.Logger_stderr_sherlock(logfile)
         brainsss.print_title(logfile, width)
+        print('logfil should have been created')
 
         scripts_path = pathlib.Path(__file__).parent.resolve()  # path of scripts
         # scripts_path = args['PWD'] # Original

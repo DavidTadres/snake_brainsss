@@ -25,6 +25,7 @@ pip install openpyxl
 pip install h5py
 pip install pyfiglet
 pip3 install opencv-python-headless
+pip install scipy
 
 
 #pip install nibabel
