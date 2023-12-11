@@ -54,11 +54,13 @@ print(current_fly)
         current_fly
     run:
         find_split_files(input)
-        """
+
 
 rule fly_builder_rule:
     run:
         fly_builder(user=current_user,
                     dirs_to_build=['20231201']
                          )
+
+"""
 
