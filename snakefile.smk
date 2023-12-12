@@ -50,13 +50,50 @@ current_fly = pathlib.Path(original_data_path, '20231201')
 print(current_fly)
 import hello_world
 
+import logging
+import time
+
+#
+class LogFile():
+    """
+
+    """
+    logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
+    pathlib.Path('./logs').mkdir(exist_ok=True)
+    logger = logging.getLogger('logging_test')
+    fh = logging.FileHandler(str(logging_file))
+    fh.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+current_log_file = LogFile()
+
 rule HelloSnake:
     #shell:
-    #    "python3 hello_world.py"
-    log:
-        "logs/hellosnake.out"
+    #    'python3 hello_world.py $args'
     run:
-        hello_world.print_hi(args='test', arg2='test2')
+        try:
+            hello_world.print_hi(args='test',arg2='test2',logfile=current_log_file.logging_file)
+        except Exception as error:
+            current_log_file.logger.error(error,exc_info=True)
+        """logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
+        pathlib.Path('./logs').mkdir(exist_ok=True)
+        logger = logging.getLogger('logging_test')
+        fh = logging.FileHandler(str(logging_file))
+        fh.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+        try:
+            logger.info('Starting script')
+            # Do stuff
+            hello_world.print_hi(args='test',arg2='test2',logfile=logging_file)
+
+            logger.info('Done')
+        except Exception as error:
+            logger.error(error,exc_info=True)"""
+
 
 """rule stitch_split_nii:
     input:
