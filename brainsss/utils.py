@@ -42,13 +42,28 @@ def get_json_data(file_path):
         data = json.load(f)
     return data
 
-class Logger_stderr_sherlock(object):
-    '''
+class logger_stderr(object):
+    """
     for redirecting stderr to a central log file.
     note, locking did not work fir fcntl, but seems to work fine without it
     keep in mind it could be possible to get errors from not locking this
     but I haven't seen anything, and apparently linux is "atomic" or some shit...
-    '''
+    # Renamed by David to 'logger_stderr' from 'Logger_stderr_sherlock'
+    """
+    def __init__(self, logfile):
+        self.logfile = logfile
+
+    def write(self, message):
+        with open(self.logfile, 'a+') as f:
+            f.write(message)
+
+    def flush(self):
+        pass
+
+class LoggerStdout(object):
+    """
+    for redirecting stdout to a central log file.
+    """
     def __init__(self, logfile):
         self.logfile = logfile
 
