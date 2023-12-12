@@ -58,25 +58,39 @@ class LogFile():
     """
 
     """
-    logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
-    pathlib.Path('./logs').mkdir(exist_ok=True)
-    logger = logging.getLogger('logging_test')
-    fh = logging.FileHandler(str(logging_file))
-    fh.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    def __init__(self, logging_file):
 
-current_log_file = LogFile()
+        print(time.strftime("%Y%m%d-%H%M%S"))
+        pathlib.Path('./logs').mkdir(exist_ok=True)
+        self.logger = logging.getLogger('logging_test')
+        # Define FileHandler
+        fh = logging.FileHandler(str(logging_file))
+        # What severance of info should be put into the file
+        fh.setLevel(logging.DEBUG)
+        # Not sure yet what this does
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        # Add handler to the logger
+        self.logger.addHandler(fh)
+
+        # Why do we get two files?
+        # Do I want to mix bellas loggerstdout with the logging module?
+        # Maybe try taking a step back an see if there's an easier way
+
+logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
+current_logger = LogFile(logging_file)
 
 rule HelloSnake:
     #shell:
     #    'python3 hello_world.py $args'
     run:
         try:
-            hello_world.print_hi(args='test',arg2='test2',logfile=current_log_file.logging_file)
+            hello_world.print_hi(
+                args=logging_file,
+                arg2='test2',
+                logfile=current_logger)
         except Exception as error:
-            current_log_file.logger.error(error,exc_info=True)
+            current_logger.logger.error(error,exc_info=True)
         """logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
         pathlib.Path('./logs').mkdir(exist_ok=True)
         logger = logging.getLogger('logging_test')
