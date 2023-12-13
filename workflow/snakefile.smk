@@ -36,8 +36,6 @@ rule HelloSnake:
 """
 
 import pathlib
-from stitch_split_nii import find_split_files
-from preprocessing import fly_builder
 
 # YOUR SUNET ID
 current_user = 'dtadres'
@@ -47,50 +45,65 @@ original_data_path = '/oak/stanford/groups/trc/data/David/Bruker/imports'
 #target_data_path = '/Volumes/groups/trc/data/David/Bruker/preprocessed'
 
 current_fly = pathlib.Path(original_data_path, '20231201')
+fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
+# do follow up analysis, enter the fly folder to be analyzed here.
+# ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 print(current_fly)
-import hello_world
+from workflow.scripts import hello_world
 
-import logging
-import time
+# Idea - to make the pipeline as traceable as possible, make one logfile
+# per fly. When coming back in the future, it's easy to read all the output
+# done for each fly
+# for logging
+from workflow import brainsss
+import sys
 
-#
-class LogFile():
-    """
+scripts_path = pathlib.Path(__file__).parent.resolve()
+print(scripts_path)
+settings = brainsss.load_user_settings(current_user,scripts_path)
+dataset_path = pathlib.Path(settings['dataset_path'])
+if fly_folder_to_process == '':
+    # If data has not yet been copied off brukerbridge,
+    new_fly_number = brainsss.get_new_fly_number(dataset_path)
+    fly_folder_to_process = pathlib.Path(dataset_path, 'fly_' + new_fly_number)
+else:
+    fly_folder_to_process = pathlib.Path(dataset_path, fly_folder_to_process)
 
-    """
-    def __init__(self, logging_file):
+# Problem: Snakemake runs twice. Seems to be a bug:
+#https://github.com/snakemake/snakemake/issues/2350
+# solution: ignore seconds
+#logfile = './logs/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
+logfile = './logs' + fly_folder_to_process.name + '.txt'
+pathlib.Path('../logs').mkdir(exist_ok=True)
 
-        print(time.strftime("%Y%m%d-%H%M%S"))
-        pathlib.Path('./logs').mkdir(exist_ok=True)
-        self.logger = logging.getLogger('logging_test')
-        # Define FileHandler
-        fh = logging.FileHandler(str(logging_file))
-        # What severance of info should be put into the file
-        fh.setLevel(logging.DEBUG)
-        # Not sure yet what this does
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        fh.setFormatter(formatter)
-        # Add handler to the logger
-        self.logger.addHandler(fh)
+width=120
+printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
+sys.stderr = brainsss.LoggerRedirect(logfile)
+sys.stdout = brainsss.LoggerRedirect(logfile)
+brainsss.print_title(logfile, width)
 
-        # Why do we get two files?
-        # Do I want to mix bellas loggerstdout with the logging module?
-        # Maybe try taking a step back an see if there's an easier way
-
-logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
-current_logger = LogFile(logging_file)
 
 rule HelloSnake:
     #shell:
     #    'python3 hello_world.py $args'
     run:
         try:
-            hello_world.print_hi(
-                args=logging_file,
-                arg2='test2',
-                logfile=current_logger)
-        except Exception as error:
-            current_logger.logger.error(error,exc_info=True)
+            hello_world.print_hi(logfile=logfile,
+                       args='world',
+                        arg2='test2'
+                        )
+        except Exception as error_stack:
+            brainsss.write_error(logfile=logfile,
+                                 error_stack=error_stack)
+
+
+        #try:
+        #    hello_world.print_hi(
+        #        args=logging_file,
+        #        arg2='test2',
+        #        logfile=current_logger)
+        #except Exception as error:
+        #    current_logger.logger.error(error,exc_info=True)
         """logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
         pathlib.Path('./logs').mkdir(exist_ok=True)
         logger = logging.getLogger('logging_test')
@@ -106,7 +119,8 @@ rule HelloSnake:
 
             logger.info('Done')
         except Exception as error:
-            logger.error(error,exc_info=True)"""
+            logger.error(error,exc_info=True)
+        """
 
 
 """rule stitch_split_nii:

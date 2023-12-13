@@ -16,12 +16,38 @@ import numpy as np
 import nibabel as nib
 from xml.etree import ElementTree as ET
 import subprocess
+import traceback
+import natsort
 
 # only imports on linux, which is fine since only needed for sherlock
 try:
     import fcntl
 except ImportError:
     pass
+
+def get_new_fly_number(target_path):
+    """
+    Function to identify new fly number
+    :param target_path: a string pointing to a path, i.e. /oak/stanford/groups/trc/data/David/Bruker/preprocessed
+    :return: three digit number
+    """
+
+    # loop through target path and collect all files and folders that contain 'fly'
+    fly_folders = [s for s in (target_path).iterdir() if "fly" in s.name and s.is_dir()]
+    # fly folders should then be sorted like this: ['fly_001', 'fly_002',.., 'fly_999']
+    sorted_fly_folder = natsort.natsorted(fly_folders)
+    # fly_folders is already sorted so last index is highest fly number
+    oldest_fly = sorted_fly_folder[-1].name.split('_')[-1]
+    # +1 highest fly number and make sure it has 3 digits.
+    new_fly_number = str(int(oldest_fly) + 1).zfill(3)
+    return(new_fly_number)
+def write_error(logfile, error_stack):
+    with open(logfile, 'a+') as file:
+        file.write('\nERROR\n')
+        file.write('Traceback (most recent call last): ' + str(
+            error_stack) + '\n\n')
+        file.write('Full traceback below: \n\n')
+        file.write(traceback.format_exc())
 
 def parse_true_false(true_false_string):
     if true_false_string in ['True', 'true']:
@@ -42,13 +68,14 @@ def get_json_data(file_path):
         data = json.load(f)
     return data
 
-class logger_stderr(object):
+class LoggerRedirect(object):
     """
     for redirecting stderr to a central log file.
     note, locking did not work fir fcntl, but seems to work fine without it
     keep in mind it could be possible to get errors from not locking this
     but I haven't seen anything, and apparently linux is "atomic" or some shit...
-    # Renamed by David to 'logger_stderr' from 'Logger_stderr_sherlock'
+    # Renamed by David to 'LoggerRedirect' from 'Logger_stderr_sherlock' and
+    # is now used for both error messages (stdeer) and for print outputs (stout).
     """
     def __init__(self, logfile):
         self.logfile = logfile

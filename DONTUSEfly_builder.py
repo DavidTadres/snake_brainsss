@@ -6,7 +6,7 @@ from shutil import copyfile
 from xml.etree import ElementTree as ET
 from lxml import etree, objectify
 from openpyxl import load_workbook
-import brainsss
+from workflow import brainsss
 import pathlib
 
 def main(user):
@@ -28,7 +28,7 @@ def main(user):
         sys.stderr = brainsss.Logger_stderr_sherlock(logfile)
         brainsss.print_title(logfile, width)
 
-        scripts_path = pathlib.Path(__file__).parent.resolve() # path of scripts
+        scripts_path = pathlib.Path(__file__).parent.resolve() # path of brainsss
         # scripts_path = args['PWD'] # Original
 
         com_path = os.path.join(scripts_path, 'com')

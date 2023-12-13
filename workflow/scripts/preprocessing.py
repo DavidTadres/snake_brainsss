@@ -8,7 +8,7 @@ from shutil import copyfile
 from xml.etree import ElementTree as ET
 from lxml import etree, objectify
 from openpyxl import load_workbook
-import brainsss
+from workflow import brainsss
 import pathlib
 def fly_builder(user, dirs_to_build ):
     """
@@ -32,7 +32,7 @@ def fly_builder(user, dirs_to_build ):
         brainsss.print_title(logfile, width)
         print('logfil should have been created')
 
-        scripts_path = pathlib.Path(__file__).parent.resolve()  # path of scripts
+        scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
         # scripts_path = args['PWD'] # Original
 
         # com_path = os.path.join(scripts_path, 'com')
@@ -715,33 +715,6 @@ def get_datetime_from_xml(xml_file):
 
     return datetime_str, datetime_int, datetime_dict
 
-def get_new_fly_number(target_path):
-    """
-    Function to identify new fly number
-    :param target_path: a string pointing to a path, i.e. /oak/stanford/groups/trc/data/David/Bruker/preprocessed
-    :return: three digit number
-    """
-
-    # loop through target path and collect all files and folders that contain 'fly'
-    fly_folders = [s for s in (target_path).iterdir() if "fly" in s.name and s.is_dir()]
-    # fly folders should then be sorted like this: ['fly_001', 'fly_002',.., 'fly_999']
-    sorted_fly_folder = natsort.natsorted(fly_folders)
-    # fly_folders is already sorted so last index is highest fly number
-    oldest_fly = sorted_fly_folder[-1].name.split('_')[-1]
-    # +1 highest fly number and make sure it has 3 digits.
-    new_fly_number = str(int(oldest_fly) + 1).zfill(3)
-    #oldest_fly = 0
-    # for each folder in target path
-    #for current_fly_folder in os.listdir(target_path):
-    #    # check for folders that start with 'fly'
-    #    if current_fly_folder.startswith('fly'):
-    #        # extract number of the folder
-    #        fly_num = current_fly_folder.split('_')[-1]
-    #        if int(fly_num) > oldest_fly:
-    #           oldest_fly = int(fly_num)
-    #new_fly_number = oldest_fly + 1
-    #return str(new_fly_number).zfill(3)
-    return(new_fly_number)
 def load_json(file):
     with open(file, 'r') as f:
         data = json.load(f)
