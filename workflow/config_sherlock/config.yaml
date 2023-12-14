@@ -20,5 +20,4 @@ keep-going: True
 rerun-incomplete: True
 printshellcmds: True
 scheduler: greedy
-use-conda: False
-  `
+use-conda: false
