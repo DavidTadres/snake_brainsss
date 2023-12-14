@@ -15,6 +15,11 @@ snakemake \
         ` \
         output.txt
 """
+# with config file type:
+# ml python/3.9.0
+# source .env_snakemake/bin/activate
+# cd snake_brainsss
+# snakemake -s snakefile.smk --profile config_sherlock
 
 ''' this one worked"
 snakemake -s snakefile.smk --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
