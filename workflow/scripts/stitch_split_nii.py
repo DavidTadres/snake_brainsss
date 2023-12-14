@@ -22,6 +22,7 @@ import natsort
 import xml.etree.ElementTree as ET
 import traceback
 
+buggy_brukerbridge = False # early version of brukerbridge omitted one sequence (z-stack) per split file. Account for this
 
 def nii_stitcher(x_resolution, y_resolution, frames_per_stack, no_of_stacks,
                  sorted_channel_list, current_folder, savename):
@@ -54,11 +55,8 @@ def nii_stitcher(x_resolution, y_resolution, frames_per_stack, no_of_stacks,
     gc.collect()  # extra delete from memory
     time.sleep(30)  ##to give to time to delete
 
-folder_name_to_target = 'func' # All my folders with functional imaging are called func, e.g. 'func1', 'func2' etc.
 
-buggy_brukerbridge = False # early version of brukerbridge omitted one sequence (z-stack) per split file. Account for this
-
-def find_split_files(dataset_path):
+def find_split_files(logfile, dataset_path):
     """
     Assumes folder structure like this:
     #/20220307
@@ -81,6 +79,7 @@ def find_split_files(dataset_path):
     :param dataset_path: example string would be:
         '/oak/stanford/groups/trc/data/David/Bruker/imports/20231201'
     """
+    folder_name_to_target = 'func'  # All my folders with functional imaging are called func, e.g. 'func1', 'func2' etc.
 
     for current_fly_folder in Path(str(dataset_path)).iterdir():
         print(current_fly_folder.name)

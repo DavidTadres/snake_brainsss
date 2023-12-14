@@ -18,6 +18,7 @@ from xml.etree import ElementTree as ET
 import subprocess
 import traceback
 import natsort
+import pathlib
 
 # only imports on linux, which is fine since only needed for sherlock
 try:
@@ -57,8 +58,11 @@ def parse_true_false(true_false_string):
     else:
         return False
 
-def load_user_settings(user, scripts_path):
-    user_file = os.path.join(os.path.dirname(scripts_path), 'users', user + '.json')
+def load_user_settings(user):
+    current_path = pathlib.Path(__file__).parents[1].resolve()
+    user_file = pathlib.Path(current_path, 'users', user + '.json')
+    print(user_file)
+    #user_file = os.path.join(os.path.dirname(scripts_path), 'users', user + '.json')
     with open(user_file) as file:
         settings = json.load(file)
     return settings
@@ -87,7 +91,7 @@ class LoggerRedirect(object):
     def flush(self):
         pass
 
-class LoggerStdout(object):
+'''class LoggerStdout(object):
     """
     for redirecting stdout to a central log file.
     """
@@ -99,7 +103,7 @@ class LoggerStdout(object):
             f.write(message)
 
     def flush(self):
-        pass
+        pass'''
 
 class Printlog():
     '''

@@ -8,9 +8,9 @@ from shutil import copyfile
 from xml.etree import ElementTree as ET
 from lxml import etree, objectify
 from openpyxl import load_workbook
-from workflow import brainsss
+import brainsss
 import pathlib
-def fly_builder(user, dirs_to_build ):
+def fly_builder(logfile, user, dirs_to_build, target_folder ):
     """
     Move folders from imports to fly dataset - need to restructure folders
 
@@ -23,14 +23,14 @@ def fly_builder(user, dirs_to_build ):
 
     if standalone:
         # Copied stuff from preprocess
-        import time
-        width = 120  # width of print log
-        print('before logfile')
-        logfile = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
-        printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-        sys.stderr = brainsss.Logger_stderr_sherlock(logfile)
-        brainsss.print_title(logfile, width)
-        print('logfil should have been created')
+        #import time
+        #width = 120  # width of print log
+        #print('before logfile')
+        #logfile = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
+        #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+        #sys.stderr = brainsss.Logger_stderr_sherlock(logfile)
+        #brainsss.print_title(logfile, width)
+        #print('logfil should have been created')
 
         scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
         # scripts_path = args['PWD'] # Original
@@ -43,8 +43,8 @@ def fly_builder(user, dirs_to_build ):
         imports_path = pathlib.Path(settings['imports_path'])
         dataset_path = pathlib.Path(settings['dataset_path'])
         # FOR TESTING ONLY
-        imports_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/imports")
-        dataset_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/preprocessed")
+        #imports_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/imports")
+        #dataset_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/preprocessed")
         target_path = dataset_path  # to be consistent with this script.
 
         #dir_to_build = args['BUILDFLIES']
@@ -94,9 +94,9 @@ def fly_builder(user, dirs_to_build ):
 
         for current_fly_folder in likely_fly_folders:
 
-            new_fly_number = get_new_fly_number(target_path)
+            new_fly_number = brainsss.get_new_fly_number(target_path)
             # printlog(f'\n*Building {likely_fly_folder} as fly number {new_fly_number}*')
-            printlog(f"\n{'   Building ' + current_fly_folder + ' as fly_' + str(new_fly_number) + '   ':-^{width}}")
+            printlog(f"\n{'   Building ' + current_fly_folder + ' as fly_' + str(target_folder.name) + '   ':-^{width}}")
 
             # Define source fly directory
             # source_fly = os.path.join(flagged_dir, likely_fly_folder)
@@ -104,10 +104,11 @@ def fly_builder(user, dirs_to_build ):
 
             # Define destination fly directory
             # fly_time = get_fly_time(source_fly)
-            new_fly_folder = 'fly_' + str(new_fly_number)
+            #new_fly_folder = 'fly_' + str(new_fly_number)
 
             #destination_fly = os.path.join(target_path, new_fly_folder)
-            destination_fly = pathlib.Path(target_path, new_fly_folder)
+            #destination_fly = pathlib.Path(target_path, new_fly_folder)
+            destination_fly = target_folder
 
             #os.mkdir(destination_fly)
             destination_fly.mkdir(parents=True) # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
