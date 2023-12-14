@@ -18,7 +18,7 @@ snakemake \
 # with config file type:
 # ml python/3.9.0
 # source .env_snakemake/bin/activate
-# cd snake_brainsss
+# cd snake_brainsss/workflow
 # snakemake -s snakefile.smk --profile config_sherlock
 
 ''' this one worked"
