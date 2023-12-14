@@ -95,6 +95,7 @@ from scripts import hello_world
 rule HelloSnake:
     #shell:
     #    'python3 hello_world.py $args'
+    threads: 2
     run:
         try:
             hello_world.print_hi(logfile=logfile,
