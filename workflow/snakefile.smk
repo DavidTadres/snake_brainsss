@@ -60,7 +60,8 @@ import_path = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
 if STITCH_NII_FILES:
     """
     Note - There really shouldn't be any errors here.
-    Error log is in a different folder compared to follow-up processing and analysis
+    Error log is in a different folder compared to follow-up processing and analysis as 
+    fly is not yet defined. 
     """
     logfile_stitcher = './logs/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
     pathlib.Path('./logs').mkdir(exist_ok=True)
@@ -72,9 +73,9 @@ if STITCH_NII_FILES:
             mem_mb=12000
         run:
             try:
-                stitch_split_nii(logfile=logfile_stitcher,
-                    dataset_path=import_path
-                )
+                stitch_split_nii.find_split_files(logfile=logfile_stitcher,
+                                                   dataset_path=import_path
+                                                  )
             except Exception as error_stack:
                 brainsss.write_error(logfile=logfile_stitcher,
                     error_stack=error_stack)
