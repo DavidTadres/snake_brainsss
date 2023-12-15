@@ -40,7 +40,7 @@ rule HelloSnake:
 
 """
 STITCH_NII_FILES = True
-import_path = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
+data_to_stitch = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
 
 import pathlib
 from scripts import preprocessing
@@ -53,13 +53,13 @@ import sys
 current_user = 'dtadres'
 
 # David's datapaths
-original_data_path = '/oak/stanford/groups/trc/data/David/Bruker/imports' # Oak
 #original_data_path = '/Volumes/groups/trc/data/David/Bruker/imports' # Mac
 #target_data_path = '/Volumes/groups/trc/data/David/Bruker/preprocessed'
 #current_fly = pathlib.Path(original_data_path, '20231207__queue__')
 
 settings = brainsss.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
+imports_path = pathlib.Path(settings['imports_path'])
 
 if STITCH_NII_FILES:
     """
@@ -80,8 +80,8 @@ if STITCH_NII_FILES:
         run:
             try:
                 stitch_split_nii.find_split_files(logfile=logfile_stitcher,
-                                                   dataset_path=dataset_path,
-                                                   import_path=import_path
+                                                   imports_path=imports_path,
+                                                   data_to_stitch=data_to_stitch
                                                   )
             except Exception as error_stack:
                 brainsss.write_error(logfile=logfile_stitcher,

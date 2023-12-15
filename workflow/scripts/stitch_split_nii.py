@@ -56,7 +56,7 @@ def nii_stitcher(x_resolution, y_resolution, frames_per_stack, no_of_stacks,
     time.sleep(30)  ##to give to time to delete
 
 
-def find_split_files(logfile, dataset_path, import_path):
+def find_split_files(logfile, imports_path, data_to_stitch):
     """
     Assumes folder structure like this:
     #/20220307
@@ -81,9 +81,9 @@ def find_split_files(logfile, dataset_path, import_path):
     """
     folder_name_to_target = 'func'  # All my folders with functional imaging are called func, e.g. 'func1', 'func2' etc.
 
-    for current_import_path in import_path:
+    for current_import_path in data_to_stitch:
 
-        current_path = Path(dataset_path, current_import_path)
+        current_path = Path(imports_path, current_import_path)
 
         for current_fly_folder in Path(str(current_path)).iterdir():
             print(current_fly_folder.name)
