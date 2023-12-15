@@ -40,12 +40,14 @@ rule HelloSnake:
 
 """
 STITCH_NII_FILES = True
+import_path = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
 
 import pathlib
 from scripts import preprocessing
 from scripts import stitch_split_nii
 import brainsss
 import time
+import sys
 
 # YOUR SUNET ID
 current_user = 'dtadres'
@@ -55,7 +57,9 @@ original_data_path = '/oak/stanford/groups/trc/data/David/Bruker/imports' # Oak
 #original_data_path = '/Volumes/groups/trc/data/David/Bruker/imports' # Mac
 #target_data_path = '/Volumes/groups/trc/data/David/Bruker/preprocessed'
 #current_fly = pathlib.Path(original_data_path, '20231207__queue__')
-import_path = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
+
+settings = brainsss.load_user_settings(current_user)
+dataset_path = pathlib.Path(settings['dataset_path'])
 
 if STITCH_NII_FILES:
     """
@@ -65,6 +69,8 @@ if STITCH_NII_FILES:
     """
     logfile_stitcher = './logs/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
     pathlib.Path('./logs').mkdir(exist_ok=True)
+    sys.stderr = brainsss.LoggerRedirect(logfile_stitcher)
+    sys.stdout = brainsss.LoggerRedirect(logfile_stitcher)
     print(logfile_stitcher)
 
     rule stitch_split_nii_rule:
@@ -74,7 +80,8 @@ if STITCH_NII_FILES:
         run:
             try:
                 stitch_split_nii.find_split_files(logfile=logfile_stitcher,
-                                                   dataset_path=import_path
+                                                   dataset_path=dataset_path,
+                                                   import_path=import_path
                                                   )
             except Exception as error_stack:
                 brainsss.write_error(logfile=logfile_stitcher,
@@ -93,8 +100,7 @@ fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
 
 import sys
 
-settings = brainsss.load_user_settings(current_user)
-dataset_path = pathlib.Path(settings['dataset_path'])
+
 if fly_folder_to_process == '':
     # If data has not yet been copied to the target folder,
     new_fly_number = brainsss.get_new_fly_number(dataset_path)

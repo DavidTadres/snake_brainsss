@@ -56,7 +56,7 @@ def nii_stitcher(x_resolution, y_resolution, frames_per_stack, no_of_stacks,
     time.sleep(30)  ##to give to time to delete
 
 
-def find_split_files(logfile, dataset_path):
+def find_split_files(logfile, dataset_path, import_path):
     """
     Assumes folder structure like this:
     #/20220307
@@ -81,108 +81,112 @@ def find_split_files(logfile, dataset_path):
     """
     folder_name_to_target = 'func'  # All my folders with functional imaging are called func, e.g. 'func1', 'func2' etc.
 
-    for current_fly_folder in Path(str(dataset_path)).iterdir():
-        print(current_fly_folder.name)
-        # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2
+    for current_import_path in import_path:
 
-        # Find folders that are called 'func1', 'func2' etc.
-        for current_func_dir in current_fly_folder.iterdir():
-            if folder_name_to_target in current_func_dir.name:
-                #print(current_func_dir)
-                # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2/func1
-                for tseries_folder in Path(current_func_dir).iterdir():
-                    if 'TSeries' in tseries_folder.name:
-                        # print(tseries_folder)
-                        # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2/func1/TSeries-12172018-1322-003
+        current_path = Path(dataset_path, current_import_path)
 
-                        files = os.listdir(tseries_folder)
-                        channel_1_list = []
-                        channel_2_list = []
-                        ch1_already_stitched = False
-                        ch2_already_stitched = False
+        for current_fly_folder in Path(str(current_path)).iterdir():
+            print(current_fly_folder.name)
+            # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2
 
-                        for file in files:
-                            ## stitch brain ##
-                            # append all appropriate nii files together
-                            # these need to be appended in order so first make a list of ch specific files then sort later
+            # Find folders that are called 'func1', 'func2' etc.
+            for current_func_dir in current_fly_folder.iterdir():
+                if folder_name_to_target in current_func_dir.name:
+                    #print(current_func_dir)
+                    # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2/func1
+                    for tseries_folder in Path(current_func_dir).iterdir():
+                        if 'TSeries' in tseries_folder.name:
+                            # print(tseries_folder)
+                            # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2/func1/TSeries-12172018-1322-003
 
-                            if "channel_1" in file and "nii" in file:
-                                channel_1_list.append(file)
-                            elif "channel_2" in file and "nii" in file:
-                                channel_2_list.append(file)
-                            elif "xml" in file and not "Voltage" in file:
-                                xml_file_name = file
-                            # Check if the stitched files already exist
-                            if 'ch1_stitched.nii' in file:
-                                ch1_already_stitched = True
-                            if 'ch2_stitched.nii' in file:
-                                ch2_already_stitched = True
+                            files = os.listdir(tseries_folder)
+                            channel_1_list = []
+                            channel_2_list = []
+                            ch1_already_stitched = False
+                            ch2_already_stitched = False
 
-                        # How many sequences does the microscope report on having have recorded
-                        xml_file = ET.parse(Path(tseries_folder, xml_file_name)).getroot()
-                        no_of_stacks = 0
-                        for current_xml_entry in xml_file:
-                            if "Sequence" in str(current_xml_entry):
-                                no_of_stacks += 1
+                            for file in files:
+                                ## stitch brain ##
+                                # append all appropriate nii files together
+                                # these need to be appended in order so first make a list of ch specific files then sort later
 
-                        # How many frames in z does the microscope report on having recorded?
-                        frames_per_stack = len(xml_file[3].findall('Frame'))
+                                if "channel_1" in file and "nii" in file:
+                                    channel_1_list.append(file)
+                                elif "channel_2" in file and "nii" in file:
+                                    channel_2_list.append(file)
+                                elif "xml" in file and not "Voltage" in file:
+                                    xml_file_name = file
+                                # Check if the stitched files already exist
+                                if 'ch1_stitched.nii' in file:
+                                    ch1_already_stitched = True
+                                if 'ch2_stitched.nii' in file:
+                                    ch2_already_stitched = True
 
-                        # X/Y resolution
-                        for current_setting in xml_file[1].findall('PVStateValue'):
-                            # How many lines per frame (resolution in y)
-                            if "linesPerFrame" in current_setting.attrib['key']:
-                                y_resolution = int(current_setting.attrib['value'])
-                            # How many pixel per line (resolution in x)
-                            if "pixelsPerLine" in current_setting.attrib['key']:
-                                x_resolution = int(current_setting.attrib['value'])
+                            # How many sequences does the microscope report on having have recorded
+                            xml_file = ET.parse(Path(tseries_folder, xml_file_name)).getroot()
+                            no_of_stacks = 0
+                            for current_xml_entry in xml_file:
+                                if "Sequence" in str(current_xml_entry):
+                                    no_of_stacks += 1
 
-                        print('Expected final shape of each file: ' + \
-                              repr(x_resolution) + ', ' + repr(y_resolution) + ',' + \
-                              repr(frames_per_stack) + ', ' + repr(no_of_stacks))
+                            # How many frames in z does the microscope report on having recorded?
+                            frames_per_stack = len(xml_file[3].findall('Frame'))
 
-                        # natsorted should sort print as expected.
-                        sorted_channel_1_list = natsort.natsorted(channel_1_list)
-                        sorted_channel_2_list = natsort.natsorted(channel_2_list)
+                            # X/Y resolution
+                            for current_setting in xml_file[1].findall('PVStateValue'):
+                                # How many lines per frame (resolution in y)
+                                if "linesPerFrame" in current_setting.attrib['key']:
+                                    y_resolution = int(current_setting.attrib['value'])
+                                # How many pixel per line (resolution in x)
+                                if "pixelsPerLine" in current_setting.attrib['key']:
+                                    x_resolution = int(current_setting.attrib['value'])
 
-                        print('sorted_channel_1_list', sorted_channel_1_list)
-                        print('sorted_channel_2_list', sorted_channel_2_list)
+                            print('Expected final shape of each file: ' + \
+                                  repr(x_resolution) + ', ' + repr(y_resolution) + ',' + \
+                                  repr(frames_per_stack) + ', ' + repr(no_of_stacks))
 
-                        ########
-                        # Stitch Channel 1
-                        ########
-                        if len(sorted_channel_1_list) > 0 and not ch1_already_stitched:
-                            print('loading split files for Ch1 in ' + str(tseries_folder) )
-                            try:
-                                nii_stitcher(x_resolution=x_resolution,
-                                             y_resolution=y_resolution,
-                                             frames_per_stack=frames_per_stack,
-                                             no_of_stacks=no_of_stacks,
-                                             sorted_channel_list=sorted_channel_1_list,
-                                             current_folder=tseries_folder,
-                                             savename='ch1_concat.nii',# it is important this is saved as ch1 rather than channel so
-                                                # it doesn't try to get restitched if the code runs twice
-                                             )
+                            # natsorted should sort print as expected.
+                            sorted_channel_1_list = natsort.natsorted(channel_1_list)
+                            sorted_channel_2_list = natsort.natsorted(channel_2_list)
 
-                                print('CH1 COMPLETE for: ', str(tseries_folder))
-                            except Exception:
-                                traceback.print_exc()
-                        ########
-                        # Channel 2
-                        ########
-                        if len(sorted_channel_2_list)> 0 and not ch2_already_stitched:
-                            print('loading split files for Ch2 in ' + str(tseries_folder) )
-                            try:
-                                nii_stitcher(x_resolution=x_resolution,
-                                             y_resolution=y_resolution,
-                                             frames_per_stack=frames_per_stack,
-                                             no_of_stacks=no_of_stacks,
-                                             sorted_channel_list=sorted_channel_2_list,
-                                             current_folder=tseries_folder,
-                                             savename='ch2_concat.nii',# it is important this is saved as ch1 rather than channel so
-                                                # it doesn't try to get restitched if the code runs twice
-                                             )
+                            print('sorted_channel_1_list', sorted_channel_1_list)
+                            print('sorted_channel_2_list', sorted_channel_2_list)
 
-                                print('CH2 COMPLETE for: ', str(tseries_folder))
-                            except Exception:
-                                traceback.print_exc()
+                            ########
+                            # Stitch Channel 1
+                            ########
+                            if len(sorted_channel_1_list) > 0 and not ch1_already_stitched:
+                                print('loading split files for Ch1 in ' + str(tseries_folder) )
+                                try:
+                                    nii_stitcher(x_resolution=x_resolution,
+                                                 y_resolution=y_resolution,
+                                                 frames_per_stack=frames_per_stack,
+                                                 no_of_stacks=no_of_stacks,
+                                                 sorted_channel_list=sorted_channel_1_list,
+                                                 current_folder=tseries_folder,
+                                                 savename='ch1_concat.nii',# it is important this is saved as ch1 rather than channel so
+                                                    # it doesn't try to get restitched if the code runs twice
+                                                 )
+
+                                    print('CH1 COMPLETE for: ', str(tseries_folder))
+                                except Exception:
+                                    traceback.print_exc()
+                            ########
+                            # Channel 2
+                            ########
+                            if len(sorted_channel_2_list)> 0 and not ch2_already_stitched:
+                                print('loading split files for Ch2 in ' + str(tseries_folder) )
+                                try:
+                                    nii_stitcher(x_resolution=x_resolution,
+                                                 y_resolution=y_resolution,
+                                                 frames_per_stack=frames_per_stack,
+                                                 no_of_stacks=no_of_stacks,
+                                                 sorted_channel_list=sorted_channel_2_list,
+                                                 current_folder=tseries_folder,
+                                                 savename='ch2_concat.nii',# it is important this is saved as ch1 rather than channel so
+                                                    # it doesn't try to get restitched if the code runs twice
+                                                 )
+
+                                    print('CH2 COMPLETE for: ', str(tseries_folder))
+                                except Exception:
+                                    traceback.print_exc()
