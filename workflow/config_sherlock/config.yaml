@@ -9,7 +9,6 @@ cluster:
     --mail-type=ALL
 default-resources:
   - partition=trc
-  - mem_mb=1000
 restart-times: 1
 max-jobs-per-second: 10
 max-status-checks-per-second: 1

@@ -39,7 +39,7 @@ rule HelloSnake:
         hello_world.print_hi(args='test', arg2='test2')
 
 """
-STITCH_NII_FILES = False
+STITCH_NII_FILES = True
 
 import pathlib
 from scripts import preprocessing
@@ -65,6 +65,10 @@ if STITCH_NII_FILES:
     logfile_stitcher = './logs/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
     pathlib.Path('./logs').mkdir(exist_ok=True)
     rule stitch_split_nii_rule:
+
+        threads: 16
+        resources:
+            mem_mb=16000
         run:
 
             try:
@@ -110,7 +114,7 @@ printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
 sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
 #brainsss.print_title(logfile, width)
-
+'''
 from scripts import hello_world
 
 rule HelloSnake:
@@ -127,33 +131,32 @@ rule HelloSnake:
                         )
         except Exception as error_stack:
             brainsss.write_error(logfile=logfile,
-                                 error_stack=error_stack)
+                                 error_stack=error_stack)'''
 
+#try:
+#    hello_world.print_hi(
+#        args=logging_file,
+#        arg2='test2',
+#        logfile=current_logger)
+#except Exception as error:
+#    current_logger.logger.error(error,exc_info=True)
+"""logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
+pathlib.Path('./logs').mkdir(exist_ok=True)
+logger = logging.getLogger('logging_test')
+fh = logging.FileHandler(str(logging_file))
+fh.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+try:
+    logger.info('Starting script')
+    # Do stuff
+    hello_world.print_hi(args='test',arg2='test2',logfile=logging_file)
 
-        #try:
-        #    hello_world.print_hi(
-        #        args=logging_file,
-        #        arg2='test2',
-        #        logfile=current_logger)
-        #except Exception as error:
-        #    current_logger.logger.error(error,exc_info=True)
-        """logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
-        pathlib.Path('./logs').mkdir(exist_ok=True)
-        logger = logging.getLogger('logging_test')
-        fh = logging.FileHandler(str(logging_file))
-        fh.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
-        try:
-            logger.info('Starting script')
-            # Do stuff
-            hello_world.print_hi(args='test',arg2='test2',logfile=logging_file)
-
-            logger.info('Done')
-        except Exception as error:
-            logger.error(error,exc_info=True)
-        """
+    logger.info('Done')
+except Exception as error:
+    logger.error(error,exc_info=True)
+"""
 
 
 
