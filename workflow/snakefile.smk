@@ -88,7 +88,6 @@ printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
 sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
 #brainsss.print_title(logfile, width)
-brainsss.print_datetime(logfile, width)
 
 from scripts import hello_world
 
@@ -97,6 +96,8 @@ rule HelloSnake:
     #    'python3 hello_world.py $args'
     threads: 2
     run:
+        brainsss.print_datetime(logfile,width)
+        print('\nExecuting ' + {rule} + ' rule\n')
         try:
             hello_world.print_hi(logfile=logfile,
                        args='world',
@@ -131,8 +132,6 @@ rule HelloSnake:
         except Exception as error:
             logger.error(error,exc_info=True)
         """
-
-
 
 """
 rule stitch_split_nii_rule:
