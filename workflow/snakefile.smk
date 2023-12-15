@@ -39,10 +39,13 @@ rule HelloSnake:
         hello_world.print_hi(args='test', arg2='test2')
 
 """
+STITCH_NII_FILES = False
 
 import pathlib
 from scripts import preprocessing
 from scripts import stitch_split_nii
+import brainsss
+import time
 
 # YOUR SUNET ID
 current_user = 'dtadres'
@@ -51,9 +54,28 @@ current_user = 'dtadres'
 original_data_path = '/oak/stanford/groups/trc/data/David/Bruker/imports' # Oak
 #original_data_path = '/Volumes/groups/trc/data/David/Bruker/imports' # Mac
 #target_data_path = '/Volumes/groups/trc/data/David/Bruker/preprocessed'
-
 #current_fly = pathlib.Path(original_data_path, '20231207__queue__')
 import_path = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
+
+if STITCH_NII_FILES:
+    """
+    Note - There really shouldn't be any errors here.
+    Error log is in a different folder compared to follow-up processing and analysis
+    """
+    logfile_stitcher = './logs/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
+    pathlib.Path('./logs').mkdir(exist_ok=True)
+    rule stitch_split_nii_rule:
+        run:
+
+            try:
+                stitch_split_nii(logfile=logfile_stitcher,
+                    dataset_path=import_path
+                )
+            except Exception as error_stack:
+                brainsss.write_error(logfile=logfile_stitcher,
+                    error_stack=error_stack)
+
+
 fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
 # do follow up analysis, enter the fly folder to be analyzed here.
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
@@ -63,7 +85,7 @@ fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
 # per fly. When coming back in the future, it's easy to read all the output
 # done for each fly
 # for logging
-import brainsss
+
 import sys
 
 settings = brainsss.load_user_settings(current_user)
@@ -97,7 +119,7 @@ rule HelloSnake:
     threads: 2
     run:
         brainsss.print_datetime(logfile,width)
-        print('\nExecuting ' + {rule} + ' rule\n')
+        print('\nExecuting HelloSnake rule\n')
         try:
             hello_world.print_hi(logfile=logfile,
                        args='world',
@@ -133,17 +155,9 @@ rule HelloSnake:
             logger.error(error,exc_info=True)
         """
 
-"""
-rule stitch_split_nii_rule:
-    run:
-        try:
-            stitch_split_nii(logfile=logfile,
-                dataset_path=import_path
-            )            
-        except Exception as error_stack:
-            brainsss.write_error(logfile=logfile,
-                error_stack=error_stack)
-                """
+
+
+
 
 """
 rule fly_builder_rule:
