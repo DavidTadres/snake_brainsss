@@ -68,7 +68,8 @@ if STITCH_NII_FILES:
 
     rule stitch_split_nii_rule:
         threads: 16
-        resources: 12000
+        resources:
+            mem_mb=12000
         run:
             try:
                 stitch_split_nii(logfile=logfile_stitcher,
