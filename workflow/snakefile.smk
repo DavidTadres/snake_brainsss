@@ -74,7 +74,8 @@ if fly_folder_to_process == '':
     fly_folder_to_process = pathlib.Path(dataset_path, 'fly_' + new_fly_number)
 else:
     fly_folder_to_process = pathlib.Path(dataset_path, fly_folder_to_process)
-print(fly_folder_to_process)
+#print(fly_folder_to_process)
+
 # Problem: Snakemake runs twice. Seems to be a bug:
 #https://github.com/snakemake/snakemake/issues/2350
 # solution: ignore seconds
@@ -88,7 +89,6 @@ sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
 #brainsss.print_title(logfile, width)
 brainsss.print_datetime(logfile, width)
-
 
 from scripts import hello_world
 

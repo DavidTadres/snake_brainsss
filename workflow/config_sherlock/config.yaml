@@ -1,11 +1,11 @@
 cluster:
-  mkdir -p logs/`date +"%d-%m-%y"` &&
+  mkdir -p logs/`date +"%Y-%m-%d"` &&
   sbatch
     --partition={resources.partition}
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
     --job-name=smk-{rule}-{wildcards}
-    --output=logs/`date +"%d-%m-%y"`/{rule}-`date +"%d-%m-%y-%H%M%S"`.out
+    --output=logs/`date +"%Y-%m-%d"`/{rule}-`date +"%Y-%m-%d-%H%M%S"`.out
     --mail-type=ALL
 default-resources:
   - partition=trc
