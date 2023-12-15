@@ -67,10 +67,8 @@ if STITCH_NII_FILES:
     print(logfile_stitcher)
 
     rule stitch_split_nii_rule:
-
-        threads: 16
-        resources:
-            mem_mb=16000
+         threads: 16
+        resources: mem_mb=16000
         run:
 
             try:
