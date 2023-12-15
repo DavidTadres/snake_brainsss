@@ -58,8 +58,8 @@ else:
 logfile = './logs/' + fly_folder_to_process.name + '.txt'
 pathlib.Path('./logs').mkdir(exist_ok=True)
 
-width=120
-printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
+#width=120
+#printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
 sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
 #brainsss.print_title(logfile, width)
@@ -81,9 +81,6 @@ rule HelloSnake:
         except Exception as error_stack:
             brainsss.write_error(logfile=logfile,
                                  error_stack=error_stack)'''
-
-
-
 
 rule fly_builder_rule:
     threads: 16

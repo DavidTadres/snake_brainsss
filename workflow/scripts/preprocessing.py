@@ -6,6 +6,7 @@ from lxml import etree, objectify
 from openpyxl import load_workbook
 import pathlib
 import sys
+import time
 
 # To import brainsss, define path to scripts!
 scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
@@ -13,7 +14,7 @@ sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 # print(pathlib.Path(scripts_path, 'workflow'))
 import brainsss
 
-def fly_builder(logfile, user, dirs_to_build, target_folder ):
+def fly_builder(logfile, user, dirs_to_build, target_folder):
     """
     Move folders from imports to fly dataset - need to restructure folders
 
@@ -22,6 +23,9 @@ def fly_builder(logfile, user, dirs_to_build, target_folder ):
     :param target_folder:
     :return:
     """
+    print('Fly builder called')
+    print(time.time.strftime("%Y%m%d-%H%M%S" + '\n'))
+    print('The following directories are going to be built: ' + repr(dirs_to_build))
 
     # scripts_path = args['PWD'] # Original
 
