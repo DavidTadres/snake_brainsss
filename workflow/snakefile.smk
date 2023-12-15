@@ -23,6 +23,8 @@ snakemake \
 
 ''' this one worked"
 snakemake -s snakefile.smk --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
+# This one with config
+snakemake -s snakefile.smk --profile 
 '''
 '''
 Can also only run a given rule:
@@ -41,6 +43,10 @@ rule HelloSnake:
 """
 STITCH_NII_FILES = True
 data_to_stitch = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
+
+fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
+# do follow up analysis, enter the fly folder to be analyzed here.
+# ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 
 import pathlib
 from scripts import preprocessing
@@ -75,8 +81,6 @@ if STITCH_NII_FILES:
 
     rule stitch_split_nii_rule:
         threads: 16
-        resources:
-            mem_mb=12000
         run:
             try:
                 stitch_split_nii.find_split_files(logfile=logfile_stitcher,
@@ -86,11 +90,6 @@ if STITCH_NII_FILES:
             except Exception as error_stack:
                 brainsss.write_error(logfile=logfile_stitcher,
                     error_stack=error_stack)
-
-
-fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
-# do follow up analysis, enter the fly folder to be analyzed here.
-# ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 
 
 # Idea - to make the pipeline as traceable as possible, make one logfile
