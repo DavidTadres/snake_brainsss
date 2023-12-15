@@ -1,63 +1,47 @@
-#import os
-import sys
 import json
-
-import natsort
 import numpy as np
 from shutil import copyfile
 from xml.etree import ElementTree as ET
 from lxml import etree, objectify
 from openpyxl import load_workbook
-import brainsss
 import pathlib
+import sys
+
+# To import brainsss, define path to scripts!
+scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
+sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
+# print(pathlib.Path(scripts_path, 'workflow'))
+import brainsss
+
 def fly_builder(logfile, user, dirs_to_build, target_folder ):
     """
     Move folders from imports to fly dataset - need to restructure folders
 
     :param user: your SUnet ID as a string
     :param dirs_to_build: a list of folders to build. e.g. dir_to_build = ['20231301'] or  dir_to_build = ['20232101', '20231202']
+    :param target_folder:
     :return:
     """
 
-    standalone = True  # i'll add if statements to be able to go back to Bella's script easliy
+    # scripts_path = args['PWD'] # Original
 
-    if standalone:
-        # Copied stuff from preprocess
-        #import time
-        #width = 120  # width of print log
-        #print('before logfile')
-        #logfile = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
-        #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-        #sys.stderr = brainsss.Logger_stderr_sherlock(logfile)
-        #brainsss.print_title(logfile, width)
-        #print('logfil should have been created')
+    # com_path = os.path.join(scripts_path, 'com')
+    # user = scripts_path.split('/')[3]
+    settings = brainsss.load_user_settings(user)
 
-        scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
-        # scripts_path = args['PWD'] # Original
+    ### Parse user settings
+    imports_path = pathlib.Path(settings['imports_path'])
+    dataset_path = pathlib.Path(settings['dataset_path'])
+    # FOR TESTING ONLY
+    #imports_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/imports")
+    #dataset_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/preprocessed")
+    target_path = dataset_path  # to be consistent with this script.
 
-        # com_path = os.path.join(scripts_path, 'com')
-        # user = scripts_path.split('/')[3]
-        settings = brainsss.load_user_settings(user, scripts_path)
+    #dir_to_build = args['BUILDFLIES']
+    paths_to_build = []
+    for current_dir in dirs_to_build:
+        paths_to_build.append(pathlib.Path(imports_path, current_dir))
 
-        ### Parse user settings
-        imports_path = pathlib.Path(settings['imports_path'])
-        dataset_path = pathlib.Path(settings['dataset_path'])
-        # FOR TESTING ONLY
-        #imports_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/imports")
-        #dataset_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/preprocessed")
-        target_path = dataset_path  # to be consistent with this script.
-
-        #dir_to_build = args['BUILDFLIES']
-        flagged_dirs = []
-        for current_dir in dirs_to_build:
-            flagged_dirs.append(pathlib.Path(imports_path, current_dir))
-        #flagged_dir = os.path.join(imports_path, dir_to_build)
-
-    else:
-        # original args
-        logfile = args['logfile']
-        flagged_dir = args['flagged_dir']
-        target_path = args['dataset_path']
     ### Parse remaining command line args
     # What is this doing?
     #if args['FLIES'] == '':
@@ -76,16 +60,17 @@ def fly_builder(logfile, user, dirs_to_build, target_folder ):
     # Need to move into fly_X folder that reflects it's date
 
     # get fly folders in flagged directory and sort to ensure correct fly order
-    printlog("Building flies from {}".format(flagged_dirs))
+    printlog("Building flies from {}".format(str(paths_to_build)))
     #likely_fly_folders = os.listdir(flagged_dir)
     #brainsss.sort_nicely(likely_fly_folders)
 
     # loop through each of the provided dirs_to_build
-    for current_dir_to_build in flagged_dirs:
+    for current_path_to_build in paths_to_build:
+        print(current_path_to_build)
 
         # Make sure that each fly folder is actually containing the keyword 'fly'
         #likely_fly_folders = [i for i in likely_fly_folders if 'fly' in i]
-        likely_fly_folders = [i for i in current_dir_to_build.iterdir() if 'fly' in i.name]
+        likely_fly_folders = [i for i in current_path_to_build.iterdir() if 'fly' in i.name]
         printlog(F"Found fly folders{str(likely_fly_folders):.>{width - 17}}")
 
         #if fly_dirs is not None:
@@ -94,9 +79,9 @@ def fly_builder(logfile, user, dirs_to_build, target_folder ):
 
         for current_fly_folder in likely_fly_folders:
 
-            new_fly_number = brainsss.get_new_fly_number(target_path)
+            #bnew_fly_number = brainsss.get_new_fly_number(target_path)
             # printlog(f'\n*Building {likely_fly_folder} as fly number {new_fly_number}*')
-            printlog(f"\n{'   Building ' + current_fly_folder + ' as fly_' + str(target_folder.name) + '   ':-^{width}}")
+            printlog(f"\n{'   Building ' + current_fly_folder.name + ' as ' + str(target_folder.name) + '   ':-^{width}}")
 
             # Define source fly directory
             # source_fly = os.path.join(flagged_dir, likely_fly_folder)
@@ -108,11 +93,11 @@ def fly_builder(logfile, user, dirs_to_build, target_folder ):
 
             #destination_fly = os.path.join(target_path, new_fly_folder)
             #destination_fly = pathlib.Path(target_path, new_fly_folder)
-            destination_fly = target_folder
 
+            destination_fly = target_path
             #os.mkdir(destination_fly)
             destination_fly.mkdir(parents=True) # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
-            printlog(F'Created fly directory:{destination_fly:.>{width - 22}}')
+            printlog(F'Created fly directory:{destination_fly.name:.>{width - 22}}')
 
             # Copy fly data
             copy_fly(current_fly_folder, destination_fly, printlog, user)
@@ -132,19 +117,23 @@ def add_date_to_fly(destination_fly):
     ### Get date
     try:  # Check if there are func folders
         # Get func folders
-        func_folders = [os.path.join(destination_fly, x) for x in os.listdir(destination_fly) if 'func' in x]
+        #func_folders = [os.path.join(destination_fly, x) for x in os.listdir(destination_fly) if 'func' in x]
+        func_folders = [pathlib.Path(destination_fly, x) for x in destination_fly.iterdir() if 'func' in x.name]
         brainsss.sort_nicely(func_folders)
         func_folder = func_folders[0]  # This throws an error if no func folder, hence try..except
         # Get full xml file path
-        xml_file = os.path.join(func_folder, 'imaging',
-                                'functional.xml')  # Unsure how this leads to correct filename!
+        xml_file = pathlib.Path(func_folder, 'imaging', 'functional.xml')
+        #xml_file = os.path.join(func_folder, 'imaging',
+        #                        'functional.xml')  # Unsure how this leads to correct filename!
     except:  # Use anatomy folder
         # Get anat folders
-        anat_folders = [os.path.join(destination_fly, x) for x in os.listdir(destination_fly) if 'anat' in x]
+        #anat_folders = [os.path.join(destination_fly, x) for x in os.listdir(destination_fly) if 'anat' in x]
+        anat_folders = [pathlib.Path(destination_fly, x) for x in destination_fly.iterdir() if 'anat' in x]
         brainsss.sort_nicely(anat_folders)
         anat_folder = anat_folders[0]
         # Get full xml file path
-        xml_file = os.path.join(anat_folder, 'imaging', 'anatomy.xml')  # Unsure how this leads to correct filename!
+        xml_file = pathlib.Path(anat_folder, 'imaging', 'anatomy.xml')
+        #xml_file = os.path.join(anat_folder, 'imaging', 'anatomy.xml')  # Unsure how this leads to correct filename!
     # Extract datetime
     datetime_str, _, _ = get_datetime_from_xml(xml_file)
     # Get just date
@@ -152,7 +141,8 @@ def add_date_to_fly(destination_fly):
     time = datetime_str.split('-')[1]
 
     ### Add to fly.json
-    json_file = os.path.join(destination_fly, 'fly.json')
+    json_file = pathlib.Path(destination_fly, 'fly.json')
+    #json_file = os.path.join(destination_fly, 'fly.json')
     with open(json_file, 'r+') as f:
         metadata = json.load(f)
         metadata['date'] = str(date)
@@ -162,58 +152,59 @@ def add_date_to_fly(destination_fly):
         f.truncate()
 
 def copy_fly(current_fly_folder, destination_fly, printlog, user):
-
-    ''' There will be two types of folders in a fly folder.
+    """
+    There will be two types of folders in a fly folder.
     1) func_x folder
     2) anat_x folder
     For functional folders, need to copy fictrac and visual as well
     For anatomy folders, only copy folder. There will also be
-    3) fly json data '''
+    3) fly json data
+    """
 
     # look at every item in source fly folder
-    #for item in os.listdir(source_fly):
-    for item in current_fly_folder.iterdir():
-        ##print('Currently looking at item: {}'.format(item))
+    for current_file_or_folder in current_fly_folder.iterdir():
+        # This should be e.g. directory such as anat1 or func0 or fly.json
+        print('Currently looking at item: {}'.format(current_file_or_folder.name))
         ##sys.stdout.flush()
 
         # Handle folders
 
         #if os.path.isdir(os.path.join(source_fly, item)):
-        if item.is_dir():
+        if current_file_or_folder.is_dir():
             # Call this folder source expt folder
             #source_expt_folder = os.path.join(source_fly, item)
-            source_expt_folder = item
+            current_imaging_folder = current_file_or_folder
             # Make the same folder in destination fly folder
             #expt_folder = os.path.join(destination_fly, item)
-            expt_folder = pathlib.Path(destination_fly, item.name)
+            current_target_folder = pathlib.Path(destination_fly, current_imaging_folder.name)
             #os.mkdir(expt_folder)
-            expt_folder.mkdir(parents=True)
+            current_target_folder.mkdir(parents=True)
             ##print('Created directory: {}'.format(expt_folder))
             ##sys.stdout.flush()
 
             # Is this folder an anatomy or functional folder?
-            if 'anat' in item:
+            if 'anat' in current_imaging_folder.name:
                 # If anatomy folder, just copy everything
                 # Make imaging folder and copy
                 #imaging_destination = os.path.join(expt_folder, 'imaging')
-                imaging_destination = pathlib.Path(expt_folder, 'imaging')
+                imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkfit(parents=True)
-                copy_bruker_data(source_expt_folder, imaging_destination, 'anat', printlog)
+                copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
                 ######################################################################
-                print(f"anat:{expt_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
+                print(f"anat:{current_target_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
-            elif 'func' in item:
+            elif 'func' in current_imaging_folder.name:
                 # Make imaging folder and copy
                 #imaging_destination = os.path.join(expt_folder, 'imaging')
-                imaging_destination = pathlib.Path(expt_folder, 'imaging')
+                imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
-                copy_bruker_data(source_expt_folder, imaging_destination, 'func', printlog)
+                copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
                 # Copt fictrac data based on timestamps
-                copy_fictrac(expt_folder, printlog, user, source_expt_folder)
+                copy_fictrac(current_target_folder, printlog, user, current_imaging_folder)
                 # Copy visual data based on timestamps, and create visual.json
-                copy_visual(expt_folder, printlog)
+                copy_visual(current_target_folder, printlog)
 
                 ######################################################################
                 #print(f"func:{expt_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
@@ -221,22 +212,22 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 # REMOVED TRIGGERING
 
             else:
-                printlog('Invalid directory in fly folder (skipping): {}'.format(item))
+                printlog('Invalid directory in fly folder (skipping): {}'.format(current_imaging_folder.name))
 
         # Copy fly.json file
         else:
-            if item == 'fly.json':
+            current_file = current_file_or_folder
+            if current_file_or_folder == 'fly.json':
                 ##print('found fly json file')
                 ##sys.stdout.flush()
                 #source_path = os.path.join(source_fly, item)
-                source_path = item
                 #target_path = os.path.join(destination_fly, item)
-                target_path = pathlib.Path(destination_fly, item.name)
+                target_path = pathlib.Path(destination_fly, current_file.name)
                 ##print('Will copy from {} to {}'.format(source_path, target_path))
                 ##sys.stdout.flush()
-                copyfile(source_path, target_path)
+                copyfile(current_file, target_path)
             else:
-                printlog('Invalid file in fly folder (skipping): {}'.format(item))
+                printlog('Invalid file in fly folder (skipping): {}'.format(current_file.name))
                 ##sys.stdout.flush()
 
 def copy_bruker_data(source, destination, folder_type, printlog):
@@ -280,29 +271,37 @@ def copy_bruker_data(source, destination, folder_type, printlog):
             if '.nii' in source_item.name and folder_type == 'anat':
                 target_item = 'anatomy_' + source_item.name.split('_')[1] + '_' + source_item.name.split('_')[2] + '.nii'
             # Special copy for photodiode since it goes in visual folder
-            '''
+
             # To be done once I have such data!!
             if '.csv' in source_item.name:
                 item = 'photodiode.csv'
-                try:
-                    visual_folder = os.path.join(os.path.split(destination)[0], 'visual')
-                    os.mkdir(visual_folder)
-                except:
-                    pass
-                target_item = os.path.join(os.path.split(destination)[0], 'visual', item)
+                #try:
+                # Create folder 'visual'
+                visual_folder_path= pathlib.Path(destination.name, 'visual')
+                visual_folder_path.mkdir(exist_ok=True)
+                #visual_folder = os.path.join(os.path.split(destination)[0], 'visual')
+                #os.mkdir(visual_folder)
+                #except:
+                #    pass
+                target_item = pathlib.Path(visual_folder_path, item)
+                #target_item = os.path.join(os.path.split(destination)[0], 'visual', item)
                 copyfile(source_item, target_item)
                 continue
             # Special copy for visprotocol metadata since it goes in visual folder
             if '.hdf5' in item:
-                try:
-                    visual_folder = os.path.join(os.path.split(destination)[0], 'visual')
-                    os.mkdir(visual_folder)
-                except:
-                    pass
-                target_item = os.path.join(os.path.split(destination)[0], 'visual', item)
+                # Create folder 'visual'
+                visual_folder_path = pathlib.Path(destination.name, 'visual')
+                visual_folder_path.mkdir(exist_ok=True)
+                target_item = pathlib.Path(visual_folder_path, item)
+                #try:
+                #    visual_folder = os.path.join(os.path.split(destination)[0], 'visual')
+                #    os.mkdir(visual_folder)
+                #except:
+                #    pass
+                #target_item = os.path.join(os.path.split(destination)[0], 'visual', item)
                 copyfile(source_item, target_item)
                 continue
-            '''
+
             # Rename to anatomy.xml if appropriate
             if '.xml' in source_item.name and folder_type == 'anat' and 'Voltage' not in source_item.name:
                 target_item = 'anatomy.xml'
@@ -329,14 +328,16 @@ def copy_bruker_data(source, destination, folder_type, printlog):
 
 def copy_file(source, target, printlog):
     # printlog('Transfering file {}'.format(target))
-    to_print = ('/').join(target.split('/')[-4:])
+    #to_print = ('/').join(target.split('/')[-4:])
+    to_print = target.parents[0]
     width = 120
     printlog(f'Transfering file{to_print:.>{width - 16}}')
     ##sys.stdout.flush()
     copyfile(source, target)
 
 def copy_visual(destination_region, printlog):
-    width = 120
+    print('copy_visual NOT IMPLEMENTED YET')
+    """width = 120
     printlog(F"Copying visual stimulus data{'':.^{width - 28}}")
     visual_folder = '/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/imports/visual'
     visual_destination = os.path.join(destination_region, 'visual')
@@ -401,12 +402,16 @@ def copy_visual(destination_region, printlog):
     except:
         unique_stimuli = 'brainsss.get_stimuli failed'
     with open(os.path.join(visual_destination, 'visual.json'), 'w') as f:
-        json.dump(unique_stimuli, f, indent=4)
+        json.dump(unique_stimuli, f, indent=4)"""
 
 def copy_fictrac(destination_region, printlog, user, source_fly):
+    print('copy_fictrac NOT IMPLEMENTED YET')
+
     # fictrac_folder = '/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/imports/fictrac'
-    fictrac_destination = os.path.join(destination_region, 'fictrac')
-    os.mkdir(fictrac_destination)
+    fictrac_destination = pathlib.Path(destination_region, 'fictrac')
+    fictrac_destination.mkdir(exist_ok=True)
+    #fictrac_destination = os.path.join(destination_region, 'fictrac')
+    #os.mkdir(fictrac_destination)
     if user == 'brezovec':
         user = 'luke'
     if user == 'yandanw':
@@ -420,29 +425,44 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
         # I instead use a deterministic file structure:
         # for example for fly 20231201\fly2\func1 imaging data, fictrac data must
         # be in the folder 20231201_fly2_func1. There must only be a single dat file in that folder.
-        source_path = os.path.join(fictrac_folder,
-                                   source_fly.split('/')[-3] + '_' + source_fly.split('/')[-2] +
-                                   '_' + source_fly.split('/')[-1])
+        source_path = pathlib.Path(fictrac_folder,
+                                   source_fly.parts[-3] + '_' + \
+                                   source_fly.parts[-2] + '_' + \
+                                   source_fly.parts[-1])
+        #source_path = os.path.join(fictrac_folder,
+        #                           source_fly.split('/')[-3] + '_' + source_fly.split('/')[-2] +
+        #                           '_' + source_fly.split('/')[-1])
         # this would yield "20231201_fly2_func1" as the folder
         # Find the dat file
-        for file in os.listdir(source_path):
+        #for file in os.listdir(source_path):
+        for file in source_path.iterdir():
             if 'dat' in file:
                 width = 120
-                source_path = os.path.join(source_path, file)
-                target_path = os.path.join(fictrac_destination, file)
-                to_print = ('/').join(target_path.split('/')[-4:])
+                #source_path = os.path.join(source_path, file)
+                target_path = pathlib.Path(fictrac_destination, file.name)
+                #target_path = os.path.join(fictrac_destination, file)
+                #to_print = ('/').join(target_path.split('/')[-4:])
+                to_print = str(target_path)
                 printlog(f'Transfering file{to_print:.>{width - 16}}')
     else:
-        fictrac_folder = os.path.join("/oak/stanford/groups/trc/data/fictrac", user)
+        #fictrac_folder = os.path.join("/oak/stanford/groups/trc/data/fictrac", user)
+        fictrac_folder = pathlib.Path("/oak/stanford/groups/trc/data/fictrac", user)
 
         # Find time of experiment based on functional.xml
-        true_ymd, true_total_seconds = get_expt_time(os.path.join(destination_region, 'imaging'))
+        #true_ymd, true_total_seconds = get_expt_time(os.path.join(destination_region, 'imaging'))
+        true_ymd, true_total_seconds = get_expt_time(pathlib.Path(destination_region, 'imaging'))
+
         # printlog(f'true_ymd: {true_ymd}; true_total_seconds: {true_total_seconds}')
 
         # Find .dat file of 1) correct-ish time, 2) correct-ish size
         correct_date_and_size = []
         time_differences = []
-        for file in os.listdir(fictrac_folder):
+        #for file in os.listdir(fictrac_folder):
+        for file in fictrac_folder.iterdir():
+
+            file = str(file) # To be changed in the future
+            # but I'm currently to lazy to change everything to
+            # pathlib object below.
 
             # must be .dat file
             if '.dat' not in file:
@@ -465,8 +485,10 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
             # printlog('Found file from same day: {}'.format(file))
 
             # Must be correct size
-            fp = os.path.join(fictrac_folder, file)
-            file_size = os.path.getsize(fp)
+            #fp = os.path.join(fictrac_folder, file)
+            fp = pathlib.Path(fictrac_folder, file)
+            file_size = fp.stat().st_size
+            #file_size = os.path.getsize(fp)
             if file_size < 1000000:  # changed to 1MB to accomidate 1 min long recordings. #30000000: #30MB
                 # width = 120
                 # printlog(F"Found correct .dat file{file:.>{width-23}}")
@@ -494,7 +516,8 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
             return
 
         # Collect all fictrac files with correct datetime
-        correct_time_files = [file for file in os.listdir(fictrac_folder) if datetime_correct in file]
+        correct_time_files = [file for file in fictrac_folder.iterdir() if datetime_correct in file.name]
+        #correct_time_files = [file for file in os.listdir(fictrac_folder) if datetime_correct in file]
 
         # correct_time_files = []
         # for file in os.listdir(fictrac_folder):
@@ -505,12 +528,16 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
         ##sys.stdout.flush()
 
         # Now transfer these 4 files to the fly
-        os.mkdir(fictrac_destination)
+        fictrac_folder.mkdir()
+        #os.mkdir(fictrac_destination)
         for file in correct_time_files:
             width = 120
-            target_path = os.path.join(fictrac_destination, file)
-            source_path = os.path.join(fictrac_folder, file)
-            to_print = ('/').join(target_path.split('/')[-4:])
+            target_path = pathlib.Path(fictrac_folder, file)
+            source_path = pathlib.Path(fictrac_folder, file)
+            #target_path = os.path.join(fictrac_destination, file)
+            #source_path = os.path.join(fictrac_folder, file)
+            #to_print = ('/').join(target_path.split('/')[-4:])
+            to_print = str(target_path)
             printlog(f'Transfering file{to_print:.>{width - 16}}')
             # printlog('Transfering {}'.format(target_path))
             ##sys.stdout.flush()
@@ -525,7 +552,8 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
     objectify.deannotate(root)
     etree.cleanup_namespaces(root)
     tree = etree.ElementTree(fictrac)
-    with open(os.path.join(fictrac_destination, 'fictrac.xml'), 'wb') as file:
+    #with open(os.path.join(fictrac_destination, 'fictrac.xml'), 'wb') as file:
+    with open(pathlib.Path(fictrac_destination, 'fictrac.xml'), 'wb') as file:
         tree.write(file, pretty_print=True)
 
 def create_imaging_json(xml_source_file, printlog):
@@ -605,12 +633,14 @@ def create_imaging_json(xml_source_file, printlog):
     #     #     printlog('Used overall laser power.')
 
     # Save data
-    with open(os.path.join(os.path.split(xml_source_file)[0], 'scan.json'), 'w') as f:
+    #with open(os.path.join(os.path.split(xml_source_file)[0], 'scan.json'), 'w') as f:
+    with open(pathlib.Path(xml_source_file.parent, 'scan.json'), 'w') as f:
         json.dump(source_data, f, indent=4)
 
 def get_expt_time(directory):
     ''' Finds time of experiment based on functional.xml '''
-    xml_file = os.path.join(directory, 'functional.xml')
+    xml_file = pathlib.Path(directory, 'functional.xml')
+    #xml_file = os.path.join(directory, 'functional.xml')
     _, _, datetime_dict = get_datetime_from_xml(xml_file)
     true_ymd = datetime_dict['year'] + datetime_dict['month'] + datetime_dict['day']
     true_total_seconds = int(datetime_dict['hour']) * 60 * 60 + \
@@ -726,12 +756,14 @@ def load_xml(file):
     root = tree.getroot()
     return root
 
+"""
 def add_times_to_jsons(destination_fly):
     ''' Deprecated '''
     # Do for each func_x folder
+    
     func_folders = [os.path.join(destination_fly, x) for x in os.listdir(destination_fly) if 'func' in x]
     for func_folder in func_folders:
-        pass
+        pass"""
 
 def add_fly_to_xlsx(fly_folder, printlog):
 
@@ -739,7 +771,8 @@ def add_fly_to_xlsx(fly_folder, printlog):
 
     ### TRY TO LOAD ELSX ###
     try:
-        xlsx_path = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/master_2P.xlsx'
+        xlsx_path = pathlib.Path(fly_folder, 'master_2P.xlsx')
+        #xlsx_path = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/master_2P.xlsx'
         wb = load_workbook(filename=xlsx_path, read_only=False)
         ws = wb.active
         printlog("Sucessfully opened master_2P log")
@@ -749,7 +782,8 @@ def add_fly_to_xlsx(fly_folder, printlog):
 
     ### TRY TO LOAD FLY METADATA ###
     try:
-        fly_file = os.path.join(fly_folder, 'fly.json')
+        fly_file = pathlib.Path(fly_folder, 'fly.json')
+        #fly_file = os.path.join(fly_folder, 'fly.json')
         fly_data = load_json(fly_file)
         printlog("Sucessfully loaded fly.json")
     except:
@@ -765,13 +799,15 @@ def add_fly_to_xlsx(fly_folder, printlog):
         fly_data['genotype'] = None
 
     expt_folders = []
-    expt_folders = [os.path.join(fly_folder, x) for x in os.listdir(fly_folder) if 'func' in x]
+    #expt_folders = [os.path.join(fly_folder, x) for x in os.listdir(fly_folder) if 'func' in x]
+    expt_folders = [pathlib.Path(fly_folder, x) for x in fly_folder.iterdir() if 'func' in x.name]
     brainsss.sort_nicely(expt_folders)
     for expt_folder in expt_folders:
 
         ### TRY TO LOAD EXPT METADATA ###
         try:
-            expt_file = os.path.join(expt_folder, 'expt.json')
+            #expt_file = os.path.join(expt_folder, 'expt.json')
+            expt_file = pathlib.Path(expt_folders, 'expt.json')
             expt_data = load_json(expt_file)
             printlog("Sucessfully loaded expt.json")
         except:
@@ -783,7 +819,8 @@ def add_fly_to_xlsx(fly_folder, printlog):
 
         ### TRY TO LOAD SCAN DATA ###
         try:
-            scan_file = os.path.join(expt_folder, 'imaging', 'scan.json')
+            scan_file = pathlib.Path(expt_folder, 'imaging' , 'scan.json')
+            #scan_file = os.path.join(expt_folder, 'imaging', 'scan.json')
             scan_data = load_json(scan_file)
             scan_data['x_voxel_size'] = '{:.1f}'.format(scan_data['x_voxel_size'])
             scan_data['y_voxel_size'] = '{:.1f}'.format(scan_data['y_voxel_size'])
@@ -802,7 +839,8 @@ def add_fly_to_xlsx(fly_folder, printlog):
             scan_data['y_voxel_size'] = None
             scan_data['z_voxel_size'] = None
 
-        visual_file = os.path.join(expt_folder, 'visual', 'visual.json')
+        visual_file = pathlib.Path(expt_folder, 'visual', 'visual.json')
+        #visual_file = os.path.join(expt_folder, 'visual', 'visual.json')
         try:
             visual_data = load_json(visual_file)
             visual_input = visual_data[0]['name'] + ' ({})'.format(len(visual_data))
@@ -810,7 +848,8 @@ def add_fly_to_xlsx(fly_folder, printlog):
             visual_input = None
 
         # Get fly_id
-        fly_folder = os.path.split(os.path.split(expt_folder)[0])[-1]
+        fly_folder = expt_folder.name
+        #fly_folder = os.path.split(os.path.split(expt_folder)[0])[-1]
         fly_id = fly_folder.split('_')[-1]
         printlog(F"Got fly ID as {fly_id}")
 

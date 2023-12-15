@@ -1,20 +1,3 @@
-## Testing ##
-"""
-snakemake \
-    --s snakefile.smk \
-    --jobs 1 \
-    --default-resource mem_mb=100\
-    --cluster '
-        sbatch \
-            --partition trc
-            --cpus-per-task 16
-            --ntasks 1
-            --output ./logs/stitchlog3.out
-            --open-mode append
-            --mail-type=ALL
-        ` \
-        output.txt
-"""
 # with config file type:
 # ml python/3.9.0
 # source .env_snakemake/bin/activate
@@ -30,19 +13,9 @@ snakemake -s snakefile.smk --profile
 Can also only run a given rule:
 snakemake -s snakefile.smk stitch_split_nii --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
 '''
-
-"""
-import hello_world
-
-rule HelloSnake:
-    #shell:
-    #    "python3 hello_world.py"
-    run:
-        hello_world.print_hi(args='test', arg2='test2')
-
-"""
-STITCH_NII_FILES = True
-data_to_stitch = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
+# To be modified by the user
+data_to_process = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
+# Only needed to run :fly_builder_rule:
 
 fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
 # do follow up analysis, enter the fly folder to be analyzed here.
@@ -50,9 +23,7 @@ fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
 
 import pathlib
 from scripts import preprocessing
-from scripts import stitch_split_nii
 import brainsss
-import time
 import sys
 
 # YOUR SUNET ID
@@ -67,38 +38,10 @@ settings = brainsss.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
 imports_path = pathlib.Path(settings['imports_path'])
 
-if STITCH_NII_FILES:
-    """
-    Note - There really shouldn't be any errors here.
-    Error log is in a different folder compared to follow-up processing and analysis as 
-    fly is not yet defined. 
-    """
-    logfile_stitcher = './logs/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
-    pathlib.Path('./logs').mkdir(exist_ok=True)
-    sys.stderr = brainsss.LoggerRedirect(logfile_stitcher)
-    sys.stdout = brainsss.LoggerRedirect(logfile_stitcher)
-    print(logfile_stitcher)
-
-    rule stitch_split_nii_rule:
-        threads: 16
-        run:
-            try:
-                stitch_split_nii.find_split_files(logfile=logfile_stitcher,
-                                                   imports_path=imports_path,
-                                                   data_to_stitch=data_to_stitch
-                                                  )
-            except Exception as error_stack:
-                brainsss.write_error(logfile=logfile_stitcher,
-                    error_stack=error_stack)
-
-
 # Idea - to make the pipeline as traceable as possible, make one logfile
 # per fly. When coming back in the future, it's easy to read all the output
 # done for each fly
 # for logging
-
-import sys
-
 
 if fly_folder_to_process == '':
     # If data has not yet been copied to the target folder,
@@ -139,47 +82,21 @@ rule HelloSnake:
             brainsss.write_error(logfile=logfile,
                                  error_stack=error_stack)'''
 
-#try:
-#    hello_world.print_hi(
-#        args=logging_file,
-#        arg2='test2',
-#        logfile=current_logger)
-#except Exception as error:
-#    current_logger.logger.error(error,exc_info=True)
-"""logging_file = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
-pathlib.Path('./logs').mkdir(exist_ok=True)
-logger = logging.getLogger('logging_test')
-fh = logging.FileHandler(str(logging_file))
-fh.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-logger.addHandler(fh)
-try:
-    logger.info('Starting script')
-    # Do stuff
-    hello_world.print_hi(args='test',arg2='test2',logfile=logging_file)
-
-    logger.info('Done')
-except Exception as error:
-    logger.error(error,exc_info=True)
-"""
 
 
 
-
-
-"""
 rule fly_builder_rule:
+    threads: 16
     run:
         try:
             preprocessing.fly_builder(logfile=logfile,
                 user=current_user,
-                dirs_to_build=import_path,
-                fly_number = fly_folder_to_process
+                dirs_to_build=data_to_process,
+                target_folder = fly_folder_to_process
             )
         except Exception as error_stack:
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack)
 
-"""
+
 

@@ -79,6 +79,10 @@ def find_split_files(logfile, imports_path, data_to_stitch):
     :param dataset_path: example string would be:
         '/oak/stanford/groups/trc/data/David/Bruker/imports/20231201'
     """
+    print('Stitching split nii files together')
+    print(time.time.strftime("%Y%m%d-%H%M%S" + '\n'))
+    print('Will stitch the following folders: ' + repr(data_to_stitch))
+
     folder_name_to_target = 'func'  # All my folders with functional imaging are called func, e.g. 'func1', 'func2' etc.
 
     for current_import_path in data_to_stitch:
@@ -86,7 +90,7 @@ def find_split_files(logfile, imports_path, data_to_stitch):
         current_path = Path(imports_path, current_import_path)
 
         for current_fly_folder in Path(str(current_path)).iterdir():
-            print(current_fly_folder.name)
+            print('Working on: '  + repr(current_fly_folder))
             # e.g. /oak/stanford/groups/trc/data/David/Bruker/imports/20231201/fly2
 
             # Find folders that are called 'func1', 'func2' etc.
