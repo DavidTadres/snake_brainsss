@@ -64,6 +64,7 @@ if STITCH_NII_FILES:
     """
     logfile_stitcher = './logs/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
     pathlib.Path('./logs').mkdir(exist_ok=True)
+    print(logfile_stitcher)
 
     rule stitch_split_nii_rule:
 
