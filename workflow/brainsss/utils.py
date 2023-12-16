@@ -422,13 +422,14 @@ def print_big_header(logfile, message, width):
 
 def print_title(logfile, width, fly_id=False):
     printlog = getattr(Printlog(logfile=logfile), 'print_to_log')
-    title = pyfiglet.figlet_format("Brainsss", font="doom" )
+    title = pyfiglet.figlet_format("snake-Brainsss", font="doom" )
     title_shifted = ('\n').join([' '*42+line for line in title.split('\n')][:-2])
     printlog("\n")
     printlog(title_shifted)
     if fly_id:
-        fly_string = fly_id
-        printlog(fly_string)
+        fly_string = pyfiglet.figlet_format(fly_id, font="doom" )
+        fly_string_shifted = ('\n').join([' ' * 42 + line for line in fly_string.split('\n')][:-2])
+        printlog(fly_string, width)
     print_datetime(logfile, width)
 
 def print_datetime(logfile, width):

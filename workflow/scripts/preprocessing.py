@@ -25,52 +25,26 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     :param target_folder:
     :return:
     """
-    print('Fly builder called')
-    print(time.strftime("%Y%m%d-%H%M%S" + '\n'))
-    print('The following directories are going to be built: ' + repr(dirs_to_build))
-
     printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
     # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
     width = 120
 
+    # For logging purposes, print function and date and time
+    printlog(F'Fly builder called at ' + brainsss.print_datetime)
+
+    # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder
-    # os.mkdir(destination_fly)
     destination_fly.mkdir(parents=True)  # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
     printlog(F'Created fly directory:{str(destination_fly):.>{width - 22}}')
 
-    # scripts_path = args['PWD'] # Original
-
-    # com_path = os.path.join(scripts_path, 'com')
-    # user = scripts_path.split('/')[3]
-    settings = brainsss.load_user_settings(user)
-
     ### Parse user settings
+    settings = brainsss.load_user_settings(user)
     imports_path = pathlib.Path(settings['imports_path'])
     dataset_path = pathlib.Path(settings['dataset_path'])
-    # FOR TESTING ONLY
-    #imports_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/imports")
-    #dataset_path = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/preprocessed")
-    target_path = dataset_path  # to be consistent with this script.
 
-    #dir_to_build = args['BUILDFLIES']
     paths_to_build = []
     for current_dir in dirs_to_build:
         paths_to_build.append(pathlib.Path(imports_path, current_dir))
-
-    ### Parse remaining command line args
-    # What is this doing?
-    #if args['FLIES'] == '':
-    #    # printlog('no flies specified')
-    #    fly_dirs = None
-    #else:
-    #    fly_dirs = args['FLIES'].split(',')
-    # fly_dirs = args['fly_dirs']
-    # user = args['user']
-
-    # Assume this folder contains fly1 etc
-    # Each area will have a T and a Z
-    # Avoid grabbing other weird xml files, reference folder etc.
-    # Need to move into fly_X folder that reflects it's date
 
     # get fly folders in flagged directory and sort to ensure correct fly order
     printlog("Building flies from {}".format(str(paths_to_build)))
@@ -116,6 +90,9 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
                 add_date_to_fly(destination_fly)
             except Exception as e:
                 printlog(str(e))
+                printlog(str(e))
+                printlog(traceback.format_exc())
+
 
             # Add json metadata to master dataset
             try:
@@ -762,14 +739,6 @@ def load_xml(file):
     root = tree.getroot()
     return root
 
-"""
-def add_times_to_jsons(destination_fly):
-    ''' Deprecated '''
-    # Do for each func_x folder
-    
-    func_folders = [os.path.join(destination_fly, x) for x in os.listdir(destination_fly) if 'func' in x]
-    for func_folder in func_folders:
-        pass"""
 
 def add_fly_to_xlsx(fly_folder, printlog):
 
