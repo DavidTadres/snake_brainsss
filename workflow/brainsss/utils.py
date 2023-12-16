@@ -61,7 +61,7 @@ def parse_true_false(true_false_string):
 def load_user_settings(user):
     current_path = pathlib.Path(__file__).parents[1].resolve()
     user_file = pathlib.Path(current_path, 'users', user + '.json')
-    print(user_file)
+    # print(user_file)
     #user_file = os.path.join(os.path.dirname(scripts_path), 'users', user + '.json')
     with open(user_file) as file:
         settings = json.load(file)

@@ -79,7 +79,7 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
 
     # loop through each of the provided dirs_to_build
     for current_path_to_build in paths_to_build:
-        print(current_path_to_build)
+        #print(current_path_to_build)
 
         # Make sure that each fly folder is actually containing the keyword 'fly'
         #likely_fly_folders = [i for i in likely_fly_folders if 'fly' in i]
@@ -856,13 +856,13 @@ def add_fly_to_xlsx(fly_folder, printlog):
             visual_input = None
 
         # Get fly_id
-        fly_folder = expt_folder.name
+        fly_folder = expt_folder.parent
         #fly_folder = os.path.split(os.path.split(expt_folder)[0])[-1]
         fly_id = fly_folder.split('_')[-1]
         printlog(F"Got fly ID as {fly_id}")
 
         # Get expt_id
-        expt_id = expt_folder.name.split('_')[-1]
+        expt_id = expt_folder.name
         printlog(F"Got expt ID as {expt_id}")
 
         # Append the new row
