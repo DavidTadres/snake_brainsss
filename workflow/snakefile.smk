@@ -93,7 +93,7 @@ rule HelloSnake:
                                  error_stack=error_stack)'''
 
 rule fly_builder_rule:
-    threads: 16
+    threads: 4
     run:
         try:
             preprocessing.fly_builder(logfile=logfile,
