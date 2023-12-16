@@ -7,6 +7,7 @@ from openpyxl import load_workbook
 import pathlib
 import sys
 import time
+import traceback
 
 # To import brainsss, define path to scripts!
 scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
@@ -197,7 +198,8 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
-                copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
+                # for testing, uncomment to copy!
+                #copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
                 ######################################################################
                 print(f"anat:{current_target_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
@@ -207,13 +209,15 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
-                copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
-                # Copt fictrac data based on timestamps
+                # for testing, uncomment afterwards
+                # copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
+                # Copy fictrac data based on timestamps
                 try:
                     copy_fictrac(current_target_folder, printlog, user, current_imaging_folder)
                 except Exception as e:
                     printlog('Could not copy fictrac data because of error:')
                     printlog(str(e))
+                    printlog(traceback.format_exc())
                 # Copy visual data based on timestamps, and create visual.json
                 try:
                     copy_visual(current_target_folder, printlog)
@@ -324,8 +328,8 @@ def copy_bruker_data(source, destination, folder_type, printlog):
 def copy_file(source, target, printlog):
     # printlog('Transfering file {}'.format(target))
     #to_print = ('/').join(target.split('/')[-4:])
-    print('source: ' + str(source))
-    print('target: ' + str(target))
+    #print('source: ' + str(source))
+    #print('target: ' + str(target))
     to_print=str(target)
     width = 120
     printlog(f'Transfering file{to_print:.>{width - 16}}')
@@ -414,7 +418,7 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
     if user == 'ilanazs':
         user = 'luke'
     if user == 'dtadres':
-        fictrac_folder = "/oak/stanford/groups/trc/data/David/Bruker/Fictrac"
+        fictrac_folder = pathlib.Path("/oak/stanford/groups/trc/data/David/Bruker/Fictrac")
         # when doing post-hoc fictrac, Bella's code where one compare the recording
         # timestamps of imaging and fictrac doesn't work anymore.
         # I instead use a deterministic file structure:
