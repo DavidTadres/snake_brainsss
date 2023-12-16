@@ -109,7 +109,7 @@ class Printlog():
     '''
     for printing all processes into same log file on sherlock
     '''
-    def __init__(self, logfile):
+    def __init__(self, logfile, fly_id):
         self.logfile = logfile
     def print_to_log(self, message):
         with open(self.logfile, 'a+') as f:
