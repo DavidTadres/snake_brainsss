@@ -34,7 +34,7 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     destination_fly = target_folder
     # os.mkdir(destination_fly)
     destination_fly.mkdir(parents=True)  # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
-    printlog(F'Created fly directory:{destination_fly:.>{width - 22}}')
+    printlog(F'Created fly directory:{str(destination_fly):.>{width - 22}}')
 
     # scripts_path = args['PWD'] # Original
 
