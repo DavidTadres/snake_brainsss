@@ -25,6 +25,7 @@ import pathlib
 from scripts import preprocessing
 import brainsss
 import sys
+import pyfiglet
 
 # YOUR SUNET ID
 current_user = 'dtadres'
@@ -64,12 +65,16 @@ pathlib.Path('./logs').mkdir(exist_ok=True)
 logfile = './logs/' + fly_folder_to_process.name + '.txt'
 
 #
-#printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
+printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
 sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
 if not pathlib.Path(logfile).is_file():
     width = 120
-    brainsss.print_title(logfile, width, additional_title=fly_folder_to_process.name)
+    brainsss.print_title(logfile, width)
+    fly_string = pyfiglet.figlet_format(fly_folder_to_process.name, font="doom" )
+    fly_string_shifted = ('\n').join([' ' * 42 + line for line in fly_string.split('\n')][:-2])
+    printlog(fly_string, width)
+    brainsss.print_datetime(logfile, width)
 '''
 from scripts import hello_world
 

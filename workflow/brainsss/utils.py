@@ -426,11 +426,7 @@ def print_title(logfile, width, fly_id=False):
     title_shifted = ('\n').join([' '*42+line for line in title.split('\n')][:-2])
     printlog("\n")
     printlog(title_shifted)
-    if fly_id:
-        fly_string = pyfiglet.figlet_format(fly_id, font="doom" )
-        fly_string_shifted = ('\n').join([' ' * 42 + line for line in fly_string.split('\n')][:-2])
-        printlog(fly_string, width)
-    print_datetime(logfile, width)
+    #print_datetime(logfile, width)
 
 def print_datetime(logfile, width):
     printlog = getattr(Printlog(logfile=logfile), 'print_to_log')
