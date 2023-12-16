@@ -35,7 +35,7 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder
     destination_fly.mkdir(parents=True)  # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
-    printlog(F'Created fly directory:{str(destination_fly):.>{width - 22}}')
+    printlog(F'Created fly directory:{str(destination_fly.name):.>{width - 22}}')
 
     ### Parse user settings
     settings = brainsss.load_user_settings(user)
