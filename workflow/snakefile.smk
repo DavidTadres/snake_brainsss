@@ -67,7 +67,7 @@ logfile = './logs/' + fly_folder_to_process.name + '.txt'
 #printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
 sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
-if pathlib.Path(logfile).is_file():
+if not pathlib.Path(logfile).is_file():
     width = 120
     brainsss.print_title(logfile, width, fly_id=fly_folder_to_process.name)
 '''

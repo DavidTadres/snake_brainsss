@@ -242,7 +242,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
         # Copy fly.json file
         else:
             current_file = current_file_or_folder
-            if current_file_or_folder == 'fly.json':
+            if current_file_or_folder.name == 'fly.json':
                 ##print('found fly json file')
                 ##sys.stdout.flush()
                 #source_path = os.path.join(source_fly, item)
@@ -336,7 +336,7 @@ def copy_file(source, target, printlog):
     #to_print = ('/').join(target.split('/')[-4:])
     #print('source: ' + str(source))
     #print('target: ' + str(target))
-    to_print=str(target)
+    to_print=str(target.name)
     width = 120
     printlog(f'Transfering file{to_print:.>{width - 16}}')
     ##sys.stdout.flush()
