@@ -42,13 +42,14 @@ def get_new_fly_number(target_path):
     # +1 highest fly number and make sure it has 3 digits.
     new_fly_number = str(int(oldest_fly) + 1).zfill(3)
     return(new_fly_number)
-def write_error(logfile, error_stack):
+def write_error(logfile, error_stack, width):
     with open(logfile, 'a+') as file:
-        file.write('\nERROR\n')
-        file.write('Traceback (most recent call last): ' + str(
+        file.write(f"\n{'     ERROR     ':!^{width}}")
+        file.write('\nTraceback (most recent call last): ' + str(
             error_stack) + '\n\n')
         file.write('Full traceback below: \n\n')
         file.write(traceback.format_exc())
+        file.write(f"\n{'     ERROR     ':!^{width}}")
 
 def parse_true_false(true_false_string):
     if true_false_string in ['True', 'true']:
@@ -423,7 +424,7 @@ def print_big_header(logfile, message, width):
 def print_title(logfile, width, fly_id=False):
     printlog = getattr(Printlog(logfile=logfile), 'print_to_log')
     title = pyfiglet.figlet_format("snake-Brainsss", font="doom" )
-    title_shifted = ('\n').join([' '*42+line for line in title.split('\n')][:-2])
+    title_shifted = ('\n').join([' '*35+line for line in title.split('\n')][:-2])
     printlog("\n")
     printlog(title_shifted)
     #print_datetime(logfile, width)
@@ -441,3 +442,17 @@ def print_footer(logfile,  width):
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
     printlog("="*width)
     printlog(F"{day_now+' | '+time_now:^{width}}")
+
+def print_function_finished(logfile, width, function_name):
+    printlog = getattr(Printlog(logfile=logfile), 'print_to_log')
+    day_now = datetime.datetime.now().strftime("%B %d, %Y")
+    time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
+    day_time = str(day_now) + ' | ' + str(time_now)
+    printlog(f"\n{'   ' + str(function_name) + ' finished at:  ' + str(day_time) + '   ':*^{width}}")
+
+def print_function_start(logfile, width, function_name):
+    printlog = getattr(Printlog(logfile=logfile), 'print_to_log')
+    day_now = datetime.datetime.now().strftime("%B %d, %Y")
+    time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
+    day_time = str(day_now) + ' | ' + str(time_now)
+    printlog(f"\n{'   ' + str(function_name) + ' called at:  ' + str(day_time) + '   ':=^{width}}")

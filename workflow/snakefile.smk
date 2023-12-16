@@ -26,6 +26,7 @@ from scripts import preprocessing
 import brainsss
 import sys
 import pyfiglet
+import datetime
 
 # YOUR SUNET ID
 current_user = 'dtadres'
@@ -68,8 +69,8 @@ sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
 # Problem: Snakemake runs twice. Seems to be a bug: https://github.com/snakemake/snakemake/issues/2350
 # Only print title and fly if logfile doesn't yet exist
+width = 120 # can go into a config file as well.
 if not pathlib.Path(logfile).is_file():
-    width = 120
     brainsss.print_title(logfile, width)
     printlog(F"{fly_folder_to_process.name:^{width}}")
     brainsss.print_datetime(logfile, width)
@@ -106,9 +107,13 @@ rule fly_builder_rule:
                 dirs_to_build=data_to_process,
                 target_folder = fly_folder_to_process
             )
+            #
+            brainsss.print_function_done(logfile, width, 'fly_builder')
         except Exception as error_stack:
             brainsss.write_error(logfile=logfile,
-                error_stack=error_stack)
+                error_stack=error_stack,
+                width=width)
+
 
 
 

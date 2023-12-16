@@ -30,13 +30,10 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
     width = 120
 
-    # For logging purposes, print function and date and time
-    day_now = datetime.datetime.now().strftime("%B %d, %Y")
-    time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
-    day_time = str(day_now) + ' | ' + str(time_now)
-    #printlog(F'Fly builder called at: {str(day_time):.>{width - 22}}')
-    printlog(f"\n{'   Fly builder called at:  ' + str(day_time) + '   ':=^{width}}")
+    # For log file readability clearly indicate when function was called
+    brainsss.print_function_start(logfile, width, 'fly builder')
 
+    print(test)
     # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder
     destination_fly.mkdir(parents=True)  # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
@@ -257,11 +254,8 @@ def copy_bruker_data(source, destination, folder_type, printlog):
                 continue
             # Rename functional file to functional_channel_x.nii
             if 'concat.nii' in source_path.name and folder_type == 'func':
-                print('found file with concat.nii and folder type func: ' + repr(source_path.name))
                 target_name = 'functional_channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
-                print('target_name: ' + repr(target_name))
                 target_path = pathlib.Path(destination, target_name)
-                print('target_path ' + repr(target_path))
             elif '.nii' in source_path.name and folder_type == 'func':
                 continue  # do not copy!! Else we'll copy all the split nii files as well.
                 # This is an artifact of splitting the nii file on Brukerbridge and might not be

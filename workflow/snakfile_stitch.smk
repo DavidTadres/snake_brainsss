@@ -35,7 +35,7 @@ sys.stderr = brainsss.LoggerRedirect(logfile_stitcher)
 sys.stdout = brainsss.LoggerRedirect(logfile_stitcher)
 # This doesn't work as part of the main function as the log is not used
 # I think because the code runs twice
-
+width = 120 # can go into a config file as well.
 
 rule stitch_split_nii_rule:
     threads: 16
@@ -47,4 +47,5 @@ rule stitch_split_nii_rule:
             )
         except Exception as error_stack:
             brainsss.write_error(logfile=logfile_stitcher,
-                error_stack=error_stack)
+                error_stack=error_stack,
+                width=width)
