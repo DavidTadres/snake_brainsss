@@ -73,7 +73,7 @@ if not pathlib.Path(logfile).is_file():
     brainsss.print_title(logfile, width)
     fly_string = pyfiglet.figlet_format(fly_folder_to_process.name, font="doom" )
     fly_string_shifted = ('\n').join([' ' * 42 + line for line in fly_string.split('\n')][:-2])
-    printlog(fly_string, width)
+    printlog(fly_string_shifted)
     brainsss.print_datetime(logfile, width)
 '''
 from scripts import hello_world
