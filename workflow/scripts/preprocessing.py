@@ -9,6 +9,7 @@ import sys
 import time
 import traceback
 import natsort
+import datetime
 
 # To import brainsss, define path to scripts!
 scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
@@ -30,7 +31,10 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     width = 120
 
     # For logging purposes, print function and date and time
-    printlog(F'Fly builder called at ' + brainsss.print_datetime)
+    day_now = datetime.datetime.now().strftime("%B %d, %Y")
+    time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
+    day_time = str(day_now) + ' | ' + str(time_now)
+    printlog(F'Fly builder called at: {str(day_time):.>{width - 22}}')
 
     # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder
@@ -47,7 +51,7 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
         paths_to_build.append(pathlib.Path(imports_path, current_dir))
 
     # get fly folders in flagged directory and sort to ensure correct fly order
-    printlog("Building flies from {}".format(str(paths_to_build)))
+    printlog(F'Building flies from: {str(paths_to_build):.>{width - 22}}')
     #likely_fly_folders = os.listdir(flagged_dir)
     #brainsss.sort_nicely(likely_fly_folders)
 
@@ -181,8 +185,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
-                # for testing, uncomment to copy!
-                #copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
+                copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
                 ######################################################################
                 print(f"anat:{current_target_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
@@ -192,8 +195,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
-                # for testing, uncomment afterwards
-                # copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
+                copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
                 # Copy fictrac data based on timestamps
                 try:
                     copy_fictrac(current_target_folder, printlog, user, current_imaging_folder)

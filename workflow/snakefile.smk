@@ -53,10 +53,6 @@ else:
     fly_folder_to_process = pathlib.Path(dataset_path, fly_folder_to_process)
 #print(fly_folder_to_process)
 
-# Problem: Snakemake runs twice. Seems to be a bug:
-#https://github.com/snakemake/snakemake/issues/2350
-# solution: ignore seconds
-#logfile = './logs/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
 #####
 # LOGGING
 #####
@@ -64,16 +60,18 @@ pathlib.Path('./logs').mkdir(exist_ok=True)
 # Have one log file per fly! This will make everything super traceable!
 logfile = './logs/' + fly_folder_to_process.name + '.txt'
 
-#
+# Not sure what this does exactly, from Bella's code
 printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
+# Pipe all errors to the logfile
 sys.stderr = brainsss.LoggerRedirect(logfile)
+# Pipe all print statements (and other console output) to the logfile
 sys.stdout = brainsss.LoggerRedirect(logfile)
+# Problem: Snakemake runs twice. Seems to be a bug: https://github.com/snakemake/snakemake/issues/2350
+# Only print title and fly if logfile doesn't yet exist
 if not pathlib.Path(logfile).is_file():
     width = 120
     brainsss.print_title(logfile, width)
-    fly_string = pyfiglet.figlet_format(fly_folder_to_process.name, font="doom" )
-    fly_string_shifted = ('\n').join([' ' * 42 + line for line in fly_string.split('\n')][:-2])
-    printlog(fly_string_shifted)
+    printlog(F"{fly_folder_to_process.name:^{width}}")
     brainsss.print_datetime(logfile, width)
 '''
 from scripts import hello_world
