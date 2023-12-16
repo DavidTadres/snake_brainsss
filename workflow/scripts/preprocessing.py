@@ -776,7 +776,7 @@ def add_fly_to_xlsx(fly_folder, printlog):
 
     ### TRY TO LOAD ELSX ###
     try:
-        xlsx_path = pathlib.Path(fly_folder, 'master_2P.xlsx')
+        xlsx_path = pathlib.Path(fly_folder.parent, 'master_2P.xlsx')
         #xlsx_path = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/master_2P.xlsx'
         wb = load_workbook(filename=xlsx_path, read_only=False)
         ws = wb.active
