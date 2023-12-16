@@ -98,7 +98,7 @@ rule fly_builder_rule:
     I did not see an improvement in run time increasing the thread number above 2. 
     """
 
-    threads: 2
+    threads: 1
     run:
         try:
             preprocessing.fly_builder(logfile=logfile,

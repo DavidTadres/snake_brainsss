@@ -301,7 +301,7 @@ def copy_bruker_data(source, destination, folder_type, printlog):
                 create_imaging_json(target_path, printlog)
                 continue
             if '.xml' in source_path.name and 'VoltageOutput' in source_path.name:
-                target_item = pathlib.Path(destination, 'voltage_output.xml')
+                target_path = pathlib.Path(destination, 'voltage_output.xml')
 
             # Actually copy the file
             #target_item = os.path.join(destination, item)
