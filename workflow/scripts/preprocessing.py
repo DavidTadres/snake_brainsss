@@ -182,7 +182,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
                 # for testing, uncomment to copy!
-                #copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
+                copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
                 ######################################################################
                 print(f"anat:{current_target_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
@@ -193,7 +193,8 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
                 # for testing, uncomment afterwards
-                # copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
+                copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
+
                 # Copy fictrac data based on timestamps
                 try:
                     copy_fictrac(current_target_folder, printlog, user, current_imaging_folder)
