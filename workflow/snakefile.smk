@@ -94,7 +94,7 @@ rule HelloSnake:
 
 rule fly_builder_rule:
     """
-    Threads: Tested 2, 4 and 16 threads for a folder with 1 fly and 3 func folders
+    Threads: Tested 1, 2, 4 and 16 threads for a folder with 1 fly and 3 func folders
     I did not see an improvement in run time increasing the thread number above 2. 
     """
 

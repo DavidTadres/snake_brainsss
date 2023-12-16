@@ -34,7 +34,8 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
     day_time = str(day_now) + ' | ' + str(time_now)
-    printlog(F'Fly builder called at: {str(day_time):.>{width - 22}}')
+    #printlog(F'Fly builder called at: {str(day_time):.>{width - 22}}')
+    printlog(f"\n{'   Fly builder called at:  ' + str(day_time) + '   ':=^{width}}")
 
     # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder
