@@ -858,7 +858,7 @@ def add_fly_to_xlsx(fly_folder, printlog):
         # Get fly_id
         fly_folder = expt_folder.parent
         #fly_folder = os.path.split(os.path.split(expt_folder)[0])[-1]
-        fly_id = fly_folder.split('_')[-1]
+        fly_id = fly_folder.name.split('_')[-1]
         printlog(F"Got fly ID as {fly_id}")
 
         # Get expt_id
