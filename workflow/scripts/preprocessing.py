@@ -435,7 +435,7 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
         # Find the dat file
         #for file in os.listdir(source_path):
         for file in source_path.iterdir():
-            if 'dat' in file:
+            if 'dat' in file.name:
                 width = 120
                 #source_path = os.path.join(source_path, file)
                 target_path = pathlib.Path(fictrac_destination, file.name)
