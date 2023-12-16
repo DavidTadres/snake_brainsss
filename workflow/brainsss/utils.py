@@ -420,12 +420,15 @@ def print_big_header(logfile, message, width):
     printlog('='*width)
     print_datetime(logfile, width)
 
-def print_title(logfile, width):
+def print_title(logfile, width, fly_id=False):
     printlog = getattr(Printlog(logfile=logfile), 'print_to_log')
     title = pyfiglet.figlet_format("Brainsss", font="doom" )
     title_shifted = ('\n').join([' '*42+line for line in title.split('\n')][:-2])
     printlog("\n")
     printlog(title_shifted)
+    if fly_id:
+        fly_string = fly_id
+        printlog(fly_string)
     print_datetime(logfile, width)
 
 def print_datetime(logfile, width):

@@ -862,8 +862,9 @@ def add_fly_to_xlsx(fly_folder, printlog):
         printlog(F"Got fly ID as {fly_id}")
 
         # Get expt_id
-        expt_id = expt_folder.name
-        printlog(F"Got expt ID as {expt_id}")
+        #expt_id = expt_folder.name
+        #printlog(F"Got expt ID as {expt_id}")
+        expt_id = 'NA' # Not sure what this is, NA for now
 
         # Append the new row
         new_row = []

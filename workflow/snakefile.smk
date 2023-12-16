@@ -56,14 +56,20 @@ else:
 #https://github.com/snakemake/snakemake/issues/2350
 # solution: ignore seconds
 #logfile = './logs/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
-logfile = './logs/' + fly_folder_to_process.name + '.txt'
+#####
+# LOGGING
+#####
 pathlib.Path('./logs').mkdir(exist_ok=True)
+# Have one log file per fly! This will make everything super traceable!
+logfile = './logs/' + fly_folder_to_process.name + '.txt'
 
-#width=120
+#
 #printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
 sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
-#brainsss.print_title(logfile, width)
+if pathlib.Path(logfile).is_file():
+    width = 120
+    brainsss.print_title(logfile, width, fly_id=fly_folder_to_process.name)
 '''
 from scripts import hello_world
 
