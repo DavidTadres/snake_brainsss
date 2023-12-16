@@ -8,6 +8,7 @@ import pathlib
 import sys
 import time
 import traceback
+import natsort
 
 # To import brainsss, define path to scripts!
 scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
@@ -804,10 +805,11 @@ def add_fly_to_xlsx(fly_folder, printlog):
         fly_data['date'] = None
         fly_data['genotype'] = None
 
-    expt_folders = []
+    #expt_folders = []
     #expt_folders = [os.path.join(fly_folder, x) for x in os.listdir(fly_folder) if 'func' in x]
     expt_folders = [pathlib.Path(fly_folder, x) for x in fly_folder.iterdir() if 'func' in x.name]
-    brainsss.sort_nicely(expt_folders)
+    #brainsss.sort_nicely(expt_folders)
+    expt_folders = natsort.natsorted(expt_folders)
     for expt_folder in expt_folders:
 
         ### TRY TO LOAD EXPT METADATA ###
