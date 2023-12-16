@@ -258,20 +258,13 @@ def copy_bruker_data(source, destination, folder_type, printlog):
             if 'concat.nii' in source_path.name and folder_type == 'func':
                 print('found file with concat.nii and folder type func: ' + repr(source_path.name))
                 target_name = 'functional_channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
+                print('target_name: ' + repr(target_name))
                 target_path = pathlib.Path(destination, target_name)
-            # item = "ch2_concat.nii"
-            # item = 'functional_channel_' + item.split('ch')[1].split('_')[0] + '.nii'
-            # -> functional_channel_2.nii
+                print('target_path ' + repr(target_path))
             elif '.nii' in source_path.name and folder_type == 'func':
                 continue  # do not copy!! Else we'll copy all the split nii files as well.
-            # Bella's code
-            # item = 'TSeries-12172018-1322-003_channel_2_s0.nii'
-            # item = 'functional_' + item.split('_')[1] + '_' + item.split('_')[2]
-            # -> 'functional_channel_2'
-            # if '.nii' in item and folder_type == 'func':
-            #    # '_' is from channel numbers my tiff to nii adds
-            #    item = 'functional_' + item.split('_')[1] + '_' + item.split('_')[2]
-
+                # This is an artifact of splitting the nii file on Brukerbridge and might not be
+                # relevant in the future/for other users!
             # Rename anatomy file to anatomy_channel_x.nii
             if '.nii' in source_path.name and folder_type == 'anat':
                 target_name = 'anatomy_' + source_path.name.split('_')[1] + '_' + source_path.name.split('_')[2] + '.nii'
@@ -319,7 +312,7 @@ def copy_file(source, target, printlog):
     #to_print = ('/').join(target.split('/')[-4:])
     #print('source: ' + str(source))
     #print('target: ' + str(target))
-    to_print=str(target.name)
+    to_print=str(source.name +' to ' + target.name)
     width = 120
     printlog(f'Transfering file{to_print:.>{width - 16}}')
     ##sys.stdout.flush()
