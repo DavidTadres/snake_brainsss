@@ -117,7 +117,12 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
                 printlog(str(e))
 
             # Add json metadata to master dataset
-            add_fly_to_xlsx(destination_fly, printlog)
+            try:
+                add_fly_to_xlsx(destination_fly, printlog)
+            except Exception as e:
+                printlog('Could not add xls data because of error:')
+                printlog(str(e))
+                printlog(traceback.format_exc())
 
 def add_date_to_fly(destination_fly):
     ''' get date from xml file and add to fly.json'''
