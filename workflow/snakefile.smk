@@ -69,7 +69,7 @@ sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
 if not pathlib.Path(logfile).is_file():
     width = 120
-    brainsss.print_title(logfile, width, fly_id=fly_folder_to_process.name)
+    brainsss.print_title(logfile, width, additional_title=fly_folder_to_process.name)
 '''
 from scripts import hello_world
 
