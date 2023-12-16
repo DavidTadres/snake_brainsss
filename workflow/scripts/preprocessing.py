@@ -114,7 +114,8 @@ def add_date_to_fly(destination_fly):
         # Get func folders
         #func_folders = [os.path.join(destination_fly, x) for x in os.listdir(destination_fly) if 'func' in x]
         func_folders = [pathlib.Path(destination_fly, x) for x in destination_fly.iterdir() if 'func' in x.name]
-        brainsss.sort_nicely(func_folders)
+        #brainsss.sort_nicely(func_folders)
+        func_folders = natsort.natsorted(func_folders)
         func_folder = func_folders[0]  # This throws an error if no func folder, hence try..except
         # Get full xml file path
         xml_file = pathlib.Path(func_folder, 'imaging', 'functional.xml')
@@ -124,7 +125,8 @@ def add_date_to_fly(destination_fly):
         # Get anat folders
         #anat_folders = [os.path.join(destination_fly, x) for x in os.listdir(destination_fly) if 'anat' in x]
         anat_folders = [pathlib.Path(destination_fly, x) for x in destination_fly.iterdir() if 'anat' in x]
-        brainsss.sort_nicely(anat_folders)
+        #brainsss.sort_nicely(anat_folders)
+        anat_folders = natsort.natsorted((anat_folders))
         anat_folder = anat_folders[0]
         # Get full xml file path
         xml_file = pathlib.Path(anat_folder, 'imaging', 'anatomy.xml')
