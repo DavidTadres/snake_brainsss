@@ -1,6 +1,6 @@
 # with config file type:
 # ml python/3.9.0
-# source .env_snakemake/bin/activate
+#s ource .env_snakemake/bin/activate
 # cd snake_brainsss/workflow
 # snakemake -s snakefile.smk --profile config_sherlock
 
@@ -14,7 +14,7 @@ Can also only run a given rule:
 snakemake -s snakefile.smk stitch_split_nii --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
 '''
 # To be modified by the user
-data_to_process = ['20231207__queue__'] # Data deposited by Brukerbridge on oak
+data_to_process = ['20231207__test__'] # Data deposited by Brukerbridge on oak
 # Only needed to run :fly_builder_rule:
 
 fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
@@ -31,6 +31,7 @@ current_user = 'dtadres'
 
 # David's datapaths
 #original_data_path = '/Volumes/groups/trc/data/David/Bruker/imports' # Mac
+#original_data_path = '/oak/stanford/groups/trc/data/David/Bruker/imports' # Mac
 #target_data_path = '/Volumes/groups/trc/data/David/Bruker/preprocessed'
 #current_fly = pathlib.Path(original_data_path, '20231207__queue__')
 

@@ -80,7 +80,7 @@ def find_split_files(logfile, imports_path, data_to_stitch):
         '/oak/stanford/groups/trc/data/David/Bruker/imports/20231201'
     """
     print('Stitching split nii files together')
-    print(time.time.strftime("%Y%m%d-%H%M%S" + '\n'))
+    print(time.strftime("%Y%m%d-%H%M%S" + '\n'))
     print('Will stitch the following folders: ' + repr(data_to_stitch))
 
     folder_name_to_target = 'func'  # All my folders with functional imaging are called func, e.g. 'func1', 'func2' etc.
