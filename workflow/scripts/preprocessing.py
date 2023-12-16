@@ -201,6 +201,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 # Copy fictrac data based on timestamps
                 try:
                     copy_fictrac(current_target_folder, printlog, user, current_imaging_folder)
+                    # printlog('Fictrac data copied')
                 except Exception as e:
                     printlog('Could not copy fictrac data because of error:')
                     printlog(str(e))
@@ -255,6 +256,7 @@ def copy_bruker_data(source, destination, folder_type, printlog):
                 continue
             # Rename functional file to functional_channel_x.nii
             if 'concat.nii' in source_path.name and folder_type == 'func':
+                print('found file with concat.nii and folder type func: ' + repr(source_path.name))
                 target_name = 'functional_channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
                 target_path = pathlib.Path(destination, target_name)
             # item = "ch2_concat.nii"
@@ -835,9 +837,9 @@ def add_fly_to_xlsx(fly_folder, printlog):
         printlog(F"Got fly ID as {fly_id}")
 
         # Get expt_id
-        #expt_id = expt_folder.name
-        #printlog(F"Got expt ID as {expt_id}")
-        expt_id = 'NA' # Not sure what this is, NA for now
+        expt_id = expt_folder.name # probably 'func1' etc.
+        printlog(F"Got expt ID as {expt_id}")
+        #expt_id = 'NA' # Not sure what this is, NA for now
 
         # Append the new row
         new_row = []
