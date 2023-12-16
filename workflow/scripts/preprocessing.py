@@ -439,11 +439,12 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
         # this would yield "20231201_fly2_func1" as the folder
         # Find the dat file
         #for file in os.listdir(source_path):
-        for file in source_path.iterdir():
-            if 'dat' in file.name:
+        for current_file in source_path.iterdir():
+            if 'dat' in current_file.name:
                 width = 120
                 #source_path = os.path.join(source_path, file)
-                target_path = pathlib.Path(fictrac_destination, file.name)
+                dat_path = current_file
+                target_path = pathlib.Path(fictrac_destination, current_file.name)
                 #target_path = os.path.join(fictrac_destination, file)
                 #to_print = ('/').join(target_path.split('/')[-4:])
                 to_print = str(target_path)
@@ -546,7 +547,7 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
             # printlog('Transfering {}'.format(target_path))
             ##sys.stdout.flush()
 
-    copyfile(source_path, target_path)
+    copyfile(dat_path, target_path)
 
     ### Create empty xml file.
     # Update this later
@@ -780,8 +781,9 @@ def add_fly_to_xlsx(fly_folder, printlog):
         wb = load_workbook(filename=xlsx_path, read_only=False)
         ws = wb.active
         printlog("Sucessfully opened master_2P log")
-    except:
+    except Exception as e:
         printlog("FYI you have no excel metadata sheet found, so unable to append metadata for this fly.")
+        printlog(traceback.format_exc())
         return
 
     ### TRY TO LOAD FLY METADATA ###
