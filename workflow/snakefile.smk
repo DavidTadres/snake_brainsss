@@ -17,25 +17,20 @@ snakemake -s snakefile.smk stitch_split_nii --jobs 1 --cluster 'sbatch --partiti
 data_to_process = ['20231207'] # Data deposited by Brukerbridge on oak
 # Only needed to run :fly_builder_rule:
 
-fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
+fly_folder_to_process = 'fly_002' # if already copied to 'fly_00X' folder and only
 # do follow up analysis, enter the fly folder to be analyzed here.
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
+
+# YOUR SUNET ID
+current_user = 'dtadres'
+
+# fps of fictrac recording!
+fictrac_fps = 50
 
 import pathlib
 from scripts import preprocessing
 import brainsss
 import sys
-import pyfiglet
-import datetime
-
-# YOUR SUNET ID
-current_user = 'dtadres'
-
-# David's datapaths
-#original_data_path = '/Volumes/groups/trc/data/David/Bruker/imports' # Mac
-#original_data_path = '/oak/stanford/groups/trc/data/David/Bruker/imports' # Mac
-#target_data_path = '/Volumes/groups/trc/data/David/Bruker/preprocessed'
-#current_fly = pathlib.Path(original_data_path, '20231207__queue__')
 
 settings = brainsss.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
@@ -92,28 +87,46 @@ rule HelloSnake:
         except Exception as error_stack:
             brainsss.write_error(logfile=logfile,
                                  error_stack=error_stack)'''
+if not fly_folder_to_process.exists():
+    rule fly_builder_rule:
+        """
+        Threads: Tested 1, 2, 4 and 16 threads for a folder with 1 fly and 3 func folders
+        I did not see an improvement in run time increasing the thread number above 2. 
+        """
 
-rule fly_builder_rule:
-    """
-    Threads: Tested 1, 2, 4 and 16 threads for a folder with 1 fly and 3 func folders
-    I did not see an improvement in run time increasing the thread number above 2. 
-    """
+        threads: 1
+        run:
 
-    threads: 1
+            # Only run the code to copy data from imports to 'fly_00X' if the
+            # user defined fly folder does not exist yet.
+            try:
+                preprocessing.fly_builder(logfile=logfile,
+                    user=current_user,
+                    dirs_to_build=data_to_process,
+                    target_folder = fly_folder_to_process
+                )
+                #
+                brainsss.print_function_done(logfile, width, 'fly_builder')
+            except Exception as error_stack:
+                brainsss.write_error(logfile=logfile,
+                    error_stack=error_stack,
+                    width=width)
+
+rule fictrac_qc_rule:
+    """
+    """
+    threads: 16
     run:
+        print('fictrac_qc rule')
         try:
-            preprocessing.fly_builder(logfile=logfile,
-                user=current_user,
-                dirs_to_build=data_to_process,
-                target_folder = fly_folder_to_process
-            )
-            #
-            brainsss.print_function_done(logfile, width, 'fly_builder')
+            preprocessing.fictrac_qc(logfile=logfile,
+                                     directory=fly_folder_to_process,
+                                     fictrac_fps=fictrac_fps)
+
+            brainsss.print_function_done(logfile, width, 'fictrac_qc')
         except Exception as error_stack:
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-
-
 
 

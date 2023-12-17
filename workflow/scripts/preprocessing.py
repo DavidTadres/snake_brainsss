@@ -17,10 +17,54 @@ sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 # print(pathlib.Path(scripts_path, 'workflow'))
 import brainsss
 
+def fictrac_qc(logfile, directory, fictrac_fps):
+    """
+    Perform fictrac quality control.
+    This is based on Bella's fictrac_qc.py  script.
+    :param logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
+    :param directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+
+    :return:
+    """
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
+    width = 120
+    # For log file readability clearly indicate when function was called
+    brainsss.print_function_start(logfile, width, 'fictrac_qc')
+
+    for current_folder in directory.iterdir():
+        if 'func' in current_folder.name:
+            #directory = args['directory'] # directory will be a full path to a func/fictrac folder
+            #fps = args['fps'] #of fictrac camera
+
+            current_fictrac_folder = pathlib.Path(current_folder, 'fictrac')
+            printlog('Currently looking at: ' + repr(current_fictrac_folder))
+            fictrac_raw = brainsss.load_fictrac(current_fictrac_folder)
+
+            # I expect this to yield something like 'fly_001/func0
+            full_id = ', '.join(str(current_fictrac_folder).split('/')[-3:1])
+            #full_id = ', '.join(directory.split('/')[-3:-1])
+
+            resolution = 10 #desired resolution in ms # Comes from Bella!
+            expt_len = fictrac_raw.shape[0]/fictrac_fps*1000
+            behaviors = ['dRotLabY', 'dRotLabZ']
+            fictrac = {}
+            for behavior in behaviors:
+                if behavior == 'dRotLabY': short = 'Y'
+                elif behavior == 'dRotLabZ': short = 'Z'
+                fictrac[short] = brainsss.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior)
+            xnew = np.arange(0,expt_len,resolution)
+
+            brainsss.make_2d_hist(fictrac, current_fictrac_folder, full_id, save=True, fixed_crop=True)
+            brainsss.make_2d_hist(fictrac, current_fictrac_folder, full_id, save=True, fixed_crop=False)
+            brainsss.make_velocity_trace(fictrac, current_fictrac_folder, full_id, xnew, save=True)
+
 def fly_builder(logfile, user, dirs_to_build, target_folder):
     """
-    Move folders from imports to fly dataset - need to restructure folders
+    Move folders from imports to fly dataset - need to restructure folders.
+    This is based on Bella's 'fly_builder.py' script
 
+    :param logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
     :param user: your SUnet ID as a string
     :param dirs_to_build: a list of folders to build. e.g. dir_to_build = ['20231301'] or  dir_to_build = ['20232101', '20231202']
     :param target_folder:
@@ -29,9 +73,8 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
     # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
     width = 120
-
     # For log file readability clearly indicate when function was called
-    brainsss.print_function_start(logfile, width, 'fly builder')
+    brainsss.print_function_start(logfile, width, 'fly_builder')
 
     # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder

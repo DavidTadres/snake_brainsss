@@ -5,6 +5,11 @@ import scipy
 import scipy.signal
 import pandas as pd
 from scipy.interpolate import interp1d
+import pathlib
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.use('agg') # Agg, is a non-interactive backend that can only write to files.
+# Without this I had the following error: Starting a Matplotlib GUI outside of the main thread will likely fail.
 
 def load_fictrac(directory, file='fictrac.dat'):
     """ Loads fictrac data from .dat file that fictrac outputs.
@@ -180,3 +185,34 @@ def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, time
     np.nan_to_num(fictrac_interp, copy=False);
     
     return fictrac_interp
+
+def make_2d_hist(fictrac, fictrac_folder, full_id, save=True, fixed_crop=True):
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111)
+    norm = mpl.colors.LogNorm()
+    ax.hist2d(fictrac['Y'], fictrac['Z'], bins=100, cmap='Blues', norm=norm);
+    ax.set_ylabel('Rotation, deg/sec')
+    ax.set_xlabel('Forward, mm/sec')
+    ax.set_title('Behavior 2D hist {}'.format(full_id))
+    plt.colorbar()
+    name = 'fictrac_2d_hist.png'
+    if fixed_crop:
+        ax.set_ylim(-400, 400)
+        ax.set_xlim(-10, 15)
+        name = 'fictrac_2d_hist_fixed.png'
+    if save:
+        #fname = os.path.join(fictrac_folder, name)
+        fname = pathlib.Path(fictrac_folder, name)
+        fig.savefig(fname, dpi=100, bbox_inches='tight')
+
+def make_velocity_trace(fictrac, fictrac_folder, full_id, xnew, save=True):
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111)
+    ax.plot(xnew/1000,fictrac['Y'],color='xkcd:dusk')
+    ax.set_ylabel('forward velocity mm/sec')
+    ax.set_xlabel('time, sec')
+    ax.set_title(full_id)
+    if save:
+        #fname = os.path.join(fictrac_folder, 'velocity_trace.png')
+        fname = pathlib.Path(fictrac_folder, 'velocity_trace.png')
+        fig.savefig(fname,dpi=100,bbox_inches='tight')
