@@ -198,7 +198,7 @@ def make_2d_hist(fictrac, fictrac_folder, full_id, save=True, fixed_crop=True):
     # For colorbar - get coordinates of ax to set it to the right
     divider = make_axes_locatable(ax)
     cax = divider.append_axes('right', size='5%', pad=0.05)
-    fig.colorbar(hist_plot, cax=cax, orientation='vertical')
+    fig.colorbar(hist_plot[3], cax=cax, orientation='vertical')
     name = 'fictrac_2d_hist.png'
     if fixed_crop:
         ax.set_ylim(-400, 400)
