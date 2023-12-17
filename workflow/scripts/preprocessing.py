@@ -33,7 +33,6 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     # For log file readability clearly indicate when function was called
     brainsss.print_function_start(logfile, width, 'fly builder')
 
-    print(test)
     # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder
     destination_fly.mkdir(parents=True)  # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
