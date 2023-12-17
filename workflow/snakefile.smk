@@ -115,7 +115,7 @@ if not fly_folder_to_process.exists():
 rule fictrac_qc_rule:
     """
     """
-    threads: 16
+    threads: 1
     run:
         print('fictrac_qc rule')
         try:
