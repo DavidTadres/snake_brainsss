@@ -6,6 +6,7 @@ import scipy.signal
 import pandas as pd
 from scipy.interpolate import interp1d
 import pathlib
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.use('agg') # Agg, is a non-interactive backend that can only write to files.
@@ -190,11 +191,14 @@ def make_2d_hist(fictrac, fictrac_folder, full_id, save=True, fixed_crop=True):
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111)
     norm = mpl.colors.LogNorm()
-    ax.hist2d(fictrac['Y'], fictrac['Z'], bins=100, cmap='Blues', norm=norm);
+    hist = ax.hist2d(fictrac['Y'], fictrac['Z'], bins=100, cmap='Blues', norm=norm);
     ax.set_ylabel('Rotation, deg/sec')
     ax.set_xlabel('Forward, mm/sec')
     ax.set_title('Behavior 2D hist {}'.format(full_id))
-    plt.colorbar()
+    # For colorbar - get coordinates of ax to set it to the right
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes('right', size='5%', pad=0.05)
+    fig.colorbar(hist, cax=cax, orientation='vertical')
     name = 'fictrac_2d_hist.png'
     if fixed_crop:
         ax.set_ylim(-400, 400)
