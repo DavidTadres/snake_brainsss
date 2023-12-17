@@ -191,14 +191,14 @@ def make_2d_hist(fictrac, fictrac_folder, full_id, save=True, fixed_crop=True):
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111)
     norm = mpl.colors.LogNorm()
-    hist = ax.hist2d(fictrac['Y'], fictrac['Z'], bins=100, cmap='Blues', norm=norm);
+    hist_plot = ax.hist2d(fictrac['Y'], fictrac['Z'], bins=100, cmap='Blues', norm=norm)
     ax.set_ylabel('Rotation, deg/sec')
     ax.set_xlabel('Forward, mm/sec')
     ax.set_title('Behavior 2D hist {}'.format(full_id))
     # For colorbar - get coordinates of ax to set it to the right
     divider = make_axes_locatable(ax)
     cax = divider.append_axes('right', size='5%', pad=0.05)
-    fig.colorbar(hist, cax=cax, orientation='vertical')
+    fig.colorbar(hist_plot, cax=cax, orientation='vertical')
     name = 'fictrac_2d_hist.png'
     if fixed_crop:
         ax.set_ylim(-400, 400)
