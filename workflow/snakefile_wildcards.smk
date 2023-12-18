@@ -201,6 +201,7 @@ rule all:
                                         print_output = output)'''
 
 rule fictrac_qc_rule:
+    threads: 1
     input:
         fictrac_file_paths = expand("{fictrac}", fictrac=full_fictrac_file_paths)
     output:
@@ -218,6 +219,10 @@ rule fictrac_qc_rule:
                                  width=width)
 
 rule bleaching_qc_rule:
+    """
+    Out of memory with one thread
+    """
+    threads: 4
     input:
         all_imaging_paths
     output:
