@@ -20,7 +20,13 @@ scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
 sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 # print(pathlib.Path(scripts_path, 'workflow'))
 import brainsss
-
+def bleaching_qc_test(logfile, ch1, ch2, print_output):
+    for ch1_data in ch1:
+        print("ch1: " + repr(ch1_data))
+    with open(print_output[0], "w") as out:
+        out.write('done')
+    #return(ch1)
+    #pass
 def bleaching_qc(logfile, directory, fly_dir_dict):
     """
     Perform bleaching qc.
@@ -244,7 +250,7 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
                 printlog(str(e))
                 printlog(traceback.format_exc())
 
-    # How many anat folder?
+    """# How many anat folder?
     no_of_anat_folders = 0
     no_of_func_folders = 0
     for current_path in fly_dirs_dict:
@@ -253,7 +259,7 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
         elif 'func' in current_path:
             no_of_func_folders +=1
     fly_dirs_dict['# of anatomy folders'] = no_of_anat_folders
-    fly_dirs_dict['# of functional folders'] = no_of_func_folders
+    fly_dirs_dict['# of functional folders'] = no_of_func_folders"""
 
     return(fly_dirs_dict)
 
@@ -332,7 +338,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
                 imaging_destination.mkdir(parents=True)
                 copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
                 current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
-                fly_dirs_dict[current_imaging_folder.name] = current_fly_dir_dict
+                fly_dirs_dict['Folder ' + current_imaging_folder.name] = current_fly_dir_dict
                 ######################################################################
                 print(f"anat:{current_target_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
@@ -345,7 +351,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
                 copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
                 # Update fly_dirs_dict
                 current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
-                fly_dirs_dict[current_imaging_folder.name] = current_fly_dir_dict
+                fly_dirs_dict['Folder' + current_imaging_folder.name] = current_fly_dir_dict
                 # Copy fictrac data based on timestamps
                 try:
                     copy_fictrac(current_target_folder, printlog, user, current_imaging_folder)
