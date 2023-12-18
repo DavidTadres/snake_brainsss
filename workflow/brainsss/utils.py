@@ -39,9 +39,19 @@ def get_new_fly_number(target_path):
     sorted_fly_folder = natsort.natsorted(fly_folders)
     # fly_folders is already sorted so last index is highest fly number
     oldest_fly = sorted_fly_folder[-1].name.split('_')[-1]
-    # +1 highest fly number and make sure it has 3 digits.
-    new_fly_number = str(int(oldest_fly) + 1).zfill(3)
-    return(new_fly_number)
+    # make sure it contains either 'func' or 'anat' data. Else this is the next fly!
+    # This check is necessary because of snakemake seems to run twice!
+    empty_folder = False
+    for current_folder in sorted_fly_folder[-1].iterdir():
+        if 'anat' in current_folder.name or 'func' in current_folder.name:
+            empty_folder = True
+    if empty_folder:
+        # +1 highest fly number and make sure it has 3 digits.
+        new_fly_number = str(int(oldest_fly) + 1).zfill(3)
+        return(new_fly_number)
+    else:
+        new_fly_number = str(int(oldest_fly)).zfill(3)
+        return(new_fly_number)
 def write_error(logfile, error_stack, width):
     with open(logfile, 'a+') as file:
         file.write(f"\n{'     ERROR     ':!^{width}}")

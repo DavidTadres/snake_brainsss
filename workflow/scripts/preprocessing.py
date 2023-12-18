@@ -10,12 +10,128 @@ import time
 import traceback
 import natsort
 import datetime
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.use('agg') # Agg, is a non-interactive backend that can only write to files.
+# Without this I had the following error: Starting a Matplotlib GUI outside of the main thread will likely fail.
 
 # To import brainsss, define path to scripts!
 scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
 sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 # print(pathlib.Path(scripts_path, 'workflow'))
 import brainsss
+
+def bleaching_qc(logfile, directory, fly_dir_dict):
+    """
+    Perform bleaching qc.
+    This is based on Bella's 'bleaching_qc.py' script
+
+    :param: logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
+    :param directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :return:
+    """
+    # args = {'logfile': logfile, 'directory': directory, 'dirtype': dirtype}
+
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
+    width = 120
+    # For log file readability clearly indicate when function was called
+    brainsss.print_function_start(logfile, width, 'bleaching_qc')
+
+    # We only care about bleaching in func I think?
+    #dirtype = 'func' # 'func' or 'anat'
+
+    #fly_dirs = directory
+
+    #func_dirs = []
+    #anat_dirs = []
+    #print(fly_dirs)
+
+    for current_dir in directory.iterdir():
+        if 'func' in current_dir.name:
+            func_dirs.extend(pathlib.Path(current_dir, x) for x in fly_dirs.iterdir() if 'func' in x.name)
+        elif 'anat' in current_dir.name:
+            anat_dirs.extend(pathlib.Path(current_dir, x) for x in fly_dirs.iterdir() if 'anat' in x.name)
+    func_dirs = natsort.natsorted(func_dirs)
+    anat_dirs = natsort.natsorted(anat_dirs)
+    ####
+    funcs = []
+    anats = []
+    for fly_dir in fly_dirs:
+        fly_directory = os.path.join(dataset_path, fly_dir)
+        if dirtype == 'func' or dirtype == None:
+            funcs.extend([os.path.join(fly_directory, x) for x in os.listdir(fly_directory) if 'func' in x])
+        if dirtype == 'anat' or dirtype == None:
+            anats.extend([os.path.join(fly_directory, x) for x in os.listdir(fly_directory) if 'anat' in x])
+
+    brainsss.sort_nicely(funcs)
+    brainsss.sort_nicely(anats)
+    funcanats = funcs + anats # ? what's that thing doing here?
+    dirtypes = ['func']*len(funcs) + ['anat']*len(anats)
+    ####
+    #logfile = args['logfile']
+    if standalone:
+        directory = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001/func1/imaging'
+    else:
+        directory = args['directory'] # directory will be a full path to either an anat/imaging folder or a func/imaging folder
+    #dirtype = args['dirtype']
+    width = 120
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+
+    #################
+    ### Define relevant folders
+    #################
+
+    #for imaging_dirs in fly_dir_dict:
+    #    if 'anat' in
+
+    #################
+    ### Load Data ###
+    #################
+
+    if dirtype == 'func':
+        files = ['functional_channel_1', 'functional_channel_2']
+    elif dirtype == 'anat':
+        files = ['anatomy_channel_1', 'anatomy_channel_2']
+    data_mean = {}
+    for file in files:
+        full_file = os.path.join(directory, file + '.nii')
+        if os.path.exists(full_file):
+            brain = np.asarray(nib.load(full_file).get_fdata(), dtype='uint16')
+            data_mean[file] = np.mean(brain,axis=(0,1,2))
+        else:
+            printlog(F"Not found (skipping){file:.>{width-20}}")
+
+    ##############################
+    ### Output Bleaching Curve ###
+    ##############################
+
+    plt.rcParams.update({'font.size': 24})
+    fig = plt.figure(figsize=(10,10))
+    signal_loss = {}
+    for file in data_mean:
+        xs = np.arange(len(data_mean[file]))
+        color='k'
+        if file[-1] == '1': color='red'
+        if file[-1] == '2': color='green'
+        plt.plot(data_mean[file],color=color,label=file)
+        linear_fit = np.polyfit(xs, data_mean[file], 1)
+        plt.plot(np.poly1d(linear_fit)(xs),color='k',linewidth=3,linestyle='--')
+        signal_loss[file] = linear_fit[0]*len(data_mean[file])/linear_fit[1]*-100
+    plt.xlabel('Frame Num')
+    plt.ylabel('Avg signal')
+    loss_string = ''
+    for file in data_mean:
+        loss_string = loss_string + file + ' lost' + F'{int(signal_loss[file])}' +'%\n'
+    plt.title(loss_string, ha='center', va='bottom')
+    # plt.text(0.5,0.9,
+    #          loss_string,
+    #          horizontalalignment='center',
+    #          verticalalignment='center',
+    #          transform=plt.gca().transAxes)
+
+    save_file = os.path.join(directory, 'bleaching.png')
+    plt.savefig(save_file,dpi=300,bbox_inches='tight')
 
 def fictrac_qc(logfile, directory, fictrac_fps):
     """
@@ -34,8 +150,6 @@ def fictrac_qc(logfile, directory, fictrac_fps):
 
     for current_folder in directory.iterdir():
         if 'func' in current_folder.name:
-            #directory = args['directory'] # directory will be a full path to a func/fictrac folder
-            #fps = args['fps'] #of fictrac camera
 
             current_fictrac_folder = pathlib.Path(current_folder, 'fictrac')
             printlog('Currently looking at: ' + repr(current_fictrac_folder))
@@ -43,7 +157,6 @@ def fictrac_qc(logfile, directory, fictrac_fps):
 
             # I expect this to yield something like 'fly_001/func0
             full_id = ', '.join(str(current_fictrac_folder).split('/')[-3:1])
-            #full_id = ', '.join(directory.split('/')[-3:-1])
 
             resolution = 10 #desired resolution in ms # Comes from Bella!
             expt_len = fictrac_raw.shape[0]/fictrac_fps*1000
@@ -78,13 +191,19 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
 
     # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder
-    destination_fly.mkdir(parents=True)  # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
+    destination_fly.mkdir(parents=True, exist_ok=True)  # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
     printlog(F'Created fly directory:{str(destination_fly.name):.>{width - 22}}')
+
+    # Create a dict that will save all paths were data is saved save it in the folder
+    # to streamline downstream analysis and to make explicit where a given folder (e.g.
+    # func0 imaging data) can be found.
+    fly_dirs_dict = {}
+    fly_dirs_dict['fly ID'] = destination_fly.name
 
     ### Parse user settings
     settings = brainsss.load_user_settings(user)
     imports_path = pathlib.Path(settings['imports_path'])
-    dataset_path = pathlib.Path(settings['dataset_path'])
+    #dataset_path = pathlib.Path(settings['dataset_path'])
 
     paths_to_build = []
     for current_dir in dirs_to_build:
@@ -97,37 +216,16 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
 
     # loop through each of the provided dirs_to_build
     for current_path_to_build in paths_to_build:
-        #print(current_path_to_build)
-
         # Make sure that each fly folder is actually containing the keyword 'fly'
-        #likely_fly_folders = [i for i in likely_fly_folders if 'fly' in i]
         likely_fly_folders = [i for i in current_path_to_build.iterdir() if 'fly' in i.name]
         printlog(F"Found fly folders{str(likely_fly_folders):.>{width - 17}}")
 
-        #if fly_dirs is not None:
-        #    likely_fly_folders = fly_dirs
-        #    printlog(F"Continuing with only{str(likely_fly_folders):.>{width - 20}}")
-
         for current_fly_folder in likely_fly_folders:
 
-            #bnew_fly_number = brainsss.get_new_fly_number(target_path)
-            # printlog(f'\n*Building {likely_fly_folder} as fly number {new_fly_number}*')
             printlog(f"\n{'   Building ' + current_fly_folder.name + ' as ' + str(target_folder.name) + '   ':-^{width}}")
 
-            # Define source fly directory
-            # source_fly = os.path.join(flagged_dir, likely_fly_folder)
-            # source_fly = pathlib.Path(flagged_dir, current_fly_folder) # alreay a path
-
-            # Define destination fly directory
-            # fly_time = get_fly_time(source_fly)
-            #new_fly_folder = 'fly_' + str(new_fly_number)
-
-            #destination_fly = os.path.join(target_path, new_fly_folder)
-            #destination_fly = pathlib.Path(target_path, new_fly_folder)
-
-
             # Copy fly data
-            copy_fly(current_fly_folder, destination_fly, printlog, user)
+            fly_dirs_dict = copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
 
             # Add date to fly.json file
             try:
@@ -145,6 +243,19 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
                 printlog('Could not add xls data because of error:')
                 printlog(str(e))
                 printlog(traceback.format_exc())
+
+    # How many anat folder?
+    no_of_anat_folders = 0
+    no_of_func_folders = 0
+    for current_path in fly_dirs_dict:
+        if 'anat' in current_path:
+            no_of_anat_folders += 1
+        elif 'func' in current_path:
+            no_of_func_folders +=1
+    fly_dirs_dict['# of anatomy folders'] = no_of_anat_folders
+    fly_dirs_dict['# of functional folders'] = no_of_func_folders
+
+    return(fly_dirs_dict)
 
 def add_date_to_fly(destination_fly):
     ''' get date from xml file and add to fly.json'''
@@ -188,7 +299,7 @@ def add_date_to_fly(destination_fly):
         json.dump(metadata, f, indent=4)
         f.truncate()
 
-def copy_fly(current_fly_folder, destination_fly, printlog, user):
+def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict):
     """
     There will be two types of folders in a fly folder.
     1) func_x folder
@@ -202,22 +313,14 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
     for current_file_or_folder in current_fly_folder.iterdir():
         # This should be e.g. directory such as anat1 or func0 or fly.json
         print('Currently looking at source_item: {}'.format(current_file_or_folder.name))
-        ##sys.stdout.flush()
-
         # Handle folders
 
-        #if os.path.isdir(os.path.join(source_fly, item)):
         if current_file_or_folder.is_dir():
             # Call this folder source expt folder
-            #source_expt_folder = os.path.join(source_fly, item)
             current_imaging_folder = current_file_or_folder
             # Make the same folder in destination fly folder
-            #expt_folder = os.path.join(destination_fly, item)
             current_target_folder = pathlib.Path(destination_fly, current_imaging_folder.name)
-            #os.mkdir(expt_folder)
             current_target_folder.mkdir(parents=True)
-            ##print('Created directory: {}'.format(expt_folder))
-            ##sys.stdout.flush()
 
             # Is this folder an anatomy or functional folder?
             if 'anat' in current_imaging_folder.name:
@@ -227,7 +330,9 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
-                copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
+                #copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
+                current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
+                fly_dirs_dict[current_imaging_folder.name] = current_fly_dir_dict
                 ######################################################################
                 print(f"anat:{current_target_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
@@ -237,7 +342,10 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
                 imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
-                copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
+                #copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
+                # Update fly_dirs_dict
+                current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
+                fly_dirs_dict[current_imaging_folder.name] = current_fly_dir_dict
                 # Copy fictrac data based on timestamps
                 try:
                     copy_fictrac(current_target_folder, printlog, user, current_imaging_folder)
@@ -276,6 +384,8 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user):
             else:
                 printlog('Invalid file in fly folder (skipping): {}'.format(current_file.name))
                 ##sys.stdout.flush()
+
+    return(fly_dirs_dict)
 
 def copy_bruker_data(source, destination, folder_type, printlog):
     # Do not update destination - download all files into that destination
@@ -437,7 +547,7 @@ def copy_fictrac(destination_region, printlog, user, source_fly):
     if user == 'ilanazs':
         user = 'luke'
     if user == 'dtadres':
-        fictrac_folder = pathlib.Path("/oak/stanford/groups/trc/data/David/Bruker/Fictrac")
+        fictrac_folder = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/Fictrac")
         # when doing post-hoc fictrac, Bella's code where one compare the recording
         # timestamps of imaging and fictrac doesn't work anymore.
         # I instead use a deterministic file structure:

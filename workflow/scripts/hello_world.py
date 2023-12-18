@@ -10,8 +10,11 @@ def print_hi(logfile, args, arg2,
     #print(pathlib.Path(__file__).parent.resolve())
 
     #printlog('test')
-    print(error)
+    #print(error)
     #logger.debug('your message')
+
+def print_bye(logfile, args):
+    print(args)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
