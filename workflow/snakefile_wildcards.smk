@@ -83,11 +83,14 @@ with open(pathlib.Path(fly_dirs_dict_path),'r') as file:
 # Imaging data paths
 func_file_paths = []
 anat_file_paths = []
+fictrac_file_paths = []
 for key in fly_dirs_dict:
     if 'func' in key and 'Folder' in key:
         func_file_paths.append(fly_dirs_dict[key])
     elif 'anat' in key and 'Folder' in key:
         anat_file_paths.append(fly_dirs_dict[key])
+    elif 'Fictrac' in key:
+        fictrac_file_paths.append(fly_dirs_dict_path[key])
 
 def create_path_func(fly_folder_to_process, list_of_paths, filename):
     final_path = []
@@ -95,9 +98,13 @@ def create_path_func(fly_folder_to_process, list_of_paths, filename):
         final_path.append(str(fly_folder_to_process) + current_path + filename)
     return(final_path)
 
-ch1_file_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_1.nii')
-ch2_file_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_2.nii')
+ch1_func_file_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_1.nii')
+ch2_func_file_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_2.nii')
+#
 
+#
+fictrac_file_paths = create_path_func(fly_folder_to_process, fictrac_file_paths, '/functional_channel_2.nii')
+#
 #func_file_paths = ['func0', 'func1', 'func2']
 #full_ch1_file_path = []
 #for current_file_path in func_file_paths:

@@ -546,7 +546,7 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
     fictrac_destination.mkdir(exist_ok=True)
     # put fictrac folder path in into fly_dirs_dict
     current_fly_dir_dict = str(fictrac_destination).split(fictrac_destination.parents[1].name)[-1]
-    fly_dirs_dict[destination_region.name + 'Fictrac'] = current_fly_dir_dict
+    fly_dirs_dict[destination_region.name + 'Fictrac '] = current_fly_dir_dict
     # Different users have different rule on what to do with the data
     if user == 'brezovec':
         user = 'luke'
@@ -555,7 +555,7 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
     if user == 'ilanazs':
         user = 'luke'
     if user == 'dtadres':
-        fictrac_folder = pathlib.Path("/Volumes/groups/trc/data/David/Bruker/Fictrac")
+        fictrac_folder = pathlib.Path("/oak/stanford/groups/trc/data/David/Bruker/Fictrac")
         # when doing post-hoc fictrac, Bella's code where one compare the recording
         # timestamps of imaging and fictrac doesn't work anymore.
         # I instead use a deterministic file structure:
@@ -577,8 +577,6 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
                 #source_path = os.path.join(source_path, file)
                 dat_path = current_file
                 target_path = pathlib.Path(fictrac_destination, current_file.name)
-                #target_path = os.path.join(fictrac_destination, file)
-                #to_print = ('/').join(target_path.split('/')[-4:])
                 to_print = str(target_path)
                 printlog(f'Transfering file{to_print:.>{width - 16}}')
     else:

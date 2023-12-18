@@ -56,8 +56,9 @@ print(pathlib.Path(fly_folder_to_process, 'logs'))
 # LOGGING
 #####
 pathlib.Path(fly_folder_to_process, 'logs').mkdir(exist_ok=True, parents=True)
-# Have one log file per fly! This will make everything super traceable!
-logfile = str(fly_folder_to_process) + '/logs/' + fly_folder_to_process.name + '.txt'
+# Have one log file per rule placed into the destination folder!
+# This will make everything super traceable!
+logfile = str(fly_folder_to_process) + '/logs/' + 'fly_builder_' + fly_folder_to_process.name + '.txt'
 
 # Not sure what this does exactly, from Bella's code
 printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
