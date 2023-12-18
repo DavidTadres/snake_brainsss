@@ -83,6 +83,24 @@ def get_json_data(file_path):
         data = json.load(f)
     return data
 
+def create_logfile(fly_folder, function_name):
+    pathlib.Path(fly_folder, 'logs').mkdir(exist_ok=True, parents=True)
+    # Have one log file per rule placed into the destination folder!
+    # This will make everything super traceable!
+    logfile = str(fly_folder) + '/logs/' + function_name + '_' + fly_folder.name + '.txt'
+
+    # Not sure what this does exactly, from Bella's code
+    printlog = getattr(Printlog(logfile=logfile), 'print_to_log')
+    # Pipe all errors to the logfile
+    sys.stderr = LoggerRedirect(logfile)
+    # Pipe all print statements (and other console output) to the logfile
+    sys.stdout = LoggerRedirect(logfile)
+    # Problem: Snakemake runs twice. Seems to be a bug: https://github.com/snakemake/snakemake/issues/2350
+    # Only print title and fly if logfile doesn't yet exist
+    width = 120  # can go into a config file as well.
+    print_function_start(logfile, width, function_name)
+    return(logfile)
+
 class LoggerRedirect(object):
     """
     for redirecting stderr to a central log file.

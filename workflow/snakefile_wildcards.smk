@@ -23,7 +23,7 @@ AND:
 # cd snake_brainsss/workflow
 # snakemake -s snakefile_wildcards.smk --profile config_sherlock
 
-fly_folder_to_process = 'fly_003' # folder to be processed
+fly_folder_to_process = 'fly_004' # folder to be processed
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 
 # do follow up analysis, enter the fly folder to be analyzed here.
@@ -40,14 +40,18 @@ import json
 import brainsss
 import sys
 from scripts import preprocessing
-
+import itertools
 
 settings = brainsss.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
 fly_folder_to_process = pathlib.Path(dataset_path, fly_folder_to_process)
-#####
-# LOGGING
-#####
+
+# Needed for logging
+width = 120 # can go into a config file as well.
+"""
+########
+# LOGGING - because this should run acyclical, no big logfile with everything but many smaller ones!
+########
 pathlib.Path('./logs').mkdir(exist_ok=True)
 # Have one log file per fly! This will make everything super traceable!
 logfile = './logs/' + fly_folder_to_process.name + '.txt'
@@ -60,12 +64,11 @@ sys.stderr = brainsss.LoggerRedirect(logfile)
 sys.stdout = brainsss.LoggerRedirect(logfile)
 # Problem: Snakemake runs twice. Seems to be a bug: https://github.com/snakemake/snakemake/issues/2350
 # Only print title and fly if logfile doesn't yet exist
-width = 120 # can go into a config file as well.
 if not pathlib.Path(logfile).is_file():
     brainsss.print_title(logfile, width)
     printlog(F"{fly_folder_to_process.name:^{width}}")
     brainsss.print_datetime(logfile, width)
-#######
+#######"""
 
 fly_dirs_dict_path = pathlib.Path(fly_folder_to_process, fly_folder_to_process.name + '_dirs.json')
 
@@ -85,49 +88,152 @@ func_file_paths = []
 anat_file_paths = []
 fictrac_file_paths = []
 for key in fly_dirs_dict:
-    if 'func' in key and 'Folder' in key:
+    #print(key)
+    if 'func' in key and 'Imaging' in key:
         func_file_paths.append(fly_dirs_dict[key])
-    elif 'anat' in key and 'Folder' in key:
+    elif 'anat' in key and 'Imaging' in key:
         anat_file_paths.append(fly_dirs_dict[key])
     elif 'Fictrac' in key:
-        fictrac_file_paths.append(fly_dirs_dict_path[key])
+        fictrac_file_paths.append(fly_dirs_dict[key])
 
-def create_path_func(fly_folder_to_process, list_of_paths, filename):
+def create_path_func(fly_folder_to_process, list_of_paths, filename=''):
+    """
+    Creates lists of path that can be feed as input/output to snakemake rules
+    :param fly_folder_to_process: a folder pointing to a fly, i.e. /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_001
+    :param list_of_paths: a list of path created, usually created from fly_dirs_dict (e.g. fly_004_dirs.json)
+    :param filename: filename to append at the end. Can be nothing (i.e. for fictrac data).
+    :return: list of full paths to a file based on the list_of_path provided
+    """
     final_path = []
     for current_path in list_of_paths:
         final_path.append(str(fly_folder_to_process) + current_path + filename)
+
     return(final_path)
 
+def create_output_path_func(list_of_paths, filename):
+    """
+    :param list_of_paths: expects a list of paths pointing to a file, for example from variable full_fictrac_file_paths
+    :param filename: filename
+    """
+    final_path = []
+    for current_path in list_of_paths:
+        if isinstance(current_path, list):
+            # This is for lists of lists, for example created by :func: create_paths_each_experiment
+            # If there's another list assume that we only want one output file!
+            # For example, in the bleaching_qc the reason we have a list of lists is because each experiment
+            # is plotted in one file. Hence, the output should be only one file
+            #print(pathlib.Path(pathlib.Path(current_path[0]).parent, filename))
+            final_path.append(pathlib.Path(pathlib.Path(current_path[0]).parent, filename))
+        else:
+            final_path.append(pathlib.Path(pathlib.Path(current_path).parent, filename))
+
+    return(final_path)
+
+def create_paths_each_experiment(func_and_anat_paths):
+    """
+    get paths to imaging data as list of lists, i.e.
+    [[func0/func_channel1.nii, func0/func_channel2.nii], [func1/func_channel1.nii, func1/func_channel2.nii]]
+    :param func_and_anat_paths: a list with all func and anat path as defined in 'fly_004_dirs.json'
+    """
+    imaging_paths_by_folder = []
+    for current_path in func_and_anat_paths:
+        if 'func' in current_path:
+            imaging_paths_by_folder.append([
+                str(fly_folder_to_process) + current_path + '/functional_channel_1.nii',
+                str(fly_folder_to_process) + current_path + '/functional_channel_2.nii']
+                )
+        elif 'anat' in current_path:
+            imaging_paths_by_folder.append([
+                str(fly_folder_to_process) + current_path + '/anatomy_channel_1.nii',
+                str(fly_folder_to_process) + current_path + '/anatomy_channel_2.nii']
+                )
+    return(imaging_paths_by_folder)
+
+func_and_anat_paths = func_file_paths + anat_file_paths
+
+imaging_paths_by_folder = create_paths_each_experiment(func_and_anat_paths)
+#print('HERE' + repr(imaging_paths_by_folder))
+
+# Get imaging data paths for func
 ch1_func_file_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_1.nii')
 ch2_func_file_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_2.nii')
-#
+# and for anat data
+ch1_anat_file_paths = create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_1.nii')
+ch2_anat_file_paths = create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_2.nii')
+# List of all imaging data
+all_imaging_paths = ch1_func_file_paths + ch2_func_file_paths + ch1_anat_file_paths + ch2_anat_file_paths
 
-#
-fictrac_file_paths = create_path_func(fly_folder_to_process, fictrac_file_paths, '/functional_channel_2.nii')
-#
-#func_file_paths = ['func0', 'func1', 'func2']
-#full_ch1_file_path = []
-#for current_file_path in func_file_paths:
-#    full_ch1_file_path.append(str(fly_folder_to_process) + '/' + current_file_path + '/imaging/functional_channel_1.nii')
+# Fictrac files are named non-deterministically (could be changed of course) but for now
+# the full filename is in the fly_dirs_dict
+full_fictrac_file_paths = create_path_func(fly_folder_to_process, fictrac_file_paths)
+# Output files for fictrac_qc rule
+fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_paths,
+                                                             filename='fictrac_2d_hist_fixed.png')
+
+bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder,
+                                                    filename='bleaching.png')
+
+# TESTING
+# full_fictrac_file_paths = [full_fictrac_file_paths[0]]
+# Output files for bleaching_qc rule
+
+#print(fictrac_output_files_2d_hist_fixed)
 # how to use expand example
 # https://stackoverflow.com/questions/55776952/snakemake-write-files-from-an-array
 
 rule all:
-    input: 'io_files/test.txt'
-    #input: expand("{f}", f=full_func_file_path)
-
-
-rule bleaching_qc_func_rule:
     input:
-        channel1 = expand("{ch1}", ch1=ch1_file_paths),
-        channel2 = expand("{ch2}", ch2=ch2_file_paths)
+         expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
+         expand("{bleaching_qc_png}", bleaching_qc_png=bleaching_qc_output_files)
+    #input: expand("{f}", f=full_func_file_path)
+            #'io_files/test.txt',
+
+'''rule bleaching_qc_func_rule:
+    "This should not run because the output is not requested in rule all"
+    input:
+        channel1_func = expand("{ch1_func}", ch1_func=ch1_func_file_paths),
+        channel2_func = expand("{ch2_func}", ch2_func=ch2_func_file_paths)
     output:
-        '/Users/dtadres/snake_brainsss/workflow/io_files/test.txt'
+        'io_files/test.txt'
     run:
-        preprocessing.bleaching_qc_test(logfile=logfile,
-                                        ch1=input.channel1,
+        preprocessing.bleaching_qc_test(ch1=input.channel1_func,
                                         ch2=input.channel2,
-                                        print_output = output)
+                                        print_output = output)'''
+
+rule fictrac_qc_rule:
+    input:
+        fictrac_file_paths = expand("{fictrac}", fictrac=full_fictrac_file_paths)
+    output:
+        expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed)
+    run:
+        try:
+            preprocessing.fictrac_qc(fly_folder_to_process,
+                                    fictrac_file_paths= input.fictrac_file_paths,
+                                    fictrac_fps=50 # AUTOMATE THIS!!!! ELSE BUG PRONE!!!!
+                                    )
+        except Exception as error_stack:
+            logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_fictrac_qc_rule')
+            brainsss.write_error(logfile=logfile,
+                                 error_stack=error_stack,
+                                 width=width)
+
+rule bleaching_qc_rule:
+    input:
+        all_imaging_paths
+    output:
+        expand("{bleaching_qc_png}", bleaching_qc_png=bleaching_qc_output_files)
+    run:
+        try:
+            preprocessing.bleaching_qc(fly_directory=fly_folder_to_process,
+                                        imaging_data_path=imaging_paths_by_folder
+                                        #print_output = output
+            )
+        except Exception as error_stack:
+            logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_bleaching_qc_rule')
+            brainsss.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
 
 
 """

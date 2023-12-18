@@ -14,20 +14,22 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.use('agg') # Agg, is a non-interactive backend that can only write to files.
 # Without this I had the following error: Starting a Matplotlib GUI outside of the main thread will likely fail.
+import nibabel as nib
+
 
 # To import brainsss, define path to scripts!
 scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
 sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 # print(pathlib.Path(scripts_path, 'workflow'))
 import brainsss
-def bleaching_qc_test(logfile, ch1, ch2, print_output):
+def bleaching_qc_test(ch1, ch2, print_output):
     for ch1_data in ch1:
         print("ch1: " + repr(ch1_data))
     with open(print_output[0], "w") as out:
         out.write('done')
     #return(ch1)
     #pass
-def bleaching_qc(logfile, directory, fly_dir_dict):
+def bleaching_qc(fly_directory, imaging_data_path):
     """
     Perform bleaching qc.
     This is based on Bella's 'bleaching_qc.py' script
@@ -36,14 +38,19 @@ def bleaching_qc(logfile, directory, fly_dir_dict):
     :param directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
     :return:
     """
-    # args = {'logfile': logfile, 'directory': directory, 'dirtype': dirtype}
 
+    # args = {'logfile': logfile, 'directory': directory, 'dirtype': dirtype}
+    logfile = brainsss.create_logfile(fly_directory, function_name='fictrac_qc')
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    width = 120
+    '''
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
     printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
     # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
     width = 120
     # For log file readability clearly indicate when function was called
     brainsss.print_function_start(logfile, width, 'bleaching_qc')
-
+    '''
     # We only care about bleaching in func I think?
     #dirtype = 'func' # 'func' or 'anat'
 
@@ -53,14 +60,15 @@ def bleaching_qc(logfile, directory, fly_dir_dict):
     #anat_dirs = []
     #print(fly_dirs)
 
+    '''
     for current_dir in directory.iterdir():
         if 'func' in current_dir.name:
             func_dirs.extend(pathlib.Path(current_dir, x) for x in fly_dirs.iterdir() if 'func' in x.name)
         elif 'anat' in current_dir.name:
             anat_dirs.extend(pathlib.Path(current_dir, x) for x in fly_dirs.iterdir() if 'anat' in x.name)
     func_dirs = natsort.natsorted(func_dirs)
-    anat_dirs = natsort.natsorted(anat_dirs)
-    ####
+    anat_dirs = natsort.natsorted(anat_dirs)'''
+    '''####
     funcs = []
     anats = []
     for fly_dir in fly_dirs:
@@ -98,85 +106,92 @@ def bleaching_qc(logfile, directory, fly_dir_dict):
     if dirtype == 'func':
         files = ['functional_channel_1', 'functional_channel_2']
     elif dirtype == 'anat':
-        files = ['anatomy_channel_1', 'anatomy_channel_2']
-    data_mean = {}
-    for file in files:
+        files = ['anatomy_channel_1', 'anatomy_channel_2']'''
+
+    '''for file in files:
         full_file = os.path.join(directory, file + '.nii')
         if os.path.exists(full_file):
             brain = np.asarray(nib.load(full_file).get_fdata(), dtype='uint16')
             data_mean[file] = np.mean(brain,axis=(0,1,2))
         else:
-            printlog(F"Not found (skipping){file:.>{width-20}}")
+            printlog(F"Not found (skipping){file:.>{width-20}}")'''
+    data_mean = {}
+    for current_folder in imaging_data_path:
+        print(current_folder)
+        for current_file in current_folder:
+            if pathlib.Path(current_file[0]).exists():
+                brain = np.asarray(nib.load(current_file).get_fdata(), dtype=np.uint16)
+                data_mean[pathlib.Path(current_file).name] = np.mean(brain, axis=(0,1,2))
+            else:
+                printlog(F"Not found (skipping){pathlib.Path(current_file).name:.>{width-20}}")
+        ##############################
+        ### Output Bleaching Curve ###
+        ##############################
 
-    ##############################
-    ### Output Bleaching Curve ###
-    ##############################
+        plt.rcParams.update({'font.size': 24})
+        fig = plt.figure(figsize=(10,10))
+        signal_loss = {}
+        for file in data_mean:
+            xs = np.arange(len(data_mean[file]))
+            color='k'
+            if file[-1] == '1': color='red'
+            if file[-1] == '2': color='green'
+            plt.plot(data_mean[file],color=color,label=file)
+            linear_fit = np.polyfit(xs, data_mean[file], 1)
+            plt.plot(np.poly1d(linear_fit)(xs),color='k',linewidth=3,linestyle='--')
+            signal_loss[file] = linear_fit[0]*len(data_mean[file])/linear_fit[1]*-100
+        plt.xlabel('Frame Num')
+        plt.ylabel('Avg signal')
+        loss_string = ''
+        for file in data_mean:
+            loss_string = loss_string + file + ' lost' + F'{int(signal_loss[file])}' +'%\n'
+        plt.title(loss_string, ha='center', va='bottom')
+        # plt.text(0.5,0.9,
+        #          loss_string,
+        #          horizontalalignment='center',
+        #          verticalalignment='center',
+        #          transform=plt.gca().transAxes)
 
-    plt.rcParams.update({'font.size': 24})
-    fig = plt.figure(figsize=(10,10))
-    signal_loss = {}
-    for file in data_mean:
-        xs = np.arange(len(data_mean[file]))
-        color='k'
-        if file[-1] == '1': color='red'
-        if file[-1] == '2': color='green'
-        plt.plot(data_mean[file],color=color,label=file)
-        linear_fit = np.polyfit(xs, data_mean[file], 1)
-        plt.plot(np.poly1d(linear_fit)(xs),color='k',linewidth=3,linestyle='--')
-        signal_loss[file] = linear_fit[0]*len(data_mean[file])/linear_fit[1]*-100
-    plt.xlabel('Frame Num')
-    plt.ylabel('Avg signal')
-    loss_string = ''
-    for file in data_mean:
-        loss_string = loss_string + file + ' lost' + F'{int(signal_loss[file])}' +'%\n'
-    plt.title(loss_string, ha='center', va='bottom')
-    # plt.text(0.5,0.9,
-    #          loss_string,
-    #          horizontalalignment='center',
-    #          verticalalignment='center',
-    #          transform=plt.gca().transAxes)
+        save_file = pathlib.Path(current_folder, 'bleaching.png')
+        plt.savefig(save_file,dpi=300,bbox_inches='tight')
 
-    save_file = os.path.join(directory, 'bleaching.png')
-    plt.savefig(save_file,dpi=300,bbox_inches='tight')
 
-def fictrac_qc(logfile, directory, fictrac_fps):
+def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):
     """
     Perform fictrac quality control.
     This is based on Bella's fictrac_qc.py  script.
-    :param logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
-    :param directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
-
+    #:param logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
+    :param fly_directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :param fictrac_file_paths: a list of paths as strings
     :return:
     """
+    #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    logfile = brainsss.create_logfile(fly_directory, function_name='fictrac_qc')
     printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
-    width = 120
+    #width = 120
     # For log file readability clearly indicate when function was called
-    brainsss.print_function_start(logfile, width, 'fictrac_qc')
 
-    for current_folder in directory.iterdir():
-        if 'func' in current_folder.name:
+    for current_file in fictrac_file_paths:
+        printlog('Currently looking at: ' + repr(current_file))
+        fictrac_raw = brainsss.load_fictrac(current_file)
+        # I expect this to yield something like 'fly_001/func0/fictrac
+        full_id = ', '.join(str(current_file).split('/')[-3:1])
 
-            current_fictrac_folder = pathlib.Path(current_folder, 'fictrac')
-            printlog('Currently looking at: ' + repr(current_fictrac_folder))
-            fictrac_raw = brainsss.load_fictrac(current_fictrac_folder)
+        resolution = 10  # desired resolution in ms # Comes from Bella!
+        expt_len = fictrac_raw.shape[0] / fictrac_fps * 1000
+        behaviors = ['dRotLabY', 'dRotLabZ']
+        fictrac = {}
+        for behavior in behaviors:
+            if behavior == 'dRotLabY':
+                short = 'Y'
+            elif behavior == 'dRotLabZ':
+                short = 'Z'
+            fictrac[short] = brainsss.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior)
+        xnew = np.arange(0, expt_len, resolution)
 
-            # I expect this to yield something like 'fly_001/func0
-            full_id = ', '.join(str(current_fictrac_folder).split('/')[-3:1])
-
-            resolution = 10 #desired resolution in ms # Comes from Bella!
-            expt_len = fictrac_raw.shape[0]/fictrac_fps*1000
-            behaviors = ['dRotLabY', 'dRotLabZ']
-            fictrac = {}
-            for behavior in behaviors:
-                if behavior == 'dRotLabY': short = 'Y'
-                elif behavior == 'dRotLabZ': short = 'Z'
-                fictrac[short] = brainsss.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior)
-            xnew = np.arange(0,expt_len,resolution)
-
-            brainsss.make_2d_hist(fictrac, current_fictrac_folder, full_id, save=True, fixed_crop=True)
-            brainsss.make_2d_hist(fictrac, current_fictrac_folder, full_id, save=True, fixed_crop=False)
-            brainsss.make_velocity_trace(fictrac, current_fictrac_folder, full_id, xnew, save=True)
+        brainsss.make_2d_hist(fictrac, current_file, full_id, save=True, fixed_crop=True)
+        brainsss.make_2d_hist(fictrac, current_file, full_id, save=True, fixed_crop=False)
+        brainsss.make_velocity_trace(fictrac, current_file, full_id, xnew, save=True)
 
 def fly_builder(logfile, user, dirs_to_build, target_folder):
     """
