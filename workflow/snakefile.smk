@@ -50,7 +50,7 @@ if fly_folder_to_process == '':
     fly_folder_to_process = pathlib.Path(dataset_path, 'fly_' + new_fly_number)
 else:
     fly_folder_to_process = pathlib.Path(dataset_path, fly_folder_to_process)
-#print(fly_folder_to_process)
+print(fly_folder_to_process)
 
 #####
 # LOGGING
