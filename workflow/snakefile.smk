@@ -55,9 +55,9 @@ else:
 #####
 # LOGGING
 #####
-pathlib.Path('./logs').mkdir(exist_ok=True)
+pathlib.Path(fly_folder_to_process, '/logs').mkdir(exist_ok=True)
 # Have one log file per fly! This will make everything super traceable!
-logfile = './logs/' + fly_folder_to_process.name + '.txt'
+logfile = str(fly_folder_to_process) + '/logs/' + fly_folder_to_process.name + '.txt'
 
 # Not sure what this does exactly, from Bella's code
 printlog = getattr(brainsss.Printlog(logfile=logfile),'print_to_log')
@@ -170,7 +170,7 @@ rule fly_builder_rule:
             # Probably need to overwrite because else snakemake won't be able to continue
             with open(fly_dirs_dict_path,'w') as file:
                 json.dump(fly_dirs_dict,file,sort_keys=True,indent=4)
-
+'''
 rule fictrac_qc_rule:
     """
     Tested only 1 thread and was super fast. To be tested with more!
@@ -194,7 +194,7 @@ rule fictrac_qc_rule:
         except Exception as error_stack:
             brainsss.write_error(logfile=logfile,
                                  error_stack=error_stack,
-                                 width=width)
+                                 width=width)'''
 '''
 rule bleaching_qc_rule:
     """

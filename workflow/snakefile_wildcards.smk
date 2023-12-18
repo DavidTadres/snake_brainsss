@@ -11,6 +11,10 @@ Note:
 
     We strongly recommend using $OAK to reference your group home directory in
     scripts, rather than its explicit path.
+AND:
+    Each compute node has a low latency, high-bandwidth Infiniband link to $SCRATCH.
+    The aggregate bandwidth of the filesystem is about 75GB/s. So any job with high
+    data performance requirements will take advantage from using $SCRATCH for I/O.
 """
 
 # with config file type:
@@ -26,6 +30,10 @@ fly_folder_to_process = 'fly_003' # folder to be processed
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 # YOUR SUNET ID
 current_user = 'dtadres'
+
+# SCRATCH_DIR
+# SCRATCH_DIR = '/scratch/users/' + current_user
+# Maybe in the future - if I implement this now I won't be able to test code locally on my computer
 
 import pathlib
 import json

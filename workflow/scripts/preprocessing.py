@@ -338,7 +338,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
                 imaging_destination.mkdir(parents=True)
                 copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
                 current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
-                fly_dirs_dict['Folder ' + current_imaging_folder.name] = current_fly_dir_dict
+                fly_dirs_dict[current_imaging_folder.name + ' Imaging'] = current_fly_dir_dict
                 ######################################################################
                 print(f"anat:{current_target_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
@@ -351,10 +351,10 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
                 copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
                 # Update fly_dirs_dict
                 current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
-                fly_dirs_dict['Folder' + current_imaging_folder.name] = current_fly_dir_dict
+                fly_dirs_dict[current_imaging_folder.name + ' Imaging'] = current_fly_dir_dict
                 # Copy fictrac data based on timestamps
                 try:
-                    copy_fictrac(current_target_folder, printlog, user, current_imaging_folder)
+                    copy_fictrac(current_target_folder, printlog, user, current_imaging_folder, fly_dirs_dict)
                     # printlog('Fictrac data copied')
                 except Exception as e:
                     printlog('Could not copy fictrac data because of error:')
@@ -540,12 +540,14 @@ def copy_visual(destination_region, printlog):
     with open(os.path.join(visual_destination, 'visual.json'), 'w') as f:
         json.dump(unique_stimuli, f, indent=4)"""
 
-def copy_fictrac(destination_region, printlog, user, source_fly):
-    # fictrac_folder = '/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/imports/fictrac'
+def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
+    # Make fictrac folder
     fictrac_destination = pathlib.Path(destination_region, 'fictrac')
     fictrac_destination.mkdir(exist_ok=True)
-    #fictrac_destination = os.path.join(destination_region, 'fictrac')
-    #os.mkdir(fictrac_destination)
+    # put fictrac folder path in into fly_dirs_dict
+    current_fly_dir_dict = str(fictrac_destination).split(fictrac_destination.parents[1].name)[-1]
+    fly_dirs_dict[destination_region.name + 'Fictrac'] = current_fly_dir_dict
+    # Different users have different rule on what to do with the data
     if user == 'brezovec':
         user = 'luke'
     if user == 'yandanw':
