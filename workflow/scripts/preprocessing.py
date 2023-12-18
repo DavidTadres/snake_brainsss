@@ -330,7 +330,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
                 imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
-                #copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
+                copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
                 current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
                 fly_dirs_dict[current_imaging_folder.name] = current_fly_dir_dict
                 ######################################################################
@@ -342,7 +342,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
                 imaging_destination = pathlib.Path(current_target_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True)
-                #copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
+                copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
                 # Update fly_dirs_dict
                 current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
                 fly_dirs_dict[current_imaging_folder.name] = current_fly_dir_dict
