@@ -544,9 +544,6 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
     # Make fictrac folder
     fictrac_destination = pathlib.Path(destination_region, 'fictrac')
     fictrac_destination.mkdir(exist_ok=True)
-    # put fictrac folder path in into fly_dirs_dict
-    current_fly_dir_dict = str(fictrac_destination).split(fictrac_destination.parents[1].name)[-1]
-    fly_dirs_dict[destination_region.name + 'Fictrac '] = current_fly_dir_dict
     # Different users have different rule on what to do with the data
     if user == 'brezovec':
         user = 'luke'
@@ -565,12 +562,6 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
                                    source_fly.parts[-3] + '_' + \
                                    source_fly.parts[-2] + '_' + \
                                    source_fly.parts[-1])
-        #source_path = os.path.join(fictrac_folder,
-        #                           source_fly.split('/')[-3] + '_' + source_fly.split('/')[-2] +
-        #                           '_' + source_fly.split('/')[-1])
-        # this would yield "20231201_fly2_func1" as the folder
-        # Find the dat file
-        #for file in os.listdir(source_path):
         for current_file in source_path.iterdir():
             if 'dat' in current_file.name:
                 width = 120
@@ -579,6 +570,10 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
                 target_path = pathlib.Path(fictrac_destination, current_file.name)
                 to_print = str(target_path)
                 printlog(f'Transfering file{to_print:.>{width - 16}}')
+
+                # put fictrac file path in into fly_dirs_dict
+                current_fly_dir_dict = str(target_path).split(fictrac_destination.parents[1].name)[-1]
+                fly_dirs_dict[destination_region.name + 'Fictrac '] = current_fly_dir_dict
     else:
         #fictrac_folder = os.path.join("/oak/stanford/groups/trc/data/fictrac", user)
         fictrac_folder = pathlib.Path("/oak/stanford/groups/trc/data/fictrac", user)
