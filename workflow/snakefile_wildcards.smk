@@ -13,6 +13,12 @@ Note:
     scripts, rather than its explicit path.
 """
 
+# with config file type:
+# ml python/3.9.0
+# source .env_snakemake/bin/activate
+# cd snake_brainsss/workflow
+# snakemake -s snakefile_wildcards.smk --profile config_sherlock
+
 fly_folder_to_process = 'fly_003' # folder to be processed
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 
@@ -92,7 +98,7 @@ ch2_file_paths = create_path_func(fly_folder_to_process, func_file_paths, '/func
 # https://stackoverflow.com/questions/55776952/snakemake-write-files-from-an-array
 
 rule all:
-    input: '/Users/dtadres/snake_brainsss/workflow/io_files/test.txt'
+    input: 'io_files/test.txt'
     #input: expand("{f}", f=full_func_file_path)
 
 
