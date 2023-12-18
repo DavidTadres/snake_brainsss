@@ -50,12 +50,12 @@ if fly_folder_to_process == '':
     fly_folder_to_process = pathlib.Path(dataset_path, 'fly_' + new_fly_number)
 else:
     fly_folder_to_process = pathlib.Path(dataset_path, fly_folder_to_process)
-print(fly_folder_to_process)
+print(pathlib.Path(fly_folder_to_process, 'logs'))
 
 #####
 # LOGGING
 #####
-pathlib.Path(fly_folder_to_process, '/logs').mkdir(exist_ok=True)
+pathlib.Path(fly_folder_to_process, 'logs').mkdir(exist_ok=True, parents=True)
 # Have one log file per fly! This will make everything super traceable!
 logfile = str(fly_folder_to_process) + '/logs/' + fly_folder_to_process.name + '.txt'
 
