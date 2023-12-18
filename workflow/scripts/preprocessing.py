@@ -40,7 +40,7 @@ def bleaching_qc(fly_directory, imaging_data_path):
     """
 
     # args = {'logfile': logfile, 'directory': directory, 'dirtype': dirtype}
-    logfile = brainsss.create_logfile(fly_directory, function_name='fictrac_qc')
+    logfile = brainsss.create_logfile(fly_directory, function_name='bleaching_qc')
     printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
     width = 120
     '''
@@ -152,7 +152,7 @@ def bleaching_qc(fly_directory, imaging_data_path):
         #          verticalalignment='center',
         #          transform=plt.gca().transAxes)
 
-        save_file = pathlib.Path(current_folder, 'bleaching.png')
+        save_file = pathlib.Path(pathlib.Path(current_file).parent, 'bleaching.png')
         plt.savefig(save_file,dpi=300,bbox_inches='tight')
 
 
