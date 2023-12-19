@@ -153,8 +153,11 @@ all_imaging_oak_paths = ch1_func_file_oak_paths + ch2_func_file_oak_paths + ch1_
 full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process, fictrac_file_paths)
 
 # Path for make_mean_brain_rule
-#paths_for_make_mean_brain_rule = create_path_func()
-
+# will look like this: ['../data/../imaging/functional_channel_1','../data/../imaging/functional_channel_2']
+paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_1') + \
+                                    create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_2') + \
+                                    create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_1') + \
+                                    create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_2')
 #######
 # Data path on SCRATCH
 #######
@@ -170,13 +173,17 @@ def convert_oak_path_to_scratch(oak_path):
         all_scratch_paths.append(SCRATCH_DIR + '/data/' + relevant_path_part)
     return(all_scratch_paths)
 
-ch1_func_file_scratch_paths = convert_oak_path_to_scratch(ch1_func_file_oak_paths)
-ch2_func_file_scratch_paths = convert_oak_path_to_scratch(ch2_func_file_oak_paths)
-ch1_anat_file_scratch_paths = convert_oak_path_to_scratch(ch1_anat_file_oak_paths)
-ch2_anat_file_scratch_paths = convert_oak_path_to_scratch(ch2_anat_file_oak_paths)
+#ch1_func_file_scratch_paths = convert_oak_path_to_scratch(ch1_func_file_oak_paths)
+#ch2_func_file_scratch_paths = convert_oak_path_to_scratch(ch2_func_file_oak_paths)
+#ch1_anat_file_scratch_paths = convert_oak_path_to_scratch(ch1_anat_file_oak_paths)
+#ch2_anat_file_scratch_paths = convert_oak_path_to_scratch(ch2_anat_file_oak_paths)
 #full_fictrac_file_scratch_paths = convert_oak_path_to_scratch(full_fictrac_file_oak_paths)
-all_imaging_scratch_paths = ch1_func_file_scratch_paths + ch2_func_file_scratch_paths + ch1_anat_file_scratch_paths + ch2_anat_file_scratch_paths
+#all_imaging_scratch_paths = ch1_func_file_scratch_paths + ch2_func_file_scratch_paths + ch1_anat_file_scratch_paths + ch2_anat_file_scratch_paths
+all_imaging_scratch_paths = convert_oak_path_to_scratch(all_imaging_oak_paths)
+print("all_imaging_scratch_paths" + repr(all_imaging_scratch_paths))
 
+paths_for_make_mean_brain_rule_scratch = convert_oak_path_to_scratch(paths_for_make_mean_brain_rule_oak)
+print("paths_for_make_mean_brain_rule_scratch" + repr(paths_for_make_mean_brain_rule_scratch))
 ####
 # Path per folder
 ####
@@ -253,6 +260,7 @@ rule all:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          bleaching_qc_output_files,
          #expand("{image_path}")
+
 
 
 """rule bleaching_qc_func_rule:
