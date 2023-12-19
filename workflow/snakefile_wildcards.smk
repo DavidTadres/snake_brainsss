@@ -31,6 +31,9 @@ fly_folder_to_process = 'fly_004' # folder to be processed
 # YOUR SUNET ID
 current_user = 'dtadres'
 
+# First n frames to average over when computing mean/fixed brain | Default None
+# (average over all frames). A
+meanbrain_n_frames =  None
 # SCRATCH_DIR
 # SCRATCH_DIR = '/scratch/users/' + current_user
 # Maybe in the future - if I implement this now I won't be able to test code locally on my computer
@@ -220,21 +223,42 @@ rule fictrac_qc_rule:
 
 rule bleaching_qc_rule:
     """
-    Out of memory with one thread
+    Out of memory with one thread on sherlock
     """
     threads: 4
     input:
         all_imaging_paths
     output:
-        expand("{bleaching_qc_png}", bleaching_qc_png=bleaching_qc_output_files)
+        #expand("{bleaching_qc_png}", bleaching_qc_png=bleaching_qc_output_files)
+        "{bleaching_qc_png}" # this might parallelize the operation
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process,
-                                        imaging_data_path=imaging_paths_by_folder
+                                        imaging_data_path=imaging_paths_by_folder,
+                                        test_run=True
                                         #print_output = output
             )
         except Exception as error_stack:
             logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_bleaching_qc_rule')
+            brainsss.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
+rule make_mean_brain_rule:
+    """
+    
+    """
+    threads: 16
+    input:
+        all_imaging_paths
+    output: 'foo'
+        # every nii file is made to a mean brain! Can predict how they
+        # are going to be called and put them here.
+    run:
+        try:
+            preprocessing.make_mean_brain(meanbrain_n_frames)
+        except Exception as error_stack:
+            logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_make_mean_brain')
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)

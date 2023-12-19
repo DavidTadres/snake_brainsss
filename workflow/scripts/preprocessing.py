@@ -16,20 +16,115 @@ mpl.use('agg') # Agg, is a non-interactive backend that can only write to files.
 # Without this I had the following error: Starting a Matplotlib GUI outside of the main thread will likely fail.
 import nibabel as nib
 
+####################
+# GLOBAL VARIABLES #
+####################
+WIDTH = 120 # This is used in all logging files
 
 # To import brainsss, define path to scripts!
 scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
 sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 # print(pathlib.Path(scripts_path, 'workflow'))
 import brainsss
-def bleaching_qc_test(ch1, ch2, print_output):
+
+def make_mean_brain(meanbrain_n_frames):
+
+    # standalone = True  # I'll add if statements to be able to go back to Bella's script easliy
+    # args = {'logfile': logfile, 'directory': directory, 'files': files}
+
+    if standalone:
+        #new logfile
+        import time
+        width = 120  # width of print log
+        logfile = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
+        printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+        sys.stderr = brainsss.Logger_stderr_sherlock(logfile)
+        brainsss.print_title(logfile, width)
+
+        # get path!
+        scripts_path = args['PWD']
+        com_path = os.path.join(scripts_path, 'com')
+        user = scripts_path.split('/')[3]
+        settings = brainsss.load_user_settings(user, scripts_path)
+
+        ### Parse user settings
+        imports_path = settings['imports_path']
+        dataset_path = settings['dataset_path']
+
+        directory = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001/func1/imaging'
+
+        files = []
+        for current_file in pathlib.Path(directory).iterdir():
+            if 'anatomy_channel' in current_file.name or 'functional_channel' in current_file.name \
+                    and not 'mean' in current_file.name: # this last one is necessary so that if script is run twice, mean is still calculated only once
+                files.append(current_file.name)
+
+        """
+        # Copy from preprocess.py
+        for funcanat, dirtype in zip(funcanats, dirtypes):
+            directory = os.path.join(funcanat, 'imaging')
+
+            if dirtype == 'func':
+                files = ['functional_channel_1.nii', 'functional_channel_2.nii']
+            if dirtype == 'anat':
+                files = ['anatomy_channel_1.nii', 'anatomy_channel_2.nii']
+            """
+    else:
+        logfile = args['logfile']
+        directory = args['directory'] # directory will be a full path to either an anat/imaging folder or a func/imaging folder
+        files = args['files']
+
+
+    #meanbrain_n_frames = args.get('meanbrain_n_frames', None)  # First n frames to average over when computing mean/fixed brain | Default None (average over all frames)
+    width = 120
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+
+    # Check if files is just a single file path string
+    if type(files) is str:
+        files = [files]
+
+    for file in files:
+        try:
+            ### make mean ###
+            full_path = os.path.join(directory, file)
+            if full_path.endswith('.nii'):
+                brain = np.asarray(nib.load(full_path).get_fdata(), dtype='uint16')
+            #elif full_path.endswith('.h5'):
+            #    with h5py.File(full_path, 'r') as hf:
+            #        brain = np.asarray(hf['data'][:], dtype='uint16')
+
+            if meanbrain_n_frames is not None:
+                # average over first meanbrain_n_frames frames
+                meanbrain = np.mean(brain[...,:int(meanbrain_n_frames)], axis=-1)
+            else: # average over all frames
+                meanbrain = np.mean(brain, axis=-1)
+
+            ### Save ###
+            save_file = os.path.join(directory, file[:-4] + '_mean.nii')
+            aff = np.eye(4)
+            img = nib.Nifti1Image(meanbrain, aff)
+            img.to_filename(save_file)
+
+            fly_func_str = ('|').join(directory.split('/')[-3:-1])
+            fly_print = directory.split('/')[-3]
+            func_print = directory.split('/')[-2]
+            #printlog(f"COMPLETE | {fly_func_str} | {file} | {brain.shape} --> {meanbrain.shape}")
+            printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {file} | {brain.shape} ===> {meanbrain.shape}")
+            if not standalone:
+                print(brain.shape[-1]) ### IMPORTANT: for communication to main
+            brain = None
+        except FileNotFoundError:
+            printlog(F"Not found (skipping){file:.>{width-20}}")
+            #printlog(f'{file} not found.')
+
+'''def bleaching_qc_test(ch1, ch2, print_output):
     for ch1_data in ch1:
         print("ch1: " + repr(ch1_data))
     with open(print_output[0], "w") as out:
         out.write('done')
     #return(ch1)
-    #pass
-def bleaching_qc(fly_directory, imaging_data_path):
+    #pass'''
+def bleaching_qc(fly_directory, imaging_data_path, test_run=False):
     """
     Perform bleaching qc.
     This is based on Bella's 'bleaching_qc.py' script
@@ -42,119 +137,50 @@ def bleaching_qc(fly_directory, imaging_data_path):
     # args = {'logfile': logfile, 'directory': directory, 'dirtype': dirtype}
     logfile = brainsss.create_logfile(fly_directory, function_name='bleaching_qc')
     printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    width = 120
-    '''
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
-    width = 120
-    # For log file readability clearly indicate when function was called
-    brainsss.print_function_start(logfile, width, 'bleaching_qc')
-    '''
-    # We only care about bleaching in func I think?
-    #dirtype = 'func' # 'func' or 'anat'
 
-    #fly_dirs = directory
+    brainsss.print_function_start(logfile, WIDTH, 'bleaching_qc')
 
-    #func_dirs = []
-    #anat_dirs = []
-    #print(fly_dirs)
 
-    '''
-    for current_dir in directory.iterdir():
-        if 'func' in current_dir.name:
-            func_dirs.extend(pathlib.Path(current_dir, x) for x in fly_dirs.iterdir() if 'func' in x.name)
-        elif 'anat' in current_dir.name:
-            anat_dirs.extend(pathlib.Path(current_dir, x) for x in fly_dirs.iterdir() if 'anat' in x.name)
-    func_dirs = natsort.natsorted(func_dirs)
-    anat_dirs = natsort.natsorted(anat_dirs)'''
-    '''####
-    funcs = []
-    anats = []
-    for fly_dir in fly_dirs:
-        fly_directory = os.path.join(dataset_path, fly_dir)
-        if dirtype == 'func' or dirtype == None:
-            funcs.extend([os.path.join(fly_directory, x) for x in os.listdir(fly_directory) if 'func' in x])
-        if dirtype == 'anat' or dirtype == None:
-            anats.extend([os.path.join(fly_directory, x) for x in os.listdir(fly_directory) if 'anat' in x])
-
-    brainsss.sort_nicely(funcs)
-    brainsss.sort_nicely(anats)
-    funcanats = funcs + anats # ? what's that thing doing here?
-    dirtypes = ['func']*len(funcs) + ['anat']*len(anats)
-    ####
-    #logfile = args['logfile']
-    if standalone:
-        directory = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001/func1/imaging'
-    else:
-        directory = args['directory'] # directory will be a full path to either an anat/imaging folder or a func/imaging folder
-    #dirtype = args['dirtype']
-    width = 120
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-
-    #################
-    ### Define relevant folders
-    #################
-
-    #for imaging_dirs in fly_dir_dict:
-    #    if 'anat' in
-
-    #################
-    ### Load Data ###
-    #################
-
-    if dirtype == 'func':
-        files = ['functional_channel_1', 'functional_channel_2']
-    elif dirtype == 'anat':
-        files = ['anatomy_channel_1', 'anatomy_channel_2']'''
-
-    '''for file in files:
-        full_file = os.path.join(directory, file + '.nii')
-        if os.path.exists(full_file):
-            brain = np.asarray(nib.load(full_file).get_fdata(), dtype='uint16')
-            data_mean[file] = np.mean(brain,axis=(0,1,2))
-        else:
-            printlog(F"Not found (skipping){file:.>{width-20}}")'''
     data_mean = {}
     for current_folder in imaging_data_path:
         print(current_folder)
-        for current_file in current_folder:
-            if pathlib.Path(current_file[0]).exists():
-                brain = np.asarray(nib.load(current_file).get_fdata(), dtype=np.uint16)
-                data_mean[pathlib.Path(current_file).name] = np.mean(brain, axis=(0,1,2))
+        for current_file_path in current_folder:
+            if pathlib.Path(current_file_path[0]).exists():
+                if test_run:
+                    brain= np.zeros((2,2,2)) # create 3D array of zeros instead of loading the whole brain!
+                else:
+                    brain = np.asarray(nib.load(current_file_path).get_fdata(), dtype=np.uint16)
+                data_mean[pathlib.Path(current_file_path).name] = np.mean(brain, axis=(0,1,2))
             else:
-                printlog(F"Not found (skipping){pathlib.Path(current_file).name:.>{width-20}}")
+                printlog(F"Not found (skipping){pathlib.Path(current_file_path).name:.>{WIDTH-20}}")
         ##############################
         ### Output Bleaching Curve ###
         ##############################
 
         plt.rcParams.update({'font.size': 24})
         fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
         signal_loss = {}
-        for file in data_mean:
-            xs = np.arange(len(data_mean[file]))
+        for filename in data_mean:
+            xs = np.arange(len(data_mean[filename]))
             color='k'
-            if file[-1] == '1': color='red'
-            if file[-1] == '2': color='green'
-            plt.plot(data_mean[file],color=color,label=file)
-            linear_fit = np.polyfit(xs, data_mean[file], 1)
-            plt.plot(np.poly1d(linear_fit)(xs),color='k',linewidth=3,linestyle='--')
-            signal_loss[file] = linear_fit[0]*len(data_mean[file])/linear_fit[1]*-100
-        plt.xlabel('Frame Num')
-        plt.ylabel('Avg signal')
+            if 'functional_channel_1.nii' in filename:
+                color='red'
+            if 'functional_channel_2.nii' in filename:
+                color='green'
+            ax.plot(data_mean[filename],color=color,label=filename)
+            linear_fit = np.polyfit(xs, data_mean[filename], 1)
+            ax.plot(np.poly1d(linear_fit)(xs),color='k',linewidth=3,linestyle='--')
+            signal_loss[filename] = linear_fit[0]*len(data_mean[filename])/linear_fit[1]*-100
+        ax.set_xlabel('Frame Num')
+        ax.set_ylabel('Avg signal')
         loss_string = ''
-        for file in data_mean:
-            loss_string = loss_string + file + ' lost' + F'{int(signal_loss[file])}' +'%\n'
-        plt.title(loss_string, ha='center', va='bottom')
-        # plt.text(0.5,0.9,
-        #          loss_string,
-        #          horizontalalignment='center',
-        #          verticalalignment='center',
-        #          transform=plt.gca().transAxes)
+        for filename in data_mean:
+            loss_string = loss_string + filename + ' lost' + F'{int(signal_loss[filename])}' +'%\n'
+        ax.set_title(loss_string, ha='center', va='bottom')
 
-        save_file = pathlib.Path(pathlib.Path(current_file).parent, 'bleaching.png')
-        plt.savefig(save_file,dpi=300,bbox_inches='tight')
-
+        save_file = pathlib.Path(pathlib.Path(current_file_path).parent, 'bleaching.png')
+        fig.savefig(save_file,dpi=300,bbox_inches='tight')
 
 def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):
     """
@@ -168,6 +194,8 @@ def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):
     #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
     logfile = brainsss.create_logfile(fly_directory, function_name='fictrac_qc')
     printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    brainsss.print_function_start(logfile, WIDTH, 'fictrac_qc')
+
     #width = 120
     # For log file readability clearly indicate when function was called
 
@@ -206,14 +234,13 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     """
     printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
     # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
-    width = 120
     # For log file readability clearly indicate when function was called
-    brainsss.print_function_start(logfile, width, 'fly_builder')
+    brainsss.print_function_start(logfile, WIDTH, 'fly_builder')
 
     # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder
     destination_fly.mkdir(parents=True, exist_ok=True)  # Don't use 'exist_ok=True' to make sure we get an error if folder exists!
-    printlog(F'Created fly directory:{str(destination_fly.name):.>{width - 22}}')
+    printlog(F'Created fly directory:{str(destination_fly.name):.>{WIDTH - 22}}')
 
     # Create a dict that will save all paths were data is saved save it in the folder
     # to streamline downstream analysis and to make explicit where a given folder (e.g.
@@ -231,7 +258,7 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
         paths_to_build.append(pathlib.Path(imports_path, current_dir))
 
     # get fly folders in flagged directory and sort to ensure correct fly order
-    printlog(F'Building flies from: {str(paths_to_build):.>{width - 22}}')
+    printlog(F'Building flies from: {str(paths_to_build):.>{WIDTH - 22}}')
     #likely_fly_folders = os.listdir(flagged_dir)
     #brainsss.sort_nicely(likely_fly_folders)
 
@@ -239,11 +266,11 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     for current_path_to_build in paths_to_build:
         # Make sure that each fly folder is actually containing the keyword 'fly'
         likely_fly_folders = [i for i in current_path_to_build.iterdir() if 'fly' in i.name]
-        printlog(F"Found fly folders{str(likely_fly_folders):.>{width - 17}}")
+        printlog(F"Found fly folders{str(likely_fly_folders):.>{WIDTH - 17}}")
 
         for current_fly_folder in likely_fly_folders:
 
-            printlog(f"\n{'   Building ' + current_fly_folder.name + ' as ' + str(target_folder.name) + '   ':-^{width}}")
+            printlog(f"\n{'   Building ' + current_fly_folder.name + ' as ' + str(target_folder.name) + '   ':-^{WIDTH}}")
 
             # Copy fly data
             fly_dirs_dict = copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
@@ -481,8 +508,8 @@ def copy_file(source, target, printlog):
     #print('source: ' + str(source))
     #print('target: ' + str(target))
     to_print=str(source.name +' to ' + target.name)
-    width = 120
-    printlog(f'Transfering file{to_print:.>{width - 16}}')
+    #width = 120
+    printlog(f'Transfering file{to_print:.>{WIDTH - 16}}')
     ##sys.stdout.flush()
     copyfile(source, target)
 
@@ -579,12 +606,12 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
                                    source_fly.parts[-1])
         for current_file in source_path.iterdir():
             if 'dat' in current_file.name:
-                width = 120
+                #width = 120
                 #source_path = os.path.join(source_path, file)
                 dat_path = current_file
                 target_path = pathlib.Path(fictrac_destination, current_file.name)
                 to_print = str(target_path)
-                printlog(f'Transfering file{to_print:.>{width - 16}}')
+                printlog(f'Transfering file{to_print:.>{WIDTH - 16}}')
 
                 # put fictrac file path in into fly_dirs_dict
                 current_fly_dir_dict = str(target_path).split(fictrac_destination.parents[1].name)[-1]
@@ -656,8 +683,8 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
         try:
             datetime_correct = correct_date_and_size[np.argmin(time_differences)]
         except:
-            width = 120
-            printlog(F"{'   No fictrac data found --- continuing without fictrac data   ':*^{width}}")
+            #width = 120
+            printlog(F"{'   No fictrac data found --- continuing without fictrac data   ':*^{WIDTH}}")
             return
 
         # Collect all fictrac files with correct datetime
@@ -676,14 +703,14 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
         fictrac_folder.mkdir()
         #os.mkdir(fictrac_destination)
         for file in correct_time_files:
-            width = 120
+            #width = 120
             target_path = pathlib.Path(fictrac_folder, file)
             source_path = pathlib.Path(fictrac_folder, file)
             #target_path = os.path.join(fictrac_destination, file)
             #source_path = os.path.join(fictrac_folder, file)
             #to_print = ('/').join(target_path.split('/')[-4:])
             to_print = str(target_path)
-            printlog(f'Transfering file{to_print:.>{width - 16}}')
+            printlog(f'Transfering file{to_print:.>{WIDTH - 16}}')
             # printlog('Transfering {}'.format(target_path))
             ##sys.stdout.flush()
 
