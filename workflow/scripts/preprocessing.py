@@ -189,7 +189,7 @@ def bleaching_qc(fly_directory,
                 #if test_run: # doesn't work for some reason
                 #    brain = np.asarray(([[0,0]], [[1,1]], [[2,2]])) # create 3D array of zeros instead of loading the whole brain!
                 #else:
-                printlog(F"Currently reading: {pathlib.Path(current_file_path_read).name:.>{WIDTH - 20}}")
+                printlog(F"Currently reading: {pathlib.Path(current_file_path_read):.>{WIDTH - 20}}")
                 brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16)
                 data_mean[pathlib.Path(current_file_path_read).name] = np.mean(brain, axis=(0,1,2))
             else:
