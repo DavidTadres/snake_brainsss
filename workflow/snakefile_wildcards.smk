@@ -223,9 +223,9 @@ rule fictrac_qc_rule:
 
 rule bleaching_qc_rule:
     """
-    Out of memory with one thread on sherlock
+    Out of memory with 1 & 4 threads on sherlock
     """
-    threads: 4
+    threads: 16 # This is parallelized so more should generally be better!
     input:
         all_imaging_paths
     output:
