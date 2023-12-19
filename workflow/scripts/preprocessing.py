@@ -184,6 +184,8 @@ def bleaching_qc(fly_directory,
 
     data_mean = {}
     for current_folder_read, current_folder_save in zip(imaging_data_path_read_from,imaging_data_path_save_to):
+        printlog(F"Currently folder: {current_folder_read:.>{WIDTH - 20}}")
+
         for current_file_path_read, current_file_path_save in zip(current_folder_read, current_folder_save):
             if pathlib.Path(current_file_path_read[0]).exists():
                 #if test_run: # doesn't work for some reason
