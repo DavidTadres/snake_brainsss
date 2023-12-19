@@ -223,6 +223,8 @@ def bleaching_qc(fly_directory,
 
         save_file = pathlib.Path(pathlib.Path(current_file_path_save).parent, 'bleaching.png')
         fig.savefig(save_file,dpi=300,bbox_inches='tight')
+        printlog(F"Prepared plot and saved as: {str(save_file):.>{WIDTH - 20}}")
+
 
 def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):
     """

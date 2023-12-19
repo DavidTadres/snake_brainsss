@@ -208,7 +208,7 @@ func_and_anat_paths = func_file_paths + anat_file_paths
 
 imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(func_and_anat_paths)
 # print('HERE' + repr(imaging_paths_by_folder_oak))
-# print('AND HERE' + repr(imaging_paths_by_folder_scratch))
+print('AND HERE' + repr(imaging_paths_by_folder_scratch))
 
 
 #####
@@ -237,7 +237,7 @@ rule all:
     input:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          bleaching_qc_output_files,
-         #expand("{image_path}")
+         expand("{image_path}")
 
 
 """rule bleaching_qc_func_rule:
@@ -343,7 +343,7 @@ rule bleaching_qc_rule:
                 error_stack=error_stack,
                 width=width)
             print('Error with bleaching_qc')
-'''
+
 rule make_mean_brain_rule:
     """
     Here it should be possible to parallelize quite easily as each input file creates
@@ -353,7 +353,7 @@ rule make_mean_brain_rule:
     paths_to_use = ['../fly_004/func0/imaging', '../fly_004/func1/imaging']
     
     rule all would request the 'mean' brain of each of those
-    paths_to_use
+    expand("{imaging_paths}/")
     """
     threads: 16
     input:
@@ -371,7 +371,7 @@ rule make_mean_brain_rule:
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-'''
+
 
 
 """
