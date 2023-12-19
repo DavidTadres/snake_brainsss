@@ -149,16 +149,16 @@ def create_paths_each_experiment(func_and_anat_paths):
                 str(fly_folder_to_process) + current_path + '/functional_channel_2.nii']
                 )
             imaging_path_by_folder_scratch.append([
-                SCRATCH_DIR + '/data/' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
-                SCRATCH_DIR + '/data/' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
+                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
+                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
         elif 'anat' in current_path:
             imaging_paths_by_folder_oak.append([
                 str(fly_folder_to_process) + current_path + '/anatomy_channel_1.nii',
                 str(fly_folder_to_process) + current_path + '/anatomy_channel_2.nii']
                 )
             imaging_path_by_folder_scratch.append([
-                SCRATCH_DIR + '/data/' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
-                SCRATCH_DIR + '/data/' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
+                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
+                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
     return(imaging_paths_by_folder_oak, imaging_path_by_folder_scratch)
 
 func_and_anat_paths = func_file_paths + anat_file_paths
@@ -231,7 +231,7 @@ rule all:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          expand("{bleaching_qc_png}", bleaching_qc_png=bleaching_qc_output_files)
     #input: expand("{f}", f=full_func_file_path)
-            #'io_files/test.txt',
+        #'io_files/test.txt',
 
 """rule bleaching_qc_func_rule:
     "This should not run because the output is not requested in rule all"
@@ -246,6 +246,9 @@ rule all:
                                         print_output = output)"""
 
 rule copy_to_scratch_rule:
+    """
+    
+    """
     threads: 1
     input:
         all_imaging_oak_paths
