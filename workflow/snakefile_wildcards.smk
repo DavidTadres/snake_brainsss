@@ -237,7 +237,7 @@ rule all:
     input:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          bleaching_qc_output_files,
-         expand("{image_path}")
+         #expand("{image_path}")
 
 
 """rule bleaching_qc_func_rule:
