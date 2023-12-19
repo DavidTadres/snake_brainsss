@@ -132,6 +132,9 @@ def make_mean_brain(fly_directory,
     aff = np.eye(4)
     object_to_save = nib.Nifti1Image(meanbrain, aff)
     object_to_save.to_filename(path_to_save)
+    fly_print = fly_directory.name
+    func_print = path_to_read.split('/')[-2]
+    printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {file} | {brain_data.shape} ===> {meanbrain.shape}")
 
     for file in files:
 
@@ -199,8 +202,11 @@ def bleaching_qc(fly_directory,
     for current_folder_read, current_folder_save in zip(imaging_data_path_read_from,imaging_data_path_save_to):
         #printlog(F"Current folder to read from: {str(current_folder_read):.>{WIDTH - 20}}")
         #printlog(F"Current folder to write to: {str(current_folder_save):.>{WIDTH - 20}}")
-        for current_file_path_read, current_file_path_save in zip(str(current_folder_read), str(current_folder_save)):
+        #print("current_folder_read" + repr(current_folder_read))
+        #print("current_folder_save" + current_folder_save)
+        for current_file_path_read, current_file_path_save in zip(current_folder_read, current_folder_save):
             #printlog(F"Current file to read from: {str(current_file_path_read):.>{WIDTH - 20}}")
+            #print("current_file_path_read" + current_file_path_read)
             #if pathlib.Path(current_file_path_read[0]).exists():
             printlog(F"Currently reading: {current_file_path_read:.>{WIDTH - 20}}")
             brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16)
