@@ -246,6 +246,7 @@ rule all:
                                         print_output = output)"""
 
 rule copy_to_scratch_rule:
+    threads: 1
     input:
         imaging_paths_by_folder_oak
     output:
