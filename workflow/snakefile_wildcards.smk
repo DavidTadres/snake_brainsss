@@ -153,7 +153,7 @@ all_imaging_oak_paths = ch1_func_file_oak_paths + ch2_func_file_oak_paths + ch1_
 full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process, fictrac_file_paths)
 
 # Path for make_mean_brain_rule
-paths_for_make_mean_brain_rule = create_path_func()
+#paths_for_make_mean_brain_rule = create_path_func()
 
 #######
 # Data path on SCRATCH
@@ -361,7 +361,7 @@ rule bleaching_qc_rule:
             # Unclear why the write_error function doesn't work...print for now.
             print(traceback.format_exc())
             print('Error with bleaching_qc' )
-
+'''
 rule make_mean_brain_rule:
     """
     Here it should be possible to parallelize quite easily as each input file creates
@@ -400,7 +400,7 @@ rule make_mean_brain_rule:
                 error_stack=error_stack,
                 width=width)
 
-
+'''
 
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
