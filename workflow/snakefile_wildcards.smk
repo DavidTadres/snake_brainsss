@@ -345,7 +345,7 @@ rule bleaching_qc_rule:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process,
                                         imaging_data_path_read_from=imaging_paths_by_folder_scratch, # {input} didn't work, I think because it destroyed the list of list we expect to see here #imaging_paths_by_folder_scratch,
-                                        imaging_data_path_save_to={output} #imaging_paths_by_folder_oak
+                                        imaging_data_path_save_to=bleaching_qc_output_files # can't use output, messes things up here! #imaging_paths_by_folder_oak
                                         #print_output = output
             )
             print('Done with bleaching_qc')
