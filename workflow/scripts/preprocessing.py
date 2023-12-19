@@ -15,6 +15,7 @@ import matplotlib as mpl
 mpl.use('agg') # Agg, is a non-interactive backend that can only write to files.
 # Without this I had the following error: Starting a Matplotlib GUI outside of the main thread will likely fail.
 import nibabel as nib
+import shutil
 
 ####################
 # GLOBAL VARIABLES #
@@ -26,6 +27,32 @@ scripts_path = pathlib.Path(__file__).parent.resolve()  # path of brainsss
 sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 # print(pathlib.Path(scripts_path, 'workflow'))
 import brainsss
+def copy_to_scratch(fly_directory, paths_on_oak, paths_on_scratch):
+    """
+    For faster reading and writing, it might be worth putting the nii
+    files (and other large files) on $SCRATCH and only save the result
+    on oak:
+    https://www.sherlock.stanford.edu/docs/storage/filesystems/#scratch
+        Each compute node has a low latency, high-bandwidth Infiniband
+        link to $SCRATCH. The aggregate bandwidth of the filesystem is
+        about 75GB/s. So any job with high data performance requirements
+         will take advantage from using $SCRATCH for I/O.
+    :return:
+    """
+    #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    logfile = brainsss.create_logfile(fly_directory, function_name='copy_to_scratch')
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    brainsss.print_function_start(logfile, WIDTH, 'copy_to_scratch')
+
+    #width = 120
+    # For log file readability clearly indicate when function was called
+
+    for current_file_src, current_file_dst in zip(paths_on_oak, paths_on_scratch):
+        # make folder if not exist
+        pathlib.Path(current_file_dst).parent.mkdir(exist_ok=True, parents=True)
+        # copy file
+        shutil.copy(current_file_src, current_file_dst)
+        printlog('Copied: ' + repr(current_file_dst))
 
 def make_mean_brain(meanbrain_n_frames):
 
@@ -124,7 +151,10 @@ def make_mean_brain(meanbrain_n_frames):
         out.write('done')
     #return(ch1)
     #pass'''
-def bleaching_qc(fly_directory, imaging_data_path):
+def bleaching_qc(fly_directory,
+                 imaging_data_path_read_from,
+                 imaging_data_path_save_to
+                 ):
     """
     Perform bleaching qc.
     This is based on Bella's 'bleaching_qc.py' script
@@ -140,19 +170,18 @@ def bleaching_qc(fly_directory, imaging_data_path):
 
     brainsss.print_function_start(logfile, WIDTH, 'bleaching_qc')
 
-
     data_mean = {}
-    for current_folder in imaging_data_path:
-        print(current_folder)
-        for current_file_path in current_folder:
-            if pathlib.Path(current_file_path[0]).exists():
+    for current_folder_read, current_folder_save in zip(imaging_data_path_read_from,imaging_data_path_save_to):
+        print(current_folder_read)
+        for current_file_path_read, current_file_path_save in zip(current_folder_read, current_folder_save):
+            if pathlib.Path(current_file_path_read[0]).exists():
                 #if test_run: # doesn't work for some reason
                 #    brain = np.asarray(([[0,0]], [[1,1]], [[2,2]])) # create 3D array of zeros instead of loading the whole brain!
                 #else:
-                brain = np.asarray(nib.load(current_file_path).get_fdata(), dtype=np.uint16)
-                data_mean[pathlib.Path(current_file_path).name] = np.mean(brain, axis=(0,1,2))
+                brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16)
+                data_mean[pathlib.Path(current_file_path_read).name] = np.mean(brain, axis=(0,1,2))
             else:
-                printlog(F"Not found (skipping){pathlib.Path(current_file_path).name:.>{WIDTH-20}}")
+                printlog(F"Not found (skipping){pathlib.Path(current_file_path_read).name:.>{WIDTH-20}}")
         ##############################
         ### Output Bleaching Curve ###
         ##############################
@@ -180,7 +209,7 @@ def bleaching_qc(fly_directory, imaging_data_path):
             loss_string = loss_string + filename + ' lost' + F'{int(signal_loss[filename])}' +'%\n'
         ax.set_title(loss_string, ha='center', va='bottom')
 
-        save_file = pathlib.Path(pathlib.Path(current_file_path).parent, 'bleaching.png')
+        save_file = pathlib.Path(pathlib.Path(current_file_path_save).parent, 'bleaching.png')
         fig.savefig(save_file,dpi=300,bbox_inches='tight')
 
 def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):

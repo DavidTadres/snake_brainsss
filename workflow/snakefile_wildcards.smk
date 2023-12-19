@@ -35,8 +35,10 @@ current_user = 'dtadres'
 # (average over all frames). A
 meanbrain_n_frames =  None
 # SCRATCH_DIR
-# SCRATCH_DIR = '/scratch/users/' + current_user
+SCRATCH_DIR = '/scratch/users/' + current_user
 # Maybe in the future - if I implement this now I won't be able to test code locally on my computer
+# Do this - if it's really much faster it's great for debugging actually. Since it's stays for 90 days
+# I only need to copy a test dataset once and hopefully will be able to use data on there very quickly
 
 import pathlib
 import json
@@ -138,43 +140,83 @@ def create_paths_each_experiment(func_and_anat_paths):
     [[func0/func_channel1.nii, func0/func_channel2.nii], [func1/func_channel1.nii, func1/func_channel2.nii]]
     :param func_and_anat_paths: a list with all func and anat path as defined in 'fly_004_dirs.json'
     """
-    imaging_paths_by_folder = []
+    imaging_paths_by_folder_oak = []
+    imaging_path_by_folder_scratch = []
     for current_path in func_and_anat_paths:
         if 'func' in current_path:
-            imaging_paths_by_folder.append([
+            imaging_paths_by_folder_oak.append([
                 str(fly_folder_to_process) + current_path + '/functional_channel_1.nii',
                 str(fly_folder_to_process) + current_path + '/functional_channel_2.nii']
                 )
+            imaging_path_by_folder_scratch.append([
+                SCRATCH_DIR + '/data/' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
+                SCRATCH_DIR + '/data/' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
         elif 'anat' in current_path:
-            imaging_paths_by_folder.append([
+            imaging_paths_by_folder_oak.append([
                 str(fly_folder_to_process) + current_path + '/anatomy_channel_1.nii',
                 str(fly_folder_to_process) + current_path + '/anatomy_channel_2.nii']
                 )
-    return(imaging_paths_by_folder)
+            imaging_path_by_folder_scratch.append([
+                SCRATCH_DIR + '/data/' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
+                SCRATCH_DIR + '/data/' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
+    return(imaging_paths_by_folder_oak, imaging_path_by_folder_scratch)
 
 func_and_anat_paths = func_file_paths + anat_file_paths
 
-imaging_paths_by_folder = create_paths_each_experiment(func_and_anat_paths)
-#print('HERE' + repr(imaging_paths_by_folder))
+imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(func_and_anat_paths)
+print('HERE' + repr(imaging_paths_by_folder_oak))
+print('AND HERE' + repr(imaging_paths_by_folder_scratch))
 
+#######
+# Data path on OAK
+#######
 # Get imaging data paths for func
-ch1_func_file_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_1.nii')
-ch2_func_file_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_2.nii')
+ch1_func_file_oak_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_1.nii')
+ch2_func_file_oak_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_2.nii')
 # and for anat data
-ch1_anat_file_paths = create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_1.nii')
-ch2_anat_file_paths = create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_2.nii')
+ch1_anat_file_oak_paths = create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_1.nii')
+ch2_anat_file_oak_paths = create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_2.nii')
 # List of all imaging data
-all_imaging_paths = ch1_func_file_paths + ch2_func_file_paths + ch1_anat_file_paths + ch2_anat_file_paths
+all_imaging_oak_paths = ch1_func_file_oak_paths + ch2_func_file_oak_paths + ch1_anat_file_oak_paths + ch2_anat_file_oak_paths
 
 # Fictrac files are named non-deterministically (could be changed of course) but for now
 # the full filename is in the fly_dirs_dict
-full_fictrac_file_paths = create_path_func(fly_folder_to_process, fictrac_file_paths)
+full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process, fictrac_file_paths)
+#######
+# Data path on SCRATCH
+#######
+def convert_oak_path_to_scratch(oak_path):
+    """
+
+    :param oak_path: expects a list of path, i.e. ch1_func_file_oak_paths
+    :return:
+    """
+    all_scratch_paths = []
+    for current_path in oak_path:
+        relevant_path_part = current_path.split('data')[-1] # data seems to be the root folder everyone is using
+        all_scratch_paths.append(SCRATCH_DIR + '/data/' + relevant_path_part)
+    return(all_scratch_paths)
+
+ch1_func_file_scratch_paths = convert_oak_path_to_scratch(ch1_func_file_oak_paths)
+ch2_func_file_scratch_paths = convert_oak_path_to_scratch(ch2_func_file_oak_paths)
+ch1_anat_file_scratch_paths = convert_oak_path_to_scratch(ch1_anat_file_oak_paths)
+ch2_anat_file_scratch_paths = convert_oak_path_to_scratch(ch2_anat_file_oak_paths)
+#full_fictrac_file_scratch_paths = convert_oak_path_to_scratch(full_fictrac_file_oak_paths)
+
+
+#####
+# Output data path ON SCRATCH!!!!
+#####
 # Output files for fictrac_qc rule
-fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_paths,
+#fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_scratch_paths,
+#                                                             filename='fictrac_2d_hist_fixed.png')
+fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_oak_paths,
                                                              filename='fictrac_2d_hist_fixed.png')
 
-bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder,
-                                                    filename='bleaching.png')
+#bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder,
+#                                                    filename='bleaching.png')
+bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder_oak,
+                                                           filename='bleaching.png')
 
 # TESTING
 # full_fictrac_file_paths = [full_fictrac_file_paths[0]]
@@ -191,7 +233,7 @@ rule all:
     #input: expand("{f}", f=full_func_file_path)
             #'io_files/test.txt',
 
-'''rule bleaching_qc_func_rule:
+"""rule bleaching_qc_func_rule:
     "This should not run because the output is not requested in rule all"
     input:
         channel1_func = expand("{ch1_func}", ch1_func=ch1_func_file_paths),
@@ -201,12 +243,30 @@ rule all:
     run:
         preprocessing.bleaching_qc_test(ch1=input.channel1_func,
                                         ch2=input.channel2,
-                                        print_output = output)'''
+                                        print_output = output)"""
+
+rule copy_to_scratch_rule:
+    input:
+        imaging_paths_by_folder_oak
+    output:
+        imaging_paths_by_folder_scratch
+    run:
+        try:
+            preprocessing.copy_to_scratch(fly_directory = fly_folder_to_process,
+                                          paths_on_oak = imaging_paths_by_folder_oak,
+                                          paths_on_scratch = imaging_paths_by_folder_scratch
+                                          )
+        except Exception as error_stack:
+            logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_copy_to_scratch')
+            brainsss.write_error(logfile=logfile,
+                                 error_stack=error_stack,
+                                 width=width)
 
 rule fictrac_qc_rule:
     threads: 1
     input:
-        fictrac_file_paths = expand("{fictrac}", fictrac=full_fictrac_file_paths)
+        full_fictrac_file_oak_paths
+        #fictrac_file_paths = expand("{fictrac}", fictrac=full_fictrac_file_scratch_paths)
     output:
         expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed)
     run:
@@ -223,26 +283,28 @@ rule fictrac_qc_rule:
 
 rule bleaching_qc_rule:
     """
-    Out of memory with 1 & 4 threads on sherlock
+    Out of memory with 1 & 4 threads on sherlock.
+    With 16 I had a ~45% memory utiliziation. Might be worth trying 8 or 10 cores
     """
     threads: 16 # This is parallelized so more should generally be better!
     input:
-        all_imaging_paths
+        imaging_paths_by_folder_scratch
     output:
         #expand("{bleaching_qc_png}", bleaching_qc_png=bleaching_qc_output_files)
         "{bleaching_qc_png}" # this might parallelize the operation
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process,
-                                        imaging_data_path=imaging_paths_by_folder
+                                        imaging_data_path_read_from=imaging_paths_by_folder_scratch,
+                                        imaging_data_path_save_to=imaging_paths_by_folder_oak
                                         #print_output = output
             )
         except Exception as error_stack:
             logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_bleaching_qc_rule')
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
-                width=width)
-
+                width=width)'''
+'''
 rule make_mean_brain_rule:
     """
     
@@ -262,7 +324,7 @@ rule make_mean_brain_rule:
                 error_stack=error_stack,
                 width=width)
 
-
+'''
 
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
