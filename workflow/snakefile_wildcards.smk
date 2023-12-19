@@ -202,7 +202,7 @@ ch2_func_file_scratch_paths = convert_oak_path_to_scratch(ch2_func_file_oak_path
 ch1_anat_file_scratch_paths = convert_oak_path_to_scratch(ch1_anat_file_oak_paths)
 ch2_anat_file_scratch_paths = convert_oak_path_to_scratch(ch2_anat_file_oak_paths)
 #full_fictrac_file_scratch_paths = convert_oak_path_to_scratch(full_fictrac_file_oak_paths)
-
+all_imaging_scratch_paths = ch1_func_file_scratch_paths + ch2_func_file_scratch_paths + ch1_anat_file_scratch_paths + ch2_anat_file_scratch_paths
 
 #####
 # Output data path ON SCRATCH!!!!
@@ -248,14 +248,14 @@ rule all:
 rule copy_to_scratch_rule:
     threads: 1
     input:
-        imaging_paths_by_folder_oak
+        all_imaging_oak_paths
     output:
-        imaging_paths_by_folder_scratch
+        all_imaging_scratch_paths
     run:
         try:
             preprocessing.copy_to_scratch(fly_directory = fly_folder_to_process,
-                                          paths_on_oak = imaging_paths_by_folder_oak,
-                                          paths_on_scratch = imaging_paths_by_folder_scratch
+                                          paths_on_oak = all_imaging_oak_paths,
+                                          paths_on_scratch = all_imaging_scratch_paths
                                           )
         except Exception as error_stack:
             logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_copy_to_scratch')

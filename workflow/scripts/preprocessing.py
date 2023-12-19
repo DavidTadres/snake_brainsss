@@ -48,6 +48,7 @@ def copy_to_scratch(fly_directory, paths_on_oak, paths_on_scratch):
     # For log file readability clearly indicate when function was called
 
     for current_file_src, current_file_dst in zip(paths_on_oak, paths_on_scratch):
+
         # make folder if not exist
         pathlib.Path(current_file_dst).parent.mkdir(exist_ok=True, parents=True)
         # copy file
