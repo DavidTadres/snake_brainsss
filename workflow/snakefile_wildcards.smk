@@ -16,6 +16,7 @@ AND:
     The aggregate bandwidth of the filesystem is about 75GB/s. So any job with high
     data performance requirements will take advantage from using $SCRATCH for I/O.
 """
+import traceback
 
 # with config file type:
 # ml python/3.9.0
@@ -207,8 +208,8 @@ def create_paths_each_experiment(func_and_anat_paths):
 func_and_anat_paths = func_file_paths + anat_file_paths
 
 imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(func_and_anat_paths)
-# print('HERE' + repr(imaging_paths_by_folder_oak))
-print('AND HERE' + repr(imaging_paths_by_folder_scratch))
+print('HERE' + repr(imaging_paths_by_folder_oak))
+#print('AND HERE' + repr(imaging_paths_by_folder_scratch))
 
 
 #####
@@ -325,14 +326,15 @@ rule bleaching_qc_rule:
     """
     threads: 16 # This is parallelized so more should generally be better!
     input:
-        imaging_paths_by_folder_scratch
+        imaging_paths_by_folder_oak
+        #imaging_paths_by_folder_scratch
         #imaging_paths_by_folder_scratch
     output:
         bleaching_qc_output_files
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process,
-                                        imaging_data_path_read_from={input}, #imaging_paths_by_folder_scratch,
+                                        imaging_data_path_read_from=imaging_paths_by_folder_oak, # {input} didn't work, I think because it destroyed the list of list we expect to see here #imaging_paths_by_folder_scratch,
                                         imaging_data_path_save_to={output} #imaging_paths_by_folder_oak
                                         #print_output = output
             )
@@ -342,7 +344,9 @@ rule bleaching_qc_rule:
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-            print('Error with bleaching_qc')
+            # Unclear why the write_error function doesn't work...print for now.
+            print(traceback.format_exc())
+            print('Error with bleaching_qc' )
 '''
 rule make_mean_brain_rule:
     """
