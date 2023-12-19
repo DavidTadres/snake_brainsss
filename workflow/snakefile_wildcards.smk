@@ -234,6 +234,16 @@ bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_
 # how to use expand example
 # https://stackoverflow.com/questions/55776952/snakemake-write-files-from-an-array
 
+"""
+rule blueprint
+
+rule name:
+    input: Files that must be present to run. if not present, will look for other rules that produce
+            files needed here
+    output: Files produced by this rule. If rule is run and file is not produced, will produce error
+    run/shell: python (run) or shell command to be run. 
+"""
+
 rule all:
     input:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
@@ -354,10 +364,20 @@ rule make_mean_brain_rule:
     one output file!
     
     input would be something like
-    paths_to_use = ['../fly_004/func0/imaging', '../fly_004/func1/imaging']
+    paths_to_use = ['../fly_004/func0/imaging/functional_channel_1', '../fly_004/func1/imaging/functional_channel_2']
     
     rule all would request the 'mean' brain of each of those
-    expand("{imaging_paths}/")
+    expand("{imaging_path}_mean.nii", imaging_path=paths_to_use)
+    
+    rule make_mean_brain_rule:
+        input: "{imaging_path}.nii"
+        output: "{imaging_path}_mean.nii"
+        run: function(imaging_path)
+    
+    which will do:
+        brain = read(input)
+        mean_brain = mean(brain)
+        save.mean_brain(output)
     """
     threads: 16
     input:
