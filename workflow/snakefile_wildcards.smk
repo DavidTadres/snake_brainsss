@@ -237,7 +237,7 @@ rule all:
     input:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          bleaching_qc_output_files,
-         expand("{image_path}")
+         #expand("{image_path}")
 
 
 """rule bleaching_qc_func_rule:
@@ -343,7 +343,7 @@ rule bleaching_qc_rule:
                 error_stack=error_stack,
                 width=width)
             print('Error with bleaching_qc')
-
+'''
 rule make_mean_brain_rule:
     """
     Here it should be possible to parallelize quite easily as each input file creates
@@ -373,7 +373,7 @@ rule make_mean_brain_rule:
                 width=width)
 
 
-
+'''
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
