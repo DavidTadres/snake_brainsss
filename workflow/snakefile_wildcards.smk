@@ -237,6 +237,7 @@ rule all:
     input:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          bleaching_qc_output_files,
+         expand("{image_path}")
 
 
 """rule bleaching_qc_func_rule:
@@ -324,7 +325,7 @@ rule bleaching_qc_rule:
     """
     threads: 16 # This is parallelized so more should generally be better!
     input:
-        imaging_paths_by_folder_oak
+        imaging_paths_by_folder_scratch
         #imaging_paths_by_folder_scratch
     output:
         bleaching_qc_output_files
@@ -335,19 +336,28 @@ rule bleaching_qc_rule:
                                         imaging_data_path_save_to={output} #imaging_paths_by_folder_oak
                                         #print_output = output
             )
+            print('Done with bleaching_qc')
         except Exception as error_stack:
             logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_bleaching_qc_rule')
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-'''
+            print('Error with bleaching_qc')
+
 rule make_mean_brain_rule:
     """
+    Here it should be possible to parallelize quite easily as each input file creates
+    one output file!
     
+    input would be something like
+    paths_to_use = ['../fly_004/func0/imaging', '../fly_004/func1/imaging']
+    
+    rule all would request the 'mean' brain of each of those
+    paths_to_use
     """
     threads: 16
     input:
-        imaging_paths_by_folder_scratch
+
     output: 'foo'
         # every nii file is made to a mean brain! Can predict how they
         # are going to be called and put them here.
@@ -362,7 +372,7 @@ rule make_mean_brain_rule:
                 error_stack=error_stack,
                 width=width)
 
-'''
+
 
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
