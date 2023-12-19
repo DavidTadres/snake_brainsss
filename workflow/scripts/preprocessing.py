@@ -124,7 +124,7 @@ def make_mean_brain(meanbrain_n_frames):
         out.write('done')
     #return(ch1)
     #pass'''
-def bleaching_qc(fly_directory, imaging_data_path, test_run=False):
+def bleaching_qc(fly_directory, imaging_data_path):
     """
     Perform bleaching qc.
     This is based on Bella's 'bleaching_qc.py' script
@@ -146,10 +146,10 @@ def bleaching_qc(fly_directory, imaging_data_path, test_run=False):
         print(current_folder)
         for current_file_path in current_folder:
             if pathlib.Path(current_file_path[0]).exists():
-                if test_run:
-                    brain= np.zeros((2,2,2)) # create 3D array of zeros instead of loading the whole brain!
-                else:
-                    brain = np.asarray(nib.load(current_file_path).get_fdata(), dtype=np.uint16)
+                #if test_run: # doesn't work for some reason
+                #    brain = np.asarray(([[0,0]], [[1,1]], [[2,2]])) # create 3D array of zeros instead of loading the whole brain!
+                #else:
+                brain = np.asarray(nib.load(current_file_path).get_fdata(), dtype=np.uint16)
                 data_mean[pathlib.Path(current_file_path).name] = np.mean(brain, axis=(0,1,2))
             else:
                 printlog(F"Not found (skipping){pathlib.Path(current_file_path).name:.>{WIDTH-20}}")
@@ -162,6 +162,7 @@ def bleaching_qc(fly_directory, imaging_data_path, test_run=False):
         ax = fig.add_subplot(111)
         signal_loss = {}
         for filename in data_mean:
+
             xs = np.arange(len(data_mean[filename]))
             color='k'
             if 'functional_channel_1.nii' in filename:

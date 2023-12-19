@@ -4,6 +4,8 @@
 # cd snake_brainsss/workflow
 # snakemake -s snakefile.smk --profile config_sherlock
 
+# config file from: https://github.com/jdblischak/smk-simple-slurm/tree/main
+
 ''' this one worked"
 snakemake -s snakefile.smk --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
 # This one with config

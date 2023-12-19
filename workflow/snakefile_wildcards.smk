@@ -234,8 +234,7 @@ rule bleaching_qc_rule:
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process,
-                                        imaging_data_path=imaging_paths_by_folder,
-                                        test_run=True
+                                        imaging_data_path=imaging_paths_by_folder
                                         #print_output = output
             )
         except Exception as error_stack:
