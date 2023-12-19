@@ -236,9 +236,8 @@ bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_
 rule all:
     input:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
-         expand("{bleaching_qc_png}", bleaching_qc_png=bleaching_qc_output_files)
-    #input: expand("{f}", f=full_func_file_path)
-        #'io_files/test.txt',
+         bleaching_qc_output_files,
+
 
 """rule bleaching_qc_func_rule:
     "This should not run because the output is not requested in rule all"
@@ -295,19 +294,45 @@ rule fictrac_qc_rule:
 rule bleaching_qc_rule:
     """
     Out of memory with 1 & 4 threads on sherlock.
-    With 16 I had a ~45% memory utiliziation. Might be worth trying 8 or 10 cores
+    With 16 I had a ~45% memory utiliziation. Might be worth trying 8 or 10 cores.
+    
+    Try to properly parallelize code here: IF want output file X, run rule with file Y. 
+    Might not be possible in this case: input is EITHER 
+    '../functional_channel1.nii', '../functional_channel2.nii'
+    OR 
+    '../anatomical_channel1.nii',, '../anatomical_channel2.nii.
+    whereas output is always 
+    '../bleaching.png'.
+    As (I think) I need to use the same wildcard as in the rule all:
+    I don't see how this could be achieved.
+    If we had only 1 kind of input files, e.g.
+    '../channel_1.nii', '../channel_2.nii'
+    we could do define do the following
+    
+    rule all:
+        input:
+            expand("{path_to_imaging_folder}/bleaching.png", path_to_imaging_folder=all_imaging_oak_paths)
+    
+    rule bleaching_qc_rule:
+        input:
+            "{path_to_imaging_folder}/channel_1.nii", "{path_to_imaging_folder}/channel_2.nii", 
+        output:
+            {path_to_imaging_folder}/bleaching.png"
+            
+    path_to_imaging_folder would need to be a list of paths pointing to 'imaging', for example:
+    ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
     threads: 16 # This is parallelized so more should generally be better!
     input:
-        imaging_paths_by_folder_scratch
+        imaging_paths_by_folder_oak
+        #imaging_paths_by_folder_scratch
     output:
-        #expand("{bleaching_qc_png}", bleaching_qc_png=bleaching_qc_output_files)
-        "{bleaching_qc_png}" # this might parallelize the operation
+        bleaching_qc_output_files
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process,
-                                        imaging_data_path_read_from=imaging_paths_by_folder_scratch,
-                                        imaging_data_path_save_to=imaging_paths_by_folder_oak
+                                        imaging_data_path_read_from={input}, #imaging_paths_by_folder_scratch,
+                                        imaging_data_path_save_to={output} #imaging_paths_by_folder_oak
                                         #print_output = output
             )
         except Exception as error_stack:
