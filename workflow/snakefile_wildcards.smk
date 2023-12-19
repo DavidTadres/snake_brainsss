@@ -367,8 +367,6 @@ rule bleaching_qc_rule:
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-            # Unclear why the write_error function doesn't work...print for now.
-            print(traceback.format_exc())
             print('Error with bleaching_qc' )
 '''
 rule make_mean_brain_rule:
@@ -407,10 +405,10 @@ rule make_mean_brain_rule:
             logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_make_mean_brain')
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
-                width=width)'''
+                width=width)
 
 
-
+'''
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
