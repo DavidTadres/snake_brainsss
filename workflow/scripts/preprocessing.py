@@ -182,11 +182,13 @@ def bleaching_qc(fly_directory,
 
     brainsss.print_function_start(logfile, WIDTH, 'bleaching_qc')
     print('All folders to read from: ' + str(imaging_data_path_read_from))
+    print('All folders to write to: ' + str(imaging_data_path_read_from))
     data_mean = {}
     for current_folder_read, current_folder_save in zip(imaging_data_path_read_from,imaging_data_path_save_to):
-        printlog(F"Current folder: {str(current_folder_read):.>{WIDTH - 20}}")
-
+        printlog(F"Current folder to read from: {str(current_folder_read):.>{WIDTH - 20}}")
+        printlog(F"Current folder to write to: {str(current_folder_read):.>{WIDTH - 20}}")
         for current_file_path_read, current_file_path_save in zip(current_folder_read, current_folder_save):
+            printlog(F"Current file to read from: {str(current_file_path_read):.>{WIDTH - 20}}")
             if pathlib.Path(current_file_path_read[0]).exists():
                 #if test_run: # doesn't work for some reason
                 #    brain = np.asarray(([[0,0]], [[1,1]], [[2,2]])) # create 3D array of zeros instead of loading the whole brain!
