@@ -260,6 +260,7 @@ rule all:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          bleaching_qc_output_files,
          #expand("{image_path}")
+         #expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak)
 
 
 
@@ -392,23 +393,23 @@ rule make_mean_brain_rule:
         save.mean_brain(output)
     """
     threads: 16
-    input:
-
-    output: 'foo'
+    input: "{mean_brains_output}.nii"
+    output: "{mean_brains_output}_mean.nii"
         # every nii file is made to a mean brain! Can predict how they
         # are going to be called and put them here.
     run:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process,
                                           meanbrain_n_frames=meanbrain_n_frames,
-                                          imaging_data_path_read_from=imaging_paths_by_folder_scratch  )
+                                          path_to_read={input},
+                                          path_to_save={output}  )
         except Exception as error_stack:
             logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_make_mean_brain')
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
-                width=width)
+                width=width)'''
 
-'''
+
 
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html

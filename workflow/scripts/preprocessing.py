@@ -57,7 +57,8 @@ def copy_to_scratch(fly_directory, paths_on_oak, paths_on_scratch):
 
 def make_mean_brain(fly_directory,
                     meanbrain_n_frames,
-                    imaging_data_path_read_from):
+                    path_to_read,
+                    path_to_save):
     """
 
     :param meanbrain_n_frames:
@@ -70,7 +71,7 @@ def make_mean_brain(fly_directory,
     # standalone = True  # I'll add if statements to be able to go back to Bella's script easliy
     # args = {'logfile': logfile, 'directory': directory, 'files': files}
 
-    if standalone:
+    """#if standalone:
         #new logfile
         #import time
         #width = 120  # width of print log
@@ -89,15 +90,15 @@ def make_mean_brain(fly_directory,
         #imports_path = settings['imports_path']
         #dataset_path = settings['dataset_path']
 
-        directory = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001/func1/imaging'
+        #directory = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001/func1/imaging'
 
-        files = []
-        for current_file in pathlib.Path(directory).iterdir():
-            if 'anatomy_channel' in current_file.name or 'functional_channel' in current_file.name \
-                    and not 'mean' in current_file.name: # this last one is necessary so that if script is run twice, mean is still calculated only once
-                files.append(current_file.name)
+        #files = []
+        #for current_file in pathlib.Path(directory).iterdir():
+        #    if 'anatomy_channel' in current_file.name or 'functional_channel' in current_file.name \
+        #            and not 'mean' in current_file.name: # this last one is necessary so that if script is run twice, mean is still calculated only once
+        #        files.append(current_file.name)
 
-        """
+        
         # Copy from preprocess.py
         for funcanat, dirtype in zip(funcanats, dirtypes):
             directory = os.path.join(funcanat, 'imaging')
@@ -107,10 +108,10 @@ def make_mean_brain(fly_directory,
             if dirtype == 'anat':
                 files = ['anatomy_channel_1.nii', 'anatomy_channel_2.nii']
             """
-    else:
-        logfile = args['logfile']
-        directory = args['directory'] # directory will be a full path to either an anat/imaging folder or a func/imaging folder
-        files = args['files']
+    #else:
+        #logfile = args['logfile']
+        #directory = args['directory'] # directory will be a full path to either an anat/imaging folder or a func/imaging folder
+        #files = args['files']
 
 
     #meanbrain_n_frames = args.get('meanbrain_n_frames', None)  # First n frames to average over when computing mean/fixed brain | Default None (average over all frames)
@@ -121,32 +122,43 @@ def make_mean_brain(fly_directory,
     #if type(files) is str:
     #    files = [files]
 
+    brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16')
+    if meanbrain_n_frames is not None:
+        # average over first meanbrain_n_frames frames
+        meanbrain = np.mean(brain_data[..., :int(meanbrain_n_frames)], axis=-1)
+    else:  # average over all frames
+        meanbrain = np.mean(brain_data, axis=-1)
+
+    aff = np.eye(4)
+    object_to_save = nib.Nifti1Image(meanbrain, aff)
+    object_to_save.to_filename(path_to_save)
+
     for file in files:
 
         try:
             ### make mean ###
-            full_path = os.path.join(directory, file)
-            if full_path.endswith('.nii'):
-                brain = np.asarray(nib.load(full_path).get_fdata(), dtype='uint16')
+            #full_path = os.path.join(directory, file)
+            #if full_path.endswith('.nii'):
+            #    brain = np.asarray(nib.load(full_path).get_fdata(), dtype='uint16')
             #elif full_path.endswith('.h5'):
             #    with h5py.File(full_path, 'r') as hf:
             #        brain = np.asarray(hf['data'][:], dtype='uint16')
 
-            if meanbrain_n_frames is not None:
-                # average over first meanbrain_n_frames frames
-                meanbrain = np.mean(brain[...,:int(meanbrain_n_frames)], axis=-1)
-            else: # average over all frames
-                meanbrain = np.mean(brain, axis=-1)
+            #if meanbrain_n_frames is not None:
+            #    # average over first meanbrain_n_frames frames
+            #    meanbrain = np.mean(brain[...,:int(meanbrain_n_frames)], axis=-1)
+            #else: # average over all frames
+            #    meanbrain = np.mean(brain, axis=-1)
 
             ### Save ###
-            save_file = os.path.join(directory, file[:-4] + '_mean.nii')
-            aff = np.eye(4)
-            img = nib.Nifti1Image(meanbrain, aff)
-            img.to_filename(save_file)
+            #save_file = os.path.join(directory, file[:-4] + '_mean.nii')
+            #aff = np.eye(4)
+            #img = nib.Nifti1Image(meanbrain, aff)
+            #img.to_filename(save_file)
 
-            fly_func_str = ('|').join(directory.split('/')[-3:-1])
-            fly_print = directory.split('/')[-3]
-            func_print = directory.split('/')[-2]
+            #fly_func_str = ('|').join(directory.split('/')[-3:-1])
+            #fly_print = directory.split('/')[-3]
+            #func_print = directory.split('/')[-2]
             #printlog(f"COMPLETE | {fly_func_str} | {file} | {brain.shape} --> {meanbrain.shape}")
             printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {file} | {brain.shape} ===> {meanbrain.shape}")
             if not standalone:
@@ -186,18 +198,15 @@ def bleaching_qc(fly_directory,
     data_mean = {}
     for current_folder_read, current_folder_save in zip(imaging_data_path_read_from,imaging_data_path_save_to):
         printlog(F"Current folder to read from: {str(current_folder_read):.>{WIDTH - 20}}")
-        printlog(F"Current folder to write to: {str(current_folder_read):.>{WIDTH - 20}}")
+        printlog(F"Current folder to write to: {str(current_folder_save):.>{WIDTH - 20}}")
         for current_file_path_read, current_file_path_save in zip(str(current_folder_read), str(current_folder_save)):
             printlog(F"Current file to read from: {str(current_file_path_read):.>{WIDTH - 20}}")
-            if pathlib.Path(current_file_path_read[0]).exists():
-                #if test_run: # doesn't work for some reason
-                #    brain = np.asarray(([[0,0]], [[1,1]], [[2,2]])) # create 3D array of zeros instead of loading the whole brain!
-                #else:
-                printlog(F"Currently reading: {current_file_path_read:.>{WIDTH - 20}}")
-                brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16)
-                data_mean[pathlib.Path(current_file_path_read).name] = np.mean(brain, axis=(0,1,2))
-            else:
-                printlog(F"Not found (skipping){pathlib.Path(current_file_path_read).name:.>{WIDTH-20}}")
+            #if pathlib.Path(current_file_path_read[0]).exists():
+            printlog(F"Currently reading: {current_file_path_read:.>{WIDTH - 20}}")
+            brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16)
+            data_mean[pathlib.Path(current_file_path_read).name] = np.mean(brain, axis=(0,1,2))
+            #else:
+            #    printlog(F"Not found (skipping){pathlib.Path(current_file_path_read).name:.>{WIDTH-20}}")
         ##############################
         ### Output Bleaching Curve ###
         ##############################
