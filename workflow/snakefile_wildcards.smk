@@ -304,7 +304,7 @@ rule bleaching_qc_rule:
             logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_bleaching_qc_rule')
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
-                width=width)'''
+                width=width)
 '''
 rule make_mean_brain_rule:
     """
