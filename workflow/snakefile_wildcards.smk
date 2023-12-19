@@ -134,38 +134,6 @@ def create_output_path_func(list_of_paths, filename):
 
     return(final_path)
 
-def create_paths_each_experiment(func_and_anat_paths):
-    """
-    get paths to imaging data as list of lists, i.e.
-    [[func0/func_channel1.nii, func0/func_channel2.nii], [func1/func_channel1.nii, func1/func_channel2.nii]]
-    :param func_and_anat_paths: a list with all func and anat path as defined in 'fly_004_dirs.json'
-    """
-    imaging_paths_by_folder_oak = []
-    imaging_path_by_folder_scratch = []
-    for current_path in func_and_anat_paths:
-        if 'func' in current_path:
-            imaging_paths_by_folder_oak.append([
-                str(fly_folder_to_process) + current_path + '/functional_channel_1.nii',
-                str(fly_folder_to_process) + current_path + '/functional_channel_2.nii']
-                )
-            imaging_path_by_folder_scratch.append([
-                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
-                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
-        elif 'anat' in current_path:
-            imaging_paths_by_folder_oak.append([
-                str(fly_folder_to_process) + current_path + '/anatomy_channel_1.nii',
-                str(fly_folder_to_process) + current_path + '/anatomy_channel_2.nii']
-                )
-            imaging_path_by_folder_scratch.append([
-                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
-                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
-    return(imaging_paths_by_folder_oak, imaging_path_by_folder_scratch)
-
-func_and_anat_paths = func_file_paths + anat_file_paths
-
-imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(func_and_anat_paths)
-print('HERE' + repr(imaging_paths_by_folder_oak))
-print('AND HERE' + repr(imaging_paths_by_folder_scratch))
 
 #######
 # Data path on OAK
@@ -204,8 +172,47 @@ ch2_anat_file_scratch_paths = convert_oak_path_to_scratch(ch2_anat_file_oak_path
 #full_fictrac_file_scratch_paths = convert_oak_path_to_scratch(full_fictrac_file_oak_paths)
 all_imaging_scratch_paths = ch1_func_file_scratch_paths + ch2_func_file_scratch_paths + ch1_anat_file_scratch_paths + ch2_anat_file_scratch_paths
 
+####
+# Path per folder
+####
+# Some scripts require to have path organized in lists per experiment. See docstring in
+# :create_paths_each_experiment: function for example
+def create_paths_each_experiment(func_and_anat_paths):
+    """
+    get paths to imaging data as list of lists, i.e.
+    [[func0/func_channel1.nii, func0/func_channel2.nii], [func1/func_channel1.nii, func1/func_channel2.nii]]
+    :param func_and_anat_paths: a list with all func and anat path as defined in 'fly_004_dirs.json'
+    """
+    imaging_paths_by_folder_oak = []
+    imaging_path_by_folder_scratch = []
+    for current_path in func_and_anat_paths:
+        if 'func' in current_path:
+            imaging_paths_by_folder_oak.append([
+                str(fly_folder_to_process) + current_path + '/functional_channel_1.nii',
+                str(fly_folder_to_process) + current_path + '/functional_channel_2.nii']
+                )
+            imaging_path_by_folder_scratch.append([
+                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
+                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
+        elif 'anat' in current_path:
+            imaging_paths_by_folder_oak.append([
+                str(fly_folder_to_process) + current_path + '/anatomy_channel_1.nii',
+                str(fly_folder_to_process) + current_path + '/anatomy_channel_2.nii']
+                )
+            imaging_path_by_folder_scratch.append([
+                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
+                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
+    return(imaging_paths_by_folder_oak, imaging_path_by_folder_scratch)
+
+func_and_anat_paths = func_file_paths + anat_file_paths
+
+imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(func_and_anat_paths)
+# print('HERE' + repr(imaging_paths_by_folder_oak))
+# print('AND HERE' + repr(imaging_paths_by_folder_scratch))
+
+
 #####
-# Output data path ON SCRATCH!!!!
+# Output data path
 #####
 # Output files for fictrac_qc rule
 #fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_scratch_paths,
@@ -315,13 +322,15 @@ rule make_mean_brain_rule:
     """
     threads: 16
     input:
-        all_imaging_paths
+        imaging_paths_by_folder_scratch
     output: 'foo'
         # every nii file is made to a mean brain! Can predict how they
         # are going to be called and put them here.
     run:
         try:
-            preprocessing.make_mean_brain(meanbrain_n_frames)
+            preprocessing.make_mean_brain(fly_directory=fly_folder_to_process,
+                                          meanbrain_n_frames=meanbrain_n_frames,
+                                          imaging_data_path_read_from=imaging_paths_by_folder_scratch  )
         except Exception as error_stack:
             logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_make_mean_brain')
             brainsss.write_error(logfile=logfile,

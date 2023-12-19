@@ -55,29 +55,39 @@ def copy_to_scratch(fly_directory, paths_on_oak, paths_on_scratch):
         shutil.copy(current_file_src, current_file_dst)
         printlog('Copied: ' + repr(current_file_dst))
 
-def make_mean_brain(meanbrain_n_frames):
+def make_mean_brain(fly_directory,
+                    meanbrain_n_frames,
+                    imaging_data_path_read_from):
+    """
+
+    :param meanbrain_n_frames:
+    :return:
+    """
+    logfile = brainsss.create_logfile(fly_directory, function_name='make_mean_brain')
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    brainsss.print_function_start(logfile, WIDTH, 'make_mean_brain')
 
     # standalone = True  # I'll add if statements to be able to go back to Bella's script easliy
     # args = {'logfile': logfile, 'directory': directory, 'files': files}
 
     if standalone:
         #new logfile
-        import time
-        width = 120  # width of print log
-        logfile = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
-        printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-        sys.stderr = brainsss.Logger_stderr_sherlock(logfile)
-        brainsss.print_title(logfile, width)
+        #import time
+        #width = 120  # width of print log
+        #logfile = './logs/' + time.strftime("%Y%m%d-%H%M%S") + '.txt'
+        #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+        #sys.stderr = brainsss.Logger_stderr_sherlock(logfile)
+        #brainsss.print_title(logfile, width)
 
         # get path!
-        scripts_path = args['PWD']
-        com_path = os.path.join(scripts_path, 'com')
-        user = scripts_path.split('/')[3]
-        settings = brainsss.load_user_settings(user, scripts_path)
+        #scripts_path = args['PWD']
+        #com_path = os.path.join(scripts_path, 'com')
+        #user = scripts_path.split('/')[3]
+        #settings = brainsss.load_user_settings(user, scripts_path)
 
         ### Parse user settings
-        imports_path = settings['imports_path']
-        dataset_path = settings['dataset_path']
+        #imports_path = settings['imports_path']
+        #dataset_path = settings['dataset_path']
 
         directory = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001/func1/imaging'
 
@@ -104,14 +114,15 @@ def make_mean_brain(meanbrain_n_frames):
 
 
     #meanbrain_n_frames = args.get('meanbrain_n_frames', None)  # First n frames to average over when computing mean/fixed brain | Default None (average over all frames)
-    width = 120
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    #width = 120
+    #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
 
     # Check if files is just a single file path string
-    if type(files) is str:
-        files = [files]
+    #if type(files) is str:
+    #    files = [files]
 
     for file in files:
+
         try:
             ### make mean ###
             full_path = os.path.join(directory, file)
@@ -173,12 +184,12 @@ def bleaching_qc(fly_directory,
 
     data_mean = {}
     for current_folder_read, current_folder_save in zip(imaging_data_path_read_from,imaging_data_path_save_to):
-        print(current_folder_read)
         for current_file_path_read, current_file_path_save in zip(current_folder_read, current_folder_save):
             if pathlib.Path(current_file_path_read[0]).exists():
                 #if test_run: # doesn't work for some reason
                 #    brain = np.asarray(([[0,0]], [[1,1]], [[2,2]])) # create 3D array of zeros instead of loading the whole brain!
                 #else:
+                printlog(F"Currently reading: {pathlib.Path(current_file_path_read).name:.>{WIDTH - 20}}")
                 brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16)
                 data_mean[pathlib.Path(current_file_path_read).name] = np.mean(brain, axis=(0,1,2))
             else:
