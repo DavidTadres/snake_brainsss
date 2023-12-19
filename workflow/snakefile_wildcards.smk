@@ -192,16 +192,16 @@ def create_paths_each_experiment(func_and_anat_paths):
                 str(fly_folder_to_process) + current_path + '/functional_channel_2.nii']
                 )
             imaging_path_by_folder_scratch.append([
-                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
-                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
+                SCRATCH_DIR + '/data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
+                SCRATCH_DIR + '/data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
         elif 'anat' in current_path:
             imaging_paths_by_folder_oak.append([
                 str(fly_folder_to_process) + current_path + '/anatomy_channel_1.nii',
                 str(fly_folder_to_process) + current_path + '/anatomy_channel_2.nii']
                 )
             imaging_path_by_folder_scratch.append([
-                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
-                SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
+                SCRATCH_DIR + '/data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
+                SCRATCH_DIR + '/data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
     return(imaging_paths_by_folder_oak, imaging_path_by_folder_scratch)
 
 func_and_anat_paths = func_file_paths + anat_file_paths
