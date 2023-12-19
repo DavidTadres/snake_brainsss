@@ -372,8 +372,8 @@ rule make_mean_brain_rule:
                 error_stack=error_stack,
                 width=width)
 
-
 '''
+
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
