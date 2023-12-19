@@ -343,7 +343,7 @@ rule bleaching_qc_rule:
                 error_stack=error_stack,
                 width=width)
             print('Error with bleaching_qc')
-
+'''
 rule make_mean_brain_rule:
     """
     Here it should be possible to parallelize quite easily as each input file creates
@@ -371,7 +371,7 @@ rule make_mean_brain_rule:
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-
+'''
 
 
 """
