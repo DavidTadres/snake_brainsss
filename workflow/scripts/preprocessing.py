@@ -199,7 +199,7 @@ def bleaching_qc(fly_directory,
     #print('All folders to read from: ' + str(imaging_data_path_read_from))
     #print('All folders to write to: ' + str(imaging_data_path_read_from))
     data_mean = {}
-    for current_folder_read, current_folder_save in zip(imaging_data_path_read_from,imaging_data_path_save_to):
+    for current_folder_read, current_folder_save in zip(imaging_data_path_read_from, imaging_data_path_save_to):
         #printlog(F"Current folder to read from: {str(current_folder_read):.>{WIDTH - 20}}")
         #printlog(F"Current folder to write to: {str(current_folder_save):.>{WIDTH - 20}}")
         #print("current_folder_read" + repr(current_folder_read))

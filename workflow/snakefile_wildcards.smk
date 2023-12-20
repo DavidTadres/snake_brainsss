@@ -36,7 +36,7 @@ current_user = 'dtadres'
 # (average over all frames). A
 meanbrain_n_frames =  None
 # SCRATCH_DIR
-SCRATCH_DIR = '/scratch/users/' + current_user
+SCRATCH_DIR = '/scratch/users' + current_user
 # Maybe in the future - if I implement this now I won't be able to test code locally on my computer
 # Do this - if it's really much faster it's great for debugging actually. Since it's stays for 90 days
 # I only need to copy a test dataset once and hopefully will be able to use data on there very quickly
@@ -96,11 +96,11 @@ fictrac_file_paths = []
 for key in fly_dirs_dict:
     #print(key)
     if 'func' in key and 'Imaging' in key:
-        func_file_paths.append(fly_dirs_dict[key])
+        func_file_paths.append(fly_dirs_dict[key][1::]) # these paths come as \imaging.. The \ confused pathlib.Path, so best to remove the first character
     elif 'anat' in key and 'Imaging' in key:
-        anat_file_paths.append(fly_dirs_dict[key])
+        anat_file_paths.append(fly_dirs_dict[key][1::])
     elif 'Fictrac' in key:
-        fictrac_file_paths.append(fly_dirs_dict[key])
+        fictrac_file_paths.append(fly_dirs_dict[key][1::])
 
 def create_path_func(fly_folder_to_process, list_of_paths, filename=''):
     """
@@ -108,11 +108,15 @@ def create_path_func(fly_folder_to_process, list_of_paths, filename=''):
     :param fly_folder_to_process: a folder pointing to a fly, i.e. /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_001
     :param list_of_paths: a list of path created, usually created from fly_dirs_dict (e.g. fly_004_dirs.json)
     :param filename: filename to append at the end. Can be nothing (i.e. for fictrac data).
-    :return: list of full paths to a file based on the list_of_path provided
+    :return: list of full paths as pathlib.Path objects to a file based on the list_of_path provided
     """
     final_path = []
     for current_path in list_of_paths:
-        final_path.append(str(fly_folder_to_process) + current_path + filename)
+        #print(fly_folder_to_process)
+        #print(current_path)
+        #print(filename)
+        final_path.append(pathlib.Path(fly_folder_to_process, current_path, filename))
+        print(final_path[-1])
 
     return(final_path)
 
@@ -120,6 +124,7 @@ def create_output_path_func(list_of_paths, filename):
     """
     :param list_of_paths: expects a list of paths pointing to a file, for example from variable full_fictrac_file_paths
     :param filename: filename
+    returns a list paths as pathlib.Path objects pointing to where the output file is going to be expecte4d
     """
     final_path = []
     for current_path in list_of_paths:
@@ -140,11 +145,11 @@ def create_output_path_func(list_of_paths, filename):
 # Data path on OAK
 #######
 # Get imaging data paths for func
-ch1_func_file_oak_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_1.nii')
-ch2_func_file_oak_paths = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_2.nii')
+ch1_func_file_oak_paths = create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_1.nii')
+ch2_func_file_oak_paths = create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_2.nii')
 # and for anat data
-ch1_anat_file_oak_paths = create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_1.nii')
-ch2_anat_file_oak_paths = create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_2.nii')
+ch1_anat_file_oak_paths = create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_1.nii')
+ch2_anat_file_oak_paths = create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_2.nii')
 # List of all imaging data
 all_imaging_oak_paths = ch1_func_file_oak_paths + ch2_func_file_oak_paths + ch1_anat_file_oak_paths + ch2_anat_file_oak_paths
 
@@ -154,10 +159,10 @@ full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process, fictrac_fi
 
 # Path for make_mean_brain_rule
 # will look like this: ['../data/../imaging/functional_channel_1','../data/../imaging/functional_channel_2']
-paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_1') + \
-                                    create_path_func(fly_folder_to_process, func_file_paths, '/functional_channel_2') + \
-                                    create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_1') + \
-                                    create_path_func(fly_folder_to_process, anat_file_paths, '/anatomy_channel_2')
+paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_1') + \
+                                    create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_2') + \
+                                    create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_1') + \
+                                    create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_2')
 #######
 # Data path on SCRATCH
 #######
@@ -165,12 +170,13 @@ def convert_oak_path_to_scratch(oak_path):
     """
 
     :param oak_path: expects a list of path, i.e. ch1_func_file_oak_paths
-    :return:
+    :return: list of paths as pathlib.objects
     """
+    print("OAK PATH" + repr(oak_path))
     all_scratch_paths = []
     for current_path in oak_path:
-        relevant_path_part = current_path.split('data')[-1] # data seems to be the root folder everyone is using
-        all_scratch_paths.append(SCRATCH_DIR + '/data/' + relevant_path_part)
+        relevant_path_part = current_path.as_posix().split('data')[-1] # data seems to be the root folder everyone is using
+        all_scratch_paths.append(pathlib.Path(SCRATCH_DIR, 'data', relevant_path_part))
     return(all_scratch_paths)
 
 #ch1_func_file_scratch_paths = convert_oak_path_to_scratch(ch1_func_file_oak_paths)
@@ -200,20 +206,20 @@ def create_paths_each_experiment(func_and_anat_paths):
     for current_path in func_and_anat_paths:
         if 'func' in current_path:
             imaging_paths_by_folder_oak.append([
-                str(fly_folder_to_process) + current_path + '/functional_channel_1.nii',
-                str(fly_folder_to_process) + current_path + '/functional_channel_2.nii']
+                pathlib.Path(fly_folder_to_process, current_path, 'functional_channel_1.nii'),
+                pathlib.Path(fly_folder_to_process, current_path, 'functional_channel_2.nii')]
                 )
             imaging_path_by_folder_scratch.append([
-                SCRATCH_DIR + '/data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
-                SCRATCH_DIR + '/data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
+                pathlib.Path(SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].as_posix().split('data')[-1]),
+                pathlib.Path(SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].as_posix().split('data')[-1])])
         elif 'anat' in current_path:
             imaging_paths_by_folder_oak.append([
-                str(fly_folder_to_process) + current_path + '/anatomy_channel_1.nii',
-                str(fly_folder_to_process) + current_path + '/anatomy_channel_2.nii']
+                pathlib.Path(fly_folder_to_process, current_path, 'anatomy_channel_1.nii'),
+                pathlib.Path(fly_folder_to_process, current_path,'anatomy_channel_2.nii')]
                 )
             imaging_path_by_folder_scratch.append([
-                SCRATCH_DIR + '/data' + imaging_paths_by_folder_oak[-1][0].split('data')[-1],
-                SCRATCH_DIR + '/data' + imaging_paths_by_folder_oak[-1][1].split('data')[-1]])
+                pathlib.Path(SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][0].as_posix().split('data')[-1]),
+                pathlib.Path(SCRATCH_DIR + 'data' + imaging_paths_by_folder_oak[-1][1].as_posix().split('data')[-1])])
     return(imaging_paths_by_folder_oak, imaging_path_by_folder_scratch)
 
 func_and_anat_paths = func_file_paths + anat_file_paths
@@ -307,7 +313,7 @@ rule fictrac_qc_rule:
     run:
         try:
             preprocessing.fictrac_qc(fly_folder_to_process,
-                                    fictrac_file_paths= input.fictrac_file_paths,
+                                    fictrac_file_paths= full_fictrac_file_oak_paths,
                                     fictrac_fps=50 # AUTOMATE THIS!!!! ELSE BUG PRONE!!!!
                                     )
         except Exception as error_stack:
