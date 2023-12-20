@@ -265,7 +265,6 @@ rule all:
     input:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          bleaching_qc_output_files,
-         #expand("{image_path}")
          #expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak)
 
 
@@ -353,7 +352,7 @@ rule bleaching_qc_rule:
     path_to_imaging_folder would need to be a list of paths pointing to 'imaging', for example:
     ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
-    threads: 16 # This is parallelized so more should generally be better!
+    threads: 8
     input:
         #imaging_paths_by_folder_scratch
         imaging_paths_by_folder_oak
@@ -375,7 +374,7 @@ rule bleaching_qc_rule:
                 error_stack=error_stack,
                 width=width)
             print('Error with bleaching_qc' )
-'''
+
 rule make_mean_brain_rule:
     """
     Here it should be possible to parallelize quite easily as each input file creates
@@ -413,7 +412,7 @@ rule make_mean_brain_rule:
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-'''
+
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
