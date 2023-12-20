@@ -135,7 +135,7 @@ def make_mean_brain(fly_directory,
     fly_print = fly_directory.name
     func_print = path_to_read.split('/')[-2]
     printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {file} | {brain_data.shape} ===> {meanbrain.shape}")
-
+    """
     for file in files:
 
         try:
@@ -169,7 +169,7 @@ def make_mean_brain(fly_directory,
             brain = None
         except FileNotFoundError:
             printlog(F"Not found (skipping){file:.>{WIDTH-20}}")
-            #printlog(f'{file} not found.')
+            #printlog(f'{file} not found.')"""
 
 def bleaching_qc(fly_directory,
                  imaging_data_path_read_from,

@@ -33,19 +33,17 @@ fly_folder_to_process = 'fly_004' # folder to be processed
 current_user = 'dtadres'
 
 # First n frames to average over when computing mean/fixed brain | Default None
-# (average over all frames). A
+# (average over all frames).
 meanbrain_n_frames =  None
+
+# SCRATCH_DIR
+SCRATCH_DIR = '/scratch/users/' + current_user
 
 
 import pathlib
 import json
 import brainsss
-import sys
 from scripts import preprocessing
-
-
-# SCRATCH_DIR
-SCRATCH_DIR = '/scratch/users/' + current_user
 
 settings = brainsss.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
@@ -264,7 +262,7 @@ rule all:
     input:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          bleaching_qc_output_files,
-         #expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak)
+         expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak)
 
 
 
@@ -331,6 +329,7 @@ rule bleaching_qc_rule:
         16 threads: runtime 5 min, 34 seconds
         8  threads: runtime (1) 2 min, 48 seconds (2) 3 min, 05 seconds
     using scratch as data source:
+        8 threads: runtime (1) 3 min, 38 seconds
           
     Try to properly parallelize code here: IF want output file X, run rule with file Y. 
     Might not be possible in this case: input is EITHER 
@@ -380,6 +379,7 @@ rule bleaching_qc_rule:
 
 rule make_mean_brain_rule:
     """
+    
     Here it should be possible to parallelize quite easily as each input file creates
     one output file!
     
