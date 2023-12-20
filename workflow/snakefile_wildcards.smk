@@ -39,7 +39,6 @@ meanbrain_n_frames =  None
 # SCRATCH_DIR
 SCRATCH_DIR = '/scratch/users/' + current_user
 
-
 import pathlib
 import json
 import brainsss
@@ -378,6 +377,8 @@ rule bleaching_qc_rule:
 
 rule make_mean_brain_rule:
     """
+    Tested with 16 threads, overkill as we wouldn't normally need more than 10Gb
+    of memory (each thread is ~8Gb)
     
     Here it should be possible to parallelize quite easily as each input file creates
     one output file!
@@ -398,7 +399,7 @@ rule make_mean_brain_rule:
         mean_brain = mean(brain)
         save.mean_brain(output)
     """
-    threads: 16
+    threads: 2
     input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
 
     output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
