@@ -324,8 +324,15 @@ rule fictrac_qc_rule:
 rule bleaching_qc_rule:
     """
     Out of memory with 1 & 4 threads on sherlock.
-    With 16 I had a ~45% memory utiliziation. Might be worth trying 8 or 10 cores.
+    With 8 I had a ~45% memory utiliziation which seems ok as in the test dataset I had a 
+    30 minute volumetric recording.
     
+    # some timing testing (3 func folders, 2 small ones with 4Gb imaging data) and 1 large (20Gb)  
+    using oak as data source: 
+        16 threads: runtime 5 min, 34 seconds
+        8  threads: runtime (1) 2 min, 48 seconds (2) 3 min, 05 seconds
+    using scratch as data source:
+          
     Try to properly parallelize code here: IF want output file X, run rule with file Y. 
     Might not be possible in this case: input is EITHER 
     '../functional_channel1.nii', '../functional_channel2.nii'
@@ -354,10 +361,7 @@ rule bleaching_qc_rule:
     """
     threads: 8
     input:
-        #imaging_paths_by_folder_scratch
-        imaging_paths_by_folder_oak
-        #imaging_paths_by_folder_scratch
-        #imaging_paths_by_folder_scratch
+        imaging_paths_by_folder_scratch
     output:
         bleaching_qc_output_files
     run:

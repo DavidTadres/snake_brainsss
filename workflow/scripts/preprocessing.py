@@ -60,7 +60,7 @@ def make_mean_brain(fly_directory,
                     path_to_read,
                     path_to_save):
     """
-
+    Function to calculate
     :param meanbrain_n_frames:
     :return:
     """
@@ -171,13 +171,6 @@ def make_mean_brain(fly_directory,
             printlog(F"Not found (skipping){file:.>{WIDTH-20}}")
             #printlog(f'{file} not found.')
 
-'''def bleaching_qc_test(ch1, ch2, print_output):
-    for ch1_data in ch1:
-        print("ch1: " + repr(ch1_data))
-    with open(print_output[0], "w") as out:
-        out.write('done')
-    #return(ch1)
-    #pass'''
 def bleaching_qc(fly_directory,
                  imaging_data_path_read_from,
                  imaging_data_path_save_to
@@ -254,6 +247,8 @@ def bleaching_qc(fly_directory,
         fig.savefig(save_file,dpi=300,bbox_inches='tight')
         printlog(F"Prepared plot and saved as: {str(save_file):.>{WIDTH - 20}}")
 
+        # release memory
+        del data_mean
 
 def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):
     """
