@@ -122,9 +122,10 @@ def make_mean_brain(fly_directory,
     #if type(files) is str:
     #    files = [files]
     # Input and output is passed as lists (or 'InputData') by Snakemake.
+    # an example would be: ['/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_004/func1/imaging/functional_channel_2.nii']
     # Since we only have a single file in each path, we take the first entry
-    #path_to_read = path_to_read[0]
-    #path_to_save = path_to_save[0]
+    path_to_read = path_to_read[0]
+    path_to_save = path_to_save[0]
     print(path_to_read)
     brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16')
     if meanbrain_n_frames is not None:
