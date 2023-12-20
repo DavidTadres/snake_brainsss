@@ -121,7 +121,11 @@ def make_mean_brain(fly_directory,
     # Check if files is just a single file path string
     #if type(files) is str:
     #    files = [files]
-
+    # Input and output is passed as lists (or 'InputData') by Snakemake.
+    # Since we only have a single file in each path, we take the first entry
+    #path_to_read = path_to_read[0]
+    #path_to_save = path_to_save[0]
+    print(path_to_read)
     brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16')
     if meanbrain_n_frames is not None:
         # average over first meanbrain_n_frames frames
@@ -134,7 +138,7 @@ def make_mean_brain(fly_directory,
     object_to_save.to_filename(path_to_save)
     fly_print = fly_directory.name
     func_print = path_to_read.split('/')[-2]
-    printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {file} | {brain_data.shape} ===> {meanbrain.shape}")
+    printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {brain_data.shape} ===> {meanbrain.shape}")
     """
     for file in files:
 

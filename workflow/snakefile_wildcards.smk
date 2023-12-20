@@ -263,8 +263,7 @@ rule all:
          expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
          bleaching_qc_output_files,
          expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak)
-
-
+         #'/Users/dtadres/Documents/functional_channel_1_mean.nii'
 
 """rule bleaching_qc_func_rule:
     "This should not run because the output is not requested in rule all"
@@ -400,8 +399,10 @@ rule make_mean_brain_rule:
         save.mean_brain(output)
     """
     threads: 16
-    input: "{mean_brains_output}.nii"
-    output: "{mean_brains_output}_mean.nii"
+    input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
+
+    output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
+
         # every nii file is made to a mean brain! Can predict how they
         # are going to be called and put them here.
     run:
