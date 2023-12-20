@@ -35,18 +35,17 @@ current_user = 'dtadres'
 # First n frames to average over when computing mean/fixed brain | Default None
 # (average over all frames). A
 meanbrain_n_frames =  None
-# SCRATCH_DIR
-SCRATCH_DIR = '/scratch/users' + current_user
-# Maybe in the future - if I implement this now I won't be able to test code locally on my computer
-# Do this - if it's really much faster it's great for debugging actually. Since it's stays for 90 days
-# I only need to copy a test dataset once and hopefully will be able to use data on there very quickly
+
 
 import pathlib
 import json
 import brainsss
 import sys
 from scripts import preprocessing
-import itertools
+
+
+# SCRATCH_DIR
+SCRATCH_DIR = '/scratch/users/' + current_user
 
 settings = brainsss.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
