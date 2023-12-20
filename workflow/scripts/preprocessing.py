@@ -187,42 +187,48 @@ def bleaching_qc(fly_directory,
     This is based on Bella's 'bleaching_qc.py' script
 
     :param: logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
-    :param directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :param imaging_data_path_read_from: a nested(!) list to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+                                        This is a list containing pathlibt.Path objects like this:
+                                        [[PosixPath('../fly_001/func0/imaging/functional_channel_1.nii'),
+                                          PosixPath('../fly_001/func0/imaging/functional_channel_2.nii')],
+                                         [PosixPath('../fly_001/func1/imaging/functional_channel_1.nii'),
+                                          PosixPath('../fly_001/func1/imaging/functional_channel_2.nii')]
+                                        ]
+    :param imaging_data_path_save_to: a list to the 'bleaching' target file as pathlib.Path objects like this:
+                                      [PosixPath('../fly_001/func0/imaging/bleaching.png'),
+                                       PosixPath('../fly_001/func1/imaging/bleaching.png)]
+
     :return:
     """
-
-    # args = {'logfile': logfile, 'directory': directory, 'dirtype': dirtype}
+    # Logging
     logfile = brainsss.create_logfile(fly_directory, function_name='bleaching_qc')
     printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-
     brainsss.print_function_start(logfile, WIDTH, 'bleaching_qc')
-    #print('All folders to read from: ' + str(imaging_data_path_read_from))
-    #print('All folders to write to: ' + str(imaging_data_path_read_from))
-    data_mean = {}
-    for current_folder_read, current_folder_save in zip(imaging_data_path_read_from, imaging_data_path_save_to):
-        #printlog(F"Current folder to read from: {str(current_folder_read):.>{WIDTH - 20}}")
-        #printlog(F"Current folder to write to: {str(current_folder_save):.>{WIDTH - 20}}")
-        #print("current_folder_read" + repr(current_folder_read))
-        #print("current_folder_save" + current_folder_save)
-        for current_file_path_read, current_file_path_save in zip(current_folder_read, current_folder_save):
-            #printlog(F"Current file to read from: {str(current_file_path_read):.>{WIDTH - 20}}")
-            #print("current_file_path_read" + current_file_path_read)
-            #if pathlib.Path(current_file_path_read[0]).exists():
-            printlog(F"Currently reading: {current_file_path_read:.>{WIDTH - 20}}")
+    #
+
+    # For each experiment,
+    for current_folder_read, current_file_path_save in zip(imaging_data_path_read_from, imaging_data_path_save_to):
+        # yields e.g. current_folder_read = PosixPath('../fly_001/func0/imaging/functional_channel_1.nii'),
+        #                                           PosixPath('../fly_001/func0/imaging/functional_channel_2.nii')]
+        # and current_file_path_save = PosixPath('../fly_001/func0/imaging/bleaching.png')
+        data_mean = {}
+        for current_file_path_read in current_folder_read:
+            # yields e.g. '../fly_001/func0/imaging/functional_channel_1.nii')
+            printlog(F"Currently reading: {current_file_path_read.name:.>{WIDTH - 20}}")
+            # Read data
             brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16)
+            # take the mean of ALL values
             data_mean[pathlib.Path(current_file_path_read).name] = np.mean(brain, axis=(0,1,2))
-            #else:
-            #    printlog(F"Not found (skipping){pathlib.Path(current_file_path_read).name:.>{WIDTH-20}}")
         ##############################
         ### Output Bleaching Curve ###
         ##############################
-
+        # plotting params
         plt.rcParams.update({'font.size': 24})
         fig = plt.figure(figsize=(10,10))
         ax = fig.add_subplot(111)
         signal_loss = {}
-        for filename in data_mean:
 
+        for filename in data_mean:
             xs = np.arange(len(data_mean[filename]))
             color='k'
             if 'functional_channel_1.nii' in filename:
@@ -230,8 +236,11 @@ def bleaching_qc(fly_directory,
             if 'functional_channel_2.nii' in filename:
                 color='green'
             ax.plot(data_mean[filename],color=color,label=filename)
+            # Fit polynomial to mean fluorescence.
             linear_fit = np.polyfit(xs, data_mean[filename], 1)
+            # and plot it
             ax.plot(np.poly1d(linear_fit)(xs),color='k',linewidth=3,linestyle='--')
+            # take the linear fit to calculate how much signal is lost and report it as the title
             signal_loss[filename] = linear_fit[0]*len(data_mean[filename])/linear_fit[1]*-100
         ax.set_xlabel('Frame Num')
         ax.set_ylabel('Avg signal')
@@ -240,7 +249,8 @@ def bleaching_qc(fly_directory,
             loss_string = loss_string + filename + ' lost' + F'{int(signal_loss[filename])}' +'%\n'
         ax.set_title(loss_string, ha='center', va='bottom')
 
-        save_file = pathlib.Path(pathlib.Path(current_file_path_save).parent, 'bleaching.png')
+        # Save plot
+        save_file = pathlib.Path(current_file_path_save)
         fig.savefig(save_file,dpi=300,bbox_inches='tight')
         printlog(F"Prepared plot and saved as: {str(save_file):.>{WIDTH - 20}}")
 

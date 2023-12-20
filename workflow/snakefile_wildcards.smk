@@ -116,7 +116,7 @@ def create_path_func(fly_folder_to_process, list_of_paths, filename=''):
         #print(current_path)
         #print(filename)
         final_path.append(pathlib.Path(fly_folder_to_process, current_path, filename))
-        print(final_path[-1])
+        #print(final_path[-1])
 
     return(final_path)
 
@@ -172,7 +172,7 @@ def convert_oak_path_to_scratch(oak_path):
     :param oak_path: expects a list of path, i.e. ch1_func_file_oak_paths
     :return: list of paths as pathlib.objects
     """
-    print("OAK PATH" + repr(oak_path))
+    #print("OAK PATH" + repr(oak_path))
     all_scratch_paths = []
     for current_path in oak_path:
         relevant_path_part = current_path.as_posix().split('data')[-1] # data seems to be the root folder everyone is using
@@ -186,10 +186,10 @@ def convert_oak_path_to_scratch(oak_path):
 #full_fictrac_file_scratch_paths = convert_oak_path_to_scratch(full_fictrac_file_oak_paths)
 #all_imaging_scratch_paths = ch1_func_file_scratch_paths + ch2_func_file_scratch_paths + ch1_anat_file_scratch_paths + ch2_anat_file_scratch_paths
 all_imaging_scratch_paths = convert_oak_path_to_scratch(all_imaging_oak_paths)
-print("all_imaging_scratch_paths" + repr(all_imaging_scratch_paths))
+#print("all_imaging_scratch_paths" + repr(all_imaging_scratch_paths))
 
 paths_for_make_mean_brain_rule_scratch = convert_oak_path_to_scratch(paths_for_make_mean_brain_rule_oak)
-print("paths_for_make_mean_brain_rule_scratch" + repr(paths_for_make_mean_brain_rule_scratch))
+#print("paths_for_make_mean_brain_rule_scratch" + repr(paths_for_make_mean_brain_rule_scratch))
 ####
 # Path per folder
 ####
@@ -225,7 +225,7 @@ def create_paths_each_experiment(func_and_anat_paths):
 func_and_anat_paths = func_file_paths + anat_file_paths
 
 imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(func_and_anat_paths)
-print('HERE' + repr(imaging_paths_by_folder_oak))
+#print('HERE' + repr(imaging_paths_by_folder_oak))
 #print('AND HERE' + repr(imaging_paths_by_folder_scratch))
 
 
