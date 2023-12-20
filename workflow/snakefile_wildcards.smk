@@ -210,16 +210,16 @@ def create_paths_each_experiment(func_and_anat_paths):
                 pathlib.Path(fly_folder_to_process, current_path, 'functional_channel_2.nii')]
                 )
             imaging_path_by_folder_scratch.append([
-                pathlib.Path(SCRATCH_DIR, 'data', imaging_paths_by_folder_oak[-1][0].as_posix().split('data')[-1]),
-                pathlib.Path(SCRATCH_DIR, 'data',  imaging_paths_by_folder_oak[-1][1].as_posix().split('data')[-1])])
+                pathlib.Path(SCRATCH_DIR, 'data' + imaging_paths_by_folder_oak[-1][0].as_posix().split('data')[-1]),
+                pathlib.Path(SCRATCH_DIR, 'data' + imaging_paths_by_folder_oak[-1][1].as_posix().split('data')[-1])])
         elif 'anat' in current_path:
             imaging_paths_by_folder_oak.append([
                 pathlib.Path(fly_folder_to_process, current_path, 'anatomy_channel_1.nii'),
                 pathlib.Path(fly_folder_to_process, current_path,'anatomy_channel_2.nii')]
                 )
             imaging_path_by_folder_scratch.append([
-                pathlib.Path(SCRATCH_DIR, 'data', imaging_paths_by_folder_oak[-1][0].as_posix().split('data')[-1]),
-                pathlib.Path(SCRATCH_DIR, 'data', imaging_paths_by_folder_oak[-1][1].as_posix().split('data')[-1])])
+                pathlib.Path(SCRATCH_DIR, 'data' + imaging_paths_by_folder_oak[-1][0].as_posix().split('data')[-1]),
+                pathlib.Path(SCRATCH_DIR, 'data' + imaging_paths_by_folder_oak[-1][1].as_posix().split('data')[-1])])
     return(imaging_paths_by_folder_oak, imaging_path_by_folder_scratch)
 
 func_and_anat_paths = func_file_paths + anat_file_paths
