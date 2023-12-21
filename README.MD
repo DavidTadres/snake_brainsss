@@ -45,6 +45,14 @@ install homebrew: https://brew.sh/
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 brew install libpng
 ```
+in environment:
+pip install cmake
+pip install itk
+pip install Downloads/antspyx-0.3.8-cp310-cp310-macosx_13_0_arm64.whl
+pip install snakemake
+pip install h5py
+pip install pyfiglet
+pip install natsort
 
 Create environment
 ```shell

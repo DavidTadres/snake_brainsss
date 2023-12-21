@@ -47,13 +47,20 @@ meanbrain_n_frames =  None
 
 # SCRATCH_DIR
 SCRATCH_DIR = '/scratch/users/' + current_user
+print(SCRATCH_DIR)
 
 import pathlib
 import json
-import brainsss
+import sys
+
+scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
+print(scripts_path)
+#sys.path.insert(0, pathlib.Path(scripts_path, 'brainsss'))
+from brainsss import utils
+#import utils
 from scripts import preprocessing
 
-settings = brainsss.load_user_settings(current_user)
+settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
 fly_folder_to_process = pathlib.Path(dataset_path, fly_folder_to_process)
 
@@ -182,21 +189,33 @@ paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process, ima
 def convert_oak_path_to_scratch(oak_path):
     """
 
-    :param oak_path: expects a list of path, i.e. ch1_func_file_oak_paths
-    :return: list of paths as pathlib.objects
+    :param oak_path: expects a list of path, i.e. ch1_func_file_oak_paths OR a single pathlib.Path object
+    :return: list of paths as pathlib.objects OR a single pathlib.Path object
     """
     #print("OAK PATH" + repr(oak_path))
-    all_scratch_paths = []
-    for current_path in oak_path:
-        relevant_path_part = current_path.as_posix().split('data')[-1] # data seems to be the root folder everyone is using
-        all_scratch_paths.append(pathlib.Path(SCRATCH_DIR, 'data', relevant_path_part))
-    return(all_scratch_paths)
+    if isinstance(oak_path, list):
+        all_scratch_paths = []
+        for current_path in oak_path:
+            # The [1::] is again necessary because split leads to something like /David/Bruker etc. which ignores preceeding parts
+            relevant_path_part = current_path.as_posix().split('data')[-1][1::] # data seems to be the root folder everyone is using
+            all_scratch_paths.append(pathlib.Path(SCRATCH_DIR, 'data', relevant_path_part))
+        return(all_scratch_paths)
+
+    elif oak_path.is_dir():
+        relevant_path_part = oak_path.as_posix().split('data')[-1][1::]
+        return(pathlib.Path(SCRATCH_DIR, 'data', relevant_path_part))
+
+    else:
+        print('oak_path needs to be a list of pathlib.Path objects or a single pathlib.Path object')
+        print('You provided: ' + repr(oak_path) +'. This might lead to a bug.')
 
 all_imaging_scratch_paths = convert_oak_path_to_scratch(all_imaging_oak_paths)
 #print("all_imaging_scratch_paths" + repr(all_imaging_scratch_paths))
 
 paths_for_make_mean_brain_rule_scratch = convert_oak_path_to_scratch(paths_for_make_mean_brain_rule_oak)
 #print("paths_for_make_mean_brain_rule_scratch" + repr(paths_for_make_mean_brain_rule_scratch))
+
+fly_folder_to_process_scratch = convert_oak_path_to_scratch(fly_folder_to_process) # Must be provided as a list
 
 ####
 # Path per folder
@@ -233,8 +252,7 @@ def create_paths_each_experiment(func_and_anat_paths):
 #func_and_anat_paths = func_file_paths + anat_file_paths
 #imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(func_and_anat_paths)
 imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(imaging_file_paths)
-# print('HERE' + repr(imaging_paths_by_folder_oak))
-#print('imaging_paths_by_folder_oak' + repr(imaging_paths_by_folder_oak))
+
 
 
 #####
@@ -273,35 +291,8 @@ rule name:
 #                     pathlib.Path('/users/dtadres/Documents/func1/imaging/moco/functional_channel_2_moco.h5')]
 
 # Filenames we can encounter
-filenames_present = ['channel_1', 'channel_2'] # I should be able to easily automatically determine this!
-imaging_folders = ['func0']
-"""
-#str(fly_folder_to_process) + "/{moco_imaging_paths}
-assemblies = []
-import os
-print(fly_folder_to_process)
-#for filename in glob_wildcards(os.path.join(str(fly_folder_to_process)+"/{moco_imaging_paths}", "/{i}.nii")):
-#    assemblies.append(filename)
-print(assemblies)
-"""
-"""
-moco_output_paths = []
-for current_folder in imaging_folders:
-    temp = []
-    for current_filename in filenames_present:
-        file = str(fly_folder_to_process) + "/current_folder/moco/current_filename_moco.h5"
-        temp.append(file)
-    moco_output_paths.append(temp)
-print(moco_output_paths)
+#imaging_folders = ['func0']
 
-[print (i) for i in moco_output_paths]"""
-
-"""
-for run, SAMPLE in zip(RUN_ID, SAMPLES):
-   for sample in SAMPLE:
-      file = f"foo/{run}/{sample}/outs/{sample}_report.html"
-      desired_files.append(file)
-      """
 # Depending on number of channels, create output files!
 
 # Note : ["{dataset}/a.txt".format(dataset=dataset) for dataset in DATASETS]
@@ -321,11 +312,11 @@ rule all:
         # While we don't really need this image, it's a good idea to have it here because the empty h5 file
         # we actually want is created very early during the rule call and will be present even if the program
         # crashed.
-        expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/motion_correction.png", moco_imaging_paths=imaging_folders),
+        expand(str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/moco/motion_correction.png", moco_imaging_paths=imaging_file_paths),
         # depending on which channels are present,
-        expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_1_moco.nii" if CH1_EXISTS else[], moco_imaging_paths=imaging_folders),
-        expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_2_moco.nii" if CH2_EXISTS else [], moco_imaging_paths=imaging_folders),
-        expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_3_moco.nii" if CH3_EXISTS else [],moco_imaging_paths=imaging_folders),
+        expand(str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[], moco_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else [], moco_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],moco_imaging_paths=imaging_file_paths),
 
 
 #expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/moco/channel_1_moco.h5",  moco_imaging_paths = imaging_file_paths)
@@ -360,8 +351,8 @@ rule copy_to_scratch_rule:
                                           paths_on_scratch = all_imaging_scratch_paths
                                           )
         except Exception as error_stack:
-            logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_copy_to_scratch')
-            brainsss.write_error(logfile=logfile,
+            logfile = utils.create_logfile(fly_folder_to_process,function_name='ERROR_copy_to_scratch')
+            utils.write_error(logfile=logfile,
                                  error_stack=error_stack,
                                  width=width)
 
@@ -379,8 +370,8 @@ rule fictrac_qc_rule:
                                     fictrac_fps=50 # AUTOMATE THIS!!!! ELSE BUG PRONE!!!!
                                     )
         except Exception as error_stack:
-            logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_fictrac_qc_rule')
-            brainsss.write_error(logfile=logfile,
+            logfile = utils.create_logfile(fly_folder_to_process,function_name='ERROR_fictrac_qc_rule')
+            utils.write_error(logfile=logfile,
                                  error_stack=error_stack,
                                  width=width)
 
@@ -437,8 +428,8 @@ rule bleaching_qc_rule:
             )
             print('Done with bleaching_qc')
         except Exception as error_stack:
-            logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_bleaching_qc_rule')
-            brainsss.write_error(logfile=logfile,
+            logfile = utils.create_logfile(fly_folder_to_process,function_name='ERROR_bleaching_qc_rule')
+            utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
             print('Error with bleaching_qc' )
@@ -453,7 +444,6 @@ filenames_for_moco = create_path_func(fly_folder_to_process, func_file_paths, 'f
                      create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_2_mean.nii')
 '''
 
-#filenames_for_moco = ['func0/imaging/channel_1', 'func0/imaging/functional_channel_2']
 rule motion_correction_rule:
     """
     
@@ -487,18 +477,18 @@ rule motion_correction_rule:
     threads: 6
     input:
         # Only use the Channels that exists
-        brain_paths_ch1=str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
-        brain_paths_ch2=str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
-        brain_paths_ch3=str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
+        brain_paths_ch1=str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/channel_1.nii" if CH1_EXISTS else [],
+        brain_paths_ch2=str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/channel_2.nii" if CH2_EXISTS else [],
+        brain_paths_ch3=str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/channel_3.nii" if CH3_EXISTS else [],
 
-        mean_brain_paths_ch1= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
-        mean_brain_paths_ch2= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH2_EXISTS else [],
-        mean_brain_paths_ch3= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH3_EXISTS else [],
+        mean_brain_paths_ch1= str(fly_folder_to_process) + "/{moco_imaging_paths}/channel_1_mean.nii" if CH1_EXISTS else [],
+        mean_brain_paths_ch2= str(fly_folder_to_process) + "/{moco_imaging_paths}/channel_1_mean.nii" if CH2_EXISTS else [],
+        mean_brain_paths_ch3= str(fly_folder_to_process) + "/{moco_imaging_paths}/channel_1_mean.nii" if CH3_EXISTS else [],
     output:
-        h5_path_ch1 = str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_1_moco.nii" if CH1_EXISTS else[],
-        h5_path_ch2= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_2_moco.nii" if CH2_EXISTS else[],
-        h5_path_ch3= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_3_moco.nii" if CH3_EXISTS else[],
-        png_output = str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/motion_correction.png"
+        h5_path_ch1 = str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
+        h5_path_ch2= str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[],
+        h5_path_ch3= str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
+        png_output = str(fly_folder_to_process_scratch) + "/{moco_imaging_paths}/moco/motion_correction.png"
     run:
         try:
             preprocessing.motion_correction(fly_directory=fly_folder_to_process,
@@ -512,8 +502,8 @@ rule motion_correction_rule:
                                             h5_path=[output.h5_path_ch1, output.h5_path_ch2, output.h5_path_ch3], # Define as dataset on scratch!
                                             )
         except Exception as error_stack:
-            logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_motion_correction')
-            brainsss.write_error(logfile=logfile,
+            logfile = utils.create_logfile(fly_folder_to_process,function_name='ERROR_motion_correction')
+            utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
 
@@ -555,8 +545,8 @@ rule make_mean_brain_rule:
                                           path_to_read=input,
                                           path_to_save=output  )
         except Exception as error_stack:
-            logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_make_mean_brain')
-            brainsss.write_error(logfile=logfile,
+            logfile = utils.create_logfile(fly_folder_to_process,function_name='ERROR_make_mean_brain')
+            utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
 
