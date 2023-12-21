@@ -24,7 +24,7 @@ import traceback
 # cd snake_brainsss/workflow
 # snakemake -s snakefile_wildcards.smk --profile config_sherlock
 
-fly_folder_to_process = 'fly_002' # folder to be processed
+fly_folder_to_process = 'fly_004' # folder to be processed
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 
 # do follow up analysis, enter the fly folder to be analyzed here.
