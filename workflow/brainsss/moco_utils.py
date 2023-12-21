@@ -6,9 +6,14 @@ mpl.use('agg') # Agg, is a non-interactive backend that can only write to files.
 from matplotlib import pyplot as plt
 import pathlib
 import time
-import utils
 import nibabel as nib
 
+# To import brainsss, define path to scripts!
+import sys
+scripts_path = pathlib.Path(__file__).parent.resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
+sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
+
+from brainsss import utils
 
 def make_empty_h5(directory, file, brain_dims):#, save_type):
 	#if save_type == 'curr_dir':
@@ -73,7 +78,16 @@ def save_moco_figure(transform_matrix, parent_path, moco_dir, printlog):
 	plt.legend()
 	fig.savefig(save_file, bbox_inches='tight', dpi=300)
 
-def print_progress_table(total_vol, complete_vol, printlog, start_time, width):
+def print_progress_table_moco(total_vol, complete_vol, printlog, start_time, width):
+	"""
+	There's a very similarly named function in utils!
+	:param total_vol:
+	:param complete_vol:
+	:param printlog:
+	:param start_time:
+	:param width:
+	:return:
+	"""
 	fraction_complete = complete_vol/total_vol
 
 	### Get elapsed time ###
@@ -91,7 +105,7 @@ def print_progress_table(total_vol, complete_vol, printlog, start_time, width):
 	complete_vol_str = f"{complete_vol:04d}"
 	total_vol_str = f"{total_vol:04d}"
 	length = len(elapsed_hms) + len(remaining_hms) + len(complete_vol_str) + len(total_vol_str)
-	bar_string = utils.progress_bar()(complete_vol, total_vol, width-length-10)
+	bar_string = utils.progress_bar(complete_vol, total_vol, width-length-10)
 
 	full_line = '| ' + elapsed_hms + '/' + remaining_hms + ' | ' + complete_vol_str + '/' + total_vol_str + ' |' + bar_string + '|'
 	printlog(full_line)

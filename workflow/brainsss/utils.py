@@ -26,6 +26,23 @@ try:
 except ImportError:
     pass
 
+def convert_list_of_string_to_posix_path(list_of_strings):
+    """
+    Unfortunately when input is passed by snakemake, the PosixPaths are converted to strings.
+    Convert back with this function
+    :param list_of_strings:
+    :return:
+    """
+    list_with_posix_paths = []
+    for current_path in list_of_strings:
+        print(current_path)
+        try:
+            list_with_posix_paths.append(pathlib.Path(current_path))
+        except TypeError:
+            # This happens because we sometimes pass empty lists for the unused channels.
+            pass
+    return(list_with_posix_paths)
+
 def get_new_fly_number(target_path):
     """
     Function to identify new fly number

@@ -28,35 +28,40 @@ WIDTH = 120 # This is used in all logging files
 scripts_path = pathlib.Path(__file__).parent.resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
 sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 # print(pathlib.Path(scripts_path, 'workflow'))
-import brainsss
+#import brainsss
 
+from brainsss import moco_utils
+from brainsss import utils
 
 def motion_correction(fly_directory,
                       dataset_path,
+                      meanbrain_path,
                       type_of_transform,
                       output_format,
                       flow_sigma,
                       total_sigma,
-                      meanbrain_target,
                       aff_metric,
-                      h5_path_scratch):
+                      h5_path):
     """
 
     :param dataset_path: A list of paths
     :return:
     """
-    logfile = brainsss.create_logfile(fly_directory, function_name='motion_correction')
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    brainsss.print_function_start(logfile, WIDTH, 'motion_correction')
+    logfile = utils.create_logfile(fly_directory, function_name='motion_correction')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'motion_correction')
 
     print(dataset_path)
+    dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
+    meanbrain_path =utils.convert_list_of_string_to_posix_path(meanbrain_path)
+    h5_path = utils.convert_list_of_string_to_posix_path(h5_path)
 
-    parent_path = dataset_path[0].parent() # the path witout filename, i.e. ../fly_001/func1/imaging/
+    parent_path = dataset_path[0].parent # the path witout filename, i.e. ../fly_001/func1/imaging/
 
     #if h5_path_scratch == "NotScratch":
     #    h5_path_scratch = dataset_path # for testing on local machines!
 
-    standalone = True  # I'll add if statements to be able to go back to Bella's script easliy
+    #standalone = True  # I'll add if statements to be able to go back to Bella's script easliy
 
     """
     # copy from preprocess.py
@@ -101,7 +106,7 @@ def motion_correction(fly_directory,
     print("path_brain_mirror " + repr(path_brain_mirror))
 
     path_mean_brain_mirror = None
-    for current_mean_path in meanbrain_target:
+    for current_mean_path in meanbrain_path:
         if 'channel_1_mean.nii' in current_mean_path.name:
             path_mean_brain_master = current_mean_path
         elif 'channel_2_mean.nii' in current_mean_path.name:
@@ -110,7 +115,7 @@ def motion_correction(fly_directory,
     print("path_mean_brain_mirror " + repr(path_mean_brain_mirror))
 
     path_h5_mirror = None
-    for current_h5_path in h5_path_scratch:
+    for current_h5_path in h5_path:
         if 'channel_1' in current_h5_path.name:
             path_h5_master = current_h5_path
         elif 'channel_2' in current_h5_path.name:
@@ -169,7 +174,7 @@ def motion_correction(fly_directory,
     #    printlog("")
 
     #brainsss.print_datetime(logfile, WIDTH)
-    printlog(F"Dataset path{parent_path:.>{WIDTH - 12}}")
+    printlog(F"Dataset path{parent_path.name:.>{WIDTH - 12}}")
     printlog(F"Brain master{path_brain_master.name:.>{WIDTH - 12}}")
     if path_brain_mirror is not None:
         printlog(F"Brain mirror{str(path_brain_mirror.name):.>{WIDTH - 12}}")
@@ -181,7 +186,7 @@ def motion_correction(fly_directory,
     printlog(F"flow_sigma{flow_sigma:.>{WIDTH - 10}}")
     printlog(F"total_sigma{total_sigma:.>{WIDTH - 11}}")
     #printlog(F"meanbrain_n_frames{str(meanbrain_n_frames):.>{WIDTH - 18}}") # Can only run this if meanbrain exists, never create it here!
-    printlog(F"meanbrain_target{str(meanbrain_target):.>{WIDTH - 12}}")
+    printlog(F"meanbrain_target{str(meanbrain_path):.>{WIDTH - 12}}")
 
     ######################
     ### PARSE SCANTYPE ###
@@ -406,17 +411,17 @@ def motion_correction(fly_directory,
             transformlist = moco['fwdtransforms']
             for x in transformlist:
                 if '.mat' not in x:
-                    print('Deleting fwdtransforms ' + x)
+                    #print('Deleting fwdtransforms ' + x)
+                    pathlib.Path(x).unlink()
                     #os.remove(x) # todo Save memory? #
 
             ### DELETE INVERSE TRANSFORMS ###
             transformlist = moco['invtransforms'] # I'm surprised this doesn't lead to an error because it doesn't seem taht moco['invtransforms'] is defined anywhere
             for x in transformlist:
                 if '.mat' not in x:
-                    print('Deleting invtransforms ' + x)
+                    #print('Deleting invtransforms ' + x)
+                    pathlib.Path(x).unlink()
                     #os.remove(x) # todo Save memory?
-
-            print(error) # Want to know what 'x' is.
 
             ### Print progress ###
             elapsed_time = time.time() - start_time
@@ -430,8 +435,9 @@ def motion_correction(fly_directory,
                 print_frequency = 60 * 60
             if time.time() - print_timer > print_frequency:
                 print_timer = time.time()
-                brainsss.print_progress_table(total_vol=brain_dims[-1], complete_vol=index, printlog=printlog,
-                                     start_time=start_time, width=WIDTH)
+                moco_utils.print_progress_table_moco(total_vol=brain_dims[-1], complete_vol=index,
+                                                   printlog=printlog,
+                                                   start_time=start_time, width=WIDTH)
 
         moco_ch1_chunk = np.moveaxis(np.asarray(moco_ch1_chunk), 0, -1)
         if path_brain_mirror is not None:
@@ -447,7 +453,7 @@ def motion_correction(fly_directory,
         ### APPEND WARPED VOL TO HD5F FILE - CHANNEL 2 ###
         t0 = time.time()
         if path_brain_mirror is not None:
-            with h5py.File(savefile_mirror, 'a') as f:
+            with h5py.File(path_h5_mirror, 'a') as f:
                 f['data'][..., steps[j]:steps[j + 1]] = moco_ch2_chunk
         # printlog(F'Ch_2 append time: {time.time()-t0}')
 
@@ -462,7 +468,7 @@ def motion_correction(fly_directory,
     ### MAKE MOCO PLOT ###
     printlog("making moco plot")
     printlog(F"moco_dir: {path_h5_master.name}")
-    brainsss.save_moco_figure(transform_matrix=transform_matrix,
+    moco_utils.save_moco_figure(transform_matrix=transform_matrix,
                               parent_path=parent_path,
                               moco_dir=path_h5_master.name,
                               printlog=printlog)
@@ -472,24 +478,24 @@ def motion_correction(fly_directory,
         printlog('saving .nii images')
 
         # Save master:
-        nii_savefile_master = brainsss.h5_to_nii(savefile_master)
+        nii_savefile_master = moco_utils.h5_to_nii(path_h5_master)
         printlog(F"nii_savefile_master: {str(nii_savefile_master.name)}")
         if nii_savefile_master is not None:  # If .nii conversion went OK, delete h5 file
-            printlog('deleting .h5 file at {}'.format(savefile_master))
-            savefile_master.unlink() # delete file
+            printlog('deleting .h5 file at {}'.format(path_h5_master))
+            path_h5_master.unlink() # delete file
         else:
-            printlog('nii conversion failed for {}'.format(savefile_master))
+            printlog('nii conversion failed for {}'.format(path_h5_master))
 
         # Save mirror:
         if path_brain_mirror is not None:
-            nii_savefile_mirror = brainsss.h5_to_nii(savefile_mirror)
+            nii_savefile_mirror = moco_utils.h5_to_nii(path_h5_mirror)
             printlog(F"nii_savefile_mirror: {str(nii_savefile_mirror)}")
             if nii_savefile_mirror is not None:  # If .nii conversion went OK, delete h5 file
-                printlog('deleting .h5 file at {}'.format(savefile_mirror))
+                printlog('deleting .h5 file at {}'.format(path_h5_mirror))
                 #os.remove(savefile_mirror)
-                savefile_mirror.unlink()
+                path_h5_mirror.unlink()
             else:
-                printlog('nii conversion failed for {}'.format(savefile_mirror))
+                printlog('nii conversion failed for {}'.format(path_h5_mirror))
 
 def copy_to_scratch(fly_directory, paths_on_oak, paths_on_scratch):
     """

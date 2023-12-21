@@ -32,6 +32,12 @@ fly_folder_to_process = 'fly_002' # folder to be processed
 # YOUR SUNET ID
 current_user = 'dtadres'
 
+# Automate this - I need some variables that define which channels are present in
+# the folder to be analyzed!
+CH1_EXISTS = True
+CH2_EXISTS = True
+CH3_EXISTS = False
+
 # First n frames to average over when computing mean/fixed brain | Default None
 # (average over all frames).
 meanbrain_n_frames =  None
@@ -236,12 +242,11 @@ imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each
 #                                                             filename='fictrac_2d_hist_fixed.png')
 fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_oak_paths,
                                                              filename='fictrac_2d_hist_fixed.png')
-print('<<<<<<<<' + repr(imaging_paths_by_folder_oak))
 #bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder,
 #                                                    filename='bleaching.png')
 bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder_oak,
                                                            filename='bleaching.png')
-print('>>>>>>.' + repr(bleaching_qc_output_files))
+
 # TESTING
 # full_fictrac_file_paths = [full_fictrac_file_paths[0]]
 # Output files for bleaching_qc rule
@@ -264,21 +269,66 @@ rule name:
 #test_output_moco = [pathlib.Path('/users/dtadres/Documents/func1/imaging/moco/functional_channel_1_moco.h5'),
 #                     pathlib.Path('/users/dtadres/Documents/func1/imaging/moco/functional_channel_2_moco.h5')]
 
-# Need to make a list of lists with ALL paths to easily expand afterwards.
-filenames_for_moco_func = ['func0/imaging/functional_channel_1', 'func0/imaging/functional_channel_2']
-filenames_for_moco_anat = ['anat/imaging/anatomy_channel_1', 'anat/imaging/anatomy_channel_2']
+# Filenames we can encounter
+filenames_present = ['channel_1', 'channel_2'] # I should be able to easily automatically determine this!
+imaging_folders = ['func0']
+"""
+#str(fly_folder_to_process) + "/{moco_imaging_paths}
+assemblies = []
+import os
+print(fly_folder_to_process)
+#for filename in glob_wildcards(os.path.join(str(fly_folder_to_process)+"/{moco_imaging_paths}", "/{i}.nii")):
+#    assemblies.append(filename)
+print(assemblies)
+"""
+"""
+moco_output_paths = []
+for current_folder in imaging_folders:
+    temp = []
+    for current_filename in filenames_present:
+        file = str(fly_folder_to_process) + "/current_folder/moco/current_filename_moco.h5"
+        temp.append(file)
+    moco_output_paths.append(temp)
+print(moco_output_paths)
 
+[print (i) for i in moco_output_paths]"""
+
+"""
+for run, SAMPLE in zip(RUN_ID, SAMPLES):
+   for sample in SAMPLE:
+      file = f"foo/{run}/{sample}/outs/{sample}_report.html"
+      desired_files.append(file)
+      """
+# Depending on number of channels, create output files!
+
+# Note : ["{dataset}/a.txt".format(dataset=dataset) for dataset in DATASETS]
+         # is the same as expand("{dataset}/a.txt", dataset=DATASETS)
+         # https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#
+         # With expand we can also do:
+         # expand("{dataset}/a.{ext}", dataset=DATASETS, ext=FORMATS)
 rule all:
     input:
-         expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
-         bleaching_qc_output_files,
-         expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak),
-         #expand(fly_folder_to_process"/{func_or_anat}/moco/{imaging_names}_moco.nii", imaging_names=filenames_for_moco, func_or_anat=)
-         #expand(fly_folder_to_process"{path_for_moco_func}/moco/")
-         #'/Users/dtadres/Documents/functional_channel_1_mean.nii'
-         #'/users/dtadres/Documents/func1/imaging/moco/functional_channel_1_moco.h5'
-         #expand("{moco_output}", moco_output=test_output_moco)
+        # Fictrac QC
+        expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
+        # Bleaching QC
+        bleaching_qc_output_files,
+        # Meanbrain
+        expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak),
+        # Motion correction output
+        # While we don't really need this image, it's a good idea to have it here because the empty h5 file
+        # we actually want is created very early during the rule call and will be present even if the program
+        # crashed.
+        expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/motion_correction.png", moco_imaging_paths=imaging_folders),
+        # depending on which channels are present,
+        expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_1_moco.nii" if CH1_EXISTS else[], moco_imaging_paths=imaging_folders),
+        expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_2_moco.nii" if CH2_EXISTS else [], moco_imaging_paths=imaging_folders),
+        expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_3_moco.nii" if CH3_EXISTS else [],moco_imaging_paths=imaging_folders),
 
+
+#expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/moco/channel_1_moco.h5",  moco_imaging_paths = imaging_file_paths)
+        #expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/moco/" + filenames_present + "_moco.h5",
+        #    moco_imaging_paths=imaging_file_paths)
+        #expand(moco_output_paths, current_folder=imaging_folders)
 """rule bleaching_qc_func_rule:
     "This should not run because the output is not requested in rule all"
     input:
@@ -400,9 +450,17 @@ filenames_for_moco = create_path_func(fly_folder_to_process, func_file_paths, 'f
                      create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_2_mean.nii')
 '''
 
-filenames_for_moco = ['func0/imaging/channel_1', 'func0/imaging/functional_channel_2']
-'''rule motion_correction_rule:
+#filenames_for_moco = ['func0/imaging/channel_1', 'func0/imaging/functional_channel_2']
+rule motion_correction_rule:
     """
+    
+    Tried a bunch of stuff and finally settled on this not super elegant solution.
+    
+    1) Figure out how many channels exist somehwere before rule all
+    2) To have a single wildcard for optimal parallelization, check if a given channel exists and pass nothing if not.
+    3) This should be relatively stable if I sometimes only record e.g. Ch1 or only Ch2 or both. I also added a 3rd 
+       channel as Jacob's upgrade is due soon. 
+    
     Has two sets of input files:
    ../imaging/..channel_1.nii & ../imaging/..channel_2.nii 
     and
@@ -414,31 +472,47 @@ filenames_for_moco = ['func0/imaging/channel_1', 'func0/imaging/functional_chann
     Because it's a pain to handle filenames that are called differently, I stopped using 
     'anatomy_channel_x' and 'functional_channel_x' and just call it 'channel_x'.
     
+    Avoid explicitly calling ch1 and ch2. Will be a pain to adapt code everytime if no ch2 is recorded...
+    
+    Goal: We want the correct number of 'moco/h5' files. We can have either 1 or 2 (or in the future 3)
+    different output files.
+    For a given file we need a defined set of input files.
+    If we find we want moco/ch1.h5 AND moco/ch2.h5 we need /ch1.nii, /ch2.nii, /ch1_mean.nii and /ch2_mean.nii
+    if we only want moco/ch1.h5 we only need /ch1.nii and /ch1_mean.nii
+    
     """
-    threads: 4
+    threads: 6
     input:
-        brain_paths = "fly_folder_to_process/func_file_paths/moco/{imaging_names}.nii",
-        mean_brain_paths = "fly_folder_to_process/func_file_paths/moco/{imaging_names}_mean.nii" # this breaks parallelization! expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak),
-    output: 'foo'
-        #"fly_folder_to_process/func_file_paths/moco/{imaging_names}_moco.nii"
+        # Only use the Channels that exists
+        brain_paths_ch1=str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
+        brain_paths_ch2=str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
+        brain_paths_ch3=str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
+
+        mean_brain_paths_ch1= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
+        mean_brain_paths_ch2= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH2_EXISTS else [],
+        mean_brain_paths_ch3= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH3_EXISTS else [],
+    output:
+        h5_path_ch1 = str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_1_moco.nii" if CH1_EXISTS else[],
+        h5_path_ch2= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_2_moco.nii" if CH2_EXISTS else[],
+        h5_path_ch3= str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/channel_3_moco.nii" if CH3_EXISTS else[],
+        png_output = str(fly_folder_to_process) + "/{moco_imaging_paths}/imaging/moco/motion_correction.png"
     run:
         try:
             preprocessing.motion_correction(fly_directory=fly_folder_to_process,
-                                            dataset_path=input.brain_paths,
-                                            meanbrain_target=input.mean_brain_paths, # NOTE must be input file! # filename of precomputed target meanbrain to register to
+                                            dataset_path=[input.brain_paths_ch1, input.brain_paths_ch2, input.brain_paths_ch3],
+                                            meanbrain_path=[input.mean_brain_paths_ch1, input.mean_brain_paths_ch2, input.mean_brain_paths_ch3], # NOTE must be input file! # filename of precomputed target meanbrain to register to
                                             type_of_transform="SyN",# For ants.registration(), see ANTsPy docs | Default 'SyN'
                                             output_format='h5', #'OPTIONAL PARAM output_format MUST BE ONE OF: "h5", "nii"'
                                             flow_sigma=3,# For ants.registration(), higher sigma focuses on coarser features | Default 3
                                             total_sigma=0,  # For ants.registration(), higher values will restrict the amount of deformation allowed | Default 0
                                             aff_metric='mattes',# For ants.registration(), metric for affine registration | Default 'mattes'. Also allowed: 'GC', 'meansquares'
-                                            h5_path_scratch={output}, # Define as dataset on scratch!
+                                            h5_path=[output.h5_path_ch1, output.h5_path_ch2, output.h5_path_ch3], # Define as dataset on scratch!
                                             )
         except Exception as error_stack:
             logfile = brainsss.create_logfile(fly_folder_to_process,function_name='ERROR_motion_correction')
             brainsss.write_error(logfile=logfile,
                 error_stack=error_stack,
-                width=width)'''
-
+                width=width)
 
 rule make_mean_brain_rule:
     """
@@ -497,5 +571,41 @@ you can do so from files that look like THAT, and here's what to run to make tha
 
 """
 
+"""
+Maybe useful in the future
+filenames_present = ['channel_1', 'channel_2'] # I should be able to easily automatically determine this!
+rule all:
+    input: expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/moco/{moco_filenames}_moco.h5",
+            moco_filenames=filenames_present,
+            moco_imaging_paths=imaging_file_paths)
+rule X:
+    input:        
+        brain_path = str(fly_folder_to_process) + "/{moco_imaging_paths}/{moco_filenames}.nii",
+        mean_brain_paths = str(fly_folder_to_process) + "/{moco_imaging_paths}/{moco_filenames}_mean.nii"
+    output:
+        str(fly_folder_to_process) + "/{moco_imaging_paths}/moco/{moco_filenames}_moco.h5"
+
+yields:
+[Wed Dec 20 14:32:32 2023]
+rule motion_correction_rule:
+    input: /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1.nii, /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1_mean.nii
+    output: /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/moco/channel_1_moco.h5
+    jobid: 3
+    reason: Missing output files: /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/moco/channel_1_moco.h5
+    wildcards: moco_imaging_paths=func0/imaging, moco_filenames=channel_1
+    threads: 4
+    resources: tmpdir=/var/folders/q0/9m96f32j1pl31hsqz1jkr4mr0000gq/T
+
+[Wed Dec 20 14:32:32 2023]
+rule motion_correction_rule:
+    input: /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_2.nii, /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_2_mean.nii
+    output: /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/moco/channel_2_moco.h5
+    jobid: 4
+    reason: Missing output files: /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/moco/channel_2_moco.h5
+    wildcards: moco_imaging_paths=func0/imaging, moco_filenames=channel_2
+    threads: 4
+    resources: tmpdir=/var/folders/q0/9m96f32j1pl31hsqz1jkr4mr0000gq/T
+
+"""
 
 
