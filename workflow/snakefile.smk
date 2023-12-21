@@ -2,7 +2,7 @@
 # ml python/3.9.0
 # source .env_snakemake/bin/activate
 # cd snake_brainsss/workflow
-# snakemake -s snakefile.smk --profile config_sherlock
+# snakemake -s snakefile.smk --profile OLDconfig_sherlock
 
 # config file from: https://github.com/jdblischak/smk-simple-slurm/tree/main
 
@@ -150,15 +150,16 @@ rule fly_builder_rule:
         if not pathlib.Path(fly_folder_to_process, 'anat').exists() or \
                 not pathlib.Path(fly_folder_to_process, 'func').exists:
             try:
-                fly_dirs_dict = preprocessing.fly_builder(logfile=logfile,
-                                                         user=current_user,
-                                                         dirs_to_build=data_to_process,
-                                                         target_folder = fly_folder_to_process
+                #fly_dirs_dict =
+                preprocessing.fly_builder(logfile=logfile,
+                                        dirs_to_build=data_to_process,
+                                        target_folder = fly_folder_to_process,
+                                        fly_dirs_dict_path = fly_dirs_dict_path
                                                          )
-                print(fly_dirs_dict)
+                #print(fly_dirs_dict)
                 # Json file containing the paths created by fly_builder
-                with open(fly_dirs_dict_path,'w') as file:
-                    json.dump(fly_dirs_dict,file,sort_keys=True,indent=4)
+                #with open(fly_dirs_dict_path,'w') as file:
+                #    json.dump(fly_dirs_dict,file,sort_keys=True,indent=4)
 
                 brainsss.print_function_done(logfile, width, 'fly_builder')
             except Exception as error_stack:
