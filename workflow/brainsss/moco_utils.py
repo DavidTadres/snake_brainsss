@@ -42,11 +42,23 @@ def make_empty_h5(directory, file, brain_dims):#, save_type):
 #		return None
 
 def save_moco_figure(transform_matrix, parent_path, moco_dir, printlog):
+	"""
 
+	:param transform_matrix:
+	:param parent_path:
+	:param moco_dir:
+	:param printlog:
+	:return:
+	"""
+	xml_path = None
 	# Get voxel resolution for figure
 	for current_file in parent_path.iterdir():
 		if 'functional.xml' in current_file.name or 'anatomy.xml' in current_file.name:
 			xml_path= current_file
+	if xml_path is None:
+		for current_file in moco_dir.parent.iterdir():
+			if 'functional.xml' in current_file.name or 'anatomy.xml' in current_file.name:
+				xml_path = current_file
 	#if scantype == 'func':
 	#	xml_name = 'functional.xml'
 	#elif scantype == 'anat':
@@ -57,7 +69,10 @@ def save_moco_figure(transform_matrix, parent_path, moco_dir, printlog):
 	#if not os.path.exists(xml_file):
 	#	printlog('Could not find xml file for scan dimensions. Skipping plot.')
 	#	return
-	if not xml_path.is_file():
+	if xml_path == None:
+		printlog('Could not find xml file for scan dimensions. Skipping plot.')
+		return
+	elif not xml_path.is_file():
 		printlog('Could not find xml file for scan dimensions. Skipping plot.')
 		return
 
