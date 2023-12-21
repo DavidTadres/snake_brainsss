@@ -6,6 +6,7 @@ cluster:
     --job-name=smk-{rule}-{wildcards}
     --output=logs/`date +"%Y-%m-%d"`/{rule}-`date +"%Y-%m-%d-%H%M%S"`.out
     --mail-type=ALL
+    --
 default-resources:
   - partition=trc
 restart-times: 0

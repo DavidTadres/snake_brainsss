@@ -32,6 +32,90 @@ sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 
 from brainsss import moco_utils
 from brainsss import utils
+from brainsss import fictrac_utils
+
+
+def zscore():
+    """
+
+    :param args:
+    :return:
+    """
+    load_directory = args['load_directory']
+    save_directory = args['save_directory']
+    brain_file = args['brain_file']
+    stepsize = 100
+
+    full_load_path = os.path.join(load_directory, brain_file)
+    save_file = os.path.join(save_directory, brain_file.split('.')[0] + '_zscore.h5')
+
+    #####################
+    ### SETUP LOGGING ###
+    #####################
+
+    width = 120
+    logfile = args['logfile']
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+
+    ##############
+    ### ZSCORE ###
+    ##############
+
+    printlog("Beginning ZSCORE")
+    with h5py.File(full_load_path, 'r') as hf:
+        data = hf['data']  # this doesn't actually LOAD the data - it is just a proxy
+        dims = np.shape(data)
+
+        printlog("Data shape is {}".format(dims))
+
+        running_sum = np.zeros(dims[:3])
+        running_sumofsq = np.zeros(dims[:3])
+
+        steps = list(range(0, dims[-1], stepsize))
+        steps.append(dims[-1])
+
+        ### Calculate meanbrain ###
+
+        for chunk_num in range(len(steps)):
+            t0 = time()
+            if chunk_num + 1 <= len(steps) - 1:
+                chunkstart = steps[chunk_num]
+                chunkend = steps[chunk_num + 1]
+                chunk = data[:, :, :, chunkstart:chunkend]
+                running_sum += np.sum(chunk, axis=3)
+                # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+        meanbrain = running_sum / dims[-1]
+
+        ### Calculate std ###
+
+        for chunk_num in range(len(steps)):
+            t0 = time()
+            if chunk_num + 1 <= len(steps) - 1:
+                chunkstart = steps[chunk_num]
+                chunkend = steps[chunk_num + 1]
+                chunk = data[:, :, :, chunkstart:chunkend]
+                running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+                # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+        final_std = np.sqrt(running_sumofsq / dims[-1])
+
+        ### Calculate zscore and save ###
+
+        with h5py.File(save_file, 'w') as f:
+            dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+
+            for chunk_num in range(len(steps)):
+                t0 = time()
+                if chunk_num + 1 <= len(steps) - 1:
+                    chunkstart = steps[chunk_num]
+                    chunkend = steps[chunk_num + 1]
+                    chunk = data[:, :, :, chunkstart:chunkend]
+                    running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+                    zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
+                    f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
+                        zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
+                    # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+
+    printlog("zscore done")
 
 def motion_correction(fly_directory,
                       dataset_path,
@@ -43,7 +127,14 @@ def motion_correction(fly_directory,
                       aff_metric,
                       h5_path):
     """
+    After discussing with Jacob: Make sure to somewhere explicitly define which channel
+    is the anatomical (GFP, Tomato or mCardinal) and which one is the functional (e.g.
+    GCaMP).
+    Then make sure to not use 'ch1' or 'ch2' anywhere in this function as it's not predictive
+    of whether it's the anatomical channel!
 
+    motion-correction works by using the anatomical channel. Then the warping is just applied
+    to the functional channel.
     :param dataset_path: A list of paths
     :return:
     """
@@ -122,8 +213,6 @@ def motion_correction(fly_directory,
             path_h5_mirror = current_h5_path
     print("path_h5_master " + repr(path_h5_master))
     print("path_h5_mirror " + repr(path_h5_mirror))
-
-
 
     #else:
     #    dataset_path = args[
@@ -411,7 +500,7 @@ def motion_correction(fly_directory,
             transformlist = moco['fwdtransforms']
             for x in transformlist:
                 if '.mat' not in x:
-                    #print('Deleting fwdtransforms ' + x)
+                    #print('Deleting fwdtransforms ' + x) # Yes, these are files
                     pathlib.Path(x).unlink()
                     #os.remove(x) # todo Save memory? #
 
@@ -462,7 +551,7 @@ def motion_correction(fly_directory,
     printlog(F"path_h5_master: {path_h5_master}")
     transform_matrix = np.array(transform_matrix)
     #save_file = os.path.join(moco_dir, 'motcorr_params')
-    save_file = pathlib.Path(path_h5_master.name, 'motcorr_params')
+    save_file = pathlib.Path(path_h5_master.parent, 'motcorr_params')
     np.save(save_file, transform_matrix)
 
     ### MAKE MOCO PLOT ###
@@ -678,16 +767,16 @@ def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):
     :return:
     """
     #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    logfile = brainsss.create_logfile(fly_directory, function_name='fictrac_qc')
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    brainsss.print_function_start(logfile, WIDTH, 'fictrac_qc')
+    logfile = utils.create_logfile(fly_directory, function_name='fictrac_qc')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'fictrac_qc')
 
     #width = 120
     # For log file readability clearly indicate when function was called
 
     for current_file in fictrac_file_paths:
         printlog('Currently looking at: ' + repr(current_file))
-        fictrac_raw = brainsss.load_fictrac(current_file)
+        fictrac_raw = fictrac_utils.load_fictrac(current_file)
         # I expect this to yield something like 'fly_001/func0/fictrac
         full_id = ', '.join(str(current_file).split('/')[-3:1])
 
@@ -700,12 +789,17 @@ def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):
                 short = 'Y'
             elif behavior == 'dRotLabZ':
                 short = 'Z'
-            fictrac[short] = brainsss.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior)
+            fictrac[short] = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior)
         xnew = np.arange(0, expt_len, resolution)
 
-        brainsss.make_2d_hist(fictrac, current_file, full_id, save=True, fixed_crop=True)
-        brainsss.make_2d_hist(fictrac, current_file, full_id, save=True, fixed_crop=False)
-        brainsss.make_velocity_trace(fictrac, current_file, full_id, xnew, save=True)
+        fictrac_utils.make_2d_hist(fictrac, current_file, full_id, save=True, fixed_crop=True)
+        fictrac_utils.make_2d_hist(fictrac, current_file, full_id, save=True, fixed_crop=False)
+        fictrac_utils.make_velocity_trace(fictrac, current_file, full_id, xnew, save=True)
+
+    ###
+    # Logging
+    ###
+    utils.get_job_status()
 
 def fly_builder(logfile, user, dirs_to_build, target_folder):
     """

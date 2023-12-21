@@ -1,7 +1,7 @@
 """
 Here the idea is to do preprocessing a little bit differently:
 
-We assume that the fly_builder already ran and that the fly_dir
+We assume that the fly_builder already ran and that the fly_dir exists
 
 Note:
     Although jobs can directly read and write to $OAK during execution,
@@ -37,6 +37,9 @@ current_user = 'dtadres'
 CH1_EXISTS = True
 CH2_EXISTS = True
 CH3_EXISTS = False
+
+ANATOMICAL_CHANNEL = 'channel_1' # < This needs to come from some sort of json file the experimenter
+# creates while running the experiment. Same as genotype.
 
 # First n frames to average over when computing mean/fixed brain | Default None
 # (average over all frames).
