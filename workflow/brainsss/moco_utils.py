@@ -50,40 +50,39 @@ def save_moco_figure(transform_matrix, parent_path, moco_dir, printlog):
 	:param printlog:
 	:return:
 	"""
-	try:
-		xml_path = None
-		# Get voxel resolution for figure
-		for current_file in parent_path.iterdir():
-			if 'functional.xml' in current_file.name or 'anatomy.xml' in current_file.name:
-				xml_path= current_file
 
-				#if xml_path == None:
-				#	printlog('Could not find xml file for scan dimensions. Skipping plot.')
-				#	return
-				#elif not xml_path.is_file():
-				#	printlog('Could not find xml file for scan dimensions. Skipping plot.')
-				#	return
+	xml_path = None
+	# Get voxel resolution for figure
+	for current_file in parent_path.iterdir():
+		if 'recording_metadata.xml' in current_file.name:
+			xml_path= current_file
 
-				printlog(F'Found xml file.')
-				x_res, y_res, z_res = utils.get_resolution(xml_path)
+			#if xml_path == None:
+			#	printlog('Could not find xml file for scan dimensions. Skipping plot.')
+			#	return
+			#elif not xml_path.is_file():
+			#	printlog('Could not find xml file for scan dimensions. Skipping plot.')
+			#	return
 
-				# Save figure of motion over time
-				#save_file = os.path.join(moco_dir, 'motion_correction.png')
-				save_file = pathlib.Path(moco_dir, 'motion_correction.png')
-				fig = plt.figure(figsize=(10,10))
-				ax = fig.add_subplot(111)
-				ax.plot(transform_matrix[:,9]*x_res, label = 'y') # note, resolutions are switched since axes are switched
-				ax.plot(transform_matrix[:,10]*y_res, label = 'x')
-				ax.plot(transform_matrix[:,11]*z_res, label = 'z')
-				ax.set_ylabel('Motion Correction, um')
-				ax.set_xlabel('Time')
-				ax.set_title(moco_dir)
-				plt.legend()
-				fig.savefig(save_file, bbox_inches='tight', dpi=300)
+			printlog(F'Found xml file.')
+			x_res, y_res, z_res = utils.get_resolution(xml_path)
 
-				return
-	except:
-		pass
+			# Save figure of motion over time
+			#save_file = os.path.join(moco_dir, 'motion_correction.png')
+			save_file = pathlib.Path(moco_dir, 'motion_correction.png')
+			fig = plt.figure(figsize=(10,10))
+			ax = fig.add_subplot(111)
+			ax.plot(transform_matrix[:,9]*x_res, label = 'y') # note, resolutions are switched since axes are switched
+			ax.plot(transform_matrix[:,10]*y_res, label = 'x')
+			ax.plot(transform_matrix[:,11]*z_res, label = 'z')
+			ax.set_ylabel('Motion Correction, um')
+			ax.set_xlabel('Time')
+			ax.set_title(moco_dir)
+			plt.legend()
+			fig.savefig(save_file, bbox_inches='tight', dpi=300)
+
+			return
+	printlog('Could not find xml file for scan dimensions. Skipping plot.')
 
 def print_progress_table_moco(total_vol, complete_vol, printlog, start_time, width):
 	"""
