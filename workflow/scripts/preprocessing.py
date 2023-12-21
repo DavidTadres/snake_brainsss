@@ -599,9 +599,9 @@ def copy_to_scratch(fly_directory, paths_on_oak, paths_on_scratch):
     :return:
     """
     #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    logfile = brainsss.create_logfile(fly_directory, function_name='copy_to_scratch')
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    brainsss.print_function_start(logfile, WIDTH, 'copy_to_scratch')
+    logfile = utils.create_logfile(fly_directory, function_name='copy_to_scratch')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'copy_to_scratch')
 
     #width = 120
     # For log file readability clearly indicate when function was called
@@ -630,9 +630,9 @@ def make_mean_brain(fly_directory,
     ###
     # Logging
     ###
-    logfile = brainsss.create_logfile(fly_directory, function_name='make_mean_brain')
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    brainsss.print_function_start(logfile, WIDTH, 'make_mean_brain')
+    logfile = utils.create_logfile(fly_directory, function_name='make_mean_brain')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'make_mean_brain')
 
     ###
     # Read nii file
@@ -693,9 +693,9 @@ def bleaching_qc(fly_directory,
     ###
     # Logging
     ###
-    logfile = brainsss.create_logfile(fly_directory, function_name='bleaching_qc')
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    brainsss.print_function_start(logfile, WIDTH, 'bleaching_qc')
+    logfile = utils.create_logfile(fly_directory, function_name='bleaching_qc')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'bleaching_qc')
     #
 
     # For each experiment,
@@ -816,10 +816,10 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     :param target_folder:
     :return:
     """
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     # printlog('\nBuilding flies from directory {}'.format(flagged_dir))
     # For log file readability clearly indicate when function was called
-    brainsss.print_function_start(logfile, WIDTH, 'fly_builder')
+    utils.print_function_start(logfile, WIDTH, 'fly_builder')
 
     # To be consistent with Bella's script, might be removed later
     destination_fly = target_folder
@@ -833,7 +833,7 @@ def fly_builder(logfile, user, dirs_to_build, target_folder):
     fly_dirs_dict['fly ID'] = destination_fly.name
 
     ### Parse user settings
-    settings = brainsss.load_user_settings(user)
+    settings = utils.load_user_settings(user)
     imports_path = pathlib.Path(settings['imports_path'])
     #dataset_path = pathlib.Path(settings['dataset_path'])
 
