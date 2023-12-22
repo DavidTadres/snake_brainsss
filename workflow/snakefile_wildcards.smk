@@ -74,7 +74,7 @@ imports_path = pathlib.Path(settings['imports_path'])
 # search for fly.json to genotype and others
 # Define path to imports to find fly.json!
 
-fly_folder_to_process_oak = pathlib.Path(dataset_path_genotype,fly_folder_to_process)
+fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
 print('only analyze data in ' + repr(fly_folder_to_process_oak))
 
 
@@ -175,7 +175,7 @@ full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process_oak, fictra
 paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_1') + \
                                     create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_2')
 #print('paths_for_make_mean_brain_rule_oak' + repr(paths_for_make_mean_brain_rule_oak))
-
+'''
 #######
 # Data path on SCRATCH
 #######
@@ -202,14 +202,14 @@ def convert_oak_path_to_scratch(oak_path):
         print('oak_path needs to be a list of pathlib.Path objects or a single pathlib.Path object')
         print('You provided: ' + repr(oak_path) +'. This might lead to a bug.')
 
-all_imaging_scratch_paths = convert_oak_path_to_scratch(all_imaging_oak_paths)
+#all_imaging_scratch_paths = convert_oak_path_to_scratch(all_imaging_oak_paths)
 #print("all_imaging_scratch_paths" + repr(all_imaging_scratch_paths))
 
-paths_for_make_mean_brain_rule_scratch = convert_oak_path_to_scratch(paths_for_make_mean_brain_rule_oak)
+#paths_for_make_mean_brain_rule_scratch = convert_oak_path_to_scratch(paths_for_make_mean_brain_rule_oak)
 #print("paths_for_make_mean_brain_rule_scratch" + repr(paths_for_make_mean_brain_rule_scratch))
 
-fly_folder_to_process_scratch = convert_oak_path_to_scratch(fly_folder_to_process_oak) # Must be provided as a list
-
+#fly_folder_to_process_scratch = convert_oak_path_to_scratch(fly_folder_to_process_oak) # Must be provided as a list
+'''
 ####
 # Path per folder
 ####
@@ -222,30 +222,29 @@ def create_paths_each_experiment(func_and_anat_paths):
     :param func_and_anat_paths: a list with all func and anat path as defined in 'fly_004_dirs.json'
     """
     imaging_path_by_folder_oak = []
-    imaging_path_by_folder_scratch = []
+    #imaging_path_by_folder_scratch = []
     for current_path in func_and_anat_paths:
         if 'func' in current_path:
             imaging_path_by_folder_oak.append([
                 pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_1.nii'),
                 pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_2.nii')]
                 )
-            imaging_path_by_folder_scratch.append([
-                pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][0].as_posix().split('data')[-1]),
-                pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][1].as_posix().split('data')[-1])])
+            #imaging_path_by_folder_scratch.append([
+            #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][0].as_posix().split('data')[-1]),
+            #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][1].as_posix().split('data')[-1])])
         elif 'anat' in current_path:
             imaging_path_by_folder_oak.append([
                 pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_1.nii'),
                 pathlib.Path(fly_folder_to_process_oak, current_path,'channel_2.nii')]
                 )
-            imaging_path_by_folder_scratch.append([
-                pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][0].as_posix().split('data')[-1]),
-                pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][1].as_posix().split('data')[-1])])
-    return(imaging_path_by_folder_oak, imaging_path_by_folder_scratch)
+            #imaging_path_by_folder_scratch.append([
+            #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][0].as_posix().split('data')[-1]),
+            #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][1].as_posix().split('data')[-1])])
+    #return(imaging_path_by_folder_oak, imaging_path_by_folder_scratch)
+    return (imaging_path_by_folder_oak)
 
-#func_and_anat_paths = func_file_paths + anat_file_paths
-#imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(func_and_anat_paths)
-imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(imaging_file_paths)
-
+#imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(imaging_file_paths)
+imaging_paths_by_folder_oak = create_paths_each_experiment(imaging_file_paths)
 
 
 #####
@@ -327,7 +326,7 @@ rule all:
         preprocessing.bleaching_qc_test(ch1=input.channel1_func,
                                         ch2=input.channel2,
                                         print_output = output)"""
-
+'''
 rule copy_to_scratch_rule:
     """
     Benchmarking:
@@ -349,7 +348,7 @@ rule copy_to_scratch_rule:
             utils.write_error(logfile=logfile,
                                  error_stack=error_stack,
                                  width=width)
-
+'''
 rule fictrac_qc_rule:
     threads: 1
     input:
@@ -410,7 +409,7 @@ rule bleaching_qc_rule:
     """
     threads: 8
     input:
-        imaging_paths_by_folder_scratch
+        imaging_paths_by_folder_oak
     output:
         bleaching_qc_output_files
     run:
