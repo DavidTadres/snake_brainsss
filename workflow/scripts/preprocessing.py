@@ -921,6 +921,7 @@ def add_date_to_fly(fly_folder):
         #xml_file = os.path.join(anat_folder, 'imaging', 'anatomy.xml')  # Unsure how this leads to correct filename!
     '''
     xml_file = pathlib.Path(fly_folder, 'imaging', 'recording_metadata.xml')
+    print("xml_file path" + repr(xml_file))
     # Extract datetime
     datetime_str, _, _ = get_datetime_from_xml(xml_file)
     # Get just date
@@ -1623,7 +1624,7 @@ def add_fly_to_xlsx(fly_folder, printlog):
             visual_input = None
 
         # Get fly_id
-        fly_folder = expt_folder.parent
+        #fly_folder = expt_folder.parent
         #fly_folder = os.path.split(os.path.split(expt_folder)[0])[-1]
         fly_id = fly_folder.name.split('_')[-1]
         printlog(F"Got fly ID as {fly_id}")
@@ -1634,7 +1635,7 @@ def add_fly_to_xlsx(fly_folder, printlog):
         #expt_id = 'NA' # Not sure what this is, NA for now
 
         # Append the new row
-        new_row = []
+        #new_row = []
         new_row = [int(fly_id),
                    str(expt_id),
                    fly_data['date'],
