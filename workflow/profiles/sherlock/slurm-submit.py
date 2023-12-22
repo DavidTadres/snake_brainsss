@@ -5,6 +5,10 @@ Snakemake SLURM submit script.
 import json
 import logging
 import os
+###
+import pathlib
+scripts_path = pathlib.Path(__file__).parent.resolve()  # should be /.snake_brainsss/workflow/profiles
+###
 
 import requests
 from snakemake.utils import read_job_properties
@@ -23,6 +27,7 @@ if DEBUG:
 
 
 def register_with_sidecar(jobid):
+    print(jobid)
     if SIDECAR_VARS is None:
         return
     print('SIDECAR_VARS: ' + repr(SIDECAR_VARS))
@@ -36,7 +41,7 @@ def register_with_sidecar(jobid):
 # cookiecutter arguments
 SBATCH_DEFAULTS = CookieCutter.SBATCH_DEFAULTS
 CLUSTER = CookieCutter.get_cluster_option()
-CLUSTER_CONFIG = CookieCutter.CLUSTER_CONFIG
+CLUSTER_CONFIG = str(scripts_path) + '/cluster_config.yml'#CookieCutter.CLUSTER_CONFIG
 
 RESOURCE_MAPPING = {
     "time": ("time", "runtime", "walltime"),
