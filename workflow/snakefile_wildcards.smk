@@ -293,6 +293,7 @@ rule name:
          # With expand we can also do:
          # expand("{dataset}/a.{ext}", dataset=DATASETS, ext=FORMATS)
 rule all:
+    resources: time_min=120,mem_mb=1000,cpus=1
     input:
         # Fictrac QC
         ###expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
@@ -350,7 +351,7 @@ rule copy_to_scratch_rule:
                                  width=width)
 '''
 rule fictrac_qc_rule:
-    threads: 1
+    resources: time_min=300,mem_mb=16000,cpus=2
     input:
         full_fictrac_file_oak_paths
         #fictrac_file_paths = expand("{fictrac}", fictrac=full_fictrac_file_scratch_paths)
