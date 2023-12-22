@@ -443,7 +443,7 @@ rule motion_correction_rule:
     threads: 6
     resources: mem_mb=mem_mb_times_threads
     benchmark:
-        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + "_benchmark_motion_correction_rule.txt"
+        str(fly_folder_to_process_oak) + "/logs/{moco_imaging_paths}" + str(time_string) + "_benchmark_motion_correction_rule.txt"
     input:
         # Only use the Channels that exists
         brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/channel_1.nii" if CH1_EXISTS else [],
@@ -506,7 +506,7 @@ rule make_mean_brain_rule:
 
     output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
     benchmark:
-        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + "_make_mean_brain_rule.txt"
+        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + "_{mean_brains_output}_make_mean_brain_rule.txt"
 
     # every nii file is made to a mean brain! Can predict how they
         # are going to be called and put them here.
