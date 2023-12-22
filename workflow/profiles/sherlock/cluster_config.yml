@@ -1,4 +1,4 @@
 __default__:
-    partition: trc # the partition you use
+    partition: trc # the partition you use, DONT MIX SPACE AND TAB HERE!
     mail-type: ALL # Get emails when a job is started and finished
-    job-name: {rule}-{wildcards} # Name each job according to rule and the wildcards
+    job-name: {rule}-{wildcards} # Name each job according to rule and the wildcards,
