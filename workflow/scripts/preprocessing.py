@@ -699,6 +699,15 @@ def bleaching_qc(fly_directory,
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'bleaching_qc')
     #
+    import sys  # for sys.argv (command-line arguments)
+    from snakemake.utils import read_job_properties  # to obtain properties
+
+    # get path of jobscript
+    jobscript = sys.argv[-1]
+    # get job properties
+    job_info = read_job_properties(jobscript)
+
+    printlog(job_info)
 
     # For each experiment,
     for current_folder_read, current_file_path_save in zip(imaging_data_path_read_from, imaging_data_path_save_to):
