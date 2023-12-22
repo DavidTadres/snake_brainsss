@@ -106,7 +106,7 @@ rule fly_builder_rule:
     """
     Not parallelized right now.
     """
-    threads: 2
+    threads: 1
     run:
 
         # Only run the code to copy data from imports to 'fly_00X' if the

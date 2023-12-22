@@ -939,7 +939,7 @@ def add_date_to_fly(fly_folder):
         json.dump(metadata, f, indent=4)
         f.truncate()
 
-def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict):
+def copy_fly(import_dir, dataset_dir, printlog, user, fly_dirs_dict):
     """
     #####
     # Todo - make sure the scratch folder is empty!!!!!
@@ -957,51 +957,50 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
     4) the recording metadata was called 'anatomy.xml' and 'functional.xml' in the past.
        this is changed to always be called 'recording_metadata.xml'
     """
-    print("current_fly_folder " + repr(current_fly_folder))
     # look at every item in source fly folder
-    for current_file_or_folder in current_fly_folder.iterdir():
+    # This is a folder like: '/oak/stanford/groups/trc/data/David/Bruker/imports/20231207/fly1'
+    for current_import_file_or_folder in import_dir.iterdir():
         # This should be e.g. directory such as anat1 or func0 or fly.json
-        print('Currently looking at source_item: {}'.format(current_file_or_folder.name))
+        print('Currently looking at source_item: {}'.format(current_import_file_or_folder.name))
         # Handle folders
-
-        if current_file_or_folder.is_dir():
+        if current_import_file_or_folder.is_dir():
             # Call this folder source expt folder
-            current_imaging_folder = current_file_or_folder
+            current_import_imaging_folder = current_import_file_or_folder
             # Make the same folder in destination fly folder
-            current_target_folder = pathlib.Path(destination_fly)
-            current_target_folder.mkdir(parents=True, exist_ok=True)
+            current_dataset_folder = pathlib.Path(dataset_dir, current_import_file_or_folder.name)
+            #current_dataset_folder.mkdir(parents=True, exist_ok=True)
 
             # Is this folder an anatomy or functional folder?
-            if 'anat' in current_imaging_folder.name:
+            if 'anat' in current_import_imaging_folder.name:
                 # If anatomy folder, just copy everything
                 # Make imaging folder and copy
                 #imaging_destination = os.path.join(expt_folder, 'imaging')
-                imaging_destination = pathlib.Path(current_target_folder, 'imaging')
+                imaging_destination = pathlib.Path(current_dataset_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True, exist_ok=True)
-                copy_bruker_data(current_imaging_folder, imaging_destination, 'anat', printlog)
+                copy_bruker_data(current_import_imaging_folder, imaging_destination, 'anat', printlog)
                 current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
                 #json_key = current_imaging_folder.name + ' Imaging'
                 #utils.append_json(path=fly_dirs_dict_path, key=json_key, value=current_fly_dir_dict)
-                fly_dirs_dict[current_imaging_folder.name + ' Imaging'] = current_fly_dir_dict
+                fly_dirs_dict[current_import_imaging_folder.name + ' Imaging'] = current_fly_dir_dict
                 ######################################################################
-                print(f"anat:{current_target_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
+                print(f"anat:{current_dataset_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
-            elif 'func' in current_imaging_folder.name:
+            elif 'func' in current_import_imaging_folder.name:
                 # Make imaging folder and copy
                 #imaging_destination = os.path.join(expt_folder, 'imaging')
-                imaging_destination = pathlib.Path(current_target_folder, 'imaging')
+                imaging_destination = pathlib.Path(current_dataset_folder, 'imaging')
                 #os.mkdir(imaging_destination)
                 imaging_destination.mkdir(parents=True, exist_ok=True)
-                copy_bruker_data(current_imaging_folder, imaging_destination, 'func', printlog)
+                copy_bruker_data(current_import_imaging_folder, imaging_destination, 'func', printlog)
                 # Update fly_dirs_dict
                 current_fly_dir_dict = str(imaging_destination).split(imaging_destination.parents[1].name)[-1]
                 #json_key = current_imaging_folder.name + ' Imaging'
                 #utils.append_json(path=fly_dirs_dict_path, key=json_key, value=current_fly_dir_dict)
-                fly_dirs_dict[current_imaging_folder.name + ' Imaging'] = current_fly_dir_dict
+                fly_dirs_dict[current_import_imaging_folder.name + ' Imaging'] = current_fly_dir_dict
                 # Copy fictrac data based on timestamps
                 try:
-                    fly_dirs_dict = copy_fictrac(current_target_folder, printlog, user, current_imaging_folder, fly_dirs_dict)
+                    fly_dirs_dict = copy_fictrac(current_dataset_folder, printlog, user, current_import_imaging_folder, fly_dirs_dict)
                     # printlog('Fictrac data copied')
                 except Exception as e:
                     printlog('Could not copy fictrac data because of error:')
@@ -1009,7 +1008,7 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
                     printlog(traceback.format_exc())
                 # Copy visual data based on timestamps, and create visual.json
                 try:
-                    copy_visual(current_target_folder, printlog)
+                    copy_visual(current_dataset_folder, printlog)
                 except Exception as e:
                     printlog('Could not copy visual data because of error:')
                     printlog(str(e))
@@ -1020,16 +1019,16 @@ def copy_fly(current_fly_folder, destination_fly, printlog, user, fly_dirs_dict)
                 # REMOVED TRIGGERING
 
             else:
-                printlog('Invalid directory in fly folder (skipping): {}'.format(current_imaging_folder.name))
+                printlog('Invalid directory in fly folder (skipping): {}'.format(current_import_imaging_folder.name))
 
         # Copy fly.json file
         else:
-            current_file = current_file_or_folder
-            if current_file_or_folder.name == 'fly.json':
-                target_path = pathlib.Path(destination_fly, current_file.name)
-                copyfile(current_file, target_path)
+            current_import_file = current_import_file_or_folder
+            if current_import_file_or_folder.name == 'fly.json':
+                target_path = pathlib.Path(dataset_dir, current_import_file.name)
+                copyfile(current_import_file, target_path)
             else:
-                printlog('Invalid file in fly folder (skipping): {}'.format(current_file.name))
+                printlog('Invalid file in fly folder (skipping): {}'.format(current_import_file.name))
 
     return(fly_dirs_dict)
 
@@ -1051,11 +1050,11 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             ### Change file names and filter various files
             if 'concat.nii' in source_path.name and folder_type == 'func':
                 target_name = 'channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
-                target_path = pathlib.Path(destination, target_name)
+                #target_path = pathlib.Path(destination, target_name)
             # Rename anatomy file to anatomy_channel_x.nii
             elif '.nii' in source_path.name and folder_type == 'anat':
                 target_name = 'channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
-                target_path = pathlib.Path(destination, target_name)
+                #target_path = pathlib.Path(destination, target_name)
             # Special copy for photodiode since it goes in visual folder
             # To be tested once I have such data!!
             elif '.csv' in source_path.name:
@@ -1548,7 +1547,7 @@ def add_fly_to_xlsx(fly_folder, printlog):
         xlsx_path = pathlib.Path(fly_folder.parent, 'master_2P.xlsx')
         wb = load_workbook(filename=xlsx_path, read_only=False)
         ws = wb.active
-        printlog("Sucessfully opened master_2P log")
+        printlog("Successfully opened master_2P log")
     except Exception as e:
         printlog("FYI you have no excel metadata sheet found, so unable to append metadata for this fly.")
         printlog(traceback.format_exc())
@@ -1560,7 +1559,7 @@ def add_fly_to_xlsx(fly_folder, printlog):
         fly_file = pathlib.Path(fly_folder, 'fly.json')
         #fly_file = os.path.join(fly_folder, 'fly.json')
         fly_data = load_json(fly_file)
-        printlog("Sucessfully loaded fly.json")
+        printlog("Successfully loaded fly.json")
     except:
         printlog("FYI no *fly.json* found; this will not be logged in your excel sheet.")
         fly_data = {}
@@ -1572,7 +1571,6 @@ def add_fly_to_xlsx(fly_folder, printlog):
         fly_data['notes'] = None
         fly_data['date'] = None
         fly_data['genotype'] = None
-
 
     expt_folders = [pathlib.Path(fly_folder, x) for x in fly_folder.iterdir() if 'func' in x.name]
     #brainsss.sort_nicely(expt_folders)
