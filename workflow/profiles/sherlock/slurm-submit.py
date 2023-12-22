@@ -15,7 +15,6 @@ from CookieCutter import CookieCutter
 logger = logging.getLogger(__name__)
 
 SIDECAR_VARS = os.environ.get("SNAKEMAKE_CLUSTER_SIDECAR_VARS", None)
-print('SIDECAR_VARS: ' + repr(SIDECAR_VARS))
 DEBUG = bool(int(os.environ.get("SNAKEMAKE_SLURM_DEBUG", "0")))
 
 if DEBUG:
@@ -26,6 +25,7 @@ if DEBUG:
 def register_with_sidecar(jobid):
     if SIDECAR_VARS is None:
         return
+    print('SIDECAR_VARS: ' + repr(SIDECAR_VARS))
     sidecar_vars = json.loads(SIDECAR_VARS)
     url = "http://localhost:%d/job/register/%s" % (sidecar_vars["server_port"], jobid)
     logger.debug("POST to %s", url)
