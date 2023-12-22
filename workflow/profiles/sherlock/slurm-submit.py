@@ -15,6 +15,7 @@ from CookieCutter import CookieCutter
 logger = logging.getLogger(__name__)
 
 SIDECAR_VARS = os.environ.get("SNAKEMAKE_CLUSTER_SIDECAR_VARS", None)
+print("SIDECAR_VARS " + repr(SIDECAR_VARS))
 DEBUG = bool(int(os.environ.get("SNAKEMAKE_SLURM_DEBUG", "0")))
 
 if DEBUG:
