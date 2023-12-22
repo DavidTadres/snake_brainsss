@@ -57,11 +57,16 @@ if DEBUG:
 class PollSqueueThread(threading.Thread):
     """Thread that polls ``squeue`` until stopped by ``stop()``"""
 
+    '''
+    Note: Original setting for squeue_timeout=2
+    Had problems because sherlock seems to take quite long
+    '''
+
     def __init__(
         self,
         squeue_wait,
         squeue_cmd,
-        squeue_timeout=2,
+        squeue_timeout=10, # see notes aboe
         sleep_time=0.01,
         max_tries=3,
         *args,
