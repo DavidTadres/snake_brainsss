@@ -26,9 +26,7 @@ import traceback
 
 ######
 # Define EITHER imports_to_process OR fly_folder_to_process. Not both
-import_to_process = '20231207__test__' # Data deposited by Brukerbridge on oak, only tested with 1 folder so far
-
-fly_folder_to_process = '' # folder to be processed
+fly_folder_to_process = 'fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 #####
 
@@ -76,33 +74,8 @@ imports_path = pathlib.Path(settings['imports_path'])
 # search for fly.json to genotype and others
 # Define path to imports to find fly.json!
 
-
-
-
-# If fly is being built!
-if import_to_process != '' and fly_folder_to_process == '':
-    # define fly.json file, must be called fly.json and be in the folder of
-    import_to_process_path = pathlib.Path(imports_path, import_to_process)
-    fly_json_path = pathlib.Path(import_to_process_path, 'fly.json')
-    #
-    with open(fly_json_path, 'r') as openfile:
-        fly_json = json.load(openfile)
-        GENOTYPE = fly_json['genotype'] # Must be present, else error
-        ANATOMICAL_CHANNEL = fly_json['anatomy_channel'] # Must be present, else error
-        FUNCTIONAL_CHANNELS = fly_json['functional_channels'] # Must be present, else error
-    print('FUNCTIONAL_CHANNELS' + repr(FUNCTIONAL_CHANNELS))
-
-    dataset_path_genotype = pathlib.Path(dataset_path,GENOTYPE)
-    new_fly_number = utils.get_new_fly_number(dataset_path_genotype)
-    print(new_fly_number)
-    fly_folder_to_process_oak = pathlib.Path(dataset_path_genotype, new_fly_number)
-    #import_path_to_fly = pathlib.Path(imports_path, )
-    print('Create new fly folder: ' + repr(fly_folder_to_process_oak))
-elif import_to_process == '' and fly_folder_to_process != '':
-    fly_folder_to_process_oak = pathlib.Path(dataset_path_genotype,fly_folder_to_process)
-    print('only analyze data in ' + repr(fly_folder_to_process_oak))
-elif import_to_process != '' and fly_folder_to_process != '':
-    print('Define EITHER data_to_process OR fly_folder_to_process. Never both. Aborting!')
+fly_folder_to_process_oak = pathlib.Path(dataset_path_genotype,fly_folder_to_process)
+print('only analyze data in ' + repr(fly_folder_to_process_oak))
 
 
 # Needed for logging
