@@ -699,6 +699,11 @@ def bleaching_qc(fly_directory,
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'bleaching_qc')
 
+    # Try to read SNAKEMAKE_CLUSTER_SIDECAR_VARS
+    import os
+    SIDECAR_VARS = os.environ.get("SNAKEMAKE_CLUSTER_SIDECAR_VARS", None)
+    print(SIDECAR_VARS)
+
     # For each experiment,
     for current_folder_read, current_file_path_save in zip(imaging_data_path_read_from, imaging_data_path_save_to):
         # yields e.g. current_folder_read = PosixPath('../fly_001/func0/imaging/functional_channel_1.nii'),

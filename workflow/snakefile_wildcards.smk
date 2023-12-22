@@ -296,6 +296,7 @@ rule name:
 def mem_mb_times_threads(wildcards, threads):
     """
     Returns memory in mb as 7500Mb/thread
+    Note: wildcards is essential here!
     :param threads:
     :return:
     """
