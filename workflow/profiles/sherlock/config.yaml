@@ -12,7 +12,7 @@ latency-wait: "5"
 use-conda: "False"
 use-singularity: "False"
 jobs: "500"
-printshellcmds: "False"
+printshellcmds: "True"
 
 # Example resource configuration
 # default-resources:

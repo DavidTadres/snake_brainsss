@@ -41,7 +41,7 @@ def register_with_sidecar(jobid):
 # cookiecutter arguments
 SBATCH_DEFAULTS = CookieCutter.SBATCH_DEFAULTS
 CLUSTER = CookieCutter.get_cluster_option()
-CLUSTER_CONFIG = str(scripts_path) + '/cluster_config.yml'#CookieCutter.CLUSTER_CONFIG
+CLUSTER_CONFIG = CookieCutter.CLUSTER_CONFIG #str(scripts_path) + '/cluster_config.yml'#CookieCutter.CLUSTER_CONFIG
 
 RESOURCE_MAPPING = {
     "time": ("time", "runtime", "walltime"),
