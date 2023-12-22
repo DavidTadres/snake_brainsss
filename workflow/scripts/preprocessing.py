@@ -928,7 +928,7 @@ def add_date_to_fly(fly_folder):
     time = datetime_str.split('-')[1]
 
     ### Add to fly.json
-    json_file = pathlib.Path(fly_folder.name, 'fly.json')
+    json_file = pathlib.Path(fly_folder, 'fly.json')
     #json_file = os.path.join(destination_fly, 'fly.json')
     with open(json_file, 'r+') as f:
         metadata = json.load(f)
