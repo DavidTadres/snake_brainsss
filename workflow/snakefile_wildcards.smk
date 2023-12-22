@@ -429,7 +429,7 @@ rule bleaching_qc_rule:
     output:
         bleaching_qc_output_files
     benchmark:
-        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + 'benchmark_bleaching_qc_rule.csv"
+        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + "benchmark_bleaching_qc_rule.csv"
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
