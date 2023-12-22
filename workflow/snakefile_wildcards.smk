@@ -424,7 +424,7 @@ rule bleaching_qc_rule:
     output:
         bleaching_qc_output_files
     benchmark:
-        str(fly_folder_to_process) + "/logs/bleaching_qc_rule.txt"
+        str(fly_folder_to_process_oak) + "/logs/bleaching_qc_rule.txt"
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
