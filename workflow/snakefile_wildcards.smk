@@ -287,6 +287,8 @@ def get_time():
     time_now = datetime.datetime.now().strftime("%I%M%S")
     return(day_now + '_' + time_now)
 time_string = get_time() # To write benchmark files
+
+
 # Filenames we can encounter
 #imaging_folders = ['func0']
 
@@ -429,7 +431,7 @@ rule bleaching_qc_rule:
     output:
         bleaching_qc_output_files
     benchmark:
-        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + "benchmark_bleaching_qc_rule.csv"
+        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + "_benchmark_bleaching_qc_rule.txt"
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
