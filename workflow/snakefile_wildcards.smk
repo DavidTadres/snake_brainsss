@@ -60,7 +60,7 @@ meanbrain_n_frames =  None
 
 import pathlib
 import json
-import sys
+import datetime
 
 scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
 print(scripts_path)
@@ -282,6 +282,11 @@ rule name:
 #test_output_moco = [pathlib.Path('/users/dtadres/Documents/func1/imaging/moco/functional_channel_1_moco.h5'),
 #                     pathlib.Path('/users/dtadres/Documents/func1/imaging/moco/functional_channel_2_moco.h5')]
 
+def get_time():
+    day_now = datetime.datetime.now().strftime("%Y%d%m")
+    time_now = datetime.datetime.now().strftime("%I%M%S")
+    return(day_now + '_' + time_now)
+time_string = get_time() # To write benchmark files
 # Filenames we can encounter
 #imaging_folders = ['func0']
 
@@ -424,7 +429,7 @@ rule bleaching_qc_rule:
     output:
         bleaching_qc_output_files
     benchmark:
-        str(fly_folder_to_process_oak) + "/logs/bleaching_qc_rule.txt"
+        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + 'benchmark_bleaching_qc_rule.csv"
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
@@ -439,6 +444,7 @@ rule bleaching_qc_rule:
                 error_stack=error_stack,
                 width=width)
             print('Error with bleaching_qc' )
+
 '''
 filenames_for_moco = create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_1.nii') + \
                      create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_2.nii') + \
