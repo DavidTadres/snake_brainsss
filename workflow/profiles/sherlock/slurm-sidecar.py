@@ -59,14 +59,34 @@ class PollSqueueThread(threading.Thread):
 
     '''
     Note: Original setting for squeue_timeout=2
-    Had problems because sherlock seems to take quite long
+    Had problems because sherlock seems to take quite long and got error:
+    ####
+        sys.exit(int(main() or 0))
+      File "/home/users/dtadres/snake_brainsss/workflow/profiles/sherlock/slurm-sidecar.py", line 298, in main
+        poll_thread = PollSqueueThread(SQUEUE_WAIT, SQUEUE_CMD, name="poll-squeue")
+      File "/home/users/dtadres/snake_brainsss/workflow/profiles/sherlock/slurm-sidecar.py", line 90, in __init__
+        self._call_squeue(allow_failure=False)
+      File "/home/users/dtadres/snake_brainsss/workflow/profiles/sherlock/slurm-sidecar.py", line 161, in _call_squeue
+        output = subprocess.check_output(cmd, timeout=self.squeue_timeout, text=True)
+      File "/share/software/user/open/python/3.9.0/lib/python3.9/subprocess.py", line 420, in check_output
+        return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+      File "/share/software/user/open/python/3.9.0/lib/python3.9/subprocess.py", line 503, in run
+        stdout, stderr = process.communicate(input, timeout=timeout)
+      File "/share/software/user/open/python/3.9.0/lib/python3.9/subprocess.py", line 1130, in communicate
+        stdout, stderr = self._communicate(input, endtime, timeout)
+      File "/share/software/user/open/python/3.9.0/lib/python3.9/subprocess.py", line 1978, in _communicate
+        self._check_timeout(endtime, orig_timeout, stdout, stderr)
+      File "/share/software/user/open/python/3.9.0/lib/python3.9/subprocess.py", line 1174, in _check_timeout
+        raise TimeoutExpired(
+    subprocess.TimeoutExpired: Command '['squeue', '--user=dtadres', '--format=%i,%T', '--state=all']' timed out after 2 seconds
+    ###
     '''
 
     def __init__(
         self,
         squeue_wait,
         squeue_cmd,
-        squeue_timeout=10, # see notes aboe
+        squeue_timeout=10, # see notes above
         sleep_time=0.01,
         max_tries=3,
         *args,
