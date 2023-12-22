@@ -22,7 +22,7 @@ import traceback
 # ml python/3.9.0
 # source .env_snakemake/bin/activate
 # cd snake_brainsss/workflow
-# snakemake -s snakefile_wildcards.smk --profile OLDconfig_sherlock
+# snakemake -s snakefile_wildcards.smk --profile simple_slurm
 
 ######
 # Define EITHER imports_to_process OR fly_folder_to_process. Not both
@@ -407,7 +407,6 @@ rule bleaching_qc_rule:
     path_to_imaging_folder would need to be a list of paths pointing to 'imaging', for example:
     ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
-    resources: partition='trc'
     threads: 8
     input:
         imaging_paths_by_folder_oak

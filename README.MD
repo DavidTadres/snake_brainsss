@@ -27,6 +27,14 @@ pip install pyfiglet
 pip3 install opencv-python-headless
 pip install scipy
 
+# On sherlock had warning message:
+
+did:
+pip list showed that I had urllib3==2.1.0 installed
+https://stackoverflow.com/questions/76187256/importerror-urllib3-v2-0-only-supports-openssl-1-1-1-currently-the-ssl-modu
+suggested to just do:
+pip install urllib3==1.26.6
+
 
 #pip install nibabel
 cd .#pip install scipy

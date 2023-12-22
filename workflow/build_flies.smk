@@ -2,7 +2,7 @@
 # ml python/3.9.0
 # source .env_snakemake/bin/activate
 # cd snake_brainsss/workflow
-# snakemake -s build_flies.smk --profile OLDconfig_sherlock
+# snakemake -s build_flies.smk --profile simple_slurm
 
 # config file from: https://github.com/jdblischak/smk-simple-slurm/tree/main
 
