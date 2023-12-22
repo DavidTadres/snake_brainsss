@@ -316,56 +316,18 @@ rule all:
         # Bleaching QC
         bleaching_qc_output_files,
         # Meanbrain
-        ###expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak),
+        expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak),
         # Motion correction output
         # While we don't really need this image, it's a good idea to have it here because the empty h5 file
         # we actually want is created very early during the rule call and will be present even if the program
         # crashed.
-        ###expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motion_correction.png", moco_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motion_correction.png", moco_imaging_paths=imaging_file_paths),
         # depending on which channels are present,
-        ###expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[], moco_imaging_paths=imaging_file_paths),
-        ###expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else [], moco_imaging_paths=imaging_file_paths),
-        ###expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],moco_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[], moco_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else [], moco_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],moco_imaging_paths=imaging_file_paths),
 
 
-#expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/moco/channel_1_moco.h5",  moco_imaging_paths = imaging_file_paths)
-        #expand(str(fly_folder_to_process) + "/{moco_imaging_paths}/moco/" + filenames_present + "_moco.h5",
-        #    moco_imaging_paths=imaging_file_paths)
-        #expand(moco_output_paths, current_folder=imaging_folders)
-"""rule bleaching_qc_func_rule:
-    "This should not run because the output is not requested in rule all"
-    input:
-        channel1_func = expand("{ch1_func}", ch1_func=ch1_func_file_paths),
-        channel2_func = expand("{ch2_func}", ch2_func=ch2_func_file_paths)
-    output:
-        'io_files/test.txt'
-    run:
-        preprocessing.bleaching_qc_test(ch1=input.channel1_func,
-                                        ch2=input.channel2,
-                                        print_output = output)"""
-'''
-rule copy_to_scratch_rule:
-    """
-    Benchmarking:
-    a 5 minute volumetric recording (2x2Gb), 1 core: 34 seconds
-    """
-    threads: 1
-    input:
-        all_imaging_oak_paths
-    output:
-        all_imaging_scratch_paths
-    run:
-        try:
-            preprocessing.copy_to_scratch(fly_directory = fly_folder_to_process_oak,
-                                          paths_on_oak = all_imaging_oak_paths,
-                                          paths_on_scratch = all_imaging_scratch_paths
-                                          )
-        except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_copy_to_scratch')
-            utils.write_error(logfile=logfile,
-                                 error_stack=error_stack,
-                                 width=width)
-'''
 rule fictrac_qc_rule:
     threads: 1
     input:
@@ -447,16 +409,6 @@ rule bleaching_qc_rule:
                 width=width)
             print('Error with bleaching_qc' )
 
-'''
-filenames_for_moco = create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_1.nii') + \
-                     create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_2.nii') + \
-                     create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_1.nii') + \
-                     create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_2.nii') + \
-                     create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_1_mean.nii') + \
-                     create_path_func(fly_folder_to_process, func_file_paths, 'functional_channel_2_mean.nii') + \
-                     create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_1_mean.nii') + \
-                     create_path_func(fly_folder_to_process, anat_file_paths, 'anatomy_channel_2_mean.nii')
-'''
 
 rule motion_correction_rule:
     """
@@ -489,6 +441,9 @@ rule motion_correction_rule:
     
     """
     threads: 6
+    resources: mem_mb=mem_mb_times_threads
+    benchmark:
+        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + "_benchmark_motion_correction_rule.txt"
     input:
         # Only use the Channels that exists
         brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/channel_1.nii" if CH1_EXISTS else [],
@@ -546,11 +501,14 @@ rule make_mean_brain_rule:
         save.mean_brain(output)
     """
     threads: 2
+    resources: mem_mb=mem_mb_times_threads
     input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
 
     output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
+    benchmark:
+        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + "_make_mean_brain_rule.txt"
 
-        # every nii file is made to a mean brain! Can predict how they
+    # every nii file is made to a mean brain! Can predict how they
         # are going to be called and put them here.
     run:
         try:
