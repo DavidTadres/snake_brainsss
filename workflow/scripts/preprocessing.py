@@ -895,49 +895,36 @@ def fly_builder(user, import_dirs, dataset_dirs):
 def add_date_to_fly(fly_folder):
     ''' get date from xml file and add to fly.json'''
 
-    ### Get date
-    #try:  # Check if there are func folders
-        # Get func folders
-        # Check if folder(s) with 'func' in name is present
-        #func_folders = [pathlib.Path(destination_fly, x) for x in destination_fly.iterdir() if 'func' in x.name]
-        # Sort folders
-        #func_folders = natsort.natsorted(func_folders)
-        #func_folder = func_folders[0]  # This throws an error if no func folder, hence try..except
-        # Get full xml file path
-        #xml_file = pathlib.Path(func_folder, 'imaging', 'recording_metadata.xml')
-        #xml_file = os.path.join(func_folder, 'imaging',
-            #                        'functional.xml')  # Unsure how this leads to correct filename!
-    '''
-    except:  # Use anatomy folder
-        # Get anat folders
-        #anat_folders = [os.path.join(destination_fly, x) for x in os.listdir(destination_fly) if 'anat' in x]
-        anat_folders = [pathlib.Path(destination_fly, x) for x in destination_fly.iterdir() if 'anat' in x.name]
-        #brainsss.sort_nicely(anat_folders)
-        anat_folders = natsort.natsorted((anat_folders))
-        anat_folder = anat_folders[0]
-        # Get full xml file path
-        # TOdo: rename to something like 'microscope.xml'. Similar to ch, keep filenames consistent!
-        xml_file = pathlib.Path(anat_folder, 'imaging', 'recording_metadata.xml')
-        #xml_file = os.path.join(anat_folder, 'imaging', 'anatomy.xml')  # Unsure how this leads to correct filename!
-    '''
-    xml_file = pathlib.Path(fly_folder, 'imaging', 'recording_metadata.xml')
-    print("xml_file path" + repr(xml_file))
-    # Extract datetime
-    datetime_str, _, _ = get_datetime_from_xml(xml_file)
-    # Get just date
-    date = datetime_str.split('-')[0]
-    time = datetime_str.split('-')[1]
+    # Check if there are func folders:
+    candidate_folders = [pathlib.Path(fly_folder, x) for x in fly_folder.iterdir() if 'func' in x.name]
+    # if not...
+    if len(candidate_folders) == 0:
+        # ...check if there are anat folders:
+        candidate_folders = [pathlib.Path(fly_folder, x) for x in fly_folder.iterdir() if 'anat' in x.name]
 
-    ### Add to fly.json
-    json_file = pathlib.Path(fly_folder, 'fly.json')
-    #json_file = os.path.join(destination_fly, 'fly.json')
-    with open(json_file, 'r+') as f:
-        metadata = json.load(f)
-        metadata['date'] = str(date)
-        metadata['time'] = str(time)
-        f.seek(0)
-        json.dump(metadata, f, indent=4)
-        f.truncate()
+    if len(candidate_folders) > 0:
+        candidate_folder = candidate_folders[0]
+        xml_file = pathlib.Path(candidate_folder, 'imaging', 'recording_metadata.xml')
+        print("xml_file path" + repr(xml_file))
+        # Extract datetime
+        datetime_str, _, _ = get_datetime_from_xml(xml_file)
+        # Get just date
+        date = datetime_str.split('-')[0]
+        time = datetime_str.split('-')[1]
+
+        ### Add to fly.json
+        json_file = pathlib.Path(fly_folder, 'fly.json')
+        #json_file = os.path.join(destination_fly, 'fly.json')
+        with open(json_file, 'r+') as f:
+            metadata = json.load(f)
+            metadata['date'] = str(date)
+            metadata['time'] = str(time)
+            f.seek(0)
+            json.dump(metadata, f, indent=4)
+            f.truncate()
+
+    else:
+        print('Unable to find folder called "anat" or "func" to read "recording_metadata.xml')
 
 def copy_fly(import_dir, dataset_dir, printlog, user, fly_dirs_dict):
     """
@@ -1571,7 +1558,9 @@ def add_fly_to_xlsx(fly_folder, printlog):
         fly_data['notes'] = None
         fly_data['date'] = None
         fly_data['genotype'] = None
+        fly_data['notes'] = None
 
+    # Write in master xlsx only if we have a func folder. Ignore anatomical data!
     expt_folders = [pathlib.Path(fly_folder, x) for x in fly_folder.iterdir() if 'func' in x.name]
     #brainsss.sort_nicely(expt_folders)
     expt_folders = natsort.natsorted(expt_folders)
