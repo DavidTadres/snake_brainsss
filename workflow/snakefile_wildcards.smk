@@ -407,8 +407,8 @@ rule bleaching_qc_rule:
     path_to_imaging_folder would need to be a list of paths pointing to 'imaging', for example:
     ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
-    threads: 8
-    resources: mem=16000
+    threads: 2
+    resources: mem=7500
     input:
         imaging_paths_by_folder_oak
     output:
