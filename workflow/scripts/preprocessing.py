@@ -308,8 +308,8 @@ def motion_correction(fly_directory,
         stepsize = 5
     else:
         scantype = 'Unknown'
-        stepsize = 500
-        printlog(F"{'   Could not determine scantype. Using default stepsize of 500   ':*^{WIDTH}}")
+        stepsize = 1000
+        printlog(F"{'   Could not determine scantype. Using default stepsize of 1000   ':*^{WIDTH}}")
     printlog(F"Scantype{scantype:.>{WIDTH - 8}}")
     printlog(F"Stepsize{stepsize:.>{WIDTH - 8}}")
 
