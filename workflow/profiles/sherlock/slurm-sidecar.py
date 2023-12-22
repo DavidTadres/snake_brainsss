@@ -163,7 +163,7 @@ class PollSqueueThread(threading.Thread):
             except IndexError:
                 logger.warning("Could not parse %s (try %d of %d)", repr(output), try_num, self.max_tries)
             secs = try_num / 2.0
-            loger.info("Sleeping %f seconds", secs)
+            logger.info("Sleeping %f seconds", secs)
             time.sleep(secs)
         raise Exception("Problem with call to %s" % cmd)
 
