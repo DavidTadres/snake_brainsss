@@ -23,8 +23,8 @@ class CookieCutter:
 
     SBATCH_DEFAULTS = from_entry_or_env(settings, "SBATCH_DEFAULTS")
     CLUSTER_NAME = from_entry_or_env(settings, "CLUSTER_NAME")
-    print("CLUSTER_CONFIG path" + str(pathlib.Path(scripts_path, 'cluster_config')))
-    CLUSTER_CONFIG = pathlib.Path(scripts_path, 'cluster_config')#from_entry_or_env(settings, "CLUSTER_CONFIG")
+    print("CLUSTER_CONFIG path" + str(pathlib.Path(scripts_path, 'cluster_config.yml')))
+    CLUSTER_CONFIG = pathlib.Path(scripts_path, 'cluster_config.yml')#from_entry_or_env(settings, "CLUSTER_CONFIG")
 
     @staticmethod
     def get_cluster_option() -> str:
