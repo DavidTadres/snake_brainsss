@@ -35,8 +35,29 @@ from brainsss import utils
 from brainsss import fictrac_utils
 
 
-def zscore():
+def zscore(dataset_path, zscore_path):
     """
+    Remember, only the functional channel is z scored of course!!!!
+
+    Expected memory needs:
+    2x Filesize + 2~10 MB for the meanbrain and std
+
+    Reason:
+    https://ipython-books.github.io/45-understanding-the-internals-of-numpy-to-avoid-unnecessary-array-copying/
+    def aid(x):
+         # This function returns the memory
+         # block address of an array.
+         return x.__array_interface__['data'][0]
+    fakebrain = np.zeros((128,256,49,1000))
+    meanbrain = np.nanmean(fakebrain, axis=3)
+    stdbrain = np.std(fakebrain, axis=3)
+    zscore = (fakebrain-meanbrain[:,:,:,np.newaxis])/stdbrain[:,:,:,np.newaxis]
+
+    aid(fake_brain), aid(zscore)
+    >(11379671040, 30647255040) # Different memory location!
+
+    # in place operation?
+    np.subtract.at(fakebrain, [], meanbrain[:,:,:,np.newaxis)
 
     :param args:
     :return:
@@ -75,45 +96,66 @@ def zscore():
         steps.append(dims[-1])
 
         ### Calculate meanbrain ###
-
-        for chunk_num in range(len(steps)):
-            t0 = time()
-            if chunk_num + 1 <= len(steps) - 1:
-                chunkstart = steps[chunk_num]
-                chunkend = steps[chunk_num + 1]
-                chunk = data[:, :, :, chunkstart:chunkend]
-                running_sum += np.sum(chunk, axis=3)
-                # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+        # I assume data is actual data.
+        # So we load data in chunks with the first 3 dimensions + a chunk in time
+        # then sum all the data over time
+        # an finally divide it by time.
+        #for chunk_num in range(len(steps)):
+        #    t0 = time()
+        #    if chunk_num + 1 <= len(steps) - 1:
+        #        chunkstart = steps[chunk_num]
+        #        chunkend = steps[chunk_num + 1]
+        #        chunk = data[:, :, :, chunkstart:chunkend]
+        #        running_sum += np.sum(chunk, axis=3)
+        #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
         meanbrain = running_sum / dims[-1]
+
+        # I think we don't have to worry about memory too much - since we only work
+        # with one h5 file at a time and 30 minutes at float32 is ~20Gb
+        # Expect a 4D array, xyz and the fourth dimension is time!
+        meanbrain = np.nanmean(data, axis=3)
 
         ### Calculate std ###
 
-        for chunk_num in range(len(steps)):
-            t0 = time()
-            if chunk_num + 1 <= len(steps) - 1:
-                chunkstart = steps[chunk_num]
-                chunkend = steps[chunk_num + 1]
-                chunk = data[:, :, :, chunkstart:chunkend]
-                running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-                # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-        final_std = np.sqrt(running_sumofsq / dims[-1])
+        #for chunk_num in range(len(steps)):
+        #    t0 = time()
+        #    if chunk_num + 1 <= len(steps) - 1:
+        #        chunkstart = steps[chunk_num]
+        #        chunkend = steps[chunk_num + 1]
+        #        chunk = data[:, :, :, chunkstart:chunkend]
+        #        running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+        #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+        #final_std = np.sqrt(running_sumofsq / dims[-1])
 
-        ### Calculate zscore and save ###
+        # Might get out of memory error, test!
+        final_std = np.std(data, axis=3)
 
-        with h5py.File(save_file, 'w') as f:
-            dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+    ### Calculate zscore and save ###
 
-            for chunk_num in range(len(steps)):
-                t0 = time()
-                if chunk_num + 1 <= len(steps) - 1:
-                    chunkstart = steps[chunk_num]
-                    chunkend = steps[chunk_num + 1]
-                    chunk = data[:, :, :, chunkstart:chunkend]
-                    running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-                    zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
-                    f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
-                        zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
-                    # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+    #with h5py.File(save_file, 'w') as f:
+    #    dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+
+    #    for chunk_num in range(len(steps)):
+    #        t0 = time()
+    #        if chunk_num + 1 <= len(steps) - 1:
+    #            chunkstart = steps[chunk_num]
+    #            chunkend = steps[chunk_num + 1]
+    #            chunk = data[:, :, :, chunkstart:chunkend]
+    #            running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+    #            zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
+    #            f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
+    #                zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
+    #            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+
+    # Calculate z-score
+    z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
+    # From the docs:
+    # Chunking has performance implications. It’s recommended to keep the total size
+    # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
+    # keep in mind that when any element in a chunk is accessed, the entire chunk
+    # is read from disk
+    with h5py.File(save_file, 'w') as file:
+        dset = file.create_dataset('data', data=z_scored)#, dims, dtype='float32', chunks=False)
 
     printlog("zscore done")
 
@@ -127,7 +169,7 @@ def motion_correction(fly_directory,
                       aff_metric,
                       h5_path):
     """
-    After discussing with Jacob: Make sure to somewhere explicitly define which channel
+    TODO After discussing with Jacob: Make sure to somewhere explicitly define which channel
     is the anatomical (GFP, Tomato or mCardinal) and which one is the functional (e.g.
     GCaMP).
     Then make sure to not use 'ch1' or 'ch2' anywhere in this function as it's not predictive
