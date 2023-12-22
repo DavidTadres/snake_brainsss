@@ -408,7 +408,7 @@ rule bleaching_qc_rule:
     ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
     threads: 2
-    resources: mem=7500
+    resources: mem_mb=14000
     input:
         imaging_paths_by_folder_oak
     output:
