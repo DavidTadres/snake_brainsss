@@ -292,6 +292,15 @@ rule name:
          # https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#
          # With expand we can also do:
          # expand("{dataset}/a.{ext}", dataset=DATASETS, ext=FORMATS)
+
+def mem_mb_times_threads(threads):
+    """
+    Returns memory in mb as 7500Mb/thread
+    :param threads:
+    :return:
+    """
+    return(threads * 7500)
+
 rule all:
     input:
         # Fictrac QC
@@ -408,7 +417,7 @@ rule bleaching_qc_rule:
     ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
     threads: 2
-    resources: mem_mb=lambda wc, input: max(2.5 * input.size_mb, 1000)
+    resources: mem_mb=mem_mb_times_threads
     input:
         imaging_paths_by_folder_oak
     output:
