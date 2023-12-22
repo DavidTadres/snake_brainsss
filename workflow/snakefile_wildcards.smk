@@ -423,6 +423,8 @@ rule bleaching_qc_rule:
         imaging_paths_by_folder_oak
     output:
         bleaching_qc_output_files
+    benchmark:
+        str(fly_folder_to_process) + "/logs/bleaching_qc_rule.txt"
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
