@@ -293,7 +293,7 @@ rule name:
          # With expand we can also do:
          # expand("{dataset}/a.{ext}", dataset=DATASETS, ext=FORMATS)
 
-def mem_mb_times_threads(threads):
+def mem_mb_times_threads(wildcards, threads):
     """
     Returns memory in mb as 7500Mb/thread
     :param threads:
