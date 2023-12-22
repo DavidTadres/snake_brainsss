@@ -43,32 +43,61 @@ def convert_list_of_string_to_posix_path(list_of_strings):
             pass
     return(list_with_posix_paths)
 
-def get_new_fly_number(target_path):
+def get_new_fly_number(target_path, first_fly_with_genotype_this_run,
+                       already_created_folders):
     """
     Function to identify new fly number
     :param target_path: a string pointing to a path, i.e. /oak/stanford/groups/trc/data/David/Bruker/preprocessed
     :return: three digit number
     """
+    # Check if target path (the gentype folder) already exists. If not, by definition
+    # we need to create 'fly_001' (see below, else statement)
+    if target_path.is_dir():
+        # loop through target path and collect all files and folders that contain 'fly'
+        fly_folders = [s for s in (target_path).iterdir() if "fly" in s.name and s.is_dir()]
+        # fly folders should then be sorted like this: ['fly_999', 'fly_998',.., 'fly_001']
+        sorted_fly_folder = natsort.natsorted(fly_folders,reverse=True)
 
-    # loop through target path and collect all files and folders that contain 'fly'
-    fly_folders = [s for s in (target_path).iterdir() if "fly" in s.name and s.is_dir()]
-    # fly folders should then be sorted like this: ['fly_001', 'fly_002',.., 'fly_999']
-    sorted_fly_folder = natsort.natsorted(fly_folders)
-    # fly_folders is already sorted so last index is highest fly number
-    oldest_fly = sorted_fly_folder[-1].name.split('_')[-1]
-    # make sure it contains either 'func' or 'anat' data. Else this is the next fly!
-    # This check is necessary because of snakemake seems to run twice!
-    empty_folder = False
-    for current_folder in sorted_fly_folder[-1].iterdir():
-        if 'anat' in current_folder.name or 'func' in current_folder.name:
-            empty_folder = True
-    if empty_folder:
-        # +1 highest fly number and make sure it has 3 digits.
+        oldest_fly = None
+        # If we have not yet created any folders with this genotype in this run...
+        if first_fly_with_genotype_this_run:
+            # ...check if the 'incomplete' flag is present in the most recent
+            # 'fly_XXX' folder
+            for current_fly_folder in sorted_fly_folder:
+                if pathlib.Path(current_fly_folder, 'incomplete').exists():
+                    # If incomplete exists, continue 'down' the folders. i.e. if
+                    # the incomplete file exists in 'fly_999', go to 'fly_998' and
+                    # check there etc. until a folder is found where the file does not
+                    # exists!
+
+                    # TODOCheck if other files are in the folder and warn user
+                    pass
+                else:
+                    # if no 'incomplete' file exists, we have found the oldest fly folder
+                    oldest_fly = current_fly_folder.name.split('_')[-1]
+            # if even 'fly_001' has a 'incomplete' file, the 'new_fly_number' is '001'.
+            if oldest_fly is None:
+                new_fly_number = str(1).zfill(3)  # fly number 001
+                return(new_fly_number) # stop function here.
+        # if we have created other paths in the same genotype file during this run before
+        # use this information to higher the next higher number
+        else:
+            # First sort all already_created_folder and find the ones with the correct
+            # genotype
+            relevant_paths = []
+            for current_path in already_created_folders:
+                if target_path.name in current_path.parts:
+                    relevant_paths.append(current_path)
+            # Next, sort the relevant paths
+            sorted_relevant_paths = natsort.natsorted(relevant_paths,reverse=True)
+            # and pick out the oldest fly
+            oldest_fly = sorted_relevant_paths[0].name.split('_')[-1]
+
         new_fly_number = str(int(oldest_fly) + 1).zfill(3)
-        return(new_fly_number)
     else:
-        new_fly_number = str(int(oldest_fly)).zfill(3)
-        return(new_fly_number)
+        new_fly_number = str(1).zfill(3) # fly number 001
+
+    return(new_fly_number)
 def write_error(logfile, error_stack, width):
     with open(logfile, 'a+') as file:
         file.write(f"\n{'     ERROR     ':!^{width}}")
@@ -501,3 +530,20 @@ def print_function_start(logfile, width, function_name):
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
     day_time = str(day_now) + ' | ' + str(time_now)
     printlog(f"\n{'   ' + str(function_name) + ' called at:  ' + str(day_time) + '   ':=^{width}}")
+
+def append_json(path, key, value):
+    """
+    Function that reads a json file as a dict, adds a single key and value and OVERWRITES
+    the original json file.
+    :param path:
+    :param key:
+    :param value:
+    :return:
+    """
+    with open(path, 'r') as openfile:
+        dict = json.load(openfile)
+    dict[key] = value
+    with open(path, 'w') as openfile:
+        json.dump(dict, openfile, indent=4)
+
+
