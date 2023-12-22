@@ -295,9 +295,9 @@ rule name:
 rule all:
     input:
         # Fictrac QC
-        expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
+        ###expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
         # Bleaching QC
-        ###bleaching_qc_output_files,
+        bleaching_qc_output_files,
         # Meanbrain
         ###expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak),
         # Motion correction output
