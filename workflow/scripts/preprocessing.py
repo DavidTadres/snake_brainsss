@@ -1558,7 +1558,6 @@ def add_fly_to_xlsx(fly_folder, printlog):
         fly_data['notes'] = None
         fly_data['date'] = None
         fly_data['genotype'] = None
-        fly_data['notes'] = None
 
     # Write in master xlsx only if we have a func folder. Ignore anatomical data!
     expt_folders = [pathlib.Path(fly_folder, x) for x in fly_folder.iterdir() if 'func' in x.name]

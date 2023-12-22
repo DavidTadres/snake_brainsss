@@ -20,4 +20,4 @@ rerun-incomplete: false
 printshellcmds: True
 scheduler: greedy
 use-conda: false
-#tmpdir: $SCRATCH # might break things, check
+#tmpdir: $SCRATCH # might break things, check -yes breaks things!
