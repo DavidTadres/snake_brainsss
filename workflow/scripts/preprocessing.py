@@ -191,6 +191,10 @@ def zscore(fly_directory, dataset_path, zscore_path):
 
             printlog("Data shape is {}".format(dims))
 
+            '''
+            ####
+            # Bella's code that allows chunking
+            ###
             #running_sum = np.zeros(dims[:3])
             #running_sumofsq = np.zeros(dims[:3])
 
@@ -212,8 +216,6 @@ def zscore(fly_directory, dataset_path, zscore_path):
             #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
             # meanbrain = running_sum / dims[-1]
 
-
-
             ### Calculate std ###
 
             #for chunk_num in range(len(steps)):
@@ -225,16 +227,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
             #        running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
             #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
             #final_std = np.sqrt(running_sumofsq / dims[-1])
-
-            # I think we don't have to worry about memory too much - since we only work
-            # with one h5 file at a time and 30 minutes at float32 is ~20Gb
-            # Expect a 4D array, xyz and the fourth dimension is time!
-            meanbrain = np.nanmean(data, axis=3)
-            # Might get out of memory error, test!
-            final_std = np.std(data, axis=3)
-
-            ### Calculate zscore and save ###
-
+            
             #with h5py.File(save_file, 'w') as f:
             #    dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
 
@@ -249,6 +242,17 @@ def zscore(fly_directory, dataset_path, zscore_path):
             #            f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
             #                zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
             #            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+            ####
+            '''
+
+            # I think we don't have to worry about memory too much - since we only work
+            # with one h5 file at a time and 30 minutes at float32 is ~20Gb
+            # Expect a 4D array, xyz and the fourth dimension is time!
+            meanbrain = np.nanmean(data, axis=3)
+            # Might get out of memory error, test!
+            final_std = np.std(data, axis=3)
+
+            ### Calculate zscore and save ###
 
             # Calculate z-score
             # z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
@@ -259,7 +263,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
             # data will be data-meanbrain after this operation
             data-=meanbrain[:,:,:,np.newaxis]
             # Then it will be divided by std which leads to zscore
-            data/=final_std
+            data/=final_std[:,:,:,np.newaxis]
             # From the docs:
             # Chunking has performance implications. It’s recommended to keep the total size
             # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
