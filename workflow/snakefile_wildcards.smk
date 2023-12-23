@@ -525,7 +525,7 @@ rule motion_correction_rule:
                 width=width)
 
 rule zscore_rule:
-    threads: 4
+    threads: 8
     resources: mem_mb=mem_mb_times_threads # Try to make dependent on input file size! Would be much more dynamic
     input:
         h5_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
