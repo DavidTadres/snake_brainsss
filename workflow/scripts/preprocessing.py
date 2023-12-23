@@ -149,10 +149,6 @@ def zscore(fly_directory, dataset_path, zscore_path):
     :return:
     """
 
-    # Check whether empty lists count as part of list or a are skipped.
-    for i in range(dataset_path):
-        print(i)
-
     ##############
     ### ZSCORE ###
     ##############
@@ -160,16 +156,17 @@ def zscore(fly_directory, dataset_path, zscore_path):
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'zscore')
 
+    ##########
+    ### Convert list of (sometimes empty) strings to pathlib.Path objects
+    ##########
+    dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
+    zscore_path = utils.convert_list_of_string_to_posix_path(zscore_path)
+
     printlog("Beginning ZSCORE")
 
     # we might get a second functional channel in the future!
     for current_dataset_path, current_zscore_path in zip(dataset_path, zscore_path):
 
-        print('doing the loop: current_dataset_path ' + current_dataset_path)
-
-        print('current_zscore_path ' + current_zscore_path)
-
-        continue
         ####
         # testing!!!
         #####

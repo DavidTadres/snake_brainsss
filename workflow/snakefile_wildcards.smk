@@ -321,6 +321,13 @@ def get_time():
     return(day_now + '_' + time_now)
 time_string = get_time() # To write benchmark files
 
+print("imaging_file_paths: " + repr(imaging_file_paths))
+
+zscore_imaging_paths = []
+for current_path in imaging_file_paths:
+    if 'func' in current_path:
+        zscore_imaging_paths.append(current_path.split('/imaging')[0])
+print("zscore_imaging_paths" + repr(zscore_imaging_paths))
 
 # Filenames we can encounter
 #imaging_folders = ['func0']
@@ -368,9 +375,9 @@ rule all:
         ####
         # Z-score
         ####
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_file_paths),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=imaging_file_paths),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=imaging_file_paths)
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=zscore_imaging_paths),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=zscore_imaging_paths),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=zscore_imaging_paths)
 
 
 rule fictrac_qc_rule:
@@ -521,14 +528,14 @@ rule zscore_rule:
     threads: 4
     resources: mem_mb=mem_mb_times_threads # Try to make dependent on input file size! Would be much more dynamic
     input:
-        h5_path_ch1 = str(fly_folder_to_process) + "{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-        h5_path_ch2 = str(fly_folder_to_process) + "{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-        h5_path_ch3 = str(fly_folder_to_process) + "{zscore_imaging_paths}/moco/channel_3_moco.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+        h5_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        h5_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        h5_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
 
     output:
-        zscore_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-        zscore_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-        zscore_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+        zscore_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
     run:
         try:
             preprocessing.zscore(fly_directory=fly_folder_to_process_oak,
