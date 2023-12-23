@@ -145,13 +145,17 @@ def create_output_path_func(list_of_paths, filename):
     """
     final_path = []
     for current_path in list_of_paths:
+        print("current_path" + repr(current_path))
         if isinstance(current_path, list):
             # This is for lists of lists, for example created by :func: create_paths_each_experiment
             # If there's another list assume that we only want one output file!
             # For example, in the bleaching_qc the reason we have a list of lists is because each experiment
             # is plotted in one file. Hence, the output should be only one file
             #print(pathlib.Path(pathlib.Path(current_path[0]).parent, filename))
-            final_path.append(pathlib.Path(pathlib.Path(current_path[0]).parent, filename))
+            try:
+                final_path.append(pathlib.Path(pathlib.Path(current_path[0]).parent, filename))
+            except IndexError:
+                pass # Happens because we don't always hvae two functional channels
         else:
             final_path.append(pathlib.Path(pathlib.Path(current_path).parent, filename))
 
@@ -213,10 +217,16 @@ list_of_imaging_paths_moco = []
 for current_path in imaging_file_paths:
     list_of_imaging_paths_moco.append(current_path.split('/imaging')[0])
 # List of paths for zscore
-zscore_imaging_paths = []
+imaging_paths_zscore = []
 for current_path in imaging_file_paths:
     if 'func' in current_path:
-        zscore_imaging_paths.append(current_path.split('/imaging')[0])
+        imaging_paths_zscore.append(current_path.split('/imaging')[0])
+# list of paths for temporal highpass filter
+# identical to zscore imaging paths but for ease of readibility, explicitly create a new one
+imaging_paths_temp_HP_filter = []
+for current_path in imaging_file_paths:
+    if 'func' in current_path:
+        imaging_paths_temp_HP_filter.append(current_path.split('/imaging')[0])
 ####
 
 '''
@@ -292,6 +302,7 @@ imaging_paths_by_folder_oak = create_paths_each_experiment(imaging_file_paths)
 # Output data path
 #####
 # Output files for fictrac_qc rule
+print("full_fictrac_file_oak_paths" + repr(full_fictrac_file_oak_paths))
 fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_oak_paths,
                                                              filename='fictrac_2d_hist_fixed.png')
 bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder_oak,
@@ -327,15 +338,20 @@ rule all:
         expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motion_correction.png", moco_imaging_paths=list_of_imaging_paths_moco),
         # depending on which channels are present,
         expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else [], moco_imaging_paths=list_of_imaging_paths_moco),
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else [],moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],moco_imaging_paths=list_of_imaging_paths_moco),
         ####
         # Z-score
         ####
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=zscore_imaging_paths),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=zscore_imaging_paths),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=zscore_imaging_paths)
-
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        ###
+        # temporal high-pass filter
+        ###
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter)
 
 rule fictrac_qc_rule:
     threads: 1
@@ -484,10 +500,24 @@ rule motion_correction_rule:
 rule temporal_high_pass_filter_rule:
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_threads
+    input:
+        zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+    output:
+        temp_HP_filter_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        temp_HP_filter_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        temp_HP_filter_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+
     run:
         try:
             preprocessing.temporal_high_pass_filter(fly_directory=fly_folder_to_process_oak,
-                                                    )
+                                                    dataset_path=[input.zscore_path_ch1,
+                                                                  input.zscore_path_ch2,
+                                                                  input.zscore_path_ch3],
+                                                    temporal_high_pass_filtered_path=[output.temp_HP_filter_path_ch1,
+                                                                                      output.temp_HP_filter_path_ch2,
+                                                                                      output.temp_HP_filter_path_ch3])
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_temporal_high_pass_filter')
             utils.write_error(logfile=logfile,

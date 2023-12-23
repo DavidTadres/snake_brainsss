@@ -18,6 +18,7 @@ import nibabel as nib
 import shutil
 import ants
 import h5py
+from scipy.ndimage import gaussian_filter1d
 
 ####################
 # GLOBAL VARIABLES #
@@ -34,13 +35,17 @@ from brainsss import moco_utils
 from brainsss import utils
 from brainsss import fictrac_utils
 
-
-def temporal_high_pass_filter(fly_directory):
+def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_filtered_path):
     """
     Filters z-scored brain
     :param args:
     :return:
     """
+
+    #####################
+    ### SETUP LOGGING ###
+    #####################
+
     logfile = utils.create_logfile(fly_directory, function_name='temporal_high_pass_filter')
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'temporal_high_pass_filter')
@@ -49,60 +54,73 @@ def temporal_high_pass_filter(fly_directory):
     # 'save_directory': save_directory,
     # 'brain_file': brain_file}
     #
-    load_directory = args['load_directory']
-    save_directory = args['save_directory']
-    brain_file = args['brain_file']
-    stepsize = 2
+    #load_directory = args['load_directory']
+    #save_directory = args['save_directory']
+    #brain_file = args['brain_file']
+    #stepsize = 2
 
-    full_load_path = os.path.join(load_directory, brain_file)
-    save_file = os.path.join(save_directory, brain_file.split('.')[0] + '_highpass.h5')
+    #full_load_path = os.path.join(load_directory, brain_file)
+    #save_file = os.path.join(save_directory, brain_file.split('.')[0] + '_highpass.h5')
 
     #####################
     ### SETUP LOGGING ###
     #####################
 
-    width = 120
-    logfile = args['logfile']
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    #width = 120
+    #logfile = args['logfile']
+    #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
 
     #################
     ### HIGH PASS ###
     #################
 
+    ##########
+    ### Convert list of (sometimes empty) strings to pathlib.Path objects
+    ##########
+    dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
+    temporal_high_pass_filtered_path = utils.convert_list_of_string_to_posix_path(temporal_high_pass_filtered_path)
+
+    # From Bella, why so low???
+    #stepsize = 2
+    stepsize = 500
+
     printlog("Beginning high pass")
-    with h5py.File(full_load_path, 'r') as hf:
-        data = hf['data']  # this doesn't actually LOAD the data - it is just a proxy
-        dims = np.shape(data)
-        printlog("Data shape is {}".format(dims))
+    # dataset_path might be a list of 2 channels (or a list with one channel only)
+    for current_dataset_path, current_temporal_high_pass_filtered_path in zip(dataset_path, temporal_high_pass_filtered_path):
+        printlog("Working on " + repr(current_dataset_path.name))
+        with h5py.File(current_dataset_path, 'r') as hf:
+            data = hf['data']  # this doesn't actually LOAD the data - it is just a proxy
+            dims = np.shape(data)
+            printlog("Data shape is {}".format(dims))
 
-        steps = list(range(0, dims[-1], stepsize))
-        steps.append(dims[-1])
+            steps = list(range(0, dims[-1], stepsize))
+            steps.append(dims[-1])
 
-        with h5py.File(save_file, 'w') as f:
-            dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+            with h5py.File(current_temporal_high_pass_filtered_path, 'w') as f:
+                dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
 
-            for chunk_num in range(len(steps)):
-                t0 = time()
-                if chunk_num + 1 <= len(steps) - 1:
-                    chunkstart = steps[chunk_num]
-                    chunkend = steps[chunk_num + 1]
-                    chunk = data[:, :, chunkstart:chunkend, :]
-                    # Check if we really are getting a [128,256,2,3000] chunk
-                    # over the z dimension. Interesting choice? Why not over time?
-                    chunk_mean = np.mean(chunk, axis=-1)
-
-                    ### SMOOTH ###
+                for chunk_num in range(len(steps)):
                     t0 = time()
-                    # I'm pretty sure this is identical to just filtering over the whole brain at once
-                    smoothed_chunk = gaussian_filter1d(chunk, sigma=200, axis=-1, truncate=1)
+                    if chunk_num + 1 <= len(steps) - 1:
+                        chunkstart = steps[chunk_num]
+                        chunkend = steps[chunk_num + 1]
+                        chunk = data[:, :, chunkstart:chunkend, :]
+                        # Check if we really are getting a [128,256,2,3000] chunk
+                        # over the z dimension. Interesting choice? Why not over time?
+                        chunk_mean = np.mean(chunk, axis=-1)
 
-                    ### Apply Smooth Correction ###
-                    t0 = time()
-                    chunk_high_pass = chunk - smoothed_chunk + chunk_mean[:, :, :, None]  # need to add back in mean to preserve offset
+                        ### SMOOTH ###
+                        t0 = time()
+                        # I'm pretty sure this is identical to just filtering over the whole brain at once
+                        smoothed_chunk = gaussian_filter1d(chunk, sigma=200, axis=-1, truncate=1)
 
-                    ### Save ###
-                    t0 = time()
-                    f['data'][:, :, chunkstart:chunkend, :] = chunk_high_pass
+                        ### Apply Smooth Correction ###
+                        t0 = time()
+                        chunk_high_pass = chunk - smoothed_chunk + chunk_mean[:, :, :, None]  # need to add back in mean to preserve offset
+
+                        ### Save ###
+                        t0 = time()
+                        f['data'][:, :, chunkstart:chunkend, :] = chunk_high_pass
 
     printlog("high pass done")
 

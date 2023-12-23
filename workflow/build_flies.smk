@@ -104,9 +104,11 @@ print('all_fly_dataset_paths' + repr(all_fly_dataset_paths))
 # does not exist yet
 rule fly_builder_rule:
     """
-    Not parallelized right now. Since this is just file transfer it's probably fine
+    Not parallelized right now. Since this is just file transfer it's probably fine to have a single one
+    Benchmark: copy full dataset (1x anat, 1x func 30 minutes volumetric and 2x5 minutes) took:
+            ~1.16Gb of memory + ~5minutes of CPU on 2 threads. One should be ok
     """
-    threads: 2
+    threads: 1
     resources: mem_mb=snake_utils.mem_mb_times_threads
     run:
 
