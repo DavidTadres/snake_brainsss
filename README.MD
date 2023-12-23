@@ -77,3 +77,19 @@ pip install YOUR WHEEL, for example: pip install antspyx-0.3.8-cp310-cp310-macos
 # OR install python 3.9 and do:
 python3 -m venv .env_snake_brainsss
 source .env_snake_brainsss/bin/activate
+
+###
+# Things that are very different to Bella's brainsss
+###
+1) the imaging files in 'func' and 'anat' folders all are called the same: instead of calling them 'functional_channel_1.nii' 
+   or 'anatomical_channel_1.nii' everything is just called 'channel_1.nii'. Reason: Makes working with wildcards in snakemake
+   much easier.
+2) fly_builder enforces having a fly.json file. It MUST contain the following fields: 'Genotype', 'anatomy channel' and 
+   'functional channel':
+   - Genotype is used to create subfolders for each genotype which contain 'fly_001', 'fly_002' etc.
+   - anatomy channel is a string with one of the following three values: 'channel1', 'channel2' or 'channel3'
+   - functional channel is a list of strings, for example ['channel2',''], or ['channel1','channel2']
+
+Current limitations:
+1) We assume that a given fly was imaged with a given set of channels. i.e. if fly001 has GCaMP and tdTomato it is assumed
+   that ALL folders inside fly001 have data with two channels! 

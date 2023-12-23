@@ -1012,7 +1012,7 @@ def fly_builder(user, import_dirs, dataset_dirs):
             fly_dirs_dict['fly ID'] = current_dataset_dir.name
             ###
             # Copy fly data
-            ###
+            ####
             fly_dirs_dict = copy_fly(current_import_dir, current_dataset_dir, printlog, user, fly_dirs_dict)
 
             ###
@@ -1037,7 +1037,7 @@ def fly_builder(user, import_dirs, dataset_dirs):
                 printlog(traceback.format_exc())
 
             # Save json file with all relevant paths
-            with open(pathlib.Path(current_dataset_dir, current_dataset_dir.name + '_dir.json'), 'w') as outfile:
+            with open(pathlib.Path(current_dataset_dir, current_dataset_dir.name + '_dirs.json'), 'w') as outfile:
                 json.dump(fly_dirs_dict, outfile)
 
             # If we are here it should mean that everything above has been copied as expected.
@@ -1210,11 +1210,11 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             ### Change file names and filter various files
             if 'concat.nii' in source_path.name and folder_type == 'func':
                 target_name = 'channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
-                #target_path = pathlib.Path(destination, target_name)
+                target_path = pathlib.Path(destination, target_name)
             # Rename anatomy file to anatomy_channel_x.nii
             elif '.nii' in source_path.name and folder_type == 'anat':
                 target_name = 'channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
-                #target_path = pathlib.Path(destination, target_name)
+                target_path = pathlib.Path(destination, target_name)
             # Special copy for photodiode since it goes in visual folder
             # To be tested once I have such data!!
             elif '.csv' in source_path.name:

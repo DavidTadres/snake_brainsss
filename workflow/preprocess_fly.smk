@@ -1,7 +1,7 @@
 """
 Here the idea is to do preprocessing a little bit differently:
 
-We assume that the fly_builder already ran and that the fly_dir exists
+We assume that the fly_builder already ran and that the fly_dir exists.
 
 Note:
     Although jobs can directly read and write to $OAK during execution,
@@ -16,51 +16,34 @@ AND:
     The aggregate bandwidth of the filesystem is about 75GB/s. So any job with high
     data performance requirements will take advantage from using $SCRATCH for I/O.
 """
-import traceback
 
-# with config file type:
+# On sherlock using config file type:
 # ml python/3.9.0
 # source .env_snakemake/bin/activate
 # cd snake_brainsss/workflow
-# snakemake -s snakefile_wildcards.smk --profile profiles/sherlock
+# snakemake -s preprocess_fly.smk --profile profiles/sherlock
 # OR
-# snakemake -s snakefile_wildcards.smk --profile profiles/simple_slurm
+# snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-# Define EITHER imports_to_process OR fly_folder_to_process. Not both
-fly_folder_to_process = 'fly_002' # folder to be processed
-# ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_001' # folder to be processed
+# ONLY ONE FLY PER RUN for now. The path must be relative to
+# what you set in your 'user/username.json' file under 'dataset_path'
+# in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
 #####
 
-# do follow up analysis, enter the fly folder to be analyzed here.
-# YOUR SUNET ID
+# the name of the file in 'user' that you want to use. Ideally it's your SUNet ID
 current_user = 'dtadres'
 
+#>>>>
 fictrac_fps = 50 # AUTOMATE THIS!!!! ELSE BUG PRONE!!!!
-
-###
-# Automate this - I need some variables that define which channels are present in
-# the folder to be analyzed!
-CH1_EXISTS = True
-CH2_EXISTS = True
-CH3_EXISTS = False
-
-ANATOMICAL_CHANNEL = 'channel_1' # < This needs to come from some sort of json file the experimenter
-# creates while running the experiment. Same as genotype.
-FUNCTIONAL_CHANNELS = ['channel_2']
-
-GENOTYPE = 'XX' # Must be in a fly.json file. Don't run if not present.
+#<<<<
 
 # First n frames to average over when computing mean/fixed brain | Default None
 # (average over all frames).
 meanbrain_n_frames =  None
 
-#### KEEP for futuer
-# SCRATCH_DIR
-#SCRATCH_DIR = '/scratch/users/' + current_user
-#print(SCRATCH_DIR)
-####
-
+##############################################
 import pathlib
 import json
 import datetime
@@ -69,22 +52,51 @@ scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/
 #print(scripts_path)
 from brainsss import utils
 from scripts import preprocessing
+from scripts import snake_utils
+
+#### KEEP for future
+# SCRATCH_DIR
+#SCRATCH_DIR = '/scratch/users/' + current_user
+#print(SCRATCH_DIR)
+####
 
 settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
 imports_path = pathlib.Path(settings['imports_path'])
 
-# search for fly.json to genotype and others
 # Define path to imports to find fly.json!
-
 fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
 print('Analyze data in ' + repr(fly_folder_to_process_oak.as_posix()))
 
-# Needed for logging
+# Read channel information from fly.json file
+with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
+    fly_json = json.load(file)
+
+ANATOMICAL_CHANNEL = fly_json['anatomy_channel'] # < This needs to come from some sort of json file the experimenter
+# creates while running the experiment. Same as genotype.
+FUNCTIONAL_CHANNELS = fly_json['functional_channel']
+
+def ch_exists_func(channel):
+    """
+    Check if a given channel exists in global variables ANATOMICAL_CHANNEL and FUNCTIONAL_CHANNELS
+    :param channel:
+    :return:
+    """
+    if 'channel' + str(channel) in ANATOMICAL_CHANNEL or 'channel' + str(channel) in FUNCTIONAL_CHANNELS:
+        ch_exists = True
+    else:
+        ch_exists = False
+    return(ch_exists)
+
+CH1_EXISTS = ch_exists_func("1")
+CH2_EXISTS = ch_exists_func("2")
+CH3_EXISTS = ch_exists_func("3")
+
+####
+# Load fly_dir.json
+####
 width = 120 # can go into a config file as well.
-
-fly_dirs_dict_path = pathlib.Path(fly_folder_to_process_oak, fly_folder_to_process + '_dirs.json')
-
+fly_dirs_dict_path = pathlib.Path(fly_folder_to_process_oak, fly_folder_to_process_oak.name + '_dirs.json')
 with open(pathlib.Path(fly_dirs_dict_path),'r') as file:
     fly_dirs_dict = json.load(file)
 
@@ -97,16 +109,9 @@ with open(pathlib.Path(fly_dirs_dict_path),'r') as file:
 # These lists of paths are created here.
 
 # Imaging data paths
-#func_file_paths = []
-#anat_file_paths = []
 imaging_file_paths = []
 fictrac_file_paths = []
 for key in fly_dirs_dict:
-    #print(key)
-    #if 'func' in key and 'Imaging' in key:
-    #    func_file_paths.append(fly_dirs_dict[key][1::]) # these paths come as \imaging.. The \ confused pathlib.Path, so best to remove the first character
-    #elif 'anat' in key and 'Imaging' in key:
-    #    anat_file_paths.append(fly_dirs_dict[key][1::])
     if 'Imaging' in key:
         imaging_file_paths.append(fly_dirs_dict[key][1::])
     elif 'Fictrac' in key:
@@ -155,39 +160,59 @@ def create_output_path_func(list_of_paths, filename):
 #######
 # Data path on OAK
 #######
-# Get imaging data paths for func
-#ch1_func_file_oak_paths = create_path_func(fly_folder_to_process_oak, func_file_paths, 'functional_channel_1.nii')
-#ch2_func_file_oak_paths = create_path_func(fly_folder_to_process_oak, func_file_paths, 'functional_channel_2.nii')
-# and for anat data
-#ch1_anat_file_oak_paths = create_path_func(fly_folder_to_process_oak, anat_file_paths, 'anatomy_channel_1.nii')
-#ch2_anat_file_oak_paths = create_path_func(fly_folder_to_process_oak, anat_file_paths, 'anatomy_channel_2.nii')
-# List of all imaging data
-# Changed to callend nii filees 'channel_x.nii' only to avoid overcomplexification
-ch1_file_oak_paths = create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_1.nii')
-ch2_file_oak_paths = create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_2.nii')
+def create_file_paths(path_to_fly_folder, imaging_file_paths, filename, func_only=False):
+    """
+    Creates lists of path that can be feed as input/output to snakemake rules taking into account that
+    different fly_00X folder might have different channels!
+    :param path_to_fly_folder: a folder pointing to a fly, i.e. /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_001
+    :param list_of_paths: a list of path created, usually created from fly_dirs_dict (e.g. fly_004_dirs.json)
+    :param filename: filename to append at the end. Can be nothing (i.e. for fictrac data).
+    :param func_only: Sometimes we need only paths from the functional channel, for example for z-scoring
+    :return: list of filepaths
+    """
+    list_of_filepaths = []
+    for current_path in imaging_file_paths:
+        if func_only:
+            if 'func' in current_path:
+                if CH1_EXISTS:
+                    list_of_filepaths.append(pathlib.Path(path_to_fly_folder, current_path, 'channel_1' + filename))
+                if CH2_EXISTS:
+                    list_of_filepaths.append(pathlib.Path(path_to_fly_folder, current_path, 'channel_2' + filename))
+                if CH3_EXISTS:
+                    list_of_filepaths.append(pathlib.Path(path_to_fly_folder, current_path, 'channel_3' + filename))
+        else:
+            if CH1_EXISTS:
+                list_of_filepaths.append(pathlib.Path(path_to_fly_folder,current_path,'channel_1' + filename))
+            if CH2_EXISTS:
+                list_of_filepaths.append(pathlib.Path(path_to_fly_folder,current_path,'channel_2' + filename))
+            if CH3_EXISTS:
+                list_of_filepaths.append(pathlib.Path(path_to_fly_folder,current_path,'channel_3' + filename))
+    return(list_of_filepaths)
 
-#all_imaging_oak_paths = ch1_func_file_oak_paths + ch2_func_file_oak_paths + ch1_anat_file_oak_paths + ch2_anat_file_oak_paths
-all_imaging_oak_paths = ch1_file_oak_paths + ch2_file_oak_paths
+# This will create path to the imaging files that exists so we'll get a list like this:
+# ['/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_001/anat1/imaging/channel_1.nii',
+#  '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_001/anat1/imaging/channel_2.nii', ...]
+all_imaging_oak_paths = create_file_paths(path_to_fly_folder=fly_folder_to_process_oak,
+                                        imaging_file_paths=imaging_file_paths,
+                                         filename='.nii')
 
+# >>>> This will hopefully change
 # Fictrac files are named non-deterministically (could be changed of course) but for now
 # the full filename is in the fly_dirs_dict
 full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process_oak, fictrac_file_paths)
+# <<<<
 
 # Path for make_mean_brain_rule
-# will look like this: ['../data/../imaging/functional_channel_1','../data/../imaging/functional_channel_2']
-#paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process_oak, func_file_paths, 'functional_channel_1') + \
-#                                    create_path_func(fly_folder_to_process_oak, func_file_paths, 'functional_channel_2') + \
-#                                    create_path_func(fly_folder_to_process_oak, anat_file_paths, 'anatomy_channel_1') + \
-#                                    create_path_func(fly_folder_to_process_oak, anat_file_paths, 'anatomy_channel_2')
-paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_1') + \
-                                    create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_2')
-#print('paths_for_make_mean_brain_rule_oak' + repr(paths_for_make_mean_brain_rule_oak))
+# will look like this: [PosixPath('../data/../imaging/channel_1'),PosixPath('../data/../imaging/channel_2')]
+paths_for_make_mean_brain_oak = create_file_paths(path_to_fly_folder=fly_folder_to_process_oak,
+                                                imaging_file_paths=imaging_file_paths,
+                                                filename='')
 
-# List of 'func' and 'anat' paths needed for motion correction
+# List of paths for moco
 list_of_imaging_paths_moco = []
 for current_path in imaging_file_paths:
     list_of_imaging_paths_moco.append(current_path.split('/imaging')[0])
-
+# List of paths for zscore
 zscore_imaging_paths = []
 for current_path in imaging_file_paths:
     if 'func' in current_path:
@@ -196,7 +221,7 @@ for current_path in imaging_file_paths:
 
 '''
 #######
-# Data path on SCRATCH
+# Data path on SCRATCH < Not working yet, might not be necessary!!!
 #######
 def convert_oak_path_to_scratch(oak_path):
     """
@@ -229,141 +254,64 @@ def convert_oak_path_to_scratch(oak_path):
 
 #fly_folder_to_process_scratch = convert_oak_path_to_scratch(fly_folder_to_process_oak) # Must be provided as a list
 '''
-"""
-# Create path segements for z correction of functional(!) channels:
-paths_for_zscore_input_oak = []
-paths_for_zscore_output_oak = []
-for current_channel in FUNCTIONAL_CHANNELS:
-     paths_for_zscore_input_oak.append(create_path_func(fly_folder_to_process='',
-         list_of_paths=imaging_file_paths, filename='moco/' + current_channel + '_moco.h5' , func_only=True))
-     paths_for_zscore_output_oak.append(create_path_func(fly_folder_to_process='',
-         list_of_paths=imaging_file_paths, filename=current_channel + '_moco_zscore.h5' , func_only=True))
 
-print("paths_for_zscore_input_oak " + repr(paths_for_zscore_input_oak))
-print("paths_for_zscore_output_oak " + repr(paths_for_zscore_output_oak))
-print(error)
-"""
-##
-# https://stackoverflow.com/questions/68882363/snakemake-use-part-of-input-file-name-for-the-output
-# expand("start-{sample}_{info}-end_R1.fastq.gz", zip, sample=ID,info=INFO)
-##
 ####
 # Path per folder
+# This is a bit different to path above as function (in this case bleaching) requires 2 or three input files
 ####
 # Some scripts require to have path organized in lists per experiment. See docstring in
 # :create_paths_each_experiment: function for example
-def create_paths_each_experiment(func_and_anat_paths):
+def create_paths_each_experiment(imaging_file_paths):
     """
     get paths to imaging data as list of lists, i.e.
-    [[func0/func_channel1.nii, func0/func_channel2.nii], [func1/func_channel1.nii, func1/func_channel2.nii]]
-    :param func_and_anat_paths: a list with all func and anat path as defined in 'fly_004_dirs.json'
+    [[func0/channel1.nii, func0/channel2.nii], [func1/channel1.nii, func1/channel2.nii]]
+    :param imaging_file_paths: a list with all func and anat path as defined in 'fly_00X_dirs.json'
     """
     imaging_path_by_folder_oak = []
     #imaging_path_by_folder_scratch = []
-    for current_path in func_and_anat_paths:
-        if 'func' in current_path:
-            imaging_path_by_folder_oak.append([
-                pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_1.nii'),
-                pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_2.nii')]
-                )
-            #imaging_path_by_folder_scratch.append([
-            #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][0].as_posix().split('data')[-1]),
-            #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][1].as_posix().split('data')[-1])])
-        elif 'anat' in current_path:
-            imaging_path_by_folder_oak.append([
-                pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_1.nii'),
-                pathlib.Path(fly_folder_to_process_oak, current_path,'channel_2.nii')]
-                )
-            #imaging_path_by_folder_scratch.append([
-            #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][0].as_posix().split('data')[-1]),
-            #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][1].as_posix().split('data')[-1])])
+    for current_path in imaging_file_paths:
+        #if 'func' in current_path:
+        temp = []
+        if CH1_EXISTS:
+            temp.append(pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_1.nii'))
+        if CH2_EXISTS:
+            temp.append(pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_2.nii'))
+        if CH3_EXISTS:
+            temp.append(pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_3.nii'))
+        imaging_path_by_folder_oak.append(temp)
+        #imaging_path_by_folder_scratch.append([
+        #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][0].as_posix().split('data')[-1]),
+        #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][1].as_posix().split('data')[-1])])
     #return(imaging_path_by_folder_oak, imaging_path_by_folder_scratch)
     return (imaging_path_by_folder_oak)
 
 #imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(imaging_file_paths)
 imaging_paths_by_folder_oak = create_paths_each_experiment(imaging_file_paths)
 
-
 #####
 # Output data path
 #####
 # Output files for fictrac_qc rule
-#fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_scratch_paths,
-#                                                             filename='fictrac_2d_hist_fixed.png')
 fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_oak_paths,
                                                              filename='fictrac_2d_hist_fixed.png')
-#bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder,
-#                                                    filename='bleaching.png')
 bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder_oak,
                                                            filename='bleaching.png')
 
-# TESTING
-# full_fictrac_file_paths = [full_fictrac_file_paths[0]]
-# Output files for bleaching_qc rule
-
-#print(fictrac_output_files_2d_hist_fixed)
-# how to use expand example
-# https://stackoverflow.com/questions/55776952/snakemake-write-files-from-an-array
-
-"""
-rule blueprint
-
-rule name:
-    input: Files that must be present to run. if not present, will look for other rules that produce
-            files needed here
-    output: Files produced by this rule. If rule is run and file is not produced, will produce error
-    run/shell: python (run) or shell command to be run. 
-"""
-#test_input_moco = [pathlib.Path('/users/dtadres/Documents/func1/imaging/functional_channel_1.nii'),
-#                    pathlib.Path('/users/dtadres/Documents/func1/imaging/functional_channel_2.nii')]
-#test_output_moco = [pathlib.Path('/users/dtadres/Documents/func1/imaging/moco/functional_channel_1_moco.h5'),
-#                     pathlib.Path('/users/dtadres/Documents/func1/imaging/moco/functional_channel_2_moco.h5')]
-
-def get_time():
-    day_now = datetime.datetime.now().strftime("%Y%d%m")
-    time_now = datetime.datetime.now().strftime("%I%M%S")
-    return(day_now + '_' + time_now)
-time_string = get_time() # To write benchmark files
-
-
-
-# Filenames we can encounter
-#imaging_folders = ['func0']
-
-# Depending on number of channels, create output files!
-
-# Note : ["{dataset}/a.txt".format(dataset=dataset) for dataset in DATASETS]
-         # is the same as expand("{dataset}/a.txt", dataset=DATASETS)
-         # https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#
-         # With expand we can also do:
-         # expand("{dataset}/a.{ext}", dataset=DATASETS, ext=FORMATS)
-
-def mem_mb_times_threads(wildcards, threads):
-    """
-    Returns memory in mb as 7500Mb/thread (I think we have ~8Gb/thread? to be confirmed)
-    Note: wildcards is essential here!
-    :param threads:
-    :return:
-    """
-    return(threads * 7500)
-
-def mem_mb_times_input(wildcards, input):
-    """
-    Returns memory in mb as 2.5*input memory size or 1Gb, whichever is larger
-    :param wildcards:
-    :param input:
-    :return:
-    """
-    return(max(input.size_mb*2.5, 1000))
-
 rule all:
+    """
+    See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
+        By default snakemake executes the first rule in the snakefile. This gives rise to pseudo-rules at the beginning 
+        of the file that can be used to define build-targets similar to GNU Make
+    Or in other words: Here we define which file we want at the end. Snakemake checks which one is there and which 
+    one is missing. It then uses the other rules to see how it can produce the missing files.
+    """
     threads: 1 # should be sufficent
     resources: mem_mb=1000 # should be sufficient
     input:
         ###
         # Fictrac QC
         ###
-        #>>expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
+        expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
         ###
         # Bleaching QC
         ###
@@ -371,7 +319,7 @@ rule all:
         ###
         # Meanbrain
         ###
-        expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak),
+        expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_oak),
         # Motion correction output
         # While we don't really need this image, it's a good idea to have it here because the empty h5 file
         # we actually want is created very early during the rule call and will be present even if the program
@@ -448,7 +396,7 @@ rule bleaching_qc_rule:
     ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
     threads: 2
-    resources: mem_mb=mem_mb_times_threads
+    resources: mem_mb=snake_utils.mem_mb_times_threads
     input:
         imaging_paths_by_folder_oak
     output:
@@ -500,7 +448,7 @@ rule motion_correction_rule:
     
     """
     threads: 6
-    resources: mem_mb=mem_mb_times_threads
+    resources: mem_mb=snake_utils.mem_mb_times_threads
     input:
         # Only use the Channels that exists
         brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
@@ -539,7 +487,7 @@ rule zscore_rule:
     Did same with 1 thread and seemed to be enough. Keep at 1 thread for now, might break with larger files.
     """
     threads: 1
-    resources: mem_mb=mem_mb_times_input #mem_mb_times_threads # Try to make dependent on input file size! Would be much more dynamic
+    resources: mem_mb=snake_utils.mem_mb_times_input
     input:
         h5_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         h5_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
@@ -585,7 +533,7 @@ rule make_mean_brain_rule:
         save.mean_brain(output)
     """
     threads: 2
-    resources: mem_mb=mem_mb_times_threads
+    resources: mem_mb=snake_utils.mem_mb_times_threads
     input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
 
     output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
@@ -654,4 +602,36 @@ rule motion_correction_rule:
 
 """
 
+##
+# https://stackoverflow.com/questions/68882363/snakemake-use-part-of-input-file-name-for-the-output
+# expand("start-{sample}_{info}-end_R1.fastq.gz", zip, sample=ID,info=INFO)
+##
 
+
+# how to use expand example
+# https://stackoverflow.com/questions/55776952/snakemake-write-files-from-an-array
+
+
+
+"""
+rule blueprint
+
+rule name:
+    input: Files that must be present to run. if not present, will look for other rules that produce
+            files needed here
+    output: Files produced by this rule. If rule is run and file is not produced, will produce error
+    run/shell: python (run) or shell command to be run.
+    
+
+#def get_time():
+#    day_now = datetime.datetime.now().strftime("%Y%d%m")
+#    time_now = datetime.datetime.now().strftime("%I%M%S")
+#    return(day_now + '_' + time_now)
+# time_string = get_time() # To write benchmark files
+
+# Note : ["{dataset}/a.txt".format(dataset=dataset) for dataset in DATASETS]
+         # is the same as expand("{dataset}/a.txt", dataset=DATASETS)
+         # https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#
+         # With expand we can also do:
+         # expand("{dataset}/a.{ext}", dataset=DATASETS, ext=FORMATS) 
+"""
