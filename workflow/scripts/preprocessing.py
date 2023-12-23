@@ -310,7 +310,9 @@ def motion_correction(fly_directory,
                       flow_sigma,
                       total_sigma,
                       aff_metric,
-                      h5_path):
+                      h5_path,
+                      anatomy_channel,
+                      functional_channels):
     """
     TODO After discussing with Jacob: Make sure to somewhere explicitly define which channel
     is the anatomical (GFP, Tomato or mCardinal) and which one is the functional (e.g.
@@ -326,6 +328,8 @@ def motion_correction(fly_directory,
     logfile = utils.create_logfile(fly_directory, function_name='motion_correction')
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'motion_correction')
+
+    print("dataset_path" + repr(dataset_path))
 
     dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
     meanbrain_path =utils.convert_list_of_string_to_posix_path(meanbrain_path)
@@ -367,36 +371,92 @@ def motion_correction(fly_directory,
     #        brain_master = 'anatomy_channel_1.nii'
     #        brain_mirror = 'anatomy_channel_2.nii'
 
-    # Mirror path is optional - set to None in case the file is not provided
-    path_brain_mirror = None
-    for current_path in dataset_path:
-        if 'channel_1.nii' in current_path.name:
-            path_brain_master = current_path
-        elif 'channel_2.nii' in current_path.name:
-            path_brain_mirror = current_path
-    if path_brain_mirror is None:
-        printlog("Brain mirror not provided. Continuing without a mirror brain.")
+    ####
+    # Identify which channel is the anatomy, or 'master' channel
+    ###
 
-    print("path_brain_master " + repr(path_brain_master))
-    print("path_brain_mirror " + repr(path_brain_mirror))
 
-    path_mean_brain_mirror = None
-    for current_mean_path in meanbrain_path:
-        if 'channel_1_mean.nii' in current_mean_path.name:
-            path_mean_brain_master = current_mean_path
-        elif 'channel_2_mean.nii' in current_mean_path.name:
-            path_mean_brain_mirror = current_mean_path
-    print("path_mean_brain_master " + repr(path_mean_brain_master))
-    print("path_mean_brain_mirror " + repr(path_mean_brain_mirror))
+    # First, define master, or anatomy channel
+    path_brain_anatomy = None
+    for current_brain_path, current_meanbrain_path in zip(dataset_path, meanbrain_path):
+        if 'channel_1.nii' in current_brain_path.name and 'channel_1' in anatomy_channel:
+            if path_brain_anatomy is None:
+                path_brain_anatomy = current_brain_path
+                path_meanbrain_anatomy = current_meanbrain_path
+            else:
+                printlog("!!!! ANATOMY CHANNEL AREADY DEFINED AS " + repr(path_brain_anatomy) +'!!! MAKE SURE TO HAVE ONLY ONE ANATOMY CHANNEL IN FLY.JSON')
+        elif 'channel_2.nii' in current_brain_path.name and 'channel_2' in anatomy_channel:
+            if path_brain_anatomy is None:
+                path_brain_anatomy = current_brain_path
+                path_meanbrain_anatomy = current_meanbrain_path
+            else:
+                printlog("!!!! ANATOMY CHANNEL AREADY DEFINED AS " + repr(path_brain_anatomy) + '!!! MAKE SURE TO HAVE ONLY ONE ANATOMY CHANNEL IN FLY.JSON')
+        elif 'channel_3.nii' in current_brain_path.name and 'channel_3' in anatomy_channel:
+            if path_brain_anatomy is None:
+                path_brain_anatomy = current_brain_path
+                path_meanbrain_anatomy = current_meanbrain_path
+            else:
+                printlog("!!!! ANATOMY CHANNEL AREADY DEFINED AS " + repr(path_brain_anatomy) + '!!! MAKE SURE TO HAVE ONLY ONE ANATOMY CHANNEL IN FLY.JSON')
+    # Here we assume that there is ONLY ONE anatomy channel
 
-    path_h5_mirror = None
+    # Mirror path is optional - to empty list in case no functional channel is provided
+    path_brain_functional = []
+    path_meanbrain_functional = []
+    for current_brain_path, current_meanbrain_path in zip(dataset_path, meanbrain_path):
+        if 'channel_1.nii' in current_brain_path.name and 'channel_1' in functional_channels:
+            path_brain_functional.append(current_brain_path)
+            path_meanbrain_functional.append(current_meanbrain_path)
+        if 'channel_2.nii' in current_brain_path.name and 'channel_2' in functional_channels:
+            path_brain_functional.append(current_brain_path)
+            path_meanbrain_functional.append(current_meanbrain_path)
+        if 'channel_3.nii' in current_brain_path.name and 'channel_3' in functional_channels:
+            path_brain_functional.append(current_brain_path)
+            path_meanbrain_functional.append(current_meanbrain_path)
+
+    #path_brain_mirror = current_path
+    #if path_brain_mirror is None:
+    #     printlog("Brain mirror not provided. Continuing without a mirror brain.")
+
+    #print("path_brain_master " + repr(path_brain_master))
+    #print("path_brain_mirror " + repr(path_brain_mirror))
+
+    # Same as for nii file for mean brain
+    #path_mean_brain_mirror = None
+    #for current_mean_path in meanbrain_path:
+    #    if 'channel_1_mean.nii' in current_mean_path.name:
+    #        path_mean_brain_master = current_mean_path
+    #    elif 'channel_2_mean.nii' in current_mean_path.name:
+    #        path_mean_brain_mirror = current_mean_path
+    #print("path_mean_brain_master " + repr(path_mean_brain_master))
+    #print("path_mean_brain_mirror " + repr(path_mean_brain_mirror))
+
+    # This could be integrated in loop above but for readability I'll make an extra loop here
     for current_h5_path in h5_path:
-        if 'channel_1' in current_h5_path.name:
-            path_h5_master = current_h5_path
-        elif 'channel_2' in current_h5_path.name:
-            path_h5_mirror = current_h5_path
-    print("path_h5_master " + repr(path_h5_master))
-    print("path_h5_mirror " + repr(path_h5_mirror))
+        if 'channel_1' in current_brain_path.name and 'channel_1' in anatomy_channel:
+            path_h5_anatomy = current_h5_path
+        elif 'channel_2' in current_brain_path.name and 'channel_2' in anatomy_channel:
+            path_h5_anatomy = current_brain_path
+        elif 'channel_3' in current_brain_path.name and 'channel_3' in anatomy_channel:
+            path_h5_anatomy = current_brain_path
+
+    # functional path is optional - to empty list in case no functional channel is provided
+    path_h5_functional = []
+    for current_h5_path in h5_path:
+        if 'channel_1' in current_brain_path.name and 'channel_1' in functional_channels:
+            path_h5_functional.append(current_h5_path)
+        if 'channel_2' in current_brain_path.name and 'channel_2' in functional_channels:
+            path_h5_functional.append(current_h5_path)
+        if 'channel_3' in current_brain_path.name and 'channel_3' in functional_channels:
+            path_h5_functional.append(current_h5_path)
+    # Here we assume that there is ONLY ONE anatomy channel
+    #path_h5_mirror = None
+    #for current_h5_path in h5_path:
+    #    if 'channel_1' in current_h5_path.name:
+    #        path_h5_master = current_h5_path
+    #    elif 'channel_2' in current_h5_path.name:
+    #        path_h5_mirror = current_h5_path
+    #print("path_h5_master " + repr(path_h5_master))
+    #print("path_h5_mirror " + repr(path_h5_mirror))
 
     #else:
     #    dataset_path = args[
@@ -448,18 +508,20 @@ def motion_correction(fly_directory,
 
     #brainsss.print_datetime(logfile, WIDTH)
     printlog(F"Dataset path{parent_path.name:.>{WIDTH - 12}}")
-    printlog(F"Brain master{path_brain_master.name:.>{WIDTH - 12}}")
-    if path_brain_mirror is not None:
-        printlog(F"Brain mirror{str(path_brain_mirror.name):.>{WIDTH - 12}}")
+    printlog(F"Brain anatomy{path_brain_anatomy.name:.>{WIDTH - 12}}")
+    if len(path_brain_functional) > 0:
+        printlog(F"Brain mirror{str(path_brain_functional[0].name):.>{WIDTH - 12}}")
+        if len(path_brain_functional) > 1:
+            printlog(F"Brain mirror#2{str(path_brain_functional[1].name):.>{WIDTH - 12}}")
     else:
-        printlog(F"Brain mirror{str(path_brain_mirror):.>{WIDTH - 12}}")
+        printlog("No functional path found {:.>{WIDTH - 12}}")
 
     printlog(F"type_of_transform{type_of_transform:.>{WIDTH - 17}}")
     printlog(F"output_format{output_format:.>{WIDTH - 13}}")
     printlog(F"flow_sigma{flow_sigma:.>{WIDTH - 10}}")
     printlog(F"total_sigma{total_sigma:.>{WIDTH - 11}}")
     #printlog(F"meanbrain_n_frames{str(meanbrain_n_frames):.>{WIDTH - 18}}") # Can only run this if meanbrain exists, never create it here!
-    printlog(F"meanbrain_target{str(meanbrain_path):.>{WIDTH - 12}}")
+    #printlog(F"meanbrain_target{str(meanbrain_path):.>{WIDTH - 12}}")
 
     ######################
     ### PARSE SCANTYPE ###
@@ -483,13 +545,13 @@ def motion_correction(fly_directory,
     #    scantype = 'func'
     #    stepsize = 100
     #    printlog(F"{'   Could not determine scantype. Using default stepsize of 100   ':*^{width}}")'''
-
-    if 'functional_channel' in path_brain_master.name:
+    path_brain_anatomy
+    if 'func' in path_brain_anatomy.parts:
         scantype = 'func'
-        stepsize = 100
-    elif 'anatomy_channel' in path_brain_master.name:
+        stepsize = 1000 # Bella had this at 100
+    elif 'anat' in path_brain_anatomy.name:
         scantype = 'anat'
-        stepsize = 5
+        stepsize = 50 # Bella had this at 5
     else:
         scantype = 'Unknown'
         stepsize = 1000
@@ -533,9 +595,9 @@ def motion_correction(fly_directory,
     ### Read Channel 1 imaging data ###
     ########################################
     ### Get Brain Shape ###
-    img_ch1 = nib.load(path_brain_master)  # this loads a proxy
-    ch1_shape = img_ch1.header.get_data_shape()
-    brain_dims = ch1_shape
+    img_anatomy = nib.load(path_brain_anatomy)  # this loads a proxy
+    anatomy_shape = img_anatomy.header.get_data_shape()
+    brain_dims = anatomy_shape
     printlog(F"Master brain shape{str(brain_dims):.>{WIDTH - 18}}")
 
     ########################################
@@ -552,9 +614,9 @@ def motion_correction(fly_directory,
     #    fixed = ants.from_numpy(np.asarray(meanbrain, dtype='float32'))
     #    printlog(F"Loaded meanbrain{existing_meanbrain_file:.>{width - 16}}")
 
-    meanbrain = np.asarray(nib.load(path_mean_brain_master).get_fdata(), dtype='uint16')
+    meanbrain = np.asarray(nib.load(path_meanbrain_anatomy).get_fdata(), dtype='uint16')
     fixed = ants.from_numpy(np.asarray(meanbrain, dtype='float32'))
-    printlog(F"Loaded meanbrain{path_mean_brain_master.name:.>{WIDTH - 16}}")
+    printlog(F"Loaded meanbrain{path_meanbrain_anatomy.name:.>{WIDTH - 16}}")
 
     # Shouldn't be necessary as snakemake will make sure the meanbrain rule is executed before
     # calling the moco rule!
@@ -591,13 +653,22 @@ def motion_correction(fly_directory,
             printlog(F"{'   WARNING Channel 1 and 2 do not have the same shape!   ':*^{width}}")
             printlog("{} and {}".format(ch1_shape, ch2_shape))'''
 
-    if path_brain_mirror is not None:
-        img_ch2 = nib.load(path_brain_mirror)  # this loads a proxy
-        # make sure channel 1 and 2 have same shape
-        ch2_shape = img_ch2.header.get_data_shape()
-        if ch1_shape != ch2_shape:
-            printlog(F"{'   WARNING Channel 1 and 2 do not have the same shape!   ':*^{WIDTH}}")
-            printlog("{} and {}".format(ch1_shape, ch2_shape))
+    if len(path_brain_functional) > 0: # is not None:
+        img_functional_one = nib.load(path_brain_functional[0])  # this loads a proxy
+        # make sure channel anatomy and functional have same shape
+        functional_one_shape = img_functional_one.header.get_data_shape()
+        if anatomy_shape != functional_one_shape:
+            printlog(F"{'   WARNING Channel anatomy and functional do not have the same shape!   ':*^{WIDTH}}")
+            printlog("{} and {}".format(anatomy_shape, functional_one_shape))
+
+        # Once we have the 3 detector channel in the bruker, we'll have 2 functional channels
+        if len(path_brain_functional) > 1:
+            img_functional_two = nib.load(path_brain_functional[1])  # this loads a proxy
+            # make sure both functional channels have same dims
+            functional_two_shape = img_functional_two.header.get_data_shape()
+            if functional_one_shape != functional_two_shape:
+                printlog(F"{'   WARNING Channel functional one and functional two do not have the same shape!   ':*^{WIDTH}}")
+                printlog("{} and {}".format(functional_one_shape, functional_two_shape))
     ############################################################
     ### Make Empty MOCO files that will be filled vol by vol ###
     ############################################################
@@ -606,18 +677,29 @@ def motion_correction(fly_directory,
     #h5_file_name = f"{path_brain_master.name.split('.')[0]}_moco.h5"
     #moco_dir, savefile_master = brainsss.make_empty_h5(h5_path_scratch, h5_file_name, brain_dims)#, save_type)
     # Make 'moco' dir in imaging path
-    path_h5_master.parent.mkdir(parents=True, exist_ok=True)
+    path_h5_anatomy.parent.mkdir(parents=True, exist_ok=True)
     # Create empty h5 file
-    with h5py.File(path_h5_master, 'w') as file:
+    with h5py.File(path_h5_anatomy, 'w') as file:
         _ = file.create_dataset('data', brain_dims, dtype='float32', chunks=True)
-    printlog(F"Created empty hdf5 file{path_h5_master.name:.>{WIDTH - 23}}")
+    printlog(F"Created empty hdf5 file{path_h5_anatomy.name:.>{WIDTH - 23}}")
 
-    if path_brain_mirror is not None:
+    if len(path_h5_functional) > 0:
+        with h5py.File(path_h5_functional[0], 'w') as file:
+            _ = file.create_dataset('data', brain_dims, dtype='float32', chunks=True)
+        printlog(F"Created empty hdf5 file{path_h5_functional[0].name:.>{WIDTH - 23}}")
+
+        if len(path_h5_functional) > 1:
+            with h5py.File(path_h5_functional[1], 'w') as file:
+                _ = file.create_dataset('data', brain_dims, dtype='float32', chunks=True)
+            printlog(F"Created empty hdf5 file{path_h5_functional[1].name:.>{WIDTH - 23}}")
+
+
+    #if path_brain_mirror is not None:
         #h5_file_name = f"{path_brain_mirror.split('.')[0]}_moco.h5"
         #_, savefile_mirror = brainsss.make_empty_h5(h5_path_scratch, h5_file_name, brain_dims)#, save_type)
-        with h5py.File(path_h5_mirror, 'w') as file:
-            _ = file.create_dataset('data', brain_dims, dtype='float32', chunks=True)
-        printlog(F"Created empty hdf5 file{path_h5_mirror.name:.>{WIDTH - 23}}")
+        #with h5py.File(path_h5_mirror, 'w') as file:
+        #    _ = file.create_dataset('data', brain_dims, dtype='float32', chunks=True)
+        #printlog(F"Created empty hdf5 file{path_h5_mirror.name:.>{WIDTH - 23}}")
 
     #################################
     ### Perform Motion Correction ###
@@ -642,8 +724,11 @@ def motion_correction(fly_directory,
         # printlog(F"j: {j}")
 
         ### LOAD A SINGLE BRAIN VOL ###
-        moco_ch1_chunk = []
-        moco_ch2_chunk = []
+        #moco_ch1_chunk = []
+        #moco_ch2_chunk = []
+        moco_anatomy_chunk = []
+        moco_functional_one_chunk = []
+        moco_functional_two_chunk = []
         # for each timePOINT!
         for i in range(stepsize):
             #t0 = time.time()
@@ -653,7 +738,7 @@ def motion_correction(fly_directory,
             if index == brain_dims[-1]:
                 break
             # that's a single slice in time
-            vol = img_ch1.dataobj[..., index]
+            vol = img_anatomy.dataobj[..., index]
             moving = ants.from_numpy(np.asarray(vol, dtype='float32'))
 
             ### MOTION CORRECT ###
@@ -663,19 +748,35 @@ def motion_correction(fly_directory,
                                      flow_sigma=flow_sigma,
                                      total_sigma=total_sigma,
                                      aff_metric=aff_metric)
-            moco_ch1 = moco['warpedmovout'].numpy()
-            moco_ch1_chunk.append(moco_ch1)
+            #moco_ch1 = moco['warpedmovout'].numpy()
+            moco_anatomy = moco['warpedmovout'].numpy()
+            #moco_ch1_chunk.append(moco_ch1)
+            moco_anatomy_chunk.append(moco_anatomy)
             transformlist = moco['fwdtransforms']
             # printlog(F'vol, ch1 moco: {index}, time: {time.time()-t0}')
 
+            ### APPLY TRANSFORMS TO FUNCTIONAL CHANNELS ###
+            if len(path_brain_functional) > 0:
+                vol = img_functional_one.dataobj[..., index]
+                functional_one_moving = ants.from_numpy(np.asarray(vol, dtype='float32'))
+                moco_functional_one = ants.apply_transforms(fixed, functional_one_moving, transformlist)
+                moco_functional_one = moco_functional_one.numpy()
+                moco_functional_one_chunk.append(moco_functional_one)
+                # If a second functional channel exists, also apply to this one
+                if len(path_brain_functional) > 1:
+                    vol = img_functional_two.dataobj[..., index]
+                    functional_two_moving = ants.from_numpy(np.asarray(vol, dtype='float32'))
+                    moco_functional_two = ants.apply_transforms(fixed, functional_two_moving, transformlist)
+                    moco_functional_two = moco_functional_two.numpy()
+                    moco_functional_two_chunk.append(moco_functional_two)
             ### APPLY TRANSFORMS TO CHANNEL 2 ###
             # t0 = time.time()
-            if path_brain_mirror is not None:
-                vol = img_ch2.dataobj[..., index]
-                ch2_moving = ants.from_numpy(np.asarray(vol, dtype='float32'))
-                moco_ch2 = ants.apply_transforms(fixed, ch2_moving, transformlist)
-                moco_ch2 = moco_ch2.numpy()
-                moco_ch2_chunk.append(moco_ch2)
+            #if path_brain_mirror is not None:
+            #    vol = img_ch2.dataobj[..., index]
+            #    ch2_moving = ants.from_numpy(np.asarray(vol, dtype='float32'))
+            #    moco_ch2 = ants.apply_transforms(fixed, ch2_moving, transformlist)
+            #    moco_ch2 = moco_ch2.numpy()
+            #    moco_ch2_chunk.append(moco_ch2)
             # printlog(F'moco vol done: {index}, time: {time.time()-t0}')
 
             ### SAVE AFFINE TRANSFORM PARAMETERS FOR PLOTTING MOTION ###
@@ -717,38 +818,51 @@ def motion_correction(fly_directory,
                                                    printlog=printlog,
                                                    start_time=start_time, width=WIDTH)
 
-        moco_ch1_chunk = np.moveaxis(np.asarray(moco_ch1_chunk), 0, -1)
-        if path_brain_mirror is not None:
-            moco_ch2_chunk = np.moveaxis(np.asarray(moco_ch2_chunk), 0, -1)
+        moco_anatomy_chunk = np.moveaxis(np.asarray(moco_anatomy_chunk), 0, -1)
+        if len(path_brain_functional) > 0:
+            moco_functional_one_chunk = np.moveaxis(np.asarray(moco_functional_one_chunk), 0, -1)
+            if len(path_brain_functional) > 1:
+                moco_functional_two_chunk = np.moveaxis(np.asarray(moco_functional_two_chunk), 0, -1)
+        #moco_ch1_chunk = np.moveaxis(np.asarray(moco_ch1_chunk), 0, -1)
+        #if path_brain_mirror is not None:
+        #    moco_ch2_chunk = np.moveaxis(np.asarray(moco_ch2_chunk), 0, -1)
         # printlog("chunk shape: {}. Time: {}".format(moco_ch1_chunk.shape, time.time()-t0))
 
         ### APPEND WARPED VOL TO HD5F FILE - CHANNEL 1 ###
-        t0 = time.time()
-        with h5py.File(path_h5_master, 'a') as f:
-            f['data'][..., steps[j]:steps[j + 1]] = moco_ch1_chunk
+        with h5py.File(path_h5_anatomy, 'a') as f:
+            f['data'][..., steps[j]:steps[j + 1]] = moco_anatomy_chunk
+        #t0 = time.time()
+        #with h5py.File(path_h5_master, 'a') as f:
+        #    f['data'][..., steps[j]:steps[j + 1]] = moco_ch1_chunk
         # printlog(F'Ch_1 append time: {time.time-t0}')
 
         ### APPEND WARPED VOL TO HD5F FILE - CHANNEL 2 ###
-        t0 = time.time()
-        if path_brain_mirror is not None:
-            with h5py.File(path_h5_mirror, 'a') as f:
-                f['data'][..., steps[j]:steps[j + 1]] = moco_ch2_chunk
+        if len(path_brain_functional) > 0:
+            with h5py.File(path_h5_functional[0], 'a') as f:
+                f['data'][..., steps[j]:steps[j + 1]] = moco_functional_one_chunk
+            if len(path_brain_functional) > 1:
+                with h5py.File(path_h5_functional[1], 'a') as f:
+                    f['data'][..., steps[j]:steps[j + 1]] = moco_functional_two_chunk
+        #t0 = time.time()
+        #if path_brain_mirror is not None:
+        #    with h5py.File(path_h5_mirror, 'a') as f:
+        #        f['data'][..., steps[j]:steps[j + 1]] = moco_ch2_chunk
         # printlog(F'Ch_2 append time: {time.time()-t0}')
 
     ### SAVE TRANSFORMS ###
     printlog("saving transforms")
-    printlog(F"path_h5_master: {path_h5_master}")
+    printlog(F"path_h5_master: {path_h5_anatomy}")
     transform_matrix = np.array(transform_matrix)
     #save_file = os.path.join(moco_dir, 'motcorr_params')
-    save_file = pathlib.Path(path_h5_master.parent, 'motcorr_params')
+    save_file = pathlib.Path(path_h5_anatomy.parent, 'motcorr_params')
     np.save(save_file, transform_matrix)
 
     ### MAKE MOCO PLOT ###
     printlog("making moco plot")
-    printlog(F"moco_dir: {path_h5_master.parent}")
+    printlog(F"moco_dir: {path_h5_anatomy.parent}")
     moco_utils.save_moco_figure(transform_matrix=transform_matrix,
                               parent_path=parent_path,
-                              moco_dir=path_h5_master.parent,
+                              moco_dir=path_h5_anatomy.parent,
                               printlog=printlog)
 
     ### OPTIONAL: SAVE REGISTERED IMAGES AS NII ###
@@ -756,24 +870,43 @@ def motion_correction(fly_directory,
         printlog('saving .nii images')
 
         # Save master:
-        nii_savefile_master = moco_utils.h5_to_nii(path_h5_master)
+        nii_savefile_master = moco_utils.h5_to_nii(path_h5_anatomy)
         printlog(F"nii_savefile_master: {str(nii_savefile_master.name)}")
         if nii_savefile_master is not None:  # If .nii conversion went OK, delete h5 file
-            printlog('deleting .h5 file at {}'.format(path_h5_master))
-            path_h5_master.unlink() # delete file
+            printlog('deleting .h5 file at {}'.format(path_h5_anatomy))
+            path_h5_anatomy.unlink() # delete file
         else:
-            printlog('nii conversion failed for {}'.format(path_h5_master))
-
+            printlog('nii conversion failed for {}'.format(path_h5_anatomy))
         # Save mirror:
-        if path_brain_mirror is not None:
-            nii_savefile_mirror = moco_utils.h5_to_nii(path_h5_mirror)
-            printlog(F"nii_savefile_mirror: {str(nii_savefile_mirror)}")
-            if nii_savefile_mirror is not None:  # If .nii conversion went OK, delete h5 file
-                printlog('deleting .h5 file at {}'.format(path_h5_mirror))
+        if len(path_h5_functional) > 0:
+            nii_savefile_functional_one = moco_utils.h5_to_nii(path_h5_functional[0])
+            printlog(F"nii_savefile_mirror: {str(nii_savefile_functional_one)}")
+            if nii_savefile_functional_one is not None:  # If .nii conversion went OK, delete h5 file
+                printlog('deleting .h5 file at {}'.format(path_h5_functional[0]))
                 #os.remove(savefile_mirror)
-                path_h5_mirror.unlink()
+                path_h5_functional[0].unlink()
             else:
-                printlog('nii conversion failed for {}'.format(path_h5_mirror))
+                printlog('nii conversion failed for {}'.format(path_h5_functional[0]))
+
+            if len(path_h5_functional) > 1:
+                nii_savefile_functional_two = moco_utils.h5_to_nii(path_h5_functional[1])
+                printlog(F"nii_savefile_mirror: {str(nii_savefile_functional_two)}")
+                if nii_savefile_functional_two is not None:  # If .nii conversion went OK, delete h5 file
+                    printlog('deleting .h5 file at {}'.format(path_h5_functional[1]))
+                    # os.remove(savefile_mirror)
+                    path_h5_functional[1].unlink()
+                else:
+                    printlog('nii conversion failed for {}'.format(path_h5_functional[1]))
+        # Save mirror:
+        #if path_brain_mirror is not None:
+        #    nii_savefile_mirror = moco_utils.h5_to_nii(path_h5_functional[0])
+        #    printlog(F"nii_savefile_mirror: {str(nii_savefile_mirror)}")
+        #    if nii_savefile_mirror is not None:  # If .nii conversion went OK, delete h5 file
+        #        printlog('deleting .h5 file at {}'.format(path_h5_mirror))
+        #        #os.remove(savefile_mirror)
+        #        path_h5_mirror.unlink()
+        #    else:
+        #        printlog('nii conversion failed for {}'.format(path_h5_mirror))
 
 def copy_to_scratch(fly_directory, paths_on_oak, paths_on_scratch):
     """

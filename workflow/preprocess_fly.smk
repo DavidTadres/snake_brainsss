@@ -72,17 +72,17 @@ print('Analyze data in ' + repr(fly_folder_to_process_oak.as_posix()))
 with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
     fly_json = json.load(file)
 
-ANATOMICAL_CHANNEL = fly_json['anatomy_channel'] # < This needs to come from some sort of json file the experimenter
+ANATOMY_CHANNEL = fly_json['anatomy_channel'] # < This needs to come from some sort of json file the experimenter
 # creates while running the experiment. Same as genotype.
 FUNCTIONAL_CHANNELS = fly_json['functional_channel']
 
 def ch_exists_func(channel):
     """
-    Check if a given channel exists in global variables ANATOMICAL_CHANNEL and FUNCTIONAL_CHANNELS
+    Check if a given channel exists in global variables ANATOMY_CHANNEL and FUNCTIONAL_CHANNELS
     :param channel:
     :return:
     """
-    if 'channel' + str(channel) in ANATOMICAL_CHANNEL or 'channel' + str(channel) in FUNCTIONAL_CHANNELS:
+    if 'channel_' + str(channel) in ANATOMY_CHANNEL or 'channel_' + str(channel) in FUNCTIONAL_CHANNELS:
         ch_exists = True
     else:
         ch_exists = False
@@ -335,7 +335,7 @@ rule all:
         # While we don't really need this image, it's a good idea to have it here because the empty h5 file
         # we actually want is created very early during the rule call and will be present even if the program
         # crashed.
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motion_correction.png", moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy", moco_imaging_paths=list_of_imaging_paths_moco),
         # depending on which channels are present,
         expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
         expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
@@ -349,9 +349,9 @@ rule all:
         ###
         # temporal high-pass filter
         ###
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter)
+        #>expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        #>expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        #>expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter)
 
 rule fictrac_qc_rule:
     threads: 1
@@ -478,7 +478,7 @@ rule motion_correction_rule:
         h5_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[],
         h5_path_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[],
         h5_path_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],
-        png_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motion_correction.png"
+        par_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
     run:
         try:
             preprocessing.motion_correction(fly_directory=fly_folder_to_process_oak,
@@ -490,6 +490,8 @@ rule motion_correction_rule:
                                             total_sigma=0,  # For ants.registration(), higher values will restrict the amount of deformation allowed | Default 0
                                             aff_metric='mattes',# For ants.registration(), metric for affine registration | Default 'mattes'. Also allowed: 'GC', 'meansquares'
                                             h5_path=[output.h5_path_ch1, output.h5_path_ch2, output.h5_path_ch3], # Define as dataset on scratch!
+                                            anatomy_channel=ANATOMY_CHANNEL,
+                                            functional_channels=FUNCTIONAL_CHANNELS
                                             )
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_motion_correction')

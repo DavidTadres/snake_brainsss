@@ -124,6 +124,12 @@ def sec_to_hms(t):
 
 
 def h5_to_nii(h5_path):
+	"""
+	Here we go from float 32 back to uint16 (original files from Bruker seem to be uint16).
+	Probably saves a ton of space but what effect does it have on data analysis due to lost precision?
+	:param h5_path:
+	:return:
+	"""
 	nii_savefile = h5_path.name.split('.')[0] + '.nii'
 	with h5py.File(h5_path, 'r+') as h5_file:
 		image_array = h5_file.get("data")[:].astype('uint16')
