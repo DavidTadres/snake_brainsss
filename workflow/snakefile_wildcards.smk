@@ -66,7 +66,7 @@ import json
 import datetime
 
 scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
-print(scripts_path)
+#print(scripts_path)
 from brainsss import utils
 from scripts import preprocessing
 
@@ -111,7 +111,6 @@ for key in fly_dirs_dict:
         imaging_file_paths.append(fly_dirs_dict[key][1::])
     elif 'Fictrac' in key:
         fictrac_file_paths.append(fly_dirs_dict[key][1::])
-print("imaging_file_paths: " + repr(imaging_file_paths))
 def create_path_func(fly_folder_to_process, list_of_paths, filename='', func_only=False):
     """
     Creates lists of path that can be feed as input/output to snakemake rules
@@ -166,7 +165,6 @@ def create_output_path_func(list_of_paths, filename):
 # Changed to callend nii filees 'channel_x.nii' only to avoid overcomplexification
 ch1_file_oak_paths = create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_1.nii')
 ch2_file_oak_paths = create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_2.nii')
-print('ch1_file_oak_paths' + repr(ch1_file_oak_paths))
 
 #all_imaging_oak_paths = ch1_func_file_oak_paths + ch2_func_file_oak_paths + ch1_anat_file_oak_paths + ch2_anat_file_oak_paths
 all_imaging_oak_paths = ch1_file_oak_paths + ch2_file_oak_paths
@@ -183,13 +181,17 @@ full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process_oak, fictra
 #                                    create_path_func(fly_folder_to_process_oak, anat_file_paths, 'anatomy_channel_2')
 paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_1') + \
                                     create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_2')
-print("paths_for_make_mean_brain_rule_oak: " + repr(paths_for_make_mean_brain_rule_oak))
 #print('paths_for_make_mean_brain_rule_oak' + repr(paths_for_make_mean_brain_rule_oak))
 
 # List of 'func' and 'anat' paths needed for motion correction
 list_of_imaging_paths_moco = []
 for current_path in imaging_file_paths:
     list_of_imaging_paths_moco.append(current_path.split('/imaging')[0])
+
+zscore_imaging_paths = []
+for current_path in imaging_file_paths:
+    if 'func' in current_path:
+        zscore_imaging_paths.append(current_path.split('/imaging')[0])
 ####
 
 '''
@@ -323,13 +325,7 @@ def get_time():
     return(day_now + '_' + time_now)
 time_string = get_time() # To write benchmark files
 
-print("imaging_file_paths: " + repr(imaging_file_paths))
 
-zscore_imaging_paths = []
-for current_path in imaging_file_paths:
-    if 'func' in current_path:
-        zscore_imaging_paths.append(current_path.split('/imaging')[0])
-print("zscore_imaging_paths" + repr(zscore_imaging_paths))
 
 # Filenames we can encounter
 #imaging_folders = ['func0']
@@ -350,6 +346,15 @@ def mem_mb_times_threads(wildcards, threads):
     :return:
     """
     return(threads * 7500)
+
+def mem_mb_times_input(wildcards, input):
+    """
+    Returns memory in mb as 2.5*input memory size or 1Gb, whichever is larger
+    :param wildcards:
+    :param input:
+    :return:
+    """
+    return(max(input.size.mb*2.5), 1000)
 
 rule all:
     input:
@@ -528,7 +533,7 @@ rule motion_correction_rule:
 
 rule zscore_rule:
     threads: 4
-    resources: mem_mb=1000 #mem_mb=mem_mb_times_threads # Try to make dependent on input file size! Would be much more dynamic
+    resources: mem_mb=mem_mb_times_input #mem_mb_times_threads # Try to make dependent on input file size! Would be much more dynamic
     input:
         h5_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         h5_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],

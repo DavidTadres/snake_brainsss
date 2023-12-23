@@ -185,6 +185,8 @@ def zscore(fly_directory, dataset_path, zscore_path):
 
 
         # Open file - Must keep file open while accessing it.
+        # I'm pretty sure we don't overwrite it because we open it as r.
+        # This should mean that we are reading stuff into memory, of course
         with h5py.File(current_dataset_path, 'r') as hf:
             data = hf['data']  # this doesn't actually LOAD the data - it is just a proxy
             dims = np.shape(data)
