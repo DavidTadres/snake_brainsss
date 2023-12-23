@@ -357,6 +357,8 @@ def mem_mb_times_input(wildcards, input):
     return(max(input.size_mb*2.5, 1000))
 
 rule all:
+    threads: 1 # should be sufficent
+    resources: mem_mb=1000 # should be sufficient
     input:
         ###
         # Fictrac QC
@@ -533,7 +535,8 @@ rule motion_correction_rule:
 
 rule zscore_rule:
     """
-    Benchmarking: Did 2.5*input file size and got a 86% efficiency on the memory. 
+    Benchmarking: Did 2.5*input file size and got a 86% efficiency on the memory, 4 threads only 12% efficiency
+    Did same with 1 thread and seemed to be enough. Keep at 1 thread for now, might break with larger files.
     """
     threads: 1
     resources: mem_mb=mem_mb_times_input #mem_mb_times_threads # Try to make dependent on input file size! Would be much more dynamic

@@ -73,3 +73,7 @@ source .env_snake_brainsss/bin/activate
 download wheel for arm Mac https://github.com/dipterix/rpyANTs/releases/tag/0.0.1.9000
 ```shell
 pip install YOUR WHEEL, for example: pip install antspyx-0.3.8-cp310-cp310-macosx_13_0_arm64.whl
+```
+# OR install python 3.9 and do:
+python3 -m venv .env_snake_brainsss
+source .env_snake_brainsss/bin/activate

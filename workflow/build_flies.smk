@@ -36,7 +36,7 @@ import sys
 import json
 import datetime
 from brainsss import utils
-
+from scripts import snake_utils
 
 settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
@@ -97,16 +97,16 @@ for current_day in imports_to_process:
                 all_fly_dataset_paths.append(current_fly_dataset_folder)
                 all_imports_paths.append(current_fly)
 
-
 #print('all_fly_dataset_paths' + repr(all_fly_dataset_paths))
-#print('all_imports_paths' + repr(all_imports_paths))
+print('all_imports_paths' + repr(all_imports_paths))
 # only run the fly_builder_rule if the folder defined as the target folder
 # does not exist yet
 rule fly_builder_rule:
     """
-    Not parallelized right now.
+    Not parallelized right now. Since this is just file transfer it's probably fine
     """
-    threads: 1
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_threads
     run:
 
         # Only run the code to copy data from imports to 'fly_00X' if the
