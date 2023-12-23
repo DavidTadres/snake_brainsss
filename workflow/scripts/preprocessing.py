@@ -34,8 +34,7 @@ from brainsss import moco_utils
 from brainsss import utils
 from brainsss import fictrac_utils
 
-
-def zscore(dataset_path, zscore_path):
+def zscore(fly_directory, dataset_path, zscore_path):
     """
     Remember, only the functional channel is z scored of course!!!!
 
@@ -56,106 +55,158 @@ def zscore(dataset_path, zscore_path):
     aid(fake_brain), aid(zscore)
     >(11379671040, 30647255040) # Different memory location!
 
-    # in place operation?
+    # in place operation possible?
     np.subtract.at(fakebrain, [], meanbrain[:,:,:,np.newaxis)
+    Or just?
+    fakebrain = fakebrain-meanbrain[:,:,:,np.newaxis])/stdbrain[:,:,:,np.newaxis]
+    -> Nope that leads to different memory locations when using 'aid' func.
 
+    Just use the normal in place operators:
+    data = np.zeros((128,256,49,1000))
+    meanbrain = np.nanmean(fakebrain, axis=3)
+    stdbrain = np.std(fakebrain, axis=3)
+    aid(data)
+    > 10737418240
+    # First subtract meanbrain from everythin
+    data-=meanbrain[:,:,:,np.newaxis]
+    aid(data)
+    > 10737418240
+    # Then divide everything by std to get zscore
+    data/=stdbrain[:,:,:,np.newaxis]
+    aid(data)
+    >10737418240
     :param args:
     :return:
     """
-    load_directory = args['load_directory']
-    save_directory = args['save_directory']
-    brain_file = args['brain_file']
-    stepsize = 100
 
-    full_load_path = os.path.join(load_directory, brain_file)
-    save_file = os.path.join(save_directory, brain_file.split('.')[0] + '_zscore.h5')
+    # Check whether empty lists count as part of list or a are skipped.
+    for i in range(dataset_path):
+        print(i)
 
-    #####################
-    ### SETUP LOGGING ###
-    #####################
-
-    width = 120
-    logfile = args['logfile']
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
 
     ##############
     ### ZSCORE ###
     ##############
+    logfile = utils.create_logfile(fly_directory, function_name='zscore')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'zscore')
 
     printlog("Beginning ZSCORE")
-    with h5py.File(full_load_path, 'r') as hf:
-        data = hf['data']  # this doesn't actually LOAD the data - it is just a proxy
-        dims = np.shape(data)
 
-        printlog("Data shape is {}".format(dims))
+    # we might get a second functional channel in the future!
+    for current_dataset_path, current_zscore_path in zip(dataset_path, zscore_path):
 
-        running_sum = np.zeros(dims[:3])
-        running_sumofsq = np.zeros(dims[:3])
+        print('doing the loop: current_dataset_path ' + current_dataset_path)
 
-        steps = list(range(0, dims[-1], stepsize))
-        steps.append(dims[-1])
+        print('current_zscore_path ' + current_zscore_path)
 
-        ### Calculate meanbrain ###
-        # I assume data is actual data.
-        # So we load data in chunks with the first 3 dimensions + a chunk in time
-        # then sum all the data over time
-        # an finally divide it by time.
-        #for chunk_num in range(len(steps)):
-        #    t0 = time()
-        #    if chunk_num + 1 <= len(steps) - 1:
-        #        chunkstart = steps[chunk_num]
-        #        chunkend = steps[chunk_num + 1]
-        #        chunk = data[:, :, :, chunkstart:chunkend]
-        #        running_sum += np.sum(chunk, axis=3)
-        #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-        meanbrain = running_sum / dims[-1]
+        continue
+        ####
+        # testing!!!
+        #####
+
+        #load_directory = args['load_directory']
+        #save_directory = args['save_directory']
+        #brain_file = args['brain_file']
+        #stepsize = 100
+
+        #full_load_path = os.path.join(load_directory, brain_file)
+        #save_file = os.path.join(save_directory, brain_file.split('.')[0] + '_zscore.h5')
+
+        #####################
+        ### SETUP LOGGING ###
+        #####################
+
+
+        # Open file - maybe have to do everything while it's open, test
+        with h5py.File(current_dataset_path, 'r') as hf:
+            data = hf['data']  # this doesn't actually LOAD the data - it is just a proxy
+            dims = np.shape(data)
+
+            printlog("Data shape is {}".format(dims))
+
+            #running_sum = np.zeros(dims[:3])
+            #running_sumofsq = np.zeros(dims[:3])
+
+            #steps = list(range(0, dims[-1], stepsize))
+            #steps.append(dims[-1])
+
+            ### Calculate meanbrain ###
+            # I assume data is actual data.
+            # So we load data in chunks with the first 3 dimensions + a chunk in time
+            # then sum all the data over time
+            # an finally divide it by time.
+            #for chunk_num in range(len(steps)):
+            #    t0 = time()
+            #    if chunk_num + 1 <= len(steps) - 1:
+            #        chunkstart = steps[chunk_num]
+            #        chunkend = steps[chunk_num + 1]
+            #        chunk = data[:, :, :, chunkstart:chunkend]
+            #        running_sum += np.sum(chunk, axis=3)
+            #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+            # meanbrain = running_sum / dims[-1]
+
+
+
+            ### Calculate std ###
+
+            #for chunk_num in range(len(steps)):
+            #    t0 = time()
+            #    if chunk_num + 1 <= len(steps) - 1:
+            #        chunkstart = steps[chunk_num]
+            #        chunkend = steps[chunk_num + 1]
+            #        chunk = data[:, :, :, chunkstart:chunkend]
+            #        running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+            #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+            #final_std = np.sqrt(running_sumofsq / dims[-1])
 
         # I think we don't have to worry about memory too much - since we only work
         # with one h5 file at a time and 30 minutes at float32 is ~20Gb
         # Expect a 4D array, xyz and the fourth dimension is time!
         meanbrain = np.nanmean(data, axis=3)
-
-        ### Calculate std ###
-
-        #for chunk_num in range(len(steps)):
-        #    t0 = time()
-        #    if chunk_num + 1 <= len(steps) - 1:
-        #        chunkstart = steps[chunk_num]
-        #        chunkend = steps[chunk_num + 1]
-        #        chunk = data[:, :, :, chunkstart:chunkend]
-        #        running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-        #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-        #final_std = np.sqrt(running_sumofsq / dims[-1])
-
         # Might get out of memory error, test!
         final_std = np.std(data, axis=3)
 
-    ### Calculate zscore and save ###
+        ### Calculate zscore and save ###
 
-    #with h5py.File(save_file, 'w') as f:
-    #    dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+        #with h5py.File(save_file, 'w') as f:
+        #    dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
 
-    #    for chunk_num in range(len(steps)):
-    #        t0 = time()
-    #        if chunk_num + 1 <= len(steps) - 1:
-    #            chunkstart = steps[chunk_num]
-    #            chunkend = steps[chunk_num + 1]
-    #            chunk = data[:, :, :, chunkstart:chunkend]
-    #            running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-    #            zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
-    #            f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
-    #                zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
-    #            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+        #    for chunk_num in range(len(steps)):
+        #        t0 = time()
+        #        if chunk_num + 1 <= len(steps) - 1:
+        #            chunkstart = steps[chunk_num]
+        #            chunkend = steps[chunk_num + 1]
+        #            chunk = data[:, :, :, chunkstart:chunkend]
+        #            running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+        #            zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
+        #            f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
+        #                zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
+        #            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
 
-    # Calculate z-score
-    z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
-    # From the docs:
-    # Chunking has performance implications. It’s recommended to keep the total size
-    # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
-    # keep in mind that when any element in a chunk is accessed, the entire chunk
-    # is read from disk
-    with h5py.File(save_file, 'w') as file:
-        dset = file.create_dataset('data', data=z_scored)#, dims, dtype='float32', chunks=False)
+        # Calculate z-score
+        # z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
+        # The above works, is easy to read but makes a copy in memory. Since brain data is
+        # huge (easily 20Gb) we'll avoid making a copy by doing in place operations to save
+        # memory! See docstring for more information
+
+        # data will be data-meanbrain after this operation
+        data-=meanbrain[:,:,:,np.newaxis]
+        # Then it will be divided by std which leads to zscore
+        data/=final_std
+        # From the docs:
+        # Chunking has performance implications. It’s recommended to keep the total size
+        # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
+        # keep in mind that when any element in a chunk is accessed, the entire chunk
+        # is read from disk
+        with h5py.File(current_zscore_path, 'w') as file:
+            dset = file.create_dataset('data', data=data)#, dims, dtype='float32', chunks=False)
+
+        if len(dataset_path) > 1:
+            del (data)
+            printlog('Sleeping for 10 seconds before loading the next functional channel')
+            time.sleep(10) # allow garbage collector to start cleaning up memory before potentially loading
+            # the other functional channel!
 
     printlog("zscore done")
 
@@ -184,7 +235,6 @@ def motion_correction(fly_directory,
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'motion_correction')
 
-    print(dataset_path)
     dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
     meanbrain_path =utils.convert_list_of_string_to_posix_path(meanbrain_path)
     h5_path = utils.convert_list_of_string_to_posix_path(h5_path)
@@ -494,23 +544,28 @@ def motion_correction(fly_directory,
     # for i in range(brain_dims[-1]):
     start_time = time.time()
     print_timer = time.time()
+
+    # For timepoints / stepsize. e.g. if have 300 timepoints and stepsize 100 I get len(steps)=3
     for j in range(len(steps) - 1):
         # printlog(F"j: {j}")
 
         ### LOAD A SINGLE BRAIN VOL ###
         moco_ch1_chunk = []
         moco_ch2_chunk = []
+        # for each timePOINT!
         for i in range(stepsize):
             #t0 = time.time()
+            # that's a number
             index = steps[j] + i
             # for the very last j, adding the step size will go over the dim, so need to stop here
             if index == brain_dims[-1]:
                 break
-
+            # that's a single slice in time
             vol = img_ch1.dataobj[..., index]
             moving = ants.from_numpy(np.asarray(vol, dtype='float32'))
 
             ### MOTION CORRECT ###
+            # by comparing a given frame in time against the meanbrain (fixed)
             moco = ants.registration(fixed, moving,
                                      type_of_transform=type_of_transform,
                                      flow_sigma=flow_sigma,

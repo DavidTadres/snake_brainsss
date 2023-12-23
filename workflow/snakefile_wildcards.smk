@@ -45,6 +45,7 @@ CH3_EXISTS = False
 
 ANATOMICAL_CHANNEL = 'channel_1' # < This needs to come from some sort of json file the experimenter
 # creates while running the experiment. Same as genotype.
+FUNCTIONAL_CHANNELS = ['channel_2']
 
 GENOTYPE = 'XX' # Must be in a fly.json file. Don't run if not present.
 
@@ -110,7 +111,7 @@ for key in fly_dirs_dict:
     elif 'Fictrac' in key:
         fictrac_file_paths.append(fly_dirs_dict[key][1::])
 
-def create_path_func(fly_folder_to_process, list_of_paths, filename=''):
+def create_path_func(fly_folder_to_process, list_of_paths, filename='', func_only=False):
     """
     Creates lists of path that can be feed as input/output to snakemake rules
     :param fly_folder_to_process: a folder pointing to a fly, i.e. /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_001
@@ -120,7 +121,14 @@ def create_path_func(fly_folder_to_process, list_of_paths, filename=''):
     """
     final_path = []
     for current_path in list_of_paths:
-        final_path.append(pathlib.Path(fly_folder_to_process, current_path, filename))
+        # Sometimes we need only paths from the functional channel, for example for z-scoring
+        if func_only:
+            if 'func' in current_path:
+                final_path.append(pathlib.Path(fly_folder_to_process,current_path,filename))
+            else:
+                pass # if no func, don't use the path!
+        else:
+            final_path.append(pathlib.Path(fly_folder_to_process, current_path, filename))
 
     return(final_path)
 
@@ -175,6 +183,13 @@ full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process_oak, fictra
 paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_1') + \
                                     create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_2')
 #print('paths_for_make_mean_brain_rule_oak' + repr(paths_for_make_mean_brain_rule_oak))
+
+# List of 'func' and 'anat' paths needed for motion correction
+list_of_imaging_paths_moco = []
+for current_path in imaging_file_paths:
+    list_of_imaging_paths_moco.append(current_path.split('/imaging')[0])
+####
+
 '''
 #######
 # Data path on SCRATCH
@@ -210,6 +225,24 @@ def convert_oak_path_to_scratch(oak_path):
 
 #fly_folder_to_process_scratch = convert_oak_path_to_scratch(fly_folder_to_process_oak) # Must be provided as a list
 '''
+"""
+# Create path segements for z correction of functional(!) channels:
+paths_for_zscore_input_oak = []
+paths_for_zscore_output_oak = []
+for current_channel in FUNCTIONAL_CHANNELS:
+     paths_for_zscore_input_oak.append(create_path_func(fly_folder_to_process='',
+         list_of_paths=imaging_file_paths, filename='moco/' + current_channel + '_moco.h5' , func_only=True))
+     paths_for_zscore_output_oak.append(create_path_func(fly_folder_to_process='',
+         list_of_paths=imaging_file_paths, filename=current_channel + '_moco_zscore.h5' , func_only=True))
+
+print("paths_for_zscore_input_oak " + repr(paths_for_zscore_input_oak))
+print("paths_for_zscore_output_oak " + repr(paths_for_zscore_output_oak))
+print(error)
+"""
+##
+# https://stackoverflow.com/questions/68882363/snakemake-use-part-of-input-file-name-for-the-output
+# expand("start-{sample}_{info}-end_R1.fastq.gz", zip, sample=ID,info=INFO)
+##
 ####
 # Path per folder
 ####
@@ -311,21 +344,33 @@ def mem_mb_times_threads(wildcards, threads):
 
 rule all:
     input:
+        ###
         # Fictrac QC
-        ###expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
+        ###
+        #>>expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
+        ###
         # Bleaching QC
+        ###
         bleaching_qc_output_files,
+        ###
         # Meanbrain
+        ###
         expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_rule_oak),
         # Motion correction output
         # While we don't really need this image, it's a good idea to have it here because the empty h5 file
         # we actually want is created very early during the rule call and will be present even if the program
         # crashed.
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motion_correction.png", moco_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motion_correction.png", moco_imaging_paths=list_of_imaging_paths_moco),
         # depending on which channels are present,
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[], moco_imaging_paths=imaging_file_paths),
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else [], moco_imaging_paths=imaging_file_paths),
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],moco_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else [], moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else [],moco_imaging_paths=list_of_imaging_paths_moco),
+        ####
+        # Z-score
+        ####
+        #>expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_file_paths),
+        #>expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=imaging_file_paths),
+        #>expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=imaging_file_paths)
 
 
 rule fictrac_qc_rule:
@@ -392,8 +437,6 @@ rule bleaching_qc_rule:
         imaging_paths_by_folder_oak
     output:
         bleaching_qc_output_files
-    benchmark:
-        str(fly_folder_to_process_oak) + "/logs/" + str(time_string) + "_benchmark_bleaching_qc_rule.txt"
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
@@ -408,7 +451,6 @@ rule bleaching_qc_rule:
                 error_stack=error_stack,
                 width=width)
             print('Error with bleaching_qc' )
-
 
 rule motion_correction_rule:
     """
@@ -444,17 +486,17 @@ rule motion_correction_rule:
     resources: mem_mb=mem_mb_times_threads
     input:
         # Only use the Channels that exists
-        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/channel_1.nii" if CH1_EXISTS else [],
-        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/channel_2.nii" if CH2_EXISTS else [],
-        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/channel_3.nii" if CH3_EXISTS else [],
+        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
+        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
+        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
 
-        mean_brain_paths_ch1= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/channel_1_mean.nii" if CH1_EXISTS else [],
-        mean_brain_paths_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/channel_1_mean.nii" if CH2_EXISTS else [],
-        mean_brain_paths_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/channel_1_mean.nii" if CH3_EXISTS else [],
+        mean_brain_paths_ch1= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
+        mean_brain_paths_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
+        mean_brain_paths_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else [],
     output:
-        h5_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
-        h5_path_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[],
-        h5_path_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
+        h5_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[],
+        h5_path_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[],
+        h5_path_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],
         png_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motion_correction.png"
     run:
         try:
@@ -470,6 +512,29 @@ rule motion_correction_rule:
                                             )
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_motion_correction')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
+rule zscore_rule:
+    threads: 4
+    resources: mem_mb=mem_mb_times_threads
+    input:
+        h5_path_ch1 = str(fly_folder_to_process) + "{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        h5_path_ch2 = str(fly_folder_to_process) + "{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        h5_path_ch3 = str(fly_folder_to_process) + "{zscore_imaging_paths}/moco/channel_3_moco.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+
+    output:
+        zscore_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        zscore_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        zscore_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+    run:
+        try:
+            preprocessing.zscore(fly_directory=fly_folder_to_process_oak,
+                                dataset_path=[input.h5_path_ch1, input.h5_path_ch2, input.h5_path_ch3],
+                                zscore_path=[output.zscore_path_ch1, output.zscore_path_ch2, output.zscore_path_ch3])
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_zscore')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
