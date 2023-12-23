@@ -354,7 +354,7 @@ def mem_mb_times_input(wildcards, input):
     :param input:
     :return:
     """
-    return(max(input.size.mb*2.5), 1000)
+    return(max(input.size_mb*2.5), 1000)
 
 rule all:
     input:
