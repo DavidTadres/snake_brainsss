@@ -76,8 +76,7 @@ imports_path = pathlib.Path(settings['imports_path'])
 # Define path to imports to find fly.json!
 
 fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
-print('only analyze data in ' + repr(fly_folder_to_process_oak))
-
+print('Analyze data in ' + repr(fly_folder_to_process_oak.as_posix()))
 
 # Needed for logging
 width = 120 # can go into a config file as well.
@@ -110,7 +109,7 @@ for key in fly_dirs_dict:
         imaging_file_paths.append(fly_dirs_dict[key][1::])
     elif 'Fictrac' in key:
         fictrac_file_paths.append(fly_dirs_dict[key][1::])
-
+print("imaging_file_paths: " + repr(imaging_file_paths))
 def create_path_func(fly_folder_to_process, list_of_paths, filename='', func_only=False):
     """
     Creates lists of path that can be feed as input/output to snakemake rules
@@ -182,6 +181,7 @@ full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process_oak, fictra
 #                                    create_path_func(fly_folder_to_process_oak, anat_file_paths, 'anatomy_channel_2')
 paths_for_make_mean_brain_rule_oak = create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_1') + \
                                     create_path_func(fly_folder_to_process_oak, imaging_file_paths, 'channel_2')
+print("paths_for_make_mean_brain_rule_oak: " + repr(paths_for_make_mean_brain_rule_oak))
 #print('paths_for_make_mean_brain_rule_oak' + repr(paths_for_make_mean_brain_rule_oak))
 
 # List of 'func' and 'anat' paths needed for motion correction
@@ -335,7 +335,7 @@ time_string = get_time() # To write benchmark files
 
 def mem_mb_times_threads(wildcards, threads):
     """
-    Returns memory in mb as 7500Mb/thread
+    Returns memory in mb as 7500Mb/thread (I think we have ~8Gb/thread? to be confirmed)
     Note: wildcards is essential here!
     :param threads:
     :return:
@@ -368,9 +368,9 @@ rule all:
         ####
         # Z-score
         ####
-        #>expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_file_paths),
-        #>expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=imaging_file_paths),
-        #>expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=imaging_file_paths)
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=imaging_file_paths),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [], zscore_imaging_paths=imaging_file_paths)
 
 
 rule fictrac_qc_rule:
@@ -454,6 +454,7 @@ rule bleaching_qc_rule:
 
 rule motion_correction_rule:
     """
+    Benchmarking: Two 3Gb files required 19Gb (43% of 44Gb at 6 cores). 1 horu
     
     Tried a bunch of stuff and finally settled on this not super elegant solution.
     
@@ -518,7 +519,7 @@ rule motion_correction_rule:
 
 rule zscore_rule:
     threads: 4
-    resources: mem_mb=mem_mb_times_threads
+    resources: mem_mb=mem_mb_times_threads # Try to make dependent on input file size! Would be much more dynamic
     input:
         h5_path_ch1 = str(fly_folder_to_process) + "{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         h5_path_ch2 = str(fly_folder_to_process) + "{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
