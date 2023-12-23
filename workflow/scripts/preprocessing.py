@@ -35,13 +35,15 @@ from brainsss import utils
 from brainsss import fictrac_utils
 
 
-def temporal_high_pass_filter(args):
+def temporal_high_pass_filter(fly_directory):
     """
     Filters z-scored brain
     :param args:
     :return:
     """
-
+    logfile = utils.create_logfile(fly_directory, function_name='temporal_high_pass_filter')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'temporal_high_pass_filter')
     # args = {'logfile': logfile,
     # 'load_directory': load_directory,
     # 'save_directory': save_directory,
@@ -1213,7 +1215,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
                 target_path = pathlib.Path(destination, target_name)
             # Rename anatomy file to anatomy_channel_x.nii
             elif '.nii' in source_path.name and folder_type == 'anat':
-                target_name = 'channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
+                target_name = 'channel_' + source_path.name.split('channel')[1].split('_')[0] + '.nii'
                 target_path = pathlib.Path(destination, target_name)
             # Special copy for photodiode since it goes in visual folder
             # To be tested once I have such data!!

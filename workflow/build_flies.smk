@@ -99,6 +99,7 @@ for current_day in imports_to_process:
 
 #print('all_fly_dataset_paths' + repr(all_fly_dataset_paths))
 print('all_imports_paths' + repr(all_imports_paths))
+print('all_fly_dataset_paths' + repr(all_fly_dataset_paths))
 # only run the fly_builder_rule if the folder defined as the target folder
 # does not exist yet
 rule fly_builder_rule:

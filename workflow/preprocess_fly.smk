@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_001' # folder to be processed
+fly_folder_to_process = 'fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -477,6 +477,19 @@ rule motion_correction_rule:
                                             )
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_motion_correction')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
+rule temporal_high_pass_filter_rule:
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_threads
+    run:
+        try:
+            preprocessing.temporal_high_pass_filter(fly_directory=fly_folder_to_process_oak,
+                                                    )
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_temporal_high_pass_filter')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
