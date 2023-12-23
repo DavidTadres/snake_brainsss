@@ -528,7 +528,7 @@ rule motion_correction_rule:
 
 rule zscore_rule:
     threads: 4
-    resources: mem_mb=mem_mb_times_threads # Try to make dependent on input file size! Would be much more dynamic
+    resources: mem_mb=1000 #mem_mb=mem_mb_times_threads # Try to make dependent on input file size! Would be much more dynamic
     input:
         h5_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         h5_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
