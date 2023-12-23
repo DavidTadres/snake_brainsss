@@ -432,21 +432,21 @@ def motion_correction(fly_directory,
 
     # This could be integrated in loop above but for readability I'll make an extra loop here
     for current_h5_path in h5_path:
-        if 'channel_1' in current_brain_path.name and 'channel_1' in anatomy_channel:
+        if 'channel_1' in current_h5_path.name and 'channel_1' in anatomy_channel:
             path_h5_anatomy = current_h5_path
-        elif 'channel_2' in current_brain_path.name and 'channel_2' in anatomy_channel:
-            path_h5_anatomy = current_brain_path
-        elif 'channel_3' in current_brain_path.name and 'channel_3' in anatomy_channel:
-            path_h5_anatomy = current_brain_path
+        elif 'channel_2' in current_h5_path.name and 'channel_2' in anatomy_channel:
+            path_h5_anatomy = current_h5_path
+        elif 'channel_3' in current_h5_path.name and 'channel_3' in anatomy_channel:
+            path_h5_anatomy = current_h5_path
 
     # functional path is optional - to empty list in case no functional channel is provided
     path_h5_functional = []
     for current_h5_path in h5_path:
-        if 'channel_1' in current_brain_path.name and 'channel_1' in functional_channels:
+        if 'channel_1' in current_h5_path.name and 'channel_1' in functional_channels:
             path_h5_functional.append(current_h5_path)
-        if 'channel_2' in current_brain_path.name and 'channel_2' in functional_channels:
+        if 'channel_2' in current_h5_path.name and 'channel_2' in functional_channels:
             path_h5_functional.append(current_h5_path)
-        if 'channel_3' in current_brain_path.name and 'channel_3' in functional_channels:
+        if 'channel_3' in current_h5_path.name and 'channel_3' in functional_channels:
             path_h5_functional.append(current_h5_path)
     # Here we assume that there is ONLY ONE anatomy channel
     #path_h5_mirror = None
@@ -704,6 +704,7 @@ def motion_correction(fly_directory,
     #################################
     ### Perform Motion Correction ###
     #################################
+    print(error)
     printlog(F"{'   STARTING MOCO   ':-^{WIDTH}}")
     transform_matrix = []
 
