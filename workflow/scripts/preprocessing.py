@@ -184,7 +184,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
         #####################
 
 
-        # Open file - maybe have to do everything while it's open, test
+        # Open file - Must keep file open while accessing it.
         with h5py.File(current_dataset_path, 'r') as hf:
             data = hf['data']  # this doesn't actually LOAD the data - it is just a proxy
             dims = np.shape(data)
@@ -226,53 +226,53 @@ def zscore(fly_directory, dataset_path, zscore_path):
             #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
             #final_std = np.sqrt(running_sumofsq / dims[-1])
 
-        # I think we don't have to worry about memory too much - since we only work
-        # with one h5 file at a time and 30 minutes at float32 is ~20Gb
-        # Expect a 4D array, xyz and the fourth dimension is time!
-        meanbrain = np.nanmean(data, axis=3)
-        # Might get out of memory error, test!
-        final_std = np.std(data, axis=3)
+            # I think we don't have to worry about memory too much - since we only work
+            # with one h5 file at a time and 30 minutes at float32 is ~20Gb
+            # Expect a 4D array, xyz and the fourth dimension is time!
+            meanbrain = np.nanmean(data, axis=3)
+            # Might get out of memory error, test!
+            final_std = np.std(data, axis=3)
 
-        ### Calculate zscore and save ###
+            ### Calculate zscore and save ###
 
-        #with h5py.File(save_file, 'w') as f:
-        #    dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+            #with h5py.File(save_file, 'w') as f:
+            #    dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
 
-        #    for chunk_num in range(len(steps)):
-        #        t0 = time()
-        #        if chunk_num + 1 <= len(steps) - 1:
-        #            chunkstart = steps[chunk_num]
-        #            chunkend = steps[chunk_num + 1]
-        #            chunk = data[:, :, :, chunkstart:chunkend]
-        #            running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-        #            zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
-        #            f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
-        #                zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
-        #            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+            #    for chunk_num in range(len(steps)):
+            #        t0 = time()
+            #        if chunk_num + 1 <= len(steps) - 1:
+            #            chunkstart = steps[chunk_num]
+            #            chunkend = steps[chunk_num + 1]
+            #            chunk = data[:, :, :, chunkstart:chunkend]
+            #            running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+            #            zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
+            #            f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
+            #                zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
+            #            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
 
-        # Calculate z-score
-        # z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
-        # The above works, is easy to read but makes a copy in memory. Since brain data is
-        # huge (easily 20Gb) we'll avoid making a copy by doing in place operations to save
-        # memory! See docstring for more information
+            # Calculate z-score
+            # z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
+            # The above works, is easy to read but makes a copy in memory. Since brain data is
+            # huge (easily 20Gb) we'll avoid making a copy by doing in place operations to save
+            # memory! See docstring for more information
 
-        # data will be data-meanbrain after this operation
-        data-=meanbrain[:,:,:,np.newaxis]
-        # Then it will be divided by std which leads to zscore
-        data/=final_std
-        # From the docs:
-        # Chunking has performance implications. It’s recommended to keep the total size
-        # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
-        # keep in mind that when any element in a chunk is accessed, the entire chunk
-        # is read from disk
-        with h5py.File(current_zscore_path, 'w') as file:
-            dset = file.create_dataset('data', data=data)#, dims, dtype='float32', chunks=False)
+            # data will be data-meanbrain after this operation
+            data-=meanbrain[:,:,:,np.newaxis]
+            # Then it will be divided by std which leads to zscore
+            data/=final_std
+            # From the docs:
+            # Chunking has performance implications. It’s recommended to keep the total size
+            # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
+            # keep in mind that when any element in a chunk is accessed, the entire chunk
+            # is read from disk
+            with h5py.File(current_zscore_path, 'w') as file:
+                dset = file.create_dataset('data', data=data)#, dims, dtype='float32', chunks=False)
 
-        if len(dataset_path) > 1:
-            del (data)
-            printlog('Sleeping for 10 seconds before loading the next functional channel')
-            time.sleep(10) # allow garbage collector to start cleaning up memory before potentially loading
-            # the other functional channel!
+            if len(dataset_path) > 1:
+                del (data)
+                printlog('Sleeping for 10 seconds before loading the next functional channel')
+                time.sleep(10) # allow garbage collector to start cleaning up memory before potentially loading
+                # the other functional channel!
 
     printlog("zscore done")
 

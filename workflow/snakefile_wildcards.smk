@@ -22,7 +22,9 @@ import traceback
 # ml python/3.9.0
 # source .env_snakemake/bin/activate
 # cd snake_brainsss/workflow
-# snakemake -s snakefile_wildcards.smk --profile simple_slurm
+# snakemake -s snakefile_wildcards.smk --profile profiles/sherlock
+# OR
+# snakemake -s snakefile_wildcards.smk --profile profiles/simple_slurm
 
 ######
 # Define EITHER imports_to_process OR fly_folder_to_process. Not both
