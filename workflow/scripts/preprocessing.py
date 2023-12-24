@@ -1352,7 +1352,20 @@ def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):
     ###
     # Logging
     ###
-    utils.get_job_status()
+    #utils.get_job_status() # see error message below
+    '''
+    ERROR     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    Traceback (most recent call last): get_job_status() missing 2 required positional arguments: 'job_id' and 'logfile'
+    
+    Full traceback below: 
+    
+    Traceback (most recent call last):
+      File "/home/users/dtadres/snake_brainsss/workflow/preprocess_fly.smk", line 405, in __rule_fictrac_qc_rule
+        using oak as data source:
+      File "/home/users/dtadres/snake_brainsss/workflow/scripts/preprocessing.py", line 1350, in fictrac_qc
+        utils.get_job_status()
+    TypeError: get_job_status() missing 2 required positional arguments: 'job_id' and 'logfile
+    '''
 
 def fly_builder(user, import_dirs, dataset_dirs):
     """

@@ -343,15 +343,15 @@ rule all:
         ####
         # Z-score
         ####
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        #expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        #expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        #expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
         ###
         # temporal high-pass filter
         ###
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter)
+        #expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        #expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        #expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter)
 
 rule fictrac_qc_rule:
     """
@@ -465,6 +465,16 @@ rule bleaching_qc_rule:
 
 rule motion_correction_rule:
     """
+    with: snake_utils.mem_mb_times_input
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 05:12:42
+    CPU Efficiency: 59.22% of 08:48:00 core-walltime
+    Job Wall-clock time: 01:28:00
+    Memory Utilized: 8.20 GB
+    Memory Efficiency: 90.45% of 9.06 GB
+    
     Benchmarking: Two 3Gb files required 19Gb (43% of 44Gb at 6 cores). 1 hour
     Same 3 gb files another run:
         Cores per node: 6
@@ -502,7 +512,7 @@ rule motion_correction_rule:
     
     """
     threads: 6
-    resources: mem_mb=snake_utils.mem_mb_times_input
+    resources: mem_mb=snake_utils.mem_mb_more_times_input
     input:
         # Only use the Channels that exists
         brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
