@@ -270,11 +270,14 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
             with h5py.File(current_temporal_high_pass_filtered_path, 'w') as f:
                 dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
 
-                # Dataset created
-                print('steps' + repr(steps))
-                print("len(steps)" + repr(len(steps)))
-                print('range(len(steps))' + repr(range(len(steps))))
-                for chunk_num in range(len(steps)):
+                data_mean = np.mean(data, axis=-1)
+                smoothed_data = gaussian_filter1d(data, sigma=200, axis=-1, truncate=1) # This for sure makes a copy of the array!
+                # To save memory, do in-place operations
+                #data_high_pass = data - smoothed_data + data_mean[:,:,:,None]
+                data-=smoothed_data
+                data+=data_mean[:,:,:,None]
+                f['data'][:,:,:,:] = data
+                '''for chunk_num in range(len(steps)):
                     print('cunk_num' + repr(chunk_num))
                     #t0 = time.time()
                     if chunk_num + 1 <= len(steps) - 1:
@@ -299,6 +302,7 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
                         ### Save ###
                         time.t0 = time()
                         f['data'][:, :, chunkstart:chunkend, :] = chunk_high_pass
+                        '''
 
     printlog("high pass done")
 

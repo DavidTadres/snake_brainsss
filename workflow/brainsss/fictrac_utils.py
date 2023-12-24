@@ -159,11 +159,13 @@ def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, time
       fictrac_smoothed = np.clip(fictrac_smoothed, a_min=None, a_max=0)*-1
 
     ### interpolate ###
+    # This function probably just returns everything from an input array
     fictrac_interp_temp = interp1d(x_original, fictrac_smoothed, bounds_error = False)
     xnew = np.arange(0,expt_len,resolution) #0 to last time at subsample res
     if timestamps is None:
       fictrac_interp = fictrac_interp_temp(xnew)
     else:
+      # So we only select which timestamps here.
       fictrac_interp = fictrac_interp_temp(timestamps[:,z])
 
     ### convert units for common cases ###
