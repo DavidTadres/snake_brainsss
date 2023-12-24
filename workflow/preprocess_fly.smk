@@ -507,7 +507,7 @@ rule motion_correction_rule:
                 width=width)
 
 rule temporal_high_pass_filter_rule:
-    threads: 2
+    threads: 4
     resources: mem_mb=snake_utils.mem_mb_times_threads
     input:
         zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
