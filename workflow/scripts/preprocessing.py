@@ -84,6 +84,9 @@ def correlation(args):
     handle 1D input...
     
     There might be n-dimensional pearson coefficent calculations I might be able to use instead?
+    
+    See script 'pearson_correlation.py' - the vectorized version should take 0.03% of the time the 
+    scipy version does.
     '''
 
     load_directory = args['load_directory']
@@ -263,11 +266,12 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
 
             steps = list(range(0, dims[-1], stepsize))
             steps.append(dims[-1])
-
+            # Here we create a document we are going to write to in the loop
             with h5py.File(current_temporal_high_pass_filtered_path, 'w') as f:
                 dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
 
                 for chunk_num in range(len(steps)):
+                    print('cunk_num' + repr(chunk_num))
                     #t0 = time.time()
                     if chunk_num + 1 <= len(steps) - 1:
                         chunkstart = steps[chunk_num]
@@ -275,7 +279,9 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
                         chunk = data[:, :, chunkstart:chunkend, :]
                         # Check if we really are getting a [128,256,2,3000] chunk
                         # over the z dimension. Interesting choice? Why not over time?
+                        # > because we want to filter over time. Could choose any dimension except time!
                         chunk_mean = np.mean(chunk, axis=-1)
+                        print("chunk_mean" + repr(chunk_mean))
 
                         ### SMOOTH ###
                         #t0 = time.time()

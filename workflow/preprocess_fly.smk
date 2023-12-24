@@ -507,6 +507,25 @@ rule motion_correction_rule:
                 width=width)
 
 rule temporal_high_pass_filter_rule:
+    """
+    Benchmark with the func1 file (~3Gb)
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:05:33
+    CPU Efficiency: 40.51% of 00:13:42 core-walltime
+    Job Wall-clock time: 00:06:51
+    Memory Utilized: 7.62 GB
+    Memory Efficiency: 51.99% of 14.65 GB
+    
+    Again with 4 cores and 32Gb
+    Cores per node: 4
+    CPU Utilized: 00:03:09
+    CPU Efficiency: 13.66% of 00:23:04 core-walltime
+    Job Wall-clock time: 00:05:46
+    Memory Utilized: 7.33 GB
+    Memory Efficiency: 25.02% of 29.30 GB
+    """
     threads: 4
     resources: mem_mb=snake_utils.mem_mb_times_threads
     input:
