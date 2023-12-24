@@ -535,7 +535,7 @@ rule temporal_high_pass_filter_rule:
     - With only 2.5 times input file size as memory and 1 thread:
     
     """
-    threads: 1
+    threads: 2
     resources: mem_mb=snake_utils.mem_mb_more_times_input
     input:
         zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],

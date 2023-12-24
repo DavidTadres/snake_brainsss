@@ -122,7 +122,7 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps):
     # all from the same experiment, so all will have the same 'recording_metadata.xml' data
 
     printlog('grey_only not implemented yet')
-    ### this means only calculat correlation during periods of grey stimuli ###
+    '''### this means only calculat correlation during periods of grey stimuli ###
     if grey_only:
         vision_path = os.path.join(load_directory, 'visual')
         stim_ids, angles = brainsss.get_stimulus_metadata(vision_path)
@@ -140,7 +140,7 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps):
         for i in range(len(grey_starts)):
             idx_to_use.extend(np.where((grey_starts[i] < timestamps[:, 0]) & (timestamps[:, 0] < grey_stops[i]))[0])
         ### this is now a list of indices where grey stim was presented
-    #else:
+    #else:'''
     # Makes a list of indexes, one for each image frame - check if each frame or each volume.
     # I'm going to assume each volume but check!
     idx_to_use = list(range(timestamps.shape[0]))
