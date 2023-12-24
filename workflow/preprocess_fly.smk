@@ -354,7 +354,19 @@ rule all:
         expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter)
 
 rule fictrac_qc_rule:
+    """
+    Benchmark with full (30 min vol dataset)
+    State: OUT_OF_MEMORY (exit code 0)
+    Cores: 1
+    CPU Utilized: 00:00:10
+    CPU Efficiency: 30.30% of 00:00:33 core-walltime
+    Job Wall-clock time: 00:00:33
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 1000.00 MB (1000.00 MB/node)
+    add resources: mem_mb=snake_utils.mem_mb_times_threads
+    """
     threads: 1
+    resources: mem_mb=snake_utils.mem_mb_times_threads
     input:
         full_fictrac_file_oak_paths
         #fictrac_file_paths = expand("{fictrac}", fictrac=full_fictrac_file_scratch_paths)
@@ -374,6 +386,17 @@ rule fictrac_qc_rule:
 
 rule bleaching_qc_rule:
     """
+    Benchmark with full (30min) dataset
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:21
+    CPU Efficiency: 16.94% of 00:02:04 core-walltime
+    Job Wall-clock time: 00:01:02
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 14.65 GB (14.65 GB/node)
+    --> from mem_mb_times_threads to mem_mb_times_input
+    
     Out of memory with 1 & 4 threads on sherlock.
     With 8 I had a ~45% memory utiliziation which seems ok as in the test dataset I had a 
     30 minute volumetric recording.
@@ -412,7 +435,7 @@ rule bleaching_qc_rule:
     ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_threads
+    resources: mem_mb=snake_utils.mem_mb_times_input
     input:
         imaging_paths_by_folder_oak
     output:
@@ -613,6 +636,17 @@ rule zscore_rule:
 
 rule make_mean_brain_rule:
     """
+    Benchmark with full dataset (30min vol recording)
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:17
+    CPU Efficiency: 16.04% of 00:01:46 core-walltime
+    Job Wall-clock time: 00:00:53
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 14.65 GB (14.65 GB/node)
+    --> set from mem_mb_times_threads to mem_mb_times_input
+    
     Tested with 16 threads, overkill as we wouldn't normally need more than 10Gb
     of memory (each thread is ~8Gb)
     
@@ -636,7 +670,7 @@ rule make_mean_brain_rule:
         save.mean_brain(output)
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_threads
+    resources: mem_mb=snake_utils.mem_mb_times_input
     input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
 
     output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
