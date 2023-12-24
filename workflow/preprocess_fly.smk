@@ -644,7 +644,18 @@ rule zscore_rule:
 
 rule make_mean_brain_rule:
     """
+    Changed memory usage by avoiding call to 'get_fdata()'
+    With same 30min vol dataset I now get: 
+    State: COMPLETED (exit code 0)
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:00:11
+    CPU Efficiency: 2.75% of 00:06:40 core-walltime
+    Job Wall-clock time: 00:01:40
+    Memory Utilized: 8.15 GB
+    Memory Efficiency: 34.65% of 23.54 GB
     
+    ######
     Benchmark with full dataset (30min vol recording)
     State: OUT_OF_MEMORY (exit code 0)
     Nodes: 1
@@ -699,7 +710,7 @@ rule make_mean_brain_rule:
         save.mean_brain(output)
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
+    resources: mem_mb=snake_utils.mem_mb_less_times_input#snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
     input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
 
     output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
