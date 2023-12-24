@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'fly_002' # folder to be processed
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_001' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -532,8 +532,14 @@ rule temporal_high_pass_filter_rule:
     Job Wall-clock time: 00:03:58
     Memory Utilized: 7.76 GB
     Memory Efficiency: 26.47% of 29.30 GB
-    - With only 2.5 times input file size as memory and 1 thread:
     
+    - With only 3.5 times input file size as memory and 2 thread:
+    Cores per node: 2
+    CPU Utilized: 00:02:55
+    CPU Efficiency: 34.31% of 00:08:30 core-walltime
+    Job Wall-clock time: 00:04:15
+    Memory Utilized: 7.50 GB
+    Memory Efficiency: 59.48% of 12.60 GB
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_more_times_input

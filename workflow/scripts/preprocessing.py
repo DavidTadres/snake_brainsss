@@ -36,7 +36,7 @@ from brainsss import utils
 from brainsss import fictrac_utils
 
 
-def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps):
+def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, metadata_path, fictrac_path):
     """
     docs
     :param args:
@@ -117,9 +117,10 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps):
     ### load brain timestamps ###
     #  timestamps: [t,z] numpy array of times (in ms) of Bruker imaging frames.
     #timestamps = brainsss.load_timestamps(os.path.join(load_directory, 'imaging'))
-    timestamps = utils.load_timestamps(pathlib.Path(dataset_path[0].name, 'imaging'))
+    ##>> timestamps = utils.load_timestamps(pathlib.Path(dataset_path[0].name, 'imaging')) # Avoid this, use snakemake to make sure all necessary files exist!
     # We will have a list of functional channels here but
     # all from the same experiment, so all will have the same 'recording_metadata.xml' data
+    timestamps = utils.load_timestamps(metadata_path)
 
     printlog('grey_only not implemented yet')
     '''### this means only calculat correlation during periods of grey stimuli ###
@@ -147,19 +148,37 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps):
     print("timestamps.shape[0]) " + repr(timestamps.shape[0]))
 
     ### Load fictrac ###
-    fictrac_raw = brainsss.load_fictrac(os.path.join(load_directory, 'fictrac'))
+    #fictrac_raw = brainsss.load_fictrac(os.path.join(load_directory, 'fictrac'))
+    # Always define path in snakefile as it makes sure the file exists before even submitting a job
+    # uses the same function as in fictrac_qc...
+    fictrac_raw = fictrac_utils.load_fictrac(fictrac_path)
     resolution = 10  # desired resolution in ms
-    expt_len = fictrac_raw.shape[0] / fps * 1000
+    expt_len = fictrac_raw.shape[0] / fictrac_fps * 1000
 
+    ### interpolate fictrac to match the timestamps
+    fictrac_interp = utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
+                                                        timestamps=timestamps, z=z)
+    #>>>TODO - see what the smooth_and_interp_fictrac does exactly to properly set the z parameter!!! <<<
     ### Load brain ###
     printlog('loading brain')
-    full_load_path = os.path.join(load_directory, brain_file)
+    #full_load_path = os.path.join(load_directory, brain_file)
 
-    if full_load_path.endswith('.h5'):
-        with h5py.File(full_load_path, 'r') as hf:
-            brain = hf['data'][:]
-    elif full_load_path.endswith('.nii'):
-        brain = np.asarray(nib.load(full_load_path).get_data().squeeze(), dtype='float32')
+    # It's possible to have more than one channel as the functional channel
+    # Since we are memory limited, do correlation for both channels consecutively!
+    for current_dataset_path, current_save_path in zip(dataset_path, save_path):
+        #if full_load_path.endswith('.h5'):
+        #    with h5py.File(full_load_path, 'r') as hf:
+        #        brain = hf['data'][:]
+        #elif full_load_path.endswith('.nii'):
+        #    brain = np.asarray(nib.load(full_load_path).get_data().squeeze(), dtype='float32')
+        if 'nii' in current_dataset_path.name:
+            brain = np.asarray(nib.load(current_dataset_path).get_fdata().sqeeeze(), dtype='float32') # Never tested this
+            # Also not sure it makes sense to define it as float32 because the h5>nii converter seems to save as int16.
+            printlog('Loaded nii file - BEWARE, I have not tested this. Better to use h5 files!')
+        elif '.h5' in current_dataset_path.name:
+            with h5py.File(current_dataset_path, 'r') as hf:
+                brain = hf['data'][:]
+
     printlog('done')
 
     # Get brain size

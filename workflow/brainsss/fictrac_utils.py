@@ -13,7 +13,12 @@ mpl.use('agg') # Agg, is a non-interactive backend that can only write to files.
 # Without this I had the following error: Starting a Matplotlib GUI outside of the main thread will likely fail.
 def load_fictrac(fictrac_file_path):
     # def load_fictrac(directory, file='fictrac.dat'):
-    """ Loads fictrac data from .dat file that fictrac outputs.
+    """
+    NEW:
+
+
+    ORIGINAL:
+    Loads fictrac data from .dat file that fictrac outputs.
 
     To-do: change units based on diameter of ball etc.
     For speed sanity check, instead remove bad frames so we don't have to throw out whole trial.

@@ -437,8 +437,17 @@ def get_resolution(xml_file):
                     print('Error')
     return x, y, z
 
-def load_timestamps(directory, file='recording_metadata'): # file='functional.xml'):
-    """ Parses a Bruker xml file to get the times of each frame, or loads h5py file if it exists.
+#def load_timestamps(directory, file='recording_metadata'): # file='functional.xml'):
+def load_timestamps(path_to_metadata):
+    """
+    NEW:
+    Parses a Bruker xml file to get the times of each frame
+    :param path_to_metadata: a full filepath to a recording_metadata.xml file
+    return: timestamps: [t,z] numpy array of times (in ms) of Bruker imaging frames.
+
+    ORIGINAL:
+
+    Parses a Bruker xml file to get the times of each frame, or loads h5py file if it exists.
 
     First tries to load from 'timestamps.h5' (h5py file). If this file doesn't exist
     it will load and parse the Bruker xml file, and save the h5py file for quick loading in the future.
@@ -453,37 +462,43 @@ def load_timestamps(directory, file='recording_metadata'): # file='functional.xm
     timestamps: [t,z] numpy array of times (in ms) of Bruker imaging frames.
 
     """
-    try:
-        print('Trying to load timestamp data from hdf5 file.')
-        with h5py.File(os.path.join(directory, 'timestamps.h5'), 'r') as hf:
-            timestamps = hf['timestamps'][:]
+    # Not sure if h5py really needs to be made...We only need the timestamps once per call
+    # and it's different for each recording...
+    #if '.h5' in path_to_metadata:
+    #try:
+    #    print('Trying to load timestamp data from hdf5 file.')
+    #    #with h5py.File(os.path.join(directory, 'timestamps.h5'), 'r') as hf:
+    #    with h5py.File(path_to_metadata, 'r') as hf:
+    #        timestamps = hf['timestamps'][:]
 
-    except:
-        print('Failed. Extracting frame timestamps from bruker xml file.')
-        #xml_file = os.path.join(directory, file)
-        xml_file = pathlib.Path(directory, file)
-        tree = ET.parse(xml_file)
-        root = tree.getroot()
-        timestamps = []
-        
-        sequences = root.findall('Sequence')
-        for sequence in sequences:
-            frames = sequence.findall('Frame')
-            for frame in frames:
-                filename = frame.findall('File')[0].get('filename')
-                time = float(frame.get('relativeTime'))
-                timestamps.append(time)
-        timestamps = np.multiply(timestamps, 1000)
+    #except:
+    #else:
+    #print('Failed. Extracting frame timestamps from bruker xml file.')
+    #xml_file = os.path.join(directory, file)
+    #xml_file = pathlib.Path(directory, file)
 
-        if len(sequences) > 1:
-            timestamps = np.reshape(timestamps, (len(sequences), len(frames)))
-        else:
-            timestamps = np.reshape(timestamps, (len(frames), len(sequences)))
+    tree = ET.parse(path_to_metadata)
+    root = tree.getroot()
+    timestamps = []
 
-        ### Save h5py file ###
-        with h5py.File(os.path.join(directory, 'timestamps.h5'), 'w') as hf:
-            hf.create_dataset("timestamps", data=timestamps)
-    
+    sequences = root.findall('Sequence')
+    for sequence in sequences:
+        frames = sequence.findall('Frame')
+        for frame in frames:
+            #filename = frame.findall('File')[0].get('filename')
+            time = float(frame.get('relativeTime'))
+            timestamps.append(time)
+    timestamps = np.multiply(timestamps, 1000)
+
+    if len(sequences) > 1:
+        timestamps = np.reshape(timestamps, (len(sequences), len(frames)))
+    else:
+        timestamps = np.reshape(timestamps, (len(frames), len(sequences)))
+
+    ### Save h5py file ###
+    #with h5py.File(os.path.join(directory, 'timestamps.h5'), 'w') as hf:
+    #    hf.create_dataset("timestamps", data=timestamps)
+
     print('Success.')
     return timestamps
 
