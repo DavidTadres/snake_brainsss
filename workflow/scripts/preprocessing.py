@@ -1247,9 +1247,9 @@ def bleaching_qc(fly_directory,
     utils.print_function_start(logfile, WIDTH, 'bleaching_qc')
 
     # Try to read SNAKEMAKE_CLUSTER_SIDECAR_VARS
-    import os
-    SIDECAR_VARS = os.environ.get("SNAKEMAKE_CLUSTER_SIDECAR_VARS", None)
-    print(SIDECAR_VARS)
+    #import os
+    #SIDECAR_VARS = os.environ.get("SNAKEMAKE_CLUSTER_SIDECAR_VARS", None)
+    #print(SIDECAR_VARS)
 
     # For each experiment,
     for current_folder_read, current_file_path_save in zip(imaging_data_path_read_from, imaging_data_path_save_to):
@@ -1261,7 +1261,7 @@ def bleaching_qc(fly_directory,
             # yields e.g. '../fly_001/func0/imaging/functional_channel_1.nii')
             printlog(F"Currently reading: {current_file_path_read.name:.>{WIDTH - 20}}")
             # Read data
-            brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16)
+            brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16) # TODO<<<< Change to dataobj call to save memory!!!!
             # take the mean of ALL values
             data_mean[pathlib.Path(current_file_path_read).name] = np.mean(brain, axis=(0,1,2))
         ##############################

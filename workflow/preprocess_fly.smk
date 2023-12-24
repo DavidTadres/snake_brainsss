@@ -654,6 +654,15 @@ rule make_mean_brain_rule:
     Job Wall-clock time: 00:01:40
     Memory Utilized: 8.15 GB
     Memory Efficiency: 34.65% of 23.54 GB
+    --> to 1.5 times input size memory
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:22
+    CPU Efficiency: 4.89% of 00:07:30 core-walltime
+    Job Wall-clock time: 00:03:45
+    Memory Utilized: 9.24 GB
+    Memory Efficiency: 60.85% of 15.18 GB
+    
     
     ######
     Benchmark with full dataset (30min vol recording)
@@ -709,7 +718,7 @@ rule make_mean_brain_rule:
         mean_brain = mean(brain)
         save.mean_brain(output)
     """
-    threads: 2
+    threads: 2 # It seems to go a bit faster. Can probably set to 1 if want to save cores
     resources: mem_mb=snake_utils.mem_mb_less_times_input#snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
     input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
 
