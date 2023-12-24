@@ -670,7 +670,7 @@ rule make_mean_brain_rule:
         save.mean_brain(output)
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input
+    resources: mem_mb=snake_utils.mem_mb_more_times_input
     input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
 
     output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'

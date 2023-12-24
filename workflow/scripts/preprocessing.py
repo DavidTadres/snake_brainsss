@@ -1161,6 +1161,8 @@ def make_mean_brain(fly_directory,
                     path_to_read,
                     path_to_save):
     """
+    Note: Unclear why it seems to require more than 2.5x input memory! Does nibabel do something strange?
+
     Function to calculate meanbrain.
     This is based on Bella's meanbrain script.
 
@@ -1185,7 +1187,7 @@ def make_mean_brain(fly_directory,
     path_to_read = path_to_read[0]
     path_to_save = path_to_save[0]
     print(path_to_read)
-    brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16')
+    brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16') # Memory should be size of file UNLESS it's e.g. uint8 or something.
 
     ###
     # create meanbrain
@@ -1200,7 +1202,7 @@ def make_mean_brain(fly_directory,
     # save meanbrain
     ###
     aff = np.eye(4)
-    object_to_save = nib.Nifti1Image(meanbrain, aff)
+    object_to_save = nib.Nifti1Image(meanbrain, aff) # sys.getsizeof reports this as size 0! Probably just a view of the underlying data.
     object_to_save.to_filename(path_to_save)
 
     ###

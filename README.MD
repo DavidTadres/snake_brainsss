@@ -98,3 +98,4 @@ source .env_snake_brainsss/bin/activate
 Questions:
 1) I'm unsure about whether the conversion from uint16 to float32 is necessary and whether it's ok to convert back to 
    uint16 (happens for example when writing the h5 file back to a nii file). 
+2) Why use nibabel at all? e.g. motion correction ants.registration takes a numpy array it seems. 
