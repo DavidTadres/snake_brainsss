@@ -252,7 +252,7 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
     temporal_high_pass_filtered_path = utils.convert_list_of_string_to_posix_path(temporal_high_pass_filtered_path)
 
     # From Bella, why so low???
-    stepsize = 2
+    #stepsize = 2
     #stepsize = 500 # Doesn't seem to work - probably because loop is set up to work only with stepsize=2
 
     printlog("Beginning high pass")
@@ -264,15 +264,18 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
             dims = np.shape(data)
             printlog("Data shape is {}".format(dims))
 
-            steps = list(range(0, dims[-1], stepsize))
-            steps.append(dims[-1])
+            #steps = list(range(0, dims[-1], stepsize))
+            #steps.append(dims[-1])
             # Here we create a document we are going to write to in the loop
             with h5py.File(current_temporal_high_pass_filtered_path, 'w') as f:
-                dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+                #dset = f.create_dataset('data', dims, dtype='float32', chunks=True) # Original
+                _ = f.create_dataset('data', dims, dtype='float32', chunks=False)
 
                 data_mean = np.mean(data, axis=-1)
-                smoothed_data = gaussian_filter1d(data, sigma=200, axis=-1, truncate=1) # This for sure makes a copy of the array!
-                # To save memory, do in-place operations
+                smoothed_data = gaussian_filter1d(data, sigma=200, axis=-1, truncate=1) # This for sure makes a copy of
+                # the array, doubling memory requirements
+
+                # To save memory, do in-place operations where possible
                 #data_high_pass = data - smoothed_data + data_mean[:,:,:,None]
                 data-=smoothed_data
                 data+=data_mean[:,:,:,None]
