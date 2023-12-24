@@ -494,7 +494,7 @@ rule motion_correction_rule:
     
     """
     threads: 6
-    resources: mem_mb=snake_utils.mem_mb_times_threads
+    resources: mem_mb=snake_utils.mem_mb_times_input
     input:
         # Only use the Channels that exists
         brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
