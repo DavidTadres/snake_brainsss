@@ -252,8 +252,8 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
     temporal_high_pass_filtered_path = utils.convert_list_of_string_to_posix_path(temporal_high_pass_filtered_path)
 
     # From Bella, why so low???
-    #stepsize = 2
-    stepsize = 500
+    stepsize = 2
+    #stepsize = 500 # Doesn't seem to work - probably because loop is set up to work only with stepsize=2
 
     printlog("Beginning high pass")
     # dataset_path might be a list of 2 channels (or a list with one channel only)
