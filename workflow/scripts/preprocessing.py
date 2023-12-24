@@ -37,6 +37,55 @@ from brainsss import fictrac_utils
 
 
 def correlation(args):
+    """
+    docs
+    :param args:
+    :return:
+    """
+
+    '''
+    from brainsss.preprocessing.py file
+    # seems to be individual func folders, I'll make sure to parallelize this. 
+    for func in funcs:
+        load_directory = os.path.join(func)
+        save_directory = os.path.join(func, 'corr')
+        if use_warp:
+            brain_file = 'functional_channel_2_moco_zscore_highpass_warped.nii'
+            fps = 100
+        elif loco_dataset:
+            brain_file = 'brain_zscored_green_high_pass_masked.nii'
+            fps = 50
+        elif no_zscore_highpass:
+            brain_file = 'moco/functional_channel_2_moco.h5'
+            #load_directory = os.path.join(func, 'moco')
+            fps = 100
+        else:
+            brain_file = 'functional_channel_2_moco_zscore_highpass.h5'
+            fps = 100
+        
+        # each of the 3 behaviors is aligned with the 
+        behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
+        for behavior in behaviors:
+                args = {'logfile': logfile, 'load_directory': load_directory,
+                'save_directory': save_directory, 'brain_file': brain_file, 
+                'behavior': behavior, 'fps': fps, 'grey_only': grey_only}
+                script = 'correlation.py'
+                job_id = brainsss.sbatch(jobname='corr',
+                                     script=os.path.join(scripts_path, script),
+                                     modules=modules,
+                                     args=args,
+                                     logfile=logfile, time=2, mem=4, nice=nice, nodes=nodes)
+                brainsss.wait_for_job(job_id, logfile, com_path)
+    # This seems to be a long and costly analysis if we check Yandan's log!
+    | SLURM | corr | 20559045 | COMPLETED | 00:28:55 | 4 cores | 21.7GB (69.7%)                                            |
+    # I will likely not parallelize each of the three behaviors since it needs so much memory! 
+    
+    The reason this is slow is the triple nested loop calling the pearson coefficent which can only
+    handle 1D input...
+    
+    There might be n-dimensional pearson coefficent calculations I might be able to use instead?
+    '''
+
     load_directory = args['load_directory']
     save_directory = args['save_directory']
     brain_file = args['brain_file']
@@ -98,14 +147,18 @@ def correlation(args):
     ### Correlate ###
     printlog("Performing Correlation on {}; behavior: {}".format(brain_file, behavior))
     corr_brain = np.zeros((x_dim, y_dim, z_dim))
+    # For z dimension
     for z in range(z_dim):
 
         ### interpolate fictrac to match the timestamps of this slice
         printlog(F"{z}")
+        # Why in here and what does z do?
         fictrac_interp = brainsss.smooth_and_interp_fictrac(fictrac_raw, fps, resolution, expt_len, behavior,
                                                             timestamps=timestamps, z=z)
 
+        # for x dimension
         for i in range(x_dim):
+            # for y dimension
             for j in range(y_dim):
                 # nan to num should be taken care of in zscore, but checking here for some already processed brains
                 if np.any(np.isnan(brain[i, j, z, :])):
@@ -138,7 +191,7 @@ def correlation(args):
         no_zscore_highpass_str = ''
 
     # date = time.strftime("%Y%m%d")
-    date = '20220420'
+    date = '20220420' # Why is a date hardcoded here?
 
     save_file = os.path.join(save_directory,
                              '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
@@ -621,9 +674,9 @@ def motion_correction(fly_directory,
     printlog(F"Dataset path{parent_path.name:.>{WIDTH - 12}}")
     printlog(F"Brain anatomy{path_brain_anatomy.name:.>{WIDTH - 12}}")
     if len(path_brain_functional) > 0:
-        printlog(F"Brain mirror{str(path_brain_functional[0].name):.>{WIDTH - 12}}")
+        printlog(F"Brain functional{str(path_brain_functional[0].name):.>{WIDTH - 12}}")
         if len(path_brain_functional) > 1:
-            printlog(F"Brain mirror#2{str(path_brain_functional[1].name):.>{WIDTH - 12}}")
+            printlog(F"Brain functional#2{str(path_brain_functional[1].name):.>{WIDTH - 12}}")
     else:
         printlog("No functional path found {:.>{WIDTH - 12}}")
 

@@ -89,7 +89,12 @@ source .env_snake_brainsss/bin/activate
    - Genotype is used to create subfolders for each genotype which contain 'fly_001', 'fly_002' etc.
    - anatomy channel is a string with one of the following three values: 'channel1', 'channel2' or 'channel3'
    - functional channel is a list of strings, for example ['channel2',''], or ['channel1','channel2']
-
-Current limitations:
+####
+# Current limitations:
+####
 1) We assume that a given fly was imaged with a given set of channels. i.e. if fly001 has GCaMP and tdTomato it is assumed
    that ALL folders inside fly001 have data with two channels! 
+
+Questions:
+1) I'm unsure about whether the conversion from uint16 to float32 is necessary and whether it's ok to convert back to 
+   uint16 (happens for example when writing the h5 file back to a nii file). 
