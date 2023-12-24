@@ -100,6 +100,7 @@ def correlation(args):
     printlog(load_directory)
 
     ### load brain timestamps ###
+    #  timestamps: [t,z] numpy array of times (in ms) of Bruker imaging frames.
     timestamps = brainsss.load_timestamps(os.path.join(load_directory, 'imaging'))
 
     ### this means only calculat correlation during periods of grey stimuli ###
@@ -121,7 +122,10 @@ def correlation(args):
             idx_to_use.extend(np.where((grey_starts[i] < timestamps[:, 0]) & (timestamps[:, 0] < grey_stops[i]))[0])
         ### this is now a list of indices where grey stim was presented
     else:
+        # Makes a list of indexes, one for each image frame - check if each frame or each volume.
+        # I'm going to assume each volume but check!
         idx_to_use = list(range(timestamps.shape[0]))
+    print("timestamps.shape[0]) " + repr(timestamps.shape[0]))
 
     ### Load fictrac ###
     fictrac_raw = brainsss.load_fictrac(os.path.join(load_directory, 'fictrac'))

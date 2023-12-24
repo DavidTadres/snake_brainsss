@@ -349,9 +349,9 @@ rule all:
         ###
         # temporal high-pass filter
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        #>expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        #>expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter)
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter)
 
 rule fictrac_qc_rule:
     threads: 1
@@ -434,7 +434,14 @@ rule bleaching_qc_rule:
 
 rule motion_correction_rule:
     """
-    Benchmarking: Two 3Gb files required 19Gb (43% of 44Gb at 6 cores). 1 horu
+    Benchmarking: Two 3Gb files required 19Gb (43% of 44Gb at 6 cores). 1 hour
+    Same 3 gb files another run:
+        Cores per node: 6
+        CPU Utilized: 02:56:44
+        CPU Efficiency: 54.95% of 05:21:36 core-walltime
+        Job Wall-clock time: 00:53:36
+        Memory Utilized: 18.47 GB
+        Memory Efficiency: 42.03% of 43.95 GB
     
     Tried a bunch of stuff and finally settled on this not super elegant solution.
     
@@ -530,6 +537,23 @@ rule zscore_rule:
     """
     Benchmarking: Did 2.5*input file size and got a 86% efficiency on the memory, 4 threads only 12% efficiency
     Did same with 1 thread and seemed to be enough. Keep at 1 thread for now, might break with larger files.
+    
+    Same test file:
+    Cores per node: 2
+    CPU Utilized: 00:00:23
+    CPU Efficiency: 9.66% of 00:03:58 core-walltime
+    Job Wall-clock time: 00:01:59
+    Memory Utilized: 1.62 GB
+    Memory Efficiency: 17.80% of 9.09 GB
+    
+    And once more: 
+    Cores per node: 2
+    CPU Utilized: 00:00:54
+    CPU Efficiency: 13.99% of 00:06:26 core-walltime
+    Job Wall-clock time: 00:03:13
+    Memory Utilized: 689.88 MB
+    Memory Efficiency: 7.41% of 9.09 GB
+    
     """
     threads: 1
     resources: mem_mb=snake_utils.mem_mb_times_input
