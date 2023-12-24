@@ -386,6 +386,14 @@ rule fictrac_qc_rule:
 
 rule bleaching_qc_rule:
     """
+    Now it works but I need to optimize the input/output files - check the memory requirement!!! This is overkill!
+    Cores per node: 14
+    CPU Utilized: 00:01:38
+    CPU Efficiency: 2.09% of 01:18:10 core-walltime
+    Job Wall-clock time: 00:05:35
+    Memory Utilized: 56.15 GB
+    Memory Efficiency: 48.54% of 115.68 GB
+    
     Benchmark with full (30min) dataset
     State: OUT_OF_MEMORY (exit code 0)
     Nodes: 1
@@ -636,6 +644,7 @@ rule zscore_rule:
 
 rule make_mean_brain_rule:
     """
+    
     Benchmark with full dataset (30min vol recording)
     State: OUT_OF_MEMORY (exit code 0)
     Nodes: 1
@@ -646,6 +655,26 @@ rule make_mean_brain_rule:
     Memory Utilized: 0.00 MB (estimated maximum)
     Memory Efficiency: 0.00% of 14.65 GB (14.65 GB/node)
     --> set from mem_mb_times_threads to mem_mb_times_input
+    
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:00:11
+    CPU Efficiency: 2.75% of 00:06:40 core-walltime
+    Job Wall-clock time: 00:01:40
+    Memory Utilized: 27.95 GB
+    Memory Efficiency: 118.74% of 23.54 GB
+    --> set from mem_mb_times_threads to mem_mb_more_times_input
+    State: OUT_OF_MEMORY (exit code 0)
+    
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:00:15
+    CPU Efficiency: 4.69% of 00:05:20 core-walltime
+    Job Wall-clock time: 00:01:20
+    Memory Utilized: 31.01 GB
+    Memory Efficiency: 94.12% of 32.95 GB
+    ??? The input file is 10Gb. We are not making any copies of the data. 
     
     Tested with 16 threads, overkill as we wouldn't normally need more than 10Gb
     of memory (each thread is ~8Gb)
@@ -670,7 +699,7 @@ rule make_mean_brain_rule:
         save.mean_brain(output)
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_more_times_input
+    resources: mem_mb=snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
     input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
 
     output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'

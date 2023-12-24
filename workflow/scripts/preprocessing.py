@@ -1187,7 +1187,10 @@ def make_mean_brain(fly_directory,
     path_to_read = path_to_read[0]
     path_to_save = path_to_save[0]
     print(path_to_read)
-    brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16') # Memory should be size of file UNLESS it's e.g. uint8 or something.
+    brain_proxy = nib.load(path_to_read) # Doesn't load anything, just points to a given location
+    brain_data = np.asarray(brain_proxy.dataobj, dtype='uint16') # loads data to memory.
+    #brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16')
+    # get_fdata() loads data into memory and sometimes doesn't release it.
 
     ###
     # create meanbrain
