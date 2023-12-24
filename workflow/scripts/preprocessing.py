@@ -1586,7 +1586,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
                 target_path = pathlib.Path(destination, target_name)
             # Rename anatomy file to anatomy_channel_x.nii
             elif '.nii' in source_path.name and folder_type == 'anat':
-                target_name = 'channel_' + source_path.name.split('channel')[1].split('_')[0] + '.nii'
+                target_name = 'channel_' + source_path.name.split('channel')[1].split('_')[1] + '.nii'
                 target_path = pathlib.Path(destination, target_name)
             # Special copy for photodiode since it goes in visual folder
             # To be tested once I have such data!!
