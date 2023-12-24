@@ -532,11 +532,11 @@ rule temporal_high_pass_filter_rule:
     Job Wall-clock time: 00:03:58
     Memory Utilized: 7.76 GB
     Memory Efficiency: 26.47% of 29.30 GB
-    - With only 2.5 times input file size as memory:
+    - With only 2.5 times input file size as memory and 1 thread:
     
     """
     threads: 1
-    resources: mem_mb=snake_utils.mem_mb_times_input
+    resources: mem_mb=snake_utils.mem_mb_more_times_input
     input:
         zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
         zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],

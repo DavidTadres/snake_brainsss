@@ -36,7 +36,7 @@ from brainsss import utils
 from brainsss import fictrac_utils
 
 
-def correlation(args):
+def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps):
     """
     docs
     :param args:
@@ -88,24 +88,40 @@ def correlation(args):
     See script 'pearson_correlation.py' - the vectorized version should take 0.03% of the time the 
     scipy version does.
     '''
+    #####################
+    ### SETUP LOGGING ###
+    #####################
 
-    load_directory = args['load_directory']
-    save_directory = args['save_directory']
-    brain_file = args['brain_file']
-    grey_only = args['grey_only']
+    logfile = utils.create_logfile(fly_directory, function_name='correlation')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'correlation')
 
-    behavior = args['behavior']
-    fps = args['fps']  # of fictrac camera
+    #load_directory = args['load_directory']
+    #save_directory = args['save_directory']
+    #brain_file = args['brain_file']
+    #grey_only = args['grey_only']
+    ##########
+    ### Convert list of (sometimes empty) strings to pathlib.Path objects
+    ##########
+    dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
+    save_path = utils.convert_list_of_string_to_posix_path(save_path)
 
-    logfile = args['logfile']
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    #behavior = args['behavior']
+    #fps = args['fps']  # of fictrac camera
 
-    printlog(load_directory)
+    #logfile = args['logfile']
+    #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+
+    #printlog(load_directory)
 
     ### load brain timestamps ###
     #  timestamps: [t,z] numpy array of times (in ms) of Bruker imaging frames.
-    timestamps = brainsss.load_timestamps(os.path.join(load_directory, 'imaging'))
+    #timestamps = brainsss.load_timestamps(os.path.join(load_directory, 'imaging'))
+    timestamps = utils.load_timestamps(pathlib.Path(dataset_path[0].name, 'imaging'))
+    # We will have a list of functional channels here but
+    # all from the same experiment, so all will have the same 'recording_metadata.xml' data
 
+    printlog('grey_only not implemented yet')
     ### this means only calculat correlation during periods of grey stimuli ###
     if grey_only:
         vision_path = os.path.join(load_directory, 'visual')
@@ -124,10 +140,10 @@ def correlation(args):
         for i in range(len(grey_starts)):
             idx_to_use.extend(np.where((grey_starts[i] < timestamps[:, 0]) & (timestamps[:, 0] < grey_stops[i]))[0])
         ### this is now a list of indices where grey stim was presented
-    else:
-        # Makes a list of indexes, one for each image frame - check if each frame or each volume.
-        # I'm going to assume each volume but check!
-        idx_to_use = list(range(timestamps.shape[0]))
+    #else:
+    # Makes a list of indexes, one for each image frame - check if each frame or each volume.
+    # I'm going to assume each volume but check!
+    idx_to_use = list(range(timestamps.shape[0]))
     print("timestamps.shape[0]) " + repr(timestamps.shape[0]))
 
     ### Load fictrac ###

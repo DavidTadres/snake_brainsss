@@ -437,7 +437,7 @@ def get_resolution(xml_file):
                     print('Error')
     return x, y, z
 
-def load_timestamps(directory, file='functional.xml'):
+def load_timestamps(directory, file='recording_metadata'): # file='functional.xml'):
     """ Parses a Bruker xml file to get the times of each frame, or loads h5py file if it exists.
 
     First tries to load from 'timestamps.h5' (h5py file). If this file doesn't exist
@@ -460,7 +460,8 @@ def load_timestamps(directory, file='functional.xml'):
 
     except:
         print('Failed. Extracting frame timestamps from bruker xml file.')
-        xml_file = os.path.join(directory, file)
+        #xml_file = os.path.join(directory, file)
+        xml_file = pathlib.Path(directory, file)
         tree = ET.parse(xml_file)
         root = tree.getroot()
         timestamps = []
