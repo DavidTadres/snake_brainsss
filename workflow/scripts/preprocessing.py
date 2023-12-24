@@ -271,6 +271,8 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
                 dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
 
                 # Dataset created
+                print('steps' + repr(steps))
+                print("len(steps)" + repr(len(steps)))
                 print('range(len(steps))' + repr(range(len(steps))))
                 for chunk_num in range(len(steps)):
                     print('cunk_num' + repr(chunk_num))
