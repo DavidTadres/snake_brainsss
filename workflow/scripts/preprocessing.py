@@ -269,7 +269,7 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
             # Here we create a document we are going to write to in the loop
             with h5py.File(current_temporal_high_pass_filtered_path, 'w') as f:
                 #dset = f.create_dataset('data', dims, dtype='float32', chunks=True) # Original
-                _ = f.create_dataset('data', dims, dtype='float32', chunks=False)
+                _ = f.create_dataset('data', dims, dtype='float32')
 
                 data_mean = np.mean(data, axis=-1)
                 smoothed_data = gaussian_filter1d(data, sigma=200, axis=-1, truncate=1) # This for sure makes a copy of
