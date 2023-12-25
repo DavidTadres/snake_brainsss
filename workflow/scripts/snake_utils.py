@@ -52,9 +52,21 @@ def time_for_moco_input(wildcards, input):
     I also know that a 30 minute recording should take ~7 hours with ~11Gb input size.
     And an anatomical scan also ~25Gb should take ~16 hours
     The slowest seems to be the functional 7 hours scan but even that is taken
-    care of with 45minutes per Gb
+    We'll do 45min per anatomy channel
+    Note that we can have 1, 2 or 3 input files...Assume that only one of the files is the
+    anatomy channel!
     :param wildcards:
     :param input:
     :return:
     """
-    return(input.size_mb/1000*45)
+    if input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [] and input.brain_path_ch3 != []:
+        # if all three channels are used
+        return(input.size_mb/1000*15)
+    elif (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != []) or \
+        (input.brain_paths_ch1 != [] and input.brain_paths_ch3 != []) or \
+        (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []):
+        # if only two channels are in use
+        return(input.size_mb/1000*30)
+    else:
+        # only one channel is provided:
+        return(input.size_mb/1000*45)
