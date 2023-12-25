@@ -810,14 +810,14 @@ rule correlation_rule:
 '''           
 rule STA_rule:
     """TODO"""'''
-
+'''
 rule moco_mean_brain_rule:
     """
     Similar to make mean brain but takes moco corrected brain! 
     """
     threads: 2
     ressources: mem_mb=snake_utils.mem_mb_less_times_input
-    input:
+    input:'''
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
