@@ -377,9 +377,9 @@ rule all:
         ###
         # Meanbrain of moco brain
         ###
-        expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [], moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
-        expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
-        expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        #expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [], moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        #expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        #expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
 
 rule fictrac_qc_rule:
     """
