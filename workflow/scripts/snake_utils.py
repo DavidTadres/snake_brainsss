@@ -59,7 +59,7 @@ def time_for_moco_input(wildcards, input):
     :param input:
     :return:
     """
-    if input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [] and input.brain_path_ch3 != []:
+    if input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []:
         # if all three channels are used
         return(input.size_mb/1000*15)
     elif (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != []) or \
