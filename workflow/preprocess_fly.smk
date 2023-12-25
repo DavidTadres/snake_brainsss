@@ -827,7 +827,7 @@ rule moco_mean_brain_rule:
     Similar to make mean brain but takes moco corrected brain! 
     """
     threads: 2
-    ressources: mem_mb=snake_utils.mem_mb_less_times_input
+    resources: mem_mb=snake_utils.mem_mb_less_times_input
     input:
         fly_folder_to_process_oak
     output:
