@@ -37,6 +37,72 @@ from brainsss import fictrac_utils
 from brainsss import corr_utils
 
 
+def stim_triggered_avg_neu(args):
+    """
+    TODO
+    :param args:
+    :return:
+    """
+    logfile = args['logfile']
+    func_path = args['func_path']
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    printlog(func_path)
+
+    ###########################
+    ### PREP VISUAL STIMULI ###
+    ###########################
+
+    vision_path = os.path.join(func_path, 'visual')
+
+    ### Load Photodiode ###
+    t, ft_triggers, pd1, pd2 = brainsss.load_photodiode(vision_path)
+    stimulus_start_times = brainsss.extract_stim_times_from_pd(pd2, t)
+
+    ### Get Metadata ###
+    stim_ids, angles = brainsss.get_stimulus_metadata(vision_path)
+    printlog(F"Found {len(stim_ids)} presented stimuli.")
+
+    # *100 puts in units of 10ms, which will match fictrac
+    starts_angle_0 = [int(stimulus_start_times[i] * 100) for i in range(len(stimulus_start_times)) if angles[i] == 0]
+    starts_angle_180 = [int(stimulus_start_times[i] * 100) for i in range(len(stimulus_start_times)) if
+                        angles[i] == 180]
+    printlog(F"starts_angle_0: {len(starts_angle_0)}. starts_angle_180: {len(starts_angle_180)}")
+    list_in_ms0 = {'0': [i * 10 for i in starts_angle_0],
+                   '180': [i * 10 for i in starts_angle_180]}
+
+    ##################
+    ### PREP BRAIN ###
+    ##################
+
+    brain_path = os.path.join(func_path, 'functional_channel_2_moco_zscore_highpass.h5')
+    timestamps = brainsss.load_timestamps(os.path.join(func_path, 'imaging'), file='functional.xml')
+
+    with h5py.File(brain_path, 'r') as hf:
+        dims = np.shape(hf['data'])
+
+    for angle in list_in_ms0.keys():
+
+        stas = []
+        for slice_num in range(dims[2]):
+            t0 = time()
+            single_slice = load_slice(brain_path, slice_num)
+            ynew = interpolation(slice_num, timestamps, single_slice)
+            new_stim_timestamps = make_new_stim_timestamps(list_in_ms0[angle])
+            chunk_edges = make_chunk_edges(new_stim_timestamps)
+            sta = make_stas(ynew, new_stim_timestamps, chunk_edges)
+            stas.append(sta)
+            printlog(F"Slice: {slice_num}. Duration: {time() - t0}")
+        stas_array = np.asarray(stas)
+
+        ### SAVE STA ###
+        savedir = os.path.join(func_path, 'STA')
+        if not os.path.exists(savedir):
+            os.mkdir(savedir)
+        savefile = os.path.join(savedir, F'sta_{angle}.npy')
+        np.save(savefile, stas_array)
+
+        ### SAVE PNG ###
+        save_maxproj_img(savefile)
 def correlation(fly_directory, dataset_path, save_path,
                 #behavior,
                 fictrac_fps,
@@ -202,9 +268,10 @@ def correlation(fly_directory, dataset_path, save_path,
         printlog("Performing correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
 
         # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
-        brain_mean = brain.mean(axis=-1, dtype=np.float64)
+        brain_mean = brain.mean(axis=-1)#, dtype=np.float64)
         fictrac_mean = fictrac_interp.mean(dtype=np.float64)
 
+        print('mean done')
         # >> Typical values for z scored brain seem to be between -25 and + 25.
         # It shouldn't be necessary to cast as float64. This then allows us
         # to do in-place operation!
@@ -214,13 +281,16 @@ def correlation(fly_directory, dataset_path, save_path,
         brain_mean_m = brain
         # fictrac data is small, so working with float64 shouldn't cost much memory!
         fictrac_mean_m = fictrac_interp.astype(np.float64) - fictrac_mean
+        print('mean_m done')
 
         normbrain = np.linalg.norm(brain_mean_m, axis=-1) # Make a copy, but since there's no time dimension it's quite small
         normfictrac = np.linalg.norm(fictrac_mean_m)
+        print('norm done')
 
         # Do another inplace operation to save memory
         #corr_brain = np.dot(brain_mean_m/normbrain[:,:,:,None], fictrac_mean_m/normfictrac)
         brain/=normbrain[:,:,:,None]
+        print('brain/=normbrain done')
         corr_brain = np.dot(brain, fictrac_mean_m/normfictrac) # here we of course make a full copy of the array again.
         # To conclude, I expect to need more than 2x input size but not 3x. Todo test!
 
@@ -1240,6 +1310,7 @@ def make_mean_brain(fly_directory,
                     path_to_save):
     """
     Note: Unclear why it seems to require more than 2.5x input memory! Does nibabel do something strange?
+    -> Avoid using get_fdata as it chaches data and I'm not sure when it releases it again.
 
     Function to calculate meanbrain.
     This is based on Bella's meanbrain script.

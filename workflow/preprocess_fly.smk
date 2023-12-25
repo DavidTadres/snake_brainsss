@@ -794,7 +794,14 @@ rule correlation_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
+'''           
+rule STA_rule:
+    """TODO"""'''
 
+rule moco_mean_brain_rule:
+    """
+    Similar to make mean brain but takes moco corrected brain! 
+    """
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
