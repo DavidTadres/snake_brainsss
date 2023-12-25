@@ -152,21 +152,22 @@ def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, time
 
     ### get orginal timestamps ###
     camera_rate = 1/fps * 1000 # camera frame rate in ms
-    x_original = np.arange(0,expt_len,camera_rate)
+    x_original = np.arange(0,expt_len,camera_rate) # same shape as fictrac (e.g. 20980)
 
     ### smooth ###
-    fictrac_smoothed = scipy.signal.savgol_filter(np.asarray(fictrac[behavior]),smoothing,3)
+    fictrac_smoothed = scipy.signal.savgol_filter(np.asarray(fictrac[behavior]),smoothing,3) # Identical shape in output as input, e.g. 20980
 
     ### clip if desired ###
     if clip == 'pos':
-      fictrac_smoothed = np.clip(fictrac_smoothed, a_min=0, a_max=None)
+      fictrac_smoothed = np.clip(fictrac_smoothed, a_min=0, a_max=None) # Unsure what this does
     elif clip == 'neg':
-      fictrac_smoothed = np.clip(fictrac_smoothed, a_min=None, a_max=0)*-1
+      fictrac_smoothed = np.clip(fictrac_smoothed, a_min=None, a_max=0)*-1 # Unsure what this does
 
     ### interpolate ###
     # This function probably just returns everything from an input array
-    fictrac_interp_temp = interp1d(x_original, fictrac_smoothed, bounds_error = False)
-    xnew = np.arange(0,expt_len,resolution) #0 to last time at subsample res
+    fictrac_interp_temp = interp1d(x_original, fictrac_smoothed, bounds_error = False) # yields a function
+    xnew = np.arange(0,expt_len,resolution) #0 to last time at subsample res ## different number, e.g. 41960, or just 2x shape before.
+    # This is probably because resolution is set to 10. If framerate is 50 we have a frame every 20 ms.
     if timestamps is None:
       fictrac_interp = fictrac_interp_temp(xnew)
     else:

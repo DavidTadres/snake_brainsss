@@ -765,17 +765,30 @@ def motion_correction(fly_directory,
     #    scantype = 'func'
     #    stepsize = 100
     #    printlog(F"{'   Could not determine scantype. Using default stepsize of 100   ':*^{width}}")'''
+
+    '''
+    ###
+    note on stepsize I used 1000, 50 and 1000 which led to:
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 05:14:21
+    CPU Efficiency: 59.12% of 08:51:42 core-walltime
+    Job Wall-clock time: 01:28:37
+    Memory Utilized: 8.22 GB
+    Memory Efficiency: 64.77% of 12.69 GB
+    '''
     path_brain_anatomy
     if 'func' in path_brain_anatomy.parts:
         scantype = 'func'
-        stepsize = 1000 # Bella had this at 100
+        stepsize = 100 # Bella had this at 100
     elif 'anat' in path_brain_anatomy.name:
         scantype = 'anat'
-        stepsize = 50 # Bella had this at 5
+        stepsize = 5 # Bella had this at 5
     else:
         scantype = 'Unknown'
-        stepsize = 1000
-        printlog(F"{'   Could not determine scantype. Using default stepsize of 1000   ':*^{WIDTH}}")
+        stepsize = 100
+        printlog(F"{'   Could not determine scantype. Using default stepsize of 100   ':*^{WIDTH}}")
     printlog(F"Scantype{scantype:.>{WIDTH - 8}}")
     printlog(F"Stepsize{stepsize:.>{WIDTH - 8}}")
 
@@ -834,7 +847,10 @@ def motion_correction(fly_directory,
     #    fixed = ants.from_numpy(np.asarray(meanbrain, dtype='float32'))
     #    printlog(F"Loaded meanbrain{existing_meanbrain_file:.>{width - 16}}")
 
-    meanbrain = np.asarray(nib.load(path_meanbrain_anatomy).get_fdata(), dtype='uint16')
+    meanbrain_proxy = nib.load(path_meanbrain_anatomy)
+    meanbrain = np.asarray(meanbrain_proxy.dataobj, dtype=np.uint16)
+    #meanbrain = np.asarray(nib.load(path_meanbrain_anatomy).get_fdata(), dtype='uint16')
+    # get_fdata() loads data into memory and sometimes doesn't release it.
     fixed = ants.from_numpy(np.asarray(meanbrain, dtype='float32'))
     printlog(F"Loaded meanbrain{path_meanbrain_anatomy.name:.>{WIDTH - 16}}")
 
