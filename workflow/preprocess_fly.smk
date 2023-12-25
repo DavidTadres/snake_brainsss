@@ -236,6 +236,10 @@ for current_path in imaging_file_paths:
         imaging_paths_corr.append(current_path.split('/imaging')[0])
 # Behavior to be correlated with z scored brain activity
 corr_behaviors = ['dRotLabZneg']#, 'dRotLabZpos', 'dRotLabY']
+
+# List of paths for moco meanbrains
+imaging_paths_moco_meanbrain = []
+
 ####
 
 '''
@@ -811,6 +815,9 @@ rule moco_mean_brain_rule:
     """
     Similar to make mean brain but takes moco corrected brain! 
     """
+    threads: 2
+    ressources: mem_mb=snake_utils.mem_mb_less_times_input
+    input:
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
