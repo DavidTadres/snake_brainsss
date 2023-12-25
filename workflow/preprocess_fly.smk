@@ -377,9 +377,9 @@ rule all:
         ###
         # Meanbrain of moco brain
         ###
-        #>expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [], moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
-        #>expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
-        #>expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [], moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
 
 rule fictrac_qc_rule:
     """
@@ -821,14 +821,19 @@ rule correlation_rule:
 '''           
 rule STA_rule:
     """TODO"""'''
-'''
+
 rule moco_mean_brain_rule:
     """
     Similar to make mean brain but takes moco corrected brain! 
     """
     threads: 2
     ressources: mem_mb=snake_utils.mem_mb_less_times_input
-    input:'''
+    input:
+        fly_folder_to_process_oak
+    output:
+        moco_meanbrain_ch1=str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        moco_meanbrain_ch2=str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        moco_meanbrain_ch3=str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else []
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.

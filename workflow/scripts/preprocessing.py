@@ -295,7 +295,7 @@ def correlation(fly_directory, dataset_path, save_path,
         print('brain/=normbrain done')
         corr_brain = np.dot(brain, fictrac_mean_m/normfictrac) # here we of course make a full copy of the array again.
         # To conclude, I expect to need more than 2x input size but not 3x. Todo test!
-
+        print('corr_brain.shape ' + repr(corr_brain.shape))
         printlog("Finished calculating correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
 
         ### SAVE ###
@@ -335,12 +335,18 @@ def correlation(fly_directory, dataset_path, save_path,
         object_to_save.to_filename(save_file)
 
         printlog("Saved {}".format(save_file))
-        corr_utils.save_maxproj_img(image_to_max_project=corr_brain,
-                                    path=save_file)
-        printlog("Saved png plot")
+        #corr_utils.save_maxproj_img(image_to_max_project=corr_brain,
+        #                            path=save_file)
+        #printlog("Saved png plot")
 
         TESTING=True
         if TESTING:
+            del brain # remove brain from memory
+            del corr_brain
+            time.sleep(2)
+            with h5py.File(current_dataset_path, 'r') as hf:
+                brain = hf['data'][:] # load everything into memory!
+
             from scipy.stats import pearsonr
             # Keep for a few tests for now
             ##### BELLAS LOOP CODE BELOW ####
