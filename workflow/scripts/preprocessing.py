@@ -37,7 +37,10 @@ from brainsss import fictrac_utils
 from brainsss import corr_utils
 
 
-def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, metadata_path, fictrac_path):
+def correlation(fly_directory, dataset_path, save_path,
+                #behavior,
+                fictrac_fps,
+                metadata_path, fictrac_path):
     """
     docs
     :param args:
@@ -279,11 +282,12 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, m
 
         # date = time.strftime("%Y%m%d")
         #date = '20220420' # Why is a date hardcoded here?
-        now = datetime.datetime.now()
-        date = now.strftime("%Y%m%d")
+        #now = datetime.datetime.now()
+        #date = now.strftime("%Y%m%d")
 
-        save_file = pathlib.Path(current_save_path,
-                                '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
+        save_file = pathlib.Path(current_save_path)#,
+        #                        '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
+        # Commened longer filename because we must define the output filename already in the snakefile.
         #save_file = os.path.join(save_directory,
         #                         '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
         aff = np.eye(4)
@@ -1810,6 +1814,8 @@ def copy_visual(destination_region, printlog):
         json.dump(unique_stimuli, f, indent=4)"""
 
 def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
+    # The target file will be called 'fictrac_behavior_data.dat' because it makes
+    # handling files much easier in the snakefile.
     # Make fictrac folder
     fictrac_destination = pathlib.Path(destination_region, 'fictrac')
     fictrac_destination.mkdir(exist_ok=True)
@@ -1837,7 +1843,8 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
                 #width = 120
                 #source_path = os.path.join(source_path, file)
                 dat_path = current_file
-                target_path = pathlib.Path(fictrac_destination, current_file.name)
+                #target_path = pathlib.Path(fictrac_destination, current_file.name)
+                target_path = pathlib.Path(fictrac_destination, 'fictrac_behavior_data.dat')
                 to_print = str(target_path)
                 printlog(f'Transfering file{to_print:.>{WIDTH - 16}}')
 

@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_001' # folder to be processed
+fly_folder_to_process = 'fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -227,6 +227,15 @@ imaging_paths_temp_HP_filter = []
 for current_path in imaging_file_paths:
     if 'func' in current_path:
         imaging_paths_temp_HP_filter.append(current_path.split('/imaging')[0])
+
+# list of paths for correlation
+# identical to zscore imaging paths but for ease of readibility, explicitly create a new one
+imaging_paths_corr = []
+for current_path in imaging_file_paths:
+    if 'func' in current_path:
+        imaging_paths_corr.append(current_path.split('/imaging')[0])
+# Behavior to be correlated with z scored brain activity
+corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
 ####
 
 '''
@@ -343,15 +352,22 @@ rule all:
         ####
         # Z-score
         ####
-        #expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        #expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        #expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
         ###
         # temporal high-pass filter
         ###
-        #expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        #expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        #expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter)
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        ###
+        # correlation with behavior
+        ###
+        # dRotLabY
+        #expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+        #expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+        #expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
 
 rule fictrac_qc_rule:
     """
@@ -463,6 +479,101 @@ rule bleaching_qc_rule:
                 width=width)
             print('Error with bleaching_qc' )
 
+rule make_mean_brain_rule:
+    """
+    Changed memory usage by avoiding call to 'get_fdata()'
+    With same 30min vol dataset I now get: 
+    State: COMPLETED (exit code 0)
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:00:11
+    CPU Efficiency: 2.75% of 00:06:40 core-walltime
+    Job Wall-clock time: 00:01:40
+    Memory Utilized: 8.15 GB
+    Memory Efficiency: 34.65% of 23.54 GB
+    --> to 1.5 times input size memory
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:22
+    CPU Efficiency: 4.89% of 00:07:30 core-walltime
+    Job Wall-clock time: 00:03:45
+    Memory Utilized: 9.24 GB
+    Memory Efficiency: 60.85% of 15.18 GB
+
+
+    ######
+    Benchmark with full dataset (30min vol recording)
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:17
+    CPU Efficiency: 16.04% of 00:01:46 core-walltime
+    Job Wall-clock time: 00:00:53
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 14.65 GB (14.65 GB/node)
+    --> set from mem_mb_times_threads to mem_mb_times_input
+
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:00:11
+    CPU Efficiency: 2.75% of 00:06:40 core-walltime
+    Job Wall-clock time: 00:01:40
+    Memory Utilized: 27.95 GB
+    Memory Efficiency: 118.74% of 23.54 GB
+    --> set from mem_mb_times_threads to mem_mb_more_times_input
+    State: OUT_OF_MEMORY (exit code 0)
+
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:00:15
+    CPU Efficiency: 4.69% of 00:05:20 core-walltime
+    Job Wall-clock time: 00:01:20
+    Memory Utilized: 31.01 GB
+    Memory Efficiency: 94.12% of 32.95 GB
+    ??? The input file is 10Gb. We are not making any copies of the data. 
+
+    Tested with 16 threads, overkill as we wouldn't normally need more than 10Gb
+    of memory (each thread is ~8Gb)
+
+    Here it should be possible to parallelize quite easily as each input file creates
+    one output file!
+
+    input would be something like
+    paths_to_use = ['../fly_004/func0/imaging/functional_channel_1', '../fly_004/func1/imaging/functional_channel_2']
+
+    rule all would request the 'mean' brain of each of those
+    expand("{imaging_path}_mean.nii", imaging_path=paths_to_use)
+
+    rule make_mean_brain_rule:
+        input: "{imaging_path}.nii"
+        output: "{imaging_path}_mean.nii"
+        run: function(imaging_path)
+
+    which will do:
+        brain = read(input)
+        mean_brain = mean(brain)
+        save.mean_brain(output)
+    """
+    threads: 2  # It seems to go a bit faster. Can probably set to 1 if want to save cores
+    resources: mem_mb=snake_utils.mem_mb_less_times_input  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
+    input: "{mean_brains_output}.nii"  #'/Users/dtadres/Documents/functional_channel_1.nii'
+
+    output: "{mean_brains_output}_mean.nii"  # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
+    # every nii file is made to a mean brain! Can predict how they
+    # are going to be called and put them here.
+    run:
+        try:
+            preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
+                meanbrain_n_frames=meanbrain_n_frames,
+                path_to_read=input,
+                path_to_save=output)
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_mean_brain')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
 rule motion_correction_rule:
     """
     with: snake_utils.mem_mb_times_input
@@ -514,7 +625,7 @@ rule motion_correction_rule:
     threads: 6
     resources:
         mem_mb=snake_utils.mem_mb_more_times_input,
-        runtime=snake_utils.time_for_moco_input
+        runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
     input:
         # Only use the Channels that exists
         brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
@@ -545,67 +656,6 @@ rule motion_correction_rule:
                                             )
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_motion_correction')
-            utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
-
-rule temporal_high_pass_filter_rule:
-    """
-    Benchmark with the func1 file (~3Gb)
-    State: OUT_OF_MEMORY (exit code 0)
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:05:33
-    CPU Efficiency: 40.51% of 00:13:42 core-walltime
-    Job Wall-clock time: 00:06:51
-    Memory Utilized: 7.62 GB
-    Memory Efficiency: 51.99% of 14.65 GB
-    
-    Again with 4 cores and 32Gb
-    Cores per node: 4
-    CPU Utilized: 00:03:09
-    CPU Efficiency: 13.66% of 00:23:04 core-walltime
-    Job Wall-clock time: 00:05:46
-    Memory Utilized: 7.33 GB
-    Memory Efficiency: 25.02% of 29.30 GB
-    
-    - Without chunking:
-    CPU Utilized: 00:02:47
-    CPU Efficiency: 17.54% of 00:15:52 core-walltime
-    Job Wall-clock time: 00:03:58
-    Memory Utilized: 7.76 GB
-    Memory Efficiency: 26.47% of 29.30 GB
-    
-    - With only 3.5 times input file size as memory and 2 thread:
-    Cores per node: 2
-    CPU Utilized: 00:02:55
-    CPU Efficiency: 34.31% of 00:08:30 core-walltime
-    Job Wall-clock time: 00:04:15
-    Memory Utilized: 7.50 GB
-    Memory Efficiency: 59.48% of 12.60 GB
-    """
-    threads: 2
-    resources: mem_mb=snake_utils.mem_mb_more_times_input
-    input:
-        zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
-    output:
-        temp_HP_filter_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-        temp_HP_filter_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-        temp_HP_filter_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
-
-    run:
-        try:
-            preprocessing.temporal_high_pass_filter(fly_directory=fly_folder_to_process_oak,
-                                                    dataset_path=[input.zscore_path_ch1,
-                                                                  input.zscore_path_ch2,
-                                                                  input.zscore_path_ch3],
-                                                    temporal_high_pass_filtered_path=[output.temp_HP_filter_path_ch1,
-                                                                                      output.temp_HP_filter_path_ch2,
-                                                                                      output.temp_HP_filter_path_ch3])
-        except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_temporal_high_pass_filter')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
@@ -654,97 +704,94 @@ rule zscore_rule:
                 error_stack=error_stack,
                 width=width)
 
-rule make_mean_brain_rule:
+rule temporal_high_pass_filter_rule:
     """
-    Changed memory usage by avoiding call to 'get_fdata()'
-    With same 30min vol dataset I now get: 
-    State: COMPLETED (exit code 0)
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:00:11
-    CPU Efficiency: 2.75% of 00:06:40 core-walltime
-    Job Wall-clock time: 00:01:40
-    Memory Utilized: 8.15 GB
-    Memory Efficiency: 34.65% of 23.54 GB
-    --> to 1.5 times input size memory
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:00:22
-    CPU Efficiency: 4.89% of 00:07:30 core-walltime
-    Job Wall-clock time: 00:03:45
-    Memory Utilized: 9.24 GB
-    Memory Efficiency: 60.85% of 15.18 GB
-    
-    
-    ######
-    Benchmark with full dataset (30min vol recording)
+    Benchmark with the func1 file (~3Gb)
     State: OUT_OF_MEMORY (exit code 0)
     Nodes: 1
     Cores per node: 2
-    CPU Utilized: 00:00:17
-    CPU Efficiency: 16.04% of 00:01:46 core-walltime
-    Job Wall-clock time: 00:00:53
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 14.65 GB (14.65 GB/node)
-    --> set from mem_mb_times_threads to mem_mb_times_input
-    
-    State: OUT_OF_MEMORY (exit code 0)
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:00:11
-    CPU Efficiency: 2.75% of 00:06:40 core-walltime
-    Job Wall-clock time: 00:01:40
-    Memory Utilized: 27.95 GB
-    Memory Efficiency: 118.74% of 23.54 GB
-    --> set from mem_mb_times_threads to mem_mb_more_times_input
-    State: OUT_OF_MEMORY (exit code 0)
-    
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:00:15
-    CPU Efficiency: 4.69% of 00:05:20 core-walltime
-    Job Wall-clock time: 00:01:20
-    Memory Utilized: 31.01 GB
-    Memory Efficiency: 94.12% of 32.95 GB
-    ??? The input file is 10Gb. We are not making any copies of the data. 
-    
-    Tested with 16 threads, overkill as we wouldn't normally need more than 10Gb
-    of memory (each thread is ~8Gb)
-    
-    Here it should be possible to parallelize quite easily as each input file creates
-    one output file!
-    
-    input would be something like
-    paths_to_use = ['../fly_004/func0/imaging/functional_channel_1', '../fly_004/func1/imaging/functional_channel_2']
-    
-    rule all would request the 'mean' brain of each of those
-    expand("{imaging_path}_mean.nii", imaging_path=paths_to_use)
-    
-    rule make_mean_brain_rule:
-        input: "{imaging_path}.nii"
-        output: "{imaging_path}_mean.nii"
-        run: function(imaging_path)
-    
-    which will do:
-        brain = read(input)
-        mean_brain = mean(brain)
-        save.mean_brain(output)
-    """
-    threads: 2 # It seems to go a bit faster. Can probably set to 1 if want to save cores
-    resources: mem_mb=snake_utils.mem_mb_less_times_input#snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
-    input: "{mean_brains_output}.nii" #'/Users/dtadres/Documents/functional_channel_1.nii'
+    CPU Utilized: 00:05:33
+    CPU Efficiency: 40.51% of 00:13:42 core-walltime
+    Job Wall-clock time: 00:06:51
+    Memory Utilized: 7.62 GB
+    Memory Efficiency: 51.99% of 14.65 GB
 
-    output: "{mean_brains_output}_mean.nii" # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
-    # every nii file is made to a mean brain! Can predict how they
-        # are going to be called and put them here.
+    Again with 4 cores and 32Gb
+    Cores per node: 4
+    CPU Utilized: 00:03:09
+    CPU Efficiency: 13.66% of 00:23:04 core-walltime
+    Job Wall-clock time: 00:05:46
+    Memory Utilized: 7.33 GB
+    Memory Efficiency: 25.02% of 29.30 GB
+
+    - Without chunking:
+    CPU Utilized: 00:02:47
+    CPU Efficiency: 17.54% of 00:15:52 core-walltime
+    Job Wall-clock time: 00:03:58
+    Memory Utilized: 7.76 GB
+    Memory Efficiency: 26.47% of 29.30 GB
+
+    - With only 3.5 times input file size as memory and 2 thread:
+    Cores per node: 2
+    CPU Utilized: 00:02:55
+    CPU Efficiency: 34.31% of 00:08:30 core-walltime
+    Job Wall-clock time: 00:04:15
+    Memory Utilized: 7.50 GB
+    Memory Efficiency: 59.48% of 12.60 GB
+    """
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_more_times_input
+    input:
+        zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+    output:
+        temp_HP_filter_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+
     run:
         try:
-            preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
-                                          meanbrain_n_frames=meanbrain_n_frames,
-                                          path_to_read=input,
-                                          path_to_save=output  )
+            preprocessing.temporal_high_pass_filter(fly_directory=fly_folder_to_process_oak,
+                dataset_path=[input.zscore_path_ch1,
+                              input.zscore_path_ch2,
+                              input.zscore_path_ch3],
+                temporal_high_pass_filtered_path=[output.temp_HP_filter_path_ch1,
+                                                  output.temp_HP_filter_path_ch2,
+                                                  output.temp_HP_filter_path_ch3])
         except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_mean_brain')
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_temporal_high_pass_filter')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
+
+rule correlation_rule:
+    """
+    """
+    threads: 1
+    resources: mem_mb=snake_utils.mem_mb_times_input # Todo test if sufficient
+    input:
+        corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        corr_path_ch3=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+        fictrac_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/fictrac/fictrac_behavior_data.dat",
+        metadata_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/imaging/recording_metadata.xml"
+    output:
+        save_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        save_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        save_path_ch3=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+    run:
+        try:
+            preprocessing.correlation(fly_directory=fly_folder_to_process_oak,
+                                dataset_path=[input.corr_path_ch1, input.corr_path_ch2, input.corr_path_ch3],
+                                save_path=[output.save_path_ch1, output.save_path_ch2, output.save_path_ch3],
+                                #behavior=input.fictrac_path,
+                                fictrac_fps=fictrac_fps,
+                                metadata_path=input.metadata_path,
+                                fictrac_path=input.fictrac_path)
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_correlation')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
