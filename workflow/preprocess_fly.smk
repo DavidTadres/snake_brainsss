@@ -768,7 +768,7 @@ rule temporal_high_pass_filter_rule:
 rule correlation_rule:
     """
     """
-    threads: 1
+    threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input # Todo test if sufficient
     input:
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
