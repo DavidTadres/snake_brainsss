@@ -767,9 +767,18 @@ rule temporal_high_pass_filter_rule:
 
 rule correlation_rule:
     """
+    With mem_mb_times_input I got:
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:23
+    CPU Efficiency: 32.86% of 00:01:10 core-walltime
+    Job Wall-clock time: 00:00:35
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 9.13 GB (9.13 GB/node)
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input # Todo test if sufficient
+    resources: mem_mb=snake_utils.mem_mb_times_input
     input:
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],

@@ -269,7 +269,11 @@ def correlation(fly_directory, dataset_path, save_path,
 
         # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
         brain_mean = brain.mean(axis=-1)#, dtype=np.float64)
-        fictrac_mean = fictrac_interp.mean(dtype=np.float64)
+        # When I plot the data plt.plot(fictrac_interp) and plt.plot(fictrac_interp.astype(np.float32) I
+        # can't see a difference. Should be ok to do this as float.
+        # This is advantagous because we have to do the dot product with the brain. np.dot will
+        # default to higher precision leading to making a copy of brain data which costs a lot of memory
+        fictrac_mean = fictrac_interp.mean(dtype=np.float32)
 
         print('mean done')
         # >> Typical values for z scored brain seem to be between -25 and + 25.
@@ -280,7 +284,7 @@ def correlation(fly_directory, dataset_path, save_path,
         # for readability, assign a view of brain to brain_mean_m
         brain_mean_m = brain
         # fictrac data is small, so working with float64 shouldn't cost much memory!
-        fictrac_mean_m = fictrac_interp.astype(np.float64) - fictrac_mean
+        fictrac_mean_m = fictrac_interp.astype(np.float32) - fictrac_mean
         print('mean_m done')
 
         normbrain = np.linalg.norm(brain_mean_m, axis=-1) # Make a copy, but since there's no time dimension it's quite small
