@@ -61,18 +61,17 @@ def time_for_moco_input(wildcards, input):
     """
     if input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []:
         # if all three channels are used
-        time_in_minutes = input.size_mb/1000*15
+        time_in_minutes = (input.size_mb/1000)*15 # /1000 to get Gb, then *minutes
     elif (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != []) or \
         (input.brain_paths_ch1 != [] and input.brain_paths_ch3 != []) or \
         (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []):
         # if only two channels are in use
-        time_in_minutes = input.size_mb/1000*30
+        time_in_minutes = (input.size_mb/1000)*30 # /1000 to get Gb, then *minutes
     else:
         # only one channel is provided:
-        time_in_minutes = input.size_mb/1000*45
+        time_in_minutes = (input.size_mb/1000)*45 # /1000 to get Gb, then *minutes
 
     #hours = int(np.floor(time_in_minutes / 60))
     #minutes = int(np.ceil(time_in_minutes % 60))
     #string_to_return = str(hours) + ':' + str(minutes) + ':00'
-    #return(str(time_in_minutes))
-    return(str(1))
+    return(str(time_in_minutes*60))

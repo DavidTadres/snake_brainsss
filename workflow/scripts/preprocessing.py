@@ -200,17 +200,25 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, m
 
         # >> Typical values for z scored brain seem to be between -25 and + 25.
         # It shouldn't be necessary to cast as float64. This then allows us
-        # to do in-place operationws
+        # to do in-place operation!
         #brain_mean_m = brain.astype(np.float64) - brain_mean[:,:,:,None]
+        brain-=brain_mean[:,:,:,None] # this overwrites original data of 'brain' in memory!
+        # for readability, assign a view of brain to brain_mean_m
+        brain_mean_m = brain
+        # fictrac data is small, so working with float64 shouldn't cost much memory!
         fictrac_mean_m = fictrac_interp.astype(np.float64) - fictrac_mean
 
-        normbrain = np.linalg.norm(brain_mean_m, axis=-1)
+        normbrain = np.linalg.norm(brain_mean_m, axis=-1) # Make a copy, but since there's no time dimension it's quite small
         normfictrac = np.linalg.norm(fictrac_mean_m)
 
-        corr_brain = np.dot(brain_mean_m/normbrain[:,:,:,None], fictrac_mean_m/normfictrac)
+        # Do another inplace operation to save memory
+        #corr_brain = np.dot(brain_mean_m/normbrain[:,:,:,None], fictrac_mean_m/normfictrac)
+        brain/=normbrain[:,:,:,None]
+        corr_brain = np.dot(brain, fictrac_mean_m/normfictrac) # here we of course make a full copy of the array again.
+        # To conclude, I expect to need more than 2x input size but not 3x. Todo test!
 
         printlog("Finished calculating correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
-
+        TESTING=False
         if TESTING:
 
             from scipy.stats import pearsonr
@@ -258,10 +266,11 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, m
             warp_str = '_warp'
         else:
             warp_str = ''
-        if grey_only:
-            grey_str = '_grey'
-        else:
-            grey_str = ''
+        printlog('grey_only not implemented yet')
+        #if grey_only:
+        #    grey_str = '_grey'
+        #else:
+        #    grey_str = ''
         #if 'zscore' not in full_load_path:
         if 'zscore' not in current_dataset_path.parts:
             no_zscore_highpass_str = '_mocoonly'
