@@ -130,6 +130,10 @@ def correlation(fly_directory, dataset_path, save_path,
     # and when we look at e.g. timestamps[0,:] we see times in ms it took to record that particular
     # volume (e.g. [104.6, 113.3 ... 523..27])
 
+    # Extract 'behavior' to be correlated with neural activity from savepath
+    behavior = save_path[0].name.split("corr_")[-1].split('.nii')[0]
+    # This should yield for example 'dRotLabZneg'
+
     printlog('grey_only not implemented yet')
     '''### this means only calculat correlation during periods of grey stimuli ###
     if grey_only:
@@ -223,7 +227,6 @@ def correlation(fly_directory, dataset_path, save_path,
         printlog("Finished calculating correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
         TESTING=False
         if TESTING:
-
             from scipy.stats import pearsonr
             # Keep for a few tests for now
             ##### BELLAS LOOP CODE BELOW ####
@@ -231,6 +234,8 @@ def correlation(fly_directory, dataset_path, save_path,
             x_dim = brain.shape[0]
             y_dim = brain.shape[1]
             z_dim = brain.shape[2]
+
+            idx_to_use = list(range(timestamps.shape[0]))
 
             corr_brain = np.zeros((x_dim, y_dim, z_dim))
             # For z dimension
@@ -241,7 +246,6 @@ def correlation(fly_directory, dataset_path, save_path,
                 # Why in here and what does z do?
                 fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
                                                                     timestamps=timestamps, z=z)
-
                 # for x dimension
                 for i in range(x_dim):
                     # for y dimension

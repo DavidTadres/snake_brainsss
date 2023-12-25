@@ -207,7 +207,7 @@ def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, time
     # Replace Nans with zeros (for later code)
     np.nan_to_num(fictrac_interp, copy=False);
     
-    return fictrac_interp
+    return(fictrac_interp)
 
 def make_2d_hist(fictrac, fictrac_path, full_id, save=True, fixed_crop=True):
     fig = plt.figure(figsize=(10, 10))
