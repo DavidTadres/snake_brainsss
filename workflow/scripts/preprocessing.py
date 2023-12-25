@@ -171,7 +171,7 @@ def correlation(fly_directory, dataset_path, save_path,
     ### interpolate fictrac to match the timestamps from the microscope!
     # Note that I use timestamps.flatten(). This converts the timestamps.shape > (602,49) to
     # timestamps.flatten().shape > (29498,) which is just 602*49.
-    fictrac_interp = utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
+    fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
                                                         timestamps=timestamps.flatten())#, z=z)
     # z parameter is used as timestamps[:,z] to return the fictrac data for a given z slice
     # Since we now want all slices at the same time we can just ignore it

@@ -235,7 +235,7 @@ for current_path in imaging_file_paths:
     if 'func' in current_path:
         imaging_paths_corr.append(current_path.split('/imaging')[0])
 # Behavior to be correlated with z scored brain activity
-corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
+corr_behaviors = ['dRotLabZneg']#, 'dRotLabZpos', 'dRotLabY']
 ####
 
 '''
