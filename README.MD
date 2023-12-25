@@ -95,7 +95,17 @@ source .env_snake_brainsss/bin/activate
 1) We assume that a given fly was imaged with a given set of channels. i.e. if fly001 has GCaMP and tdTomato it is assumed
    that ALL folders inside fly001 have data with two channels! 
 
-Questions:
+###
+# Questions:
+###
 1) I'm unsure about whether the conversion from uint16 to float32 is necessary and whether it's ok to convert back to 
-   uint16 (happens for example when writing the h5 file back to a nii file). 
-2) Why use nibabel at all? e.g. motion correction ants.registration takes a numpy array it seems. 
+   uint16 (happens for example when writing the h5 file back to a nii file).  
+2) Why use nibabel at all? e.g. motion correction ants.registration takes a numpy array it seems. > Probably because
+   it can be opened natively in fiji?
+
+###
+# Other notes:
+###
+1) Dangerous: in fictrac_utils.smooth_and_interp_fictrac the scipy.signal.savgol filter has a fixed smoothing
+   length that does NOT depend on the framerate. This will yield different smoothing results depending on the 
+   recording framerate!

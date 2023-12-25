@@ -1,5 +1,5 @@
 # Functions to be called from snakefiles
-
+import numpy as np
 def mem_mb_times_threads(wildcards, threads):
     """
     Returns memory in mb as 7500Mb/thread (I think we have ~8Gb/thread? to be confirmed)
@@ -61,12 +61,17 @@ def time_for_moco_input(wildcards, input):
     """
     if input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []:
         # if all three channels are used
-        return(input.size_mb/1000*15)
+        time_in_minutes = input.size_mb/1000*15
     elif (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != []) or \
         (input.brain_paths_ch1 != [] and input.brain_paths_ch3 != []) or \
         (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []):
         # if only two channels are in use
-        return(input.size_mb/1000*30)
+        time_in_minutes = input.size_mb/1000*30
     else:
         # only one channel is provided:
-        return(input.size_mb/1000*45)
+        time_in_minutes = input.size_mb/1000*45
+
+    hours = int(np.floor(time_in_minutes / 60))
+    minutes = int(np.ceil(time_in_minutes % 60))
+    string_to_return = str(hours) + ':' + str(minutes) + ':00'
+    return(string_to_return)

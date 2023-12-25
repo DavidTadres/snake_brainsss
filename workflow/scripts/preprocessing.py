@@ -34,6 +34,7 @@ sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
 from brainsss import moco_utils
 from brainsss import utils
 from brainsss import fictrac_utils
+from brainsss import corr_utils
 
 
 def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, metadata_path, fictrac_path):
@@ -121,6 +122,10 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, m
     # We will have a list of functional channels here but
     # all from the same experiment, so all will have the same 'recording_metadata.xml' data
     timestamps = utils.load_timestamps(metadata_path)
+    # These are timestamps PER FRAME. For example, for a volume with 49 z slices and 602 volumes
+    # timestamps.shape > (602, 49).
+    # and when we look at e.g. timestamps[0,:] we see times in ms it took to record that particular
+    # volume (e.g. [104.6, 113.3 ... 523..27])
 
     printlog('grey_only not implemented yet')
     '''### this means only calculat correlation during periods of grey stimuli ###
@@ -144,8 +149,8 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, m
     #else:'''
     # Makes a list of indexes, one for each image frame - check if each frame or each volume.
     # I'm going to assume each volume but check!
-    idx_to_use = list(range(timestamps.shape[0]))
-    print("timestamps.shape[0]) " + repr(timestamps.shape[0]))
+    #idx_to_use = list(range(timestamps.shape[0]))
+    # this would be 602 which are volume timepoints!
 
     ### Load fictrac ###
     #fictrac_raw = brainsss.load_fictrac(os.path.join(load_directory, 'fictrac'))
@@ -153,12 +158,17 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, m
     # uses the same function as in fictrac_qc...
     fictrac_raw = fictrac_utils.load_fictrac(fictrac_path)
     resolution = 10  # desired resolution in ms
-    expt_len = fictrac_raw.shape[0] / fictrac_fps * 1000
+    expt_len = (fictrac_raw.shape[0] / fictrac_fps) * 1000
+    # how many datapoints divide by how many times per seconds,in ms
 
-    ### interpolate fictrac to match the timestamps
+    ### interpolate fictrac to match the timestamps from the microscope!
+    # Note that I use timestamps.flatten(). This converts the timestamps.shape > (602,49) to
+    # timestamps.flatten().shape > (29498,) which is just 602*49.
     fictrac_interp = utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
-                                                        timestamps=timestamps, z=z)
-    #>>>TODO - see what the smooth_and_interp_fictrac does exactly to properly set the z parameter!!! <<<
+                                                        timestamps=timestamps.flatten())#, z=z)
+    # z parameter is used as timestamps[:,z] to return the fictrac data for a given z slice
+    # Since we now want all slices at the same time we can just ignore it
+
     ### Load brain ###
     printlog('loading brain')
     #full_load_path = os.path.join(load_directory, brain_file)
@@ -177,69 +187,104 @@ def correlation(fly_directory, dataset_path, save_path, behavior, fictrac_fps, m
             printlog('Loaded nii file - BEWARE, I have not tested this. Better to use h5 files!')
         elif '.h5' in current_dataset_path.name:
             with h5py.File(current_dataset_path, 'r') as hf:
-                brain = hf['data'][:]
+                brain = hf['data'][:] # load everything into memory!
 
-    printlog('done')
+        printlog('done')
 
-    # Get brain size
-    x_dim = brain.shape[0]
-    y_dim = brain.shape[1]
-    z_dim = brain.shape[2]
+        ### Correlate ###
+        printlog("Performing correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
 
-    ### Correlate ###
-    printlog("Performing Correlation on {}; behavior: {}".format(brain_file, behavior))
-    corr_brain = np.zeros((x_dim, y_dim, z_dim))
-    # For z dimension
-    for z in range(z_dim):
+        # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
+        brain_mean = brain.mean(axis=-1, dtype=np.float64)
+        fictrac_mean = fictrac_interp.mean(dtype=np.float64)
 
-        ### interpolate fictrac to match the timestamps of this slice
-        printlog(F"{z}")
-        # Why in here and what does z do?
-        fictrac_interp = brainsss.smooth_and_interp_fictrac(fictrac_raw, fps, resolution, expt_len, behavior,
-                                                            timestamps=timestamps, z=z)
+        # >> Typical values for z scored brain seem to be between -25 and + 25.
+        # It shouldn't be necessary to cast as float64. This then allows us
+        # to do in-place operationws
+        #brain_mean_m = brain.astype(np.float64) - brain_mean[:,:,:,None]
+        fictrac_mean_m = fictrac_interp.astype(np.float64) - fictrac_mean
 
-        # for x dimension
-        for i in range(x_dim):
-            # for y dimension
-            for j in range(y_dim):
-                # nan to num should be taken care of in zscore, but checking here for some already processed brains
-                if np.any(np.isnan(brain[i, j, z, :])):
-                    printlog(F'warning found nan at x = {i}; y = {j}; z = {z}')
-                    corr_brain[i, j, z] = 0
-                elif len(np.unique(brain[i, j, z, :])) == 1:
-                    #     if np.unique(brain[i,j,z,:]) != 0:
-                    #         printlog(F'warning found non-zero constant value at x = {i}; y = {j}; z = {z}')
-                    corr_brain[i, j, z] = 0
-                else:
-                    # idx_to_use can be used to select a subset of timepoints
-                    corr_brain[i, j, z] = \
-                    scipy.stats.pearsonr(fictrac_interp[idx_to_use], brain[i, j, z, :][idx_to_use])[0]
+        normbrain = np.linalg.norm(brain_mean_m, axis=-1)
+        normfictrac = np.linalg.norm(fictrac_mean_m)
 
-    ### SAVE ###
-    if not os.path.exists(save_directory):
-        os.mkdir(save_directory)
+        corr_brain = np.dot(brain_mean_m/normbrain[:,:,:,None], fictrac_mean_m/normfictrac)
 
-    if 'warp' in full_load_path:
-        warp_str = '_warp'
-    else:
-        warp_str = ''
-    if grey_only:
-        grey_str = '_grey'
-    else:
-        grey_str = ''
-    if 'zscore' not in full_load_path:
-        no_zscore_highpass_str = '_mocoonly'
-    else:
-        no_zscore_highpass_str = ''
+        printlog("Finished calculating correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
 
-    # date = time.strftime("%Y%m%d")
-    date = '20220420' # Why is a date hardcoded here?
+        if TESTING:
 
-    save_file = os.path.join(save_directory,
-                             '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
-    nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
-    printlog("Saved {}".format(save_file))
-    save_maxproj_img(save_file)
+            from scipy.stats import pearsonr
+            # Keep for a few tests for now
+            ##### BELLAS LOOP CODE BELOW ####
+            # Get brain size
+            x_dim = brain.shape[0]
+            y_dim = brain.shape[1]
+            z_dim = brain.shape[2]
+
+            corr_brain = np.zeros((x_dim, y_dim, z_dim))
+            # For z dimension
+            for z in range(z_dim):
+
+                ### interpolate fictrac to match the timestamps of this slice
+                printlog(F"{z}")
+                # Why in here and what does z do?
+                fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
+                                                                    timestamps=timestamps, z=z)
+
+                # for x dimension
+                for i in range(x_dim):
+                    # for y dimension
+                    for j in range(y_dim):
+                        # nan to num should be taken care of in zscore, but checking here for some already processed brains
+                        if np.any(np.isnan(brain[i, j, z, :])):
+                            printlog(F'warning found nan at x = {i}; y = {j}; z = {z}')
+                            corr_brain[i, j, z] = 0
+                        elif len(np.unique(brain[i, j, z, :])) == 1:
+                            #     if np.unique(brain[i,j,z,:]) != 0:
+                            #         printlog(F'warning found non-zero constant value at x = {i}; y = {j}; z = {z}')
+                            corr_brain[i, j, z] = 0
+                        else:
+                            # idx_to_use can be used to select a subset of timepoints
+                            corr_brain[i, j, z] = \
+                            pearsonr(fictrac_interp[idx_to_use], brain[i, j, z, :][idx_to_use])[0]
+
+        ### SAVE ###
+        #if not os.path.exists(save_directory):
+        #    os.mkdir(save_directory)
+        current_save_path.parent.mkdir(exist_ok=True, parents=True)
+
+        #if 'warp' in full_load_path:
+        if 'warp' in current_dataset_path.parts:
+            warp_str = '_warp'
+        else:
+            warp_str = ''
+        if grey_only:
+            grey_str = '_grey'
+        else:
+            grey_str = ''
+        #if 'zscore' not in full_load_path:
+        if 'zscore' not in current_dataset_path.parts:
+            no_zscore_highpass_str = '_mocoonly'
+        else:
+            no_zscore_highpass_str = ''
+
+        # date = time.strftime("%Y%m%d")
+        #date = '20220420' # Why is a date hardcoded here?
+        now = datetime.datetime.now()
+        date = now.strftime("%Y%m%d")
+
+        save_file = pathlib.Path(current_save_path,
+                                '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
+        #save_file = os.path.join(save_directory,
+        #                         '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
+        aff = np.eye(4)
+        object_to_save = nib.Nifti1Image(corr_brain, aff)
+        #nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
+        object_to_save.to_filename(save_file)
+
+        printlog("Saved {}".format(save_file))
+        corr_utils.save_maxproj_img(image_to_max_project=corr_brain,
+                                    path=save_file)
 
 def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_filtered_path):
     """

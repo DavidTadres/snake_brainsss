@@ -139,7 +139,7 @@ def interpolate_fictrac(fictrac, timestamps, fps, dur, behavior='speed',sigma=3,
     
     return fictrac_interp
 
-def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, timestamps=None, smoothing=25, z=None):
+def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, timestamps=None):#, smoothing=25, z=None):
 
     if behavior == 'dRotLabZpos':
       behavior = 'dRotLabZ'
@@ -155,7 +155,18 @@ def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, time
     x_original = np.arange(0,expt_len,camera_rate) # same shape as fictrac (e.g. 20980)
 
     ### smooth ###
-    fictrac_smoothed = scipy.signal.savgol_filter(np.asarray(fictrac[behavior]),smoothing,3) # Identical shape in output as input, e.g. 20980
+    # >>> DANGEROUS - the filter length of the following function is not normalized by the fps
+    # e.g. Bella recorded at 100 fps and if we do fictrac_smooth with window length 25 we get
+    # filtered data over 10ms * 25 = 250ms.
+    # If I record at 50fps each frame is only 20ms. We still filter over 25 points so now we
+    # filter over 25*20 = 500ms
+    # <<<<
+    # I remove the smoothing input from this function and make it dependent on the fps
+    smoothing = int(np.ceil(0.25/(1/50))) # This will always yield 250 ms (or the next closest
+    # possible number, e.g. if we have 50fps we would get a smotthing window of 12.5 which we can't
+    # index of course. We always round up so with 50 fps we'd get 13 = 260 ms
+    fictrac_smoothed = scipy.signal.savgol_filter(np.asarray(fictrac[behavior]),smoothing,3)
+    # Identical shape in output as input, e.g. 20980
 
     ### clip if desired ###
     if clip == 'pos':
@@ -166,13 +177,15 @@ def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, time
     ### interpolate ###
     # This function probably just returns everything from an input array
     fictrac_interp_temp = interp1d(x_original, fictrac_smoothed, bounds_error = False) # yields a function
-    xnew = np.arange(0,expt_len,resolution) #0 to last time at subsample res ## different number, e.g. 41960, or just 2x shape before.
+    xnew = np.arange(0,expt_len,resolution) #0 to last time at subsample res
+    # ## different number, e.g. 41960, or just 2x shape before.
     # This is probably because resolution is set to 10. If framerate is 50 we have a frame every 20 ms.
     if timestamps is None:
       fictrac_interp = fictrac_interp_temp(xnew)
     else:
       # So we only select which timestamps here.
-      fictrac_interp = fictrac_interp_temp(timestamps[:,z])
+      #fictrac_interp = fictrac_interp_temp(timestamps[:,z]) # This would return ALL timestamps per z slice
+      fictrac_interp = fictrac_interp_temp(timestamps)
 
     ### convert units for common cases ###
     sphere_radius = 4.5e-3 # in m
