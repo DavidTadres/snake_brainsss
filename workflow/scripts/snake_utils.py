@@ -71,7 +71,7 @@ def time_for_moco_input(wildcards, input):
         # only one channel is provided:
         time_in_minutes = input.size_mb/1000*45
 
-    hours = int(np.floor(time_in_minutes / 60))
-    minutes = int(np.ceil(time_in_minutes % 60))
-    string_to_return = str(hours) + ':' + str(minutes) + ':00'
-    return(string_to_return)
+    #hours = int(np.floor(time_in_minutes / 60))
+    #minutes = int(np.ceil(time_in_minutes % 60))
+    #string_to_return = str(hours) + ':' + str(minutes) + ':00'
+    return(str(time_in_minutes))
