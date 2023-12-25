@@ -239,6 +239,9 @@ corr_behaviors = ['dRotLabZneg']#, 'dRotLabZpos', 'dRotLabY']
 
 # List of paths for moco meanbrains
 imaging_paths_moco_meanbrain = []
+for current_path in imaging_file_paths:
+    imaging_paths_moco_meanbrain.append(current_path.split('/imaging')[0])
+print("imaging_paths_moco_meanbrain" + repr(imaging_paths_moco_meanbrain))
 
 ####
 
@@ -371,6 +374,12 @@ rule all:
         expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
         expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
         expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+        ###
+        # Meanbrain of moco brain
+        ###
+        expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [], moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
 
 rule fictrac_qc_rule:
     """
@@ -771,15 +780,17 @@ rule temporal_high_pass_filter_rule:
 
 rule correlation_rule:
     """
-    With mem_mb_times_input I got:
-    State: OUT_OF_MEMORY (exit code 0)
+    
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_input
+    State: COMPLETED (exit code 0)
     Nodes: 1
     Cores per node: 2
-    CPU Utilized: 00:00:23
-    CPU Efficiency: 32.86% of 00:01:10 core-walltime
-    Job Wall-clock time: 00:00:35
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 9.13 GB (9.13 GB/node)
+    CPU Utilized: 00:01:02
+    CPU Efficiency: 27.93% of 00:03:42 core-walltime
+    Job Wall-clock time: 00:01:51
+    Memory Utilized: 4.44 GB
+    Memory Efficiency: 48.59% of 9.13 GB
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input

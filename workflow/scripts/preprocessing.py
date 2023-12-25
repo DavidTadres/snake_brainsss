@@ -297,43 +297,6 @@ def correlation(fly_directory, dataset_path, save_path,
         # To conclude, I expect to need more than 2x input size but not 3x. Todo test!
 
         printlog("Finished calculating correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
-        TESTING=False
-        if TESTING:
-            from scipy.stats import pearsonr
-            # Keep for a few tests for now
-            ##### BELLAS LOOP CODE BELOW ####
-            # Get brain size
-            x_dim = brain.shape[0]
-            y_dim = brain.shape[1]
-            z_dim = brain.shape[2]
-
-            idx_to_use = list(range(timestamps.shape[0]))
-
-            corr_brain = np.zeros((x_dim, y_dim, z_dim))
-            # For z dimension
-            for z in range(z_dim):
-
-                ### interpolate fictrac to match the timestamps of this slice
-                printlog(F"{z}")
-                # Why in here and what does z do?
-                fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
-                                                                    timestamps=timestamps, z=z)
-                # for x dimension
-                for i in range(x_dim):
-                    # for y dimension
-                    for j in range(y_dim):
-                        # nan to num should be taken care of in zscore, but checking here for some already processed brains
-                        if np.any(np.isnan(brain[i, j, z, :])):
-                            printlog(F'warning found nan at x = {i}; y = {j}; z = {z}')
-                            corr_brain[i, j, z] = 0
-                        elif len(np.unique(brain[i, j, z, :])) == 1:
-                            #     if np.unique(brain[i,j,z,:]) != 0:
-                            #         printlog(F'warning found non-zero constant value at x = {i}; y = {j}; z = {z}')
-                            corr_brain[i, j, z] = 0
-                        else:
-                            # idx_to_use can be used to select a subset of timepoints
-                            corr_brain[i, j, z] = \
-                            pearsonr(fictrac_interp[idx_to_use], brain[i, j, z, :][idx_to_use])[0]
 
         ### SAVE ###
         #if not os.path.exists(save_directory):
@@ -374,6 +337,52 @@ def correlation(fly_directory, dataset_path, save_path,
         printlog("Saved {}".format(save_file))
         corr_utils.save_maxproj_img(image_to_max_project=corr_brain,
                                     path=save_file)
+        printlog("Saved png plot")
+
+        TESTING=True
+        if TESTING:
+            from scipy.stats import pearsonr
+            # Keep for a few tests for now
+            ##### BELLAS LOOP CODE BELOW ####
+            # Get brain size
+            x_dim = brain.shape[0]
+            y_dim = brain.shape[1]
+            z_dim = brain.shape[2]
+
+            idx_to_use = list(range(timestamps.shape[0]))
+
+            corr_brain = np.zeros((x_dim, y_dim, z_dim))
+            # For z dimension
+            for z in range(z_dim):
+
+                ### interpolate fictrac to match the timestamps of this slice
+                printlog(F"{z}")
+                # Why in here and what does z do?
+                fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
+                                                                    timestamps=timestamps, z=z)
+                # for x dimension
+                for i in range(x_dim):
+                    # for y dimension
+                    for j in range(y_dim):
+                        # nan to num should be taken care of in zscore, but checking here for some already processed brains
+                        if np.any(np.isnan(brain[i, j, z, :])):
+                            printlog(F'warning found nan at x = {i}; y = {j}; z = {z}')
+                            corr_brain[i, j, z] = 0
+                        elif len(np.unique(brain[i, j, z, :])) == 1:
+                            #     if np.unique(brain[i,j,z,:]) != 0:
+                            #         printlog(F'warning found non-zero constant value at x = {i}; y = {j}; z = {z}')
+                            corr_brain[i, j, z] = 0
+                        else:
+                            # idx_to_use can be used to select a subset of timepoints
+                            corr_brain[i, j, z] = \
+                            pearsonr(fictrac_interp[idx_to_use], brain[i, j, z, :][idx_to_use])[0]
+
+            save_file = pathlib.Path(current_save_path.parent, current_save_path.name.split('.nii') + '_testing.nii')
+            aff = np.eye(4)
+            object_to_save = nib.Nifti1Image(corr_brain, aff)
+            # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
+            object_to_save.to_filename(save_file)
+
 
 def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_filtered_path):
     """

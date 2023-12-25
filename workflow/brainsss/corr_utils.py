@@ -27,4 +27,4 @@ def save_maxproj_img(image_to_max_project, path):
     savepath = pathlib.Path(path.parent, path.name.split(path.suffix)[0] + '.png')
 
     save_file = path[:-3] + 'png'
-    plt.savefig(savepath, bbox_inches='tight', dpi=300)
+    fig.savefig(savepath, bbox_inches='tight', dpi=300)
