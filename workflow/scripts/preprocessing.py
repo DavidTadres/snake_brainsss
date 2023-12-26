@@ -19,7 +19,7 @@ import shutil
 import ants
 import h5py
 from scipy import ndimage
-from scipy import filters
+import scipy
 import sklearn
 
 
@@ -82,7 +82,7 @@ def clean_anatomy(fly_directory, dataset_path, save_path):
     ### Blur brain and mask small values ###
     brain_copy = brain.copy()# Not necessary, already cast as float32.astype('float32')
     brain_copy = ndimage.gaussian_filter(brain_copy, sigma=10)
-    threshold = filters.triangle(brain_copy)
+    threshold = scipy.filters.triangle(brain_copy)
     brain_copy[np.where(brain_copy < threshold/2)] = 0
 
     ### Remove blobs outside contiguous brain ###
