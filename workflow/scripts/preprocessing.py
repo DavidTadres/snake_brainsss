@@ -96,9 +96,11 @@ def clean_anatomy(fly_directory, dataset_path, save_path):
     brain_copy[np.where(brain_copy < threshold/2)] = 0 # Set every value below threshold to zero
 
     ### Remove blobs outside contiguous brain ###
-    labels, label_nb = ndimage.label(brain_copy)
+    labels, label_nb = ndimage.label(brain_copy) # This is done on the already thresholded brain
     brain_label = np.bincount(labels.flatten())[1:].argmax()+1
-    brain_copy = brain.copy().astype('float32')
+
+    # Make another copy of brain
+    brain_copy = brain.copy() # Not necessary, already cast as float32 ".astype('float32')"
     brain_copy[np.where(labels != brain_label)] = np.nan
 
     ### Perform quantile normalization ###

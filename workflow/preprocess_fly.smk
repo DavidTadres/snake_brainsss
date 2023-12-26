@@ -888,7 +888,7 @@ rule moco_mean_brain_rule:
     Similar to make mean brain but takes moco corrected brain! 
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_less_times_input
+    resources: mem_mb=snake_utils.mem_mb_times_input
     input:
         str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco.h5"
         #moco_ch1=str(fly_folder_to_process_oak) +"/{moco_meanbr_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else [],
