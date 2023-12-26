@@ -139,7 +139,7 @@ def interpolate_fictrac(fictrac, timestamps, fps, dur, behavior='speed',sigma=3,
     
     return fictrac_interp
 
-def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, timestamps=None):#, smoothing=25, z=None):
+def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, timestamps=None,z=None):#, smoothing=25, z=None):
 
     if behavior == 'dRotLabZpos':
       behavior = 'dRotLabZ'
@@ -182,6 +182,8 @@ def smooth_and_interp_fictrac(fictrac, fps, resolution, expt_len, behavior, time
     # This is probably because resolution is set to 10. If framerate is 50 we have a frame every 20 ms.
     if timestamps is None:
       fictrac_interp = fictrac_interp_temp(xnew)
+    elif z is not None: # For testing only!
+        fictrac_interp = fictrac_interp_temp(timestamps[:, z])
     else:
       # So we only select which timestamps here.
       #fictrac_interp = fictrac_interp_temp(timestamps[:,z]) # This would return ALL timestamps per z slice
