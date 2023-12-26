@@ -304,6 +304,7 @@ def correlation(fly_directory, dataset_path, save_path,
                                                         timestamps=timestamps)#, z=z)
     # z parameter is used as timestamps[:,z] to return the fictrac data for a given z slice
     # Since we now want all slices at the same time we can just ignore it
+    print("fictrac_interp.shape " + repr(fictrac_interp.shape))
 
     ### Load brain ###
     printlog('loading brain')
@@ -344,6 +345,7 @@ def correlation(fly_directory, dataset_path, save_path,
         # to do in-place operation!
         #brain_mean_m = brain.astype(np.float64) - brain_mean[:,:,:,None]
         brain-=brain_mean[:,:,:,None] # this overwrites original data of 'brain' in memory!
+        # expected dimensions=1
         # for readability, assign a view of brain to brain_mean_m
         brain_mean_m = brain
         # fictrac data is small, so working with float64 shouldn't cost much memory!
@@ -356,7 +358,7 @@ def correlation(fly_directory, dataset_path, save_path,
 
         # Do another inplace operation to save memory
         #corr_brain = np.dot(brain_mean_m/normbrain[:,:,:,None], fictrac_mean_m/normfictrac)
-        brain/=normbrain[:,:,:,None]
+        brain_mean_m/=normbrain[:,:,:,None]
         print('brain/=normbrain done')
         corr_brain = np.dot(brain, fictrac_mean_m/normfictrac) # here we of course make a full copy of the array again.
         # To conclude, I expect to need more than 2x input size but not 3x. Todo test!
@@ -404,7 +406,7 @@ def correlation(fly_directory, dataset_path, save_path,
         #                            path=save_file)
         #printlog("Saved png plot")
 
-        TESTING=True
+        TESTING=False
         if TESTING:
             del brain # remove brain from memory
             del corr_brain
