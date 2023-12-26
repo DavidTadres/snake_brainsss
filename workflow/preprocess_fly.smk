@@ -904,8 +904,8 @@ rule moco_mean_brain_rule:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
                                             meanbrain_n_frames=meanbrain_n_frames,
-                                            path_to_read=[input],
-                                            path_to_save=[output])
+                                            path_to_read=input,
+                                            path_to_save=output)
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_moco_mean_brain')
             utils.write_error(logfile=logfile,

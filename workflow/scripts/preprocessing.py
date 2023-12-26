@@ -90,7 +90,7 @@ def clean_anatomy(fly_directory, dataset_path, save_path):
     # memory requirement!
 
     threshold = skimage.filters.threshold_triangle(brain_copy) # this is a threshold detection
-    # algorithm.
+    # algorithm (Similar to Otsu).
     brain_copy[np.where(brain_copy < threshold/2)] = 0
 
     ### Remove blobs outside contiguous brain ###
