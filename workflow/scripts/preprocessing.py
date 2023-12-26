@@ -173,56 +173,24 @@ def correlation(fly_directory, dataset_path, save_path,
                 fictrac_fps,
                 metadata_path, fictrac_path):
     """
-    docs
+    Correlate z-scored brain activity with behavioral activity.
+
+    The original function from brainsss was a triple looped call to scipy>pearsonr which took quite long as
+    this example shows
+    | SLURM | corr | 20559045 | COMPLETED | 00:28:55 | 4 cores | 21.7GB (69.7%)
+
+    To speed the correlation up, I used only the parts from the scipy pearsonr function we need.
+    One difference is that we only work in float32 space. The scipy function would cast everything as float64,
+    doubling the memory requirements.
+    When I subtract the vectorized result with the looped scipy pearson result I gat a max(diff) of 9.8e-8. This
+    should not be relevant for us.
+
+    See script 'pearson_correlation.py' - the vectorized version should take 0.03% of the time the
+    scipy version does.
+
     :param args:
     :return:
     """
-
-    '''
-    from brainsss.preprocessing.py file
-    # seems to be individual func folders, I'll make sure to parallelize this. 
-    for func in funcs:
-        load_directory = os.path.join(func)
-        save_directory = os.path.join(func, 'corr')
-        if use_warp:
-            brain_file = 'functional_channel_2_moco_zscore_highpass_warped.nii'
-            fps = 100
-        elif loco_dataset:
-            brain_file = 'brain_zscored_green_high_pass_masked.nii'
-            fps = 50
-        elif no_zscore_highpass:
-            brain_file = 'moco/functional_channel_2_moco.h5'
-            #load_directory = os.path.join(func, 'moco')
-            fps = 100
-        else:
-            brain_file = 'functional_channel_2_moco_zscore_highpass.h5'
-            fps = 100
-        
-        # each of the 3 behaviors is aligned with the 
-        behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
-        for behavior in behaviors:
-                args = {'logfile': logfile, 'load_directory': load_directory,
-                'save_directory': save_directory, 'brain_file': brain_file, 
-                'behavior': behavior, 'fps': fps, 'grey_only': grey_only}
-                script = 'correlation.py'
-                job_id = brainsss.sbatch(jobname='corr',
-                                     script=os.path.join(scripts_path, script),
-                                     modules=modules,
-                                     args=args,
-                                     logfile=logfile, time=2, mem=4, nice=nice, nodes=nodes)
-                brainsss.wait_for_job(job_id, logfile, com_path)
-    # This seems to be a long and costly analysis if we check Yandan's log!
-    | SLURM | corr | 20559045 | COMPLETED | 00:28:55 | 4 cores | 21.7GB (69.7%)                                            |
-    # I will likely not parallelize each of the three behaviors since it needs so much memory! 
-    
-    The reason this is slow is the triple nested loop calling the pearson coefficent which can only
-    handle 1D input...
-    
-    There might be n-dimensional pearson coefficent calculations I might be able to use instead?
-    
-    See script 'pearson_correlation.py' - the vectorized version should take 0.03% of the time the 
-    scipy version does.
-    '''
     #####################
     ### SETUP LOGGING ###
     #####################
@@ -231,28 +199,12 @@ def correlation(fly_directory, dataset_path, save_path,
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'correlation')
 
-    #load_directory = args['load_directory']
-    #save_directory = args['save_directory']
-    #brain_file = args['brain_file']
-    #grey_only = args['grey_only']
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
     ##########
     dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
     save_path = utils.convert_list_of_string_to_posix_path(save_path)
 
-    #behavior = args['behavior']
-    #fps = args['fps']  # of fictrac camera
-
-    #logfile = args['logfile']
-    #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-
-    #printlog(load_directory)
-
-    ### load brain timestamps ###
-    #  timestamps: [t,z] numpy array of times (in ms) of Bruker imaging frames.
-    #timestamps = brainsss.load_timestamps(os.path.join(load_directory, 'imaging'))
-    ##>> timestamps = utils.load_timestamps(pathlib.Path(dataset_path[0].name, 'imaging')) # Avoid this, use snakemake to make sure all necessary files exist!
     # We will have a list of functional channels here but
     # all from the same experiment, so all will have the same 'recording_metadata.xml' data
     timestamps = utils.load_timestamps(metadata_path)
@@ -285,13 +237,10 @@ def correlation(fly_directory, dataset_path, save_path,
             idx_to_use.extend(np.where((grey_starts[i] < timestamps[:, 0]) & (timestamps[:, 0] < grey_stops[i]))[0])
         ### this is now a list of indices where grey stim was presented
     #else:'''
-    # Makes a list of indexes, one for each image frame - check if each frame or each volume.
-    # I'm going to assume each volume but check!
-    #idx_to_use = list(range(timestamps.shape[0]))
-    # this would be 602 which are volume timepoints!
 
+    ####################
     ### Load fictrac ###
-    #fictrac_raw = brainsss.load_fictrac(os.path.join(load_directory, 'fictrac'))
+    ####################
     # Always define path in snakefile as it makes sure the file exists before even submitting a job
     # uses the same function as in fictrac_qc...
     fictrac_raw = fictrac_utils.load_fictrac(fictrac_path)
@@ -301,23 +250,15 @@ def correlation(fly_directory, dataset_path, save_path,
 
     ### interpolate fictrac to match the timestamps from the microscope!
     fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
-                                                        timestamps=timestamps
-                                                             )#, z=z)
-    # z parameter is used as timestamps[:,z] to return the fictrac data for a given z slice
-
-    ### Load brain ###
-    printlog('loading brain')
-    #full_load_path = os.path.join(load_directory, brain_file)
+                                                        timestamps=timestamps)
+    # Originally, there was a z parameter which was used as timestamps[:,z] to return the fictrac
+    # data for a given z slice. We're not using it in the vectorized verison
 
     # It's possible to have more than one channel as the functional channel
     # Since we are memory limited, do correlation for both channels consecutively!
     for current_dataset_path, current_save_path in zip(dataset_path, save_path):
-        #if full_load_path.endswith('.h5'):
-        #    with h5py.File(full_load_path, 'r') as hf:
-        #        brain = hf['data'][:]
-        #elif full_load_path.endswith('.nii'):
-        #    brain = np.asarray(nib.load(full_load_path).get_data().squeeze(), dtype='float32')
         if 'nii' in current_dataset_path.name:
+            # Avoid using get_fdata in loop. Something about cache is filling up memory quite fast!
             brain = np.asarray(nib.load(current_dataset_path).get_fdata().sqeeeze(), dtype='float32') # Never tested this
             # Also not sure it makes sense to define it as float32 because the h5>nii converter seems to save as int16.
             printlog('Loaded nii file - BEWARE, I have not tested this. Better to use h5 files!')
@@ -325,15 +266,21 @@ def correlation(fly_directory, dataset_path, save_path,
             with h5py.File(current_dataset_path, 'r') as hf:
                 brain = hf['data'][:] # load everything into memory!
 
-        printlog('done')
+        printlog('Brain loaded')
 
         ### Correlate ###
         printlog("Performing correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
+        # Preallocate an array filled with zeros
         corr_brain = np.zeros((brain.shape[0], brain.shape[1], brain.shape[2]), dtype=np.float32)
+        # Fill array with NaN to rule out that we interpret a missing value as a real value when it should be NaN
         corr_brain.fill(np.nan)
+        # Loop through each slice:
         for z in range(brain.shape[2]):
             # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
+            # The formula is:
+            # r = (sum(x-m_x)*(y-m_y) / sqrt(sum((x-m_x)^2)*sum((y-m_y)^2)
             brain_mean = brain[:,:,z,:].mean(axis=-1)#, dtype=np.float64)
+
             # When I plot the data plt.plot(fictrac_interp) and plt.plot(fictrac_interp.astype(np.float32) I
             # can't see a difference. Should be ok to do this as float.
             # This is advantagous because we have to do the dot product with the brain. np.dot will
@@ -344,21 +291,20 @@ def correlation(fly_directory, dataset_path, save_path,
             # >> Typical values for z scored brain seem to be between -25 and + 25.
             # It shouldn't be necessary to cast as float64. This then allows us
             # to do in-place operation!
-            brain_mean_m = brain[:,:,z,:].astype(np.float32) - brain_mean[:,:,None]
-            #brain-=brain_mean[:,:,:,None] # this overwrites original data of 'brain' in memory!
+            brain_mean_m = brain[:,:,z,:] - brain_mean[:,:,None]
             # fictrac data is small, so working with float64 shouldn't cost much memory!
             # Correction - if we cast as float64 and do dot product with brain, we'll copy the
             # brain to float64 array, balloning the memory requirement
             fictrac_mean_m = fictrac_interp[:,z].astype(np.float32) - fictrac_mean
 
+            # Note from scipy pearson docs: This can overflow if brain_mean_m is, for example [-5e210, 5e210, 3e200, -3e200]
+            # I doubt we'll ever get close to numbers like this.
             normbrain = np.linalg.norm(brain_mean_m, axis=-1) # Make a copy, but since there's no time dimension it's quite small
             normfictrac = np.linalg.norm(fictrac_mean_m)
 
-            # Do another inplace operation to save memory
+            # Calculate correlation
             corr_brain[:,:,z] = np.dot(brain_mean_m/normbrain[:,:,None], fictrac_mean_m/normfictrac)
-            #brain_mean_m/=normbrain[:,:,:,None]
-            #corr_brain = np.dot(brain, fictrac_mean_m/normfictrac) # here we of course make a full copy of the array again.
-            # To conclude, I expect to need more than 2x input size but not 3x. Todo test!
+
         printlog("Finished calculating correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
 
         ### SAVE ###
@@ -376,20 +322,14 @@ def correlation(fly_directory, dataset_path, save_path,
         #    grey_str = '_grey'
         #else:
         #    grey_str = ''
-        #if 'zscore' not in full_load_path:
         if 'zscore' not in current_dataset_path.parts:
             no_zscore_highpass_str = '_mocoonly'
         else:
             no_zscore_highpass_str = ''
 
-        # date = time.strftime("%Y%m%d")
-        #date = '20220420' # Why is a date hardcoded here?
-        #now = datetime.datetime.now()
-        #date = now.strftime("%Y%m%d")
-
         save_file = pathlib.Path(current_save_path)#,
         #                        '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
-        # Commened longer filename because we must define the output filename already in the snakefile.
+        # Commented longer filename because we must define the output filename already in the snakefile.
         #save_file = os.path.join(save_directory,
         #                         '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
         aff = np.eye(4)
@@ -398,9 +338,9 @@ def correlation(fly_directory, dataset_path, save_path,
         object_to_save.to_filename(save_file)
 
         printlog("Saved {}".format(save_file))
-        #corr_utils.save_maxproj_img(image_to_max_project=corr_brain,
-        #                            path=save_file)
-        #printlog("Saved png plot")
+        corr_utils.save_maxproj_img(image_to_max_project=corr_brain,
+                                    path=save_file)
+        printlog("Saved png plot")
 
         TESTING=False
         if TESTING:

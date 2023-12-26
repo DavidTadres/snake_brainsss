@@ -842,8 +842,8 @@ rule correlation_rule:
     Memory Utilized: 4.44 GB
     Memory Efficiency: 48.59% of 9.13 GB
     """
-    threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input, runtime=5 # TODO
+    threads: 1
+    resources: mem_mb=snake_utils.mem_mb_less_times_input, runtime=5 # TODO
     input:
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],

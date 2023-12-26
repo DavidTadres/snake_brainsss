@@ -26,5 +26,4 @@ def save_maxproj_img(image_to_max_project, path):
     # swap the suffix from whatever the input file is to .png
     savepath = pathlib.Path(path.parent, path.name.split(path.suffix)[0] + '.png')
 
-    save_file = path[:-3] + 'png'
     fig.savefig(savepath, bbox_inches='tight', dpi=300)
