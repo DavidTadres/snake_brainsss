@@ -21,6 +21,7 @@ import h5py
 from scipy import ndimage
 import scipy
 import sklearn
+import skimage.filters
 
 
 ####################
@@ -80,9 +81,16 @@ def clean_anatomy(fly_directory, dataset_path, save_path):
     #    brain = np.asarray(nib.load(file).get_data(), dtype='float32')
 
     ### Blur brain and mask small values ###
-    brain_copy = brain.copy()# Not necessary, already cast as float32.astype('float32')
-    brain_copy = ndimage.gaussian_filter(brain_copy, sigma=10)
-    threshold = scipy.filters.triangle(brain_copy)
+    brain_copy = brain.copy() # Make a copy in memory of the brain data, doubles memory
+    # requirement # Not necessary, already cast as float32 ".astype('float32')"
+
+    brain_copy = ndimage.gaussian_filter(brain_copy, sigma=10) # filter brain copy.
+    # Note: it doesn't seem to be necessary to make a copy of brain before calling gaussian
+    # filter. gaussian_filter makes a copy of the input array. Could be changed to save
+    # memory requirement!
+
+    threshold = skimage.filters.threshold_triangle(brain_copy) # this is a threshold detection
+    # algorithm.
     brain_copy[np.where(brain_copy < threshold/2)] = 0
 
     ### Remove blobs outside contiguous brain ###
@@ -1353,6 +1361,7 @@ def make_mean_brain(fly_directory,
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'make_mean_brain')
 
+    print('path_to_read before convert' + repr(path_to_read))
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
     #####
