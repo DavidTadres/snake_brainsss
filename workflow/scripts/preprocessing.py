@@ -1395,12 +1395,12 @@ def make_mean_brain(fly_directory,
         object_to_save = nib.Nifti1Image(meanbrain, aff) # sys.getsizeof reports this as size 0! Probably just a view of the underlying data.
         object_to_save.to_filename(current_path_to_save)
 
-    ###
-    # log success
-    ###
-    fly_print = fly_directory.name
-    func_print = path_to_read.name.split('/')[-2]
-    printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {brain_data.shape} ===> {meanbrain.shape}")
+        ###
+        # log success
+        ###
+        fly_print = pathlib.Path(fly_directory).name
+        func_print = current_path_to_read.name.split('/')[-2]
+        printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {brain_data.shape} ===> {meanbrain.shape}")
 
 def bleaching_qc(fly_directory,
                  imaging_data_path_read_from,
