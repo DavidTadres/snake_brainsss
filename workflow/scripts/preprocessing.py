@@ -41,9 +41,175 @@ from brainsss import fictrac_utils
 from brainsss import corr_utils
 
 
-def clean_anatomy(fly_directory, dataset_path, save_path):
+def main(args):
+    logfile = args['logfile']
+    save_directory = args['save_directory']
+    flip_X = args['flip_X']
+    flip_Z = args['flip_Z']
+    type_of_transform = args['type_of_transform']  # SyN or Affine
+    save_warp_params = args['save_warp_params']
+
+    fixed_path = args['fixed_path']
+    fixed_fly = args['fixed_fly']
+    fixed_resolution = args['fixed_resolution']
+
+    moving_path = args['moving_path']
+    moving_fly = args['moving_fly']
+    moving_resolution = args['moving_resolution']
+
+    low_res = args['low_res']
+    very_low_res = args['very_low_res']
+
+    iso_2um_fixed = args['iso_2um_fixed']
+    iso_2um_moving = args['iso_2um_moving']
+
+    grad_step = args['grad_step']
+    flow_sigma = args['flow_sigma']
+    total_sigma = args['total_sigma']
+    syn_sampling = args['syn_sampling']
+
+    try:
+        mimic_path = args['mimic_path']
+        mimic_fly = args['mimic_fly']
+        mimic_resolution = args['mimic_resolution']
+    except:
+        mimic_path = None
+        mimic_fly = None
+        mimic_resolution = None
+
+    width = 120
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+
+    ###################
+    ### Load Brains ###
+    ###################
+
+    ### Fixed
+    fixed = np.asarray(nib.load(fixed_path).get_data().squeeze(), dtype='float32')
+    fixed = ants.from_numpy(fixed)
+    fixed.set_spacing(fixed_resolution)
+    if low_res:
+        fixed = ants.resample_image(fixed, (256, 128, 49), 1, 0)
+    elif very_low_res:
+        fixed = ants.resample_image(fixed, (128, 64, 49), 1, 0)
+    elif iso_2um_fixed:
+        fixed = ants.resample_image(fixed, (2, 2, 2), use_voxels=False)
+
+    ### Moving
+    moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')
+    if flip_X:
+        moving = moving[::-1, :, :]
+    if flip_Z:
+        moving = moving[:, :, ::-1]
+    moving = ants.from_numpy(moving)
+    moving.set_spacing(moving_resolution)
+    if low_res:
+        moving = ants.resample_image(moving, (256, 128, 49), 1, 0)
+    elif very_low_res:
+        moving = ants.resample_image(moving, (128, 64, 49), 1, 0)
+    elif iso_2um_moving:
+        moving = ants.resample_image(moving, (2, 2, 2), use_voxels=False)
+
+    ### Mimic
+    if mimic_path is not None:
+        mimic = np.asarray(nib.load(mimic_path).get_data().squeeze(), dtype='float32')
+        if flip_X:
+            mimic = mimic[::-1, :, :]
+        if flip_Z:
+            mimic = mimic[:, :, ::-1]
+        mimic = ants.from_numpy(mimic)
+        mimic.set_spacing(mimic_resolution)
+        printlog('Starting {} to {}, with mimic {}'.format(moving_fly, fixed_fly, mimic_fly))
+    else:
+        printlog('Starting {} to {}'.format(moving_fly, fixed_fly))
+
+    #############
+    ### Align ###
+    #############
+
+    t0 = time()
+    with stderr_redirected():  # to prevent dumb itk gaussian error bullshit infinite printing
+        moco = ants.registration(fixed,
+                                 moving,
+                                 type_of_transform=type_of_transform,
+                                 grad_step=grad_step,
+                                 flow_sigma=flow_sigma,
+                                 total_sigma=total_sigma,
+                                 syn_sampling=syn_sampling)
+
+    printlog('Fixed: {}, {} | Moving: {}, {} | {} | {}'.format(fixed_fly, fixed_path.split('/')[-1], moving_fly,
+                                                               moving_path.split('/')[-1], type_of_transform,
+                                                               sec_to_hms(time() - t0)))
+
+    ################################
+    ### Save warp params if True ###
+    ################################
+
+    if save_warp_params:
+        fwdtransformlist = moco['fwdtransforms']
+        fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_fwdtransforms'.format(moving_fly, fixed_fly))
+        if low_res:
+            fwdtransforms_save_dir += '_lowres'
+        if True in [iso_2um_moving, iso_2um_fixed]:
+            fwdtransforms_save_dir += '_2umiso'
+        if not os.path.exists(fwdtransforms_save_dir):
+            os.mkdir(fwdtransforms_save_dir)
+        for source_path in fwdtransformlist:
+            source_file = source_path.split('/')[-1]
+            target_path = os.path.join(fwdtransforms_save_dir, source_file)
+            copyfile(source_path, target_path)
+
+    # Added this saving of inv transforms 2020 Dec 19
+    if save_warp_params:
+        fwdtransformlist = moco['invtransforms']
+        fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_invtransforms'.format(moving_fly, fixed_fly))
+        if low_res:
+            fwdtransforms_save_dir += '_lowres'
+        if True in [iso_2um_moving, iso_2um_fixed]:
+            fwdtransforms_save_dir += '_2umiso'
+        if not os.path.exists(fwdtransforms_save_dir):
+            os.mkdir(fwdtransforms_save_dir)
+        for source_path in fwdtransformlist:
+            source_file = source_path.split('/')[-1]
+            target_path = os.path.join(fwdtransforms_save_dir, source_file)
+            copyfile(source_path, target_path)
+
+    ##################################
+    ### Apply warp params to mimic ###
+    ##################################
+
+    if mimic_path is not None:
+        mimic_moco = ants.apply_transforms(fixed, mimic, moco['fwdtransforms'])
+
+    ############
+    ### Save ###
+    ############
+
+    # NOT SAVING MIMIC <------ MAY NEED TO CHANGE
+    if flip_X:
+        save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly)
+        # save_file = os.path.join(save_directory, mimic_fly + '_m' + '-to-' + fixed_fly + '.nii')
+    else:
+        save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly)
+        # save_file = os.path.join(save_directory, mimic_fly + '-to-' + fixed_fly + '.nii')
+    # nib.Nifti1Image(mimic_moco.numpy(), np.eye(4)).to_filename(save_file)
+    if low_res:
+        save_file += '_lowres'
+    save_file += '.nii'
+    nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(save_file)
+
+    # if flip_X:
+    #     save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly + '.nii')
+    # else:
+    #     save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly + '.nii')
+    # nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(save_file)
+
+
+def clean_anatomy(fly_directory, path_to_read, save_path):
     """
     Only on folders called anatomy!
+    Todo: Possible to save on RAM by reading brain twice instead of copying arrays!
+    Make sure to not accidentaly overwrite the original file, though.
     :param args:
     :return:
     """
@@ -64,21 +230,17 @@ def clean_anatomy(fly_directory, dataset_path, save_path):
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
     ##########
-    dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
+    path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
     save_path = utils.convert_list_of_string_to_posix_path(save_path)
+
+    printlog('Will perform clean anatomy on ' + repr(path_to_read[0]))
 
     ##########
     ### Load brain ###
     ##########
     # Since we only have a >>>single anatomy channel<<< no need to loop!
-    brain_proxy = nib.load(dataset_path[0])
+    brain_proxy = nib.load(path_to_read[0])
     brain = np.asarray(brain_proxy.dataobj, dtype=np.float32)
-    #try:
-    #    file = os.path.join(directory, 'stitched_brain_red_mean.nii')
-    #    brain = np.asarray(nib.load(file).get_data(), dtype='float32')
-    #except:
-    #    file = os.path.join(directory, 'anatomy_channel_1_moc_mean.nii')
-    #    brain = np.asarray(nib.load(file).get_data(), dtype='float32')
 
     ### Blur brain and mask small values ###
     brain_copy = brain.copy() # Make a copy in memory of the brain data, doubles memory
@@ -101,18 +263,24 @@ def clean_anatomy(fly_directory, dataset_path, save_path):
 
     # Make another copy of brain
     brain_copy = brain.copy() # Not necessary, already cast as float32 ".astype('float32')"
-    brain_copy[np.where(labels != brain_label)] = np.nan
+    brain_copy[np.where(labels != brain_label)] = np.nan # Set blobs outside brain to nan
 
     ### Perform quantile normalization ###
-    brain_out = sklearn.preprocessing.quantile_transform(brain_copy.flatten().reshape(-1, 1), n_quantiles=500, random_state=0, copy=True)
+    #brain_out = sklearn.preprocessing.quantile_transform(brain_copy.flatten().reshape(-1, 1), n_quantiles=500, random_state=0, copy=True)
+    # This method transforms the features to follow a uniform or a normal distribution.
+    brain_out = sklearn.preprocessing.quantile_transform(brain_copy.ravel().reshape(-1, 1), n_quantiles=500,
+                                                         random_state=0, copy=True)
+    # change flatten to ravel to avoid making a copy if possible.
     brain_out = brain_out.reshape(brain.shape)
-    np.nan_to_num(brain_out, copy=False)
+    np.nan_to_num(brain_out, copy=False) # nan are set to zeros here.
 
     ### Save brain ###
     #save_file = save_path[0].name[:-4] + '_clean.nii'
     aff = np.eye(4)
     img = nib.Nifti1Image(brain_out, aff)
     img.to_filename(save_path[0])
+
+    printlog('Clean anatomy successfully saved in ' + repr(save_path[0]))
 
 def stim_triggered_avg_neu(args):
     """

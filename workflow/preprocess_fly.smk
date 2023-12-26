@@ -264,6 +264,12 @@ for current_path in imaging_file_paths:
     imaging_paths_moco_meanbrain.append(current_path.split('/imaging')[0])
 print("imaging_paths_moco_meanbrain" + repr(imaging_paths_moco_meanbrain))
 
+##
+# List of paths for clean anatomy - only anatomy folders!
+imaging_paths_clean_anatomy = []
+for current_path in imaging_file_paths:
+    if 'anat' in current_path:
+        imaging_paths_clean_anatomy.append(current_path.split('/imaging')[0])
 ####
 
 '''
@@ -402,11 +408,11 @@ rule all:
         ###
         # Meanbrain of moco brain
         ###
-        expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels)
-        #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.nii" if CH1_EXISTS else [], moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
-        #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.nii" if CH2_EXISTS else [] ,moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
-        #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.nii" if CH3_EXISTS else [] ,moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
-
+        expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels),
+        ###
+        # Clean anatomy
+        ### directory = os.path.join(anat, 'moco')
+        expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels)
 rule fictrac_qc_rule:
     """
     Benchmark with full (30 min vol dataset)
@@ -891,15 +897,8 @@ rule moco_mean_brain_rule:
     resources: mem_mb=snake_utils.mem_mb_times_input
     input:
         str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco.h5"
-        #moco_ch1=str(fly_folder_to_process_oak) +"/{moco_meanbr_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else [],
-        #moco_ch2=str(fly_folder_to_process_oak) +"/{moco_meanbr_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[],
-        #moco_ch3=str(fly_folder_to_process_oak) +"/{moco_meanbr_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],
-
     output:
         str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii"
-        #moco_meanbrain_ch1=str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.nii" if CH1_EXISTS else [],
-        #moco_meanbrain_ch2=str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.nii" if CH2_EXISTS else [],
-        #moco_meanbrain_ch3=str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.nii" if CH3_EXISTS else []
     run:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
@@ -912,6 +911,24 @@ rule moco_mean_brain_rule:
                 error_stack=error_stack,
                 width=width)
 
+rule clean_anatomy_rule:
+    """
+    TO BE TESTED!!!!sleep
+    """
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_input
+    input: str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean.nii",
+    output: str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
+    run:
+        try:
+            preprocessing.clean_anatomy(fly_directory=fly_folder_to_process_oak,
+                                        path_to_read=input,
+                                        save_path=output)
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_clean_anatomy')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
 
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
