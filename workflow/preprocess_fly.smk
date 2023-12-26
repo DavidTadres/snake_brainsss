@@ -638,6 +638,15 @@ rule motion_correction_rule:
     Memory Utilized: 60.57 GB
     Memory Efficiency: 83.56% of 72.49 GB
     
+    Unoptimzed for small slices - this is a 10Gb functional recording:
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 1-05:28:29
+    CPU Efficiency: 58.07% of 2-02:45:18 core-walltime
+    Job Wall-clock time: 08:27:33
+    Memory Utilized: 4.13 GB
+    Memory Efficiency: 5.82% of 70.93 GB
+    
     with: snake_utils.mem_mb_times_input
     State: OUT_OF_MEMORY (exit code 0)
     Nodes: 1
@@ -843,7 +852,9 @@ rule correlation_rule:
     Memory Efficiency: 48.59% of 9.13 GB
     """
     threads: 1
-    resources: mem_mb=snake_utils.mem_mb_less_times_input, runtime=5 # TODO
+    resources:
+        mem_mb=snake_utils.mem_mb_less_times_input,
+        runtime=snake_utils.time_for_correlation
     input:
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],

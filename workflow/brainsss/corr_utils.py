@@ -21,7 +21,7 @@ def save_maxproj_img(image_to_max_project, path):
     ax.axis('off')
     divider = make_axes_locatable(ax)
     cax = divider.append_axes('right', size='5%', pad=0.05)
-    fig.colorbar(max_proj_plot[3], cax=cax, orientation='vertical')
+    fig.colorbar(max_proj_plot, cax=cax, orientation='vertical')
 
     # swap the suffix from whatever the input file is to .png
     savepath = pathlib.Path(path.parent, path.name.split(path.suffix)[0] + '.png')
