@@ -402,7 +402,7 @@ rule all:
         ###
         # Meanbrain of moco brain
         ###
-        #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels)
+        expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels)
         #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.nii" if CH1_EXISTS else [], moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
         #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.nii" if CH2_EXISTS else [] ,moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
         #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.nii" if CH3_EXISTS else [] ,moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
@@ -854,7 +854,7 @@ rule correlation_rule:
     threads: 1
     resources:
         mem_mb=snake_utils.mem_mb_less_times_input,
-        runtime=snake_utils.time_for_correlation
+        runtime=10 #snake_utils.time_for_correlation
     input:
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
