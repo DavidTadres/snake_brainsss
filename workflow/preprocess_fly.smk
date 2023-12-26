@@ -620,9 +620,9 @@ rule make_mean_brain_rule:
         #ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else[],
         #ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else[],
         # OLD"{mean_brains_output}.nii"  #'/Users/dtadres/Documents/functional_channel_1.nii'
-        str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/moco/channel_{meanbr_ch}_moco.h5"
+        str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}.nii"
     output:
-        str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/moco/channel_{meanbr_ch}_moco_mean.nii"
+        str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii"
         #meanbrain_ch1=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
         #meanbrain_ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
         #meanbrain_ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3_mean.nii" if CH2_EXISTS else [],
