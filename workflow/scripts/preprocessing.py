@@ -329,7 +329,8 @@ def correlation(fly_directory, dataset_path, save_path,
 
         ### Correlate ###
         printlog("Performing correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
-
+        corr_brain = np.zeros((brain.shape[0], brain.shape[1], brain.shape[2]), dtype=np.float32)
+        corr_brain.fill(np.nan)
         for z in range(brain.shape[2]):
             # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
             brain_mean = brain[:,:,z,:].mean(axis=-1)#, dtype=np.float64)
@@ -349,19 +350,15 @@ def correlation(fly_directory, dataset_path, save_path,
             # Correction - if we cast as float64 and do dot product with brain, we'll copy the
             # brain to float64 array, balloning the memory requirement
             fictrac_mean_m = fictrac_interp[:,z].astype(np.float32) - fictrac_mean
-            print('mean_m done')
 
             normbrain = np.linalg.norm(brain_mean_m, axis=-1) # Make a copy, but since there's no time dimension it's quite small
             normfictrac = np.linalg.norm(fictrac_mean_m)
-            print('norm done')
 
             # Do another inplace operation to save memory
-            corr_brain = np.dot(brain_mean_m/normbrain[:,:,None], fictrac_mean_m/normfictrac)
+            corr_brain[:,:,z] = np.dot(brain_mean_m/normbrain[:,:,None], fictrac_mean_m/normfictrac)
             #brain_mean_m/=normbrain[:,:,:,None]
-            print('brain/=normbrain done')
             #corr_brain = np.dot(brain, fictrac_mean_m/normfictrac) # here we of course make a full copy of the array again.
             # To conclude, I expect to need more than 2x input size but not 3x. Todo test!
-            print('corr_brain.shape ' + repr(corr_brain.shape))
         printlog("Finished calculating correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
 
         ### SAVE ###
