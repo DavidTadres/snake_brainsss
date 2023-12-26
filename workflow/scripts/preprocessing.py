@@ -1378,7 +1378,7 @@ def make_mean_brain(fly_directory,
         # Read imaging file
         ###
         print(current_path_to_read)
-        if current_path_to_save.suffix == '.nii':
+        if current_path_to_read.suffix == '.nii':
             brain_proxy = nib.load(current_path_to_read) # Doesn't load anything, just points to a given location
             brain_data = np.asarray(brain_proxy.dataobj, dtype='uint16') # loads data to memory.
         elif current_path_to_read.suffix == '.h5':
