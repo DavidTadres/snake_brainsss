@@ -309,11 +309,12 @@ def print_progress_table(progress, logfile, start_time, print_header=False, prin
         printlog((' '*9) + '|' + '|'.join([F"{str(vol)+' vols':^{column_width}}" for vol in total_vol]) + '|')
         printlog('|ELAPSED ' + '+' + '+'.join([F"{'':-^{column_width}}"]*num_columns) + '+' + 'REMAININ|')
 
-    def sec_to_hms(t):
-        secs=F"{np.floor(t%60):02.0f}"
-        mins=F"{np.floor((t/60)%60):02.0f}"
-        hrs=F"{np.floor((t/3600)%60):02.0f}"
-        return ':'.join([hrs, mins, secs])
+    # This exists further below, no need to re-defind
+    #def sec_to_hms(t):
+    #    secs=F"{np.floor(t%60):02.0f}"
+    #    mins=F"{np.floor((t/60)%60):02.0f}"
+    #    hrs=F"{np.floor((t/3600)%60):02.0f}"
+    #    return ':'.join([hrs, mins, secs])
 
     elapsed = time()-start_time
     elapsed_hms = sec_to_hms(elapsed)
@@ -561,5 +562,12 @@ def append_json(path, key, value):
     dict[key] = value
     with open(path, 'w') as openfile:
         json.dump(dict, openfile, indent=4)
+
+def sec_to_hms(t):
+        secs=F"{np.floor(t%60):02.0f}"
+        mins=F"{np.floor((t/60)%60):02.0f}"
+        hrs=F"{np.floor((t/3600)%60):02.0f}"
+        return ':'.join([hrs, mins, secs])
+
 
 

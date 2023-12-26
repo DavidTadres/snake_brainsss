@@ -1,6 +1,5 @@
 import json
 import numpy as np
-from shutil import copyfile
 from xml.etree import ElementTree as ET
 from lxml import etree, objectify
 from openpyxl import load_workbook
@@ -9,7 +8,6 @@ import sys
 import time
 import traceback
 import natsort
-import datetime
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.use('agg') # Agg, is a non-interactive backend that can only write to files.
@@ -19,7 +17,6 @@ import shutil
 import ants
 import h5py
 from scipy import ndimage
-import scipy
 import sklearn
 import skimage.filters
 
@@ -41,7 +38,20 @@ from brainsss import fictrac_utils
 from brainsss import corr_utils
 
 
-def align_anat(fly_directory):
+def align_anat(fly_directory,
+               path_to_read_fixed,
+               path_to_read_moving,
+               path_to_save,
+               transform_type,
+               resolution_of_fixed,
+               resolution_of_moving,
+               iso_2um_fixed=True,
+               iso_2um_moving=False,
+               grad_step=0.2,
+               flow_sigma=3,
+               total_sigma=0,
+               syn_sampling=32
+               ):
     """
 
     :param args:
@@ -94,108 +104,127 @@ def align_anat(fly_directory):
     ###
     # Logging
     ###
-    logfile = utils.create_logfile(fly_directory, function_name='make_mean_brain')
+    logfile = utils.create_logfile(fly_directory, function_name='func2anat')
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
-    utils.print_function_start(logfile, WIDTH, 'make_mean_brain')
+    utils.print_function_start(logfile, WIDTH, 'func2anat')
+
+    #####
+    # CONVERT PATHS TO PATHLIB.PATH OBJECTS
+    #####
+    path_to_read_fixed = utils.convert_list_of_string_to_posix_path(path_to_read_fixed)
+    path_to_read_moving =utils.convert_list_of_string_to_posix_path(path_to_read_moving)
+    path_to_save = utils.convert_list_of_string_to_posix_path(path_to_save)
 
     #logfile = args['logfile']
     #save_directory = args['save_directory']
-    flip_X = args['flip_X']
-    flip_Z = args['flip_Z']
-    type_of_transform = args['type_of_transform']  # SyN or Affine
-    save_warp_params = args['save_warp_params']
+    flip_X = False # args['flip_X'] # Todo - what does this do? Was set to false in brainsss
+    flip_Z = False # args['flip_Z'] # Todo - what does this do? Was set to false in brainsss
+    type_of_transform = transform_type # args['type_of_transform']  # SyN or Affine,
+    save_warp_params = True # copy-paste from brainsss. args['save_warp_params']
 
-    fixed_path = args['fixed_path']
-    fixed_fly = args['fixed_fly']
-    fixed_resolution = args['fixed_resolution']
+    fixed_path = path_to_read_fixed #args['fixed_path']
+    #fixed_fly = 'anat' #args['fixed_fly']
+    fixed_fly = path_to_read_fixed.name
+    fixed_resolution = resolution_of_fixed # args['fixed_resolution']
 
-    moving_path = args['moving_path']
-    moving_fly = args['moving_fly']
-    moving_resolution = args['moving_resolution']
+    moving_path = path_to_read_moving # args['moving_path']
+    #moving_fly = 'func' #args['moving_fly']
+    moving_fly = path_to_read_moving.name
+    moving_resolution = resolution_of_moving #args['moving_resolution']
 
-    low_res = args['low_res']
-    very_low_res = args['very_low_res']
+    #low_res = False # args['low_res']
+    #very_low_res = False # args['very_low_res']
 
-    iso_2um_fixed = args['iso_2um_fixed']
-    iso_2um_moving = args['iso_2um_moving']
+    iso_2um_fixed = iso_2um_fixed # args['iso_2um_fixed'] True for func2anat, False for anat2atlas
+    iso_2um_moving = iso_2um_moving # args['iso_2um_moving'] False for func2anat, True for anat2atlas
 
-    grad_step = args['grad_step']
-    flow_sigma = args['flow_sigma']
-    total_sigma = args['total_sigma']
-    syn_sampling = args['syn_sampling']
+    grad_step = grad_step #args['grad_step']
+    flow_sigma = flow_sigma #args['flow_sigma']
+    total_sigma = total_sigma #args['total_sigma']
+    syn_sampling = syn_sampling #args['syn_sampling']
 
-    try:
-        mimic_path = args['mimic_path']
-        mimic_fly = args['mimic_fly']
-        mimic_resolution = args['mimic_resolution']
-    except:
-        mimic_path = None
-        mimic_fly = None
-        mimic_resolution = None
-
-    width = 120
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+    #try:
+    #    mimic_path = args['mimic_path']
+    #    mimic_fly = args['mimic_fly']
+    #    mimic_resolution = args['mimic_resolution']
+    #except:
+    mimic_path = None
+    mimic_fly = None
+    mimic_resolution = None
 
     ###################
     ### Load Brains ###
     ###################
 
     ### Fixed
-    fixed = np.asarray(nib.load(fixed_path).get_data().squeeze(), dtype='float32')
-    fixed = ants.from_numpy(fixed)
-    fixed.set_spacing(fixed_resolution)
-    if low_res:
-        fixed = ants.resample_image(fixed, (256, 128, 49), 1, 0)
-    elif very_low_res:
-        fixed = ants.resample_image(fixed, (128, 64, 49), 1, 0)
-    elif iso_2um_fixed:
-        fixed = ants.resample_image(fixed, (2, 2, 2), use_voxels=False)
+    #fixed = np.asarray(nib.load(fixed_path).get_data().squeeze(), dtype='float32')
+    # Doesn't load to memory
+    fixed_brain_proxy = nib.load(path_to_read_fixed)
+    # Load to memory
+    fixed_brain = np.asarry(fixed_brain_proxy.dataobj, dtype=np.float32) # I'm not using squeeze here! Might introduce
+    # a bug so important to keep if statement below!
+    if len(fixed_brain.shape)>3:
+        printlog('WARNING: Here we should only have 3 dimensions not '+ repr(fixed_brain.shape))
+
+    fixfixed_brained = ants.from_numpy(fixed_brain)
+    fixed_brain.set_spacing(fixed_resolution)
+    #if low_res:
+    #    fixed = ants.resample_image(fixed, (256, 128, 49), 1, 0)
+    #elif very_low_res:
+    #    fixed = ants.resample_image(fixed, (128, 64, 49), 1, 0)
+    #elif iso_2um_fixed:
+    fixed_brain = ants.resample_image(fixed_brain, (2, 2, 2), use_voxels=False)
 
     ### Moving
-    moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')
+    #moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')\
+    moving_brain_proxy = nib.load(path_to_read_moving)
+    moving_brain = np.asarray(moving_brain_proxy.dataobj, dtype=np.float32)
+    if len(moving_brain.shape)>3:
+        printlog('WARNING: Here we should only have 3 dimensions not '+ repr(fixed_brain.shape))
     if flip_X:
-        moving = moving[::-1, :, :]
+        moving_brain = moving_brain[::-1, :, :]
     if flip_Z:
-        moving = moving[:, :, ::-1]
-    moving = ants.from_numpy(moving)
-    moving.set_spacing(moving_resolution)
-    if low_res:
-        moving = ants.resample_image(moving, (256, 128, 49), 1, 0)
-    elif very_low_res:
-        moving = ants.resample_image(moving, (128, 64, 49), 1, 0)
-    elif iso_2um_moving:
-        moving = ants.resample_image(moving, (2, 2, 2), use_voxels=False)
+        moving_brain = moving_brain[:, :, ::-1]
+    moving_brain = ants.from_numpy(moving_brain)
+    moving_brain.set_spacing(moving_resolution)
+    #if low_res:
+    #    moving = ants.resample_image(moving, (256, 128, 49), 1, 0)
+    #elif very_low_res:
+    #    moving = ants.resample_image(moving, (128, 64, 49), 1, 0)
+    #elif iso_2um_moving:
+    moving_brain = ants.resample_image(moving_brain, (2, 2, 2), use_voxels=False)
 
     ### Mimic
-    if mimic_path is not None:
-        mimic = np.asarray(nib.load(mimic_path).get_data().squeeze(), dtype='float32')
-        if flip_X:
-            mimic = mimic[::-1, :, :]
-        if flip_Z:
-            mimic = mimic[:, :, ::-1]
-        mimic = ants.from_numpy(mimic)
-        mimic.set_spacing(mimic_resolution)
-        printlog('Starting {} to {}, with mimic {}'.format(moving_fly, fixed_fly, mimic_fly))
-    else:
-        printlog('Starting {} to {}'.format(moving_fly, fixed_fly))
+    #if mimic_path is not None:
+    #    mimic = np.asarray(nib.load(mimic_path).get_data().squeeze(), dtype='float32')
+    #    if flip_X:
+    #        mimic = mimic[::-1, :, :]
+    #    if flip_Z:
+    #        mimic = mimic[:, :, ::-1]
+    #    mimic = ants.from_numpy(mimic)
+    #    mimic.set_spacing(mimic_resolution)
+    #    printlog('Starting {} to {}, with mimic {}'.format(moving_fly, fixed_fly, mimic_fly))
+    #else:
+    printlog('Starting registration of {} to {}'.format(moving_fly, fixed_fly))
 
     #############
     ### Align ###
     #############
 
     t0 = time()
-    with stderr_redirected():  # to prevent dumb itk gaussian error bullshit infinite printing
-        moco = ants.registration(fixed,
-                                 moving,
-                                 type_of_transform=type_of_transform,
-                                 grad_step=grad_step,
-                                 flow_sigma=flow_sigma,
-                                 total_sigma=total_sigma,
-                                 syn_sampling=syn_sampling)
+    # with stderr_redirected():  # to prevent dumb itk gaussian error bullshit infinite printing > Ohoh, hopefully doesn't
+    # fill my log up
+    moco = ants.registration(fixed_brain,
+                             moving_brain,
+                             type_of_transform=type_of_transform,
+                             grad_step=grad_step,
+                             flow_sigma=flow_sigma,
+                             total_sigma=total_sigma,
+                             syn_sampling=syn_sampling)
 
     printlog('Fixed: {}, {} | Moving: {}, {} | {} | {}'.format(fixed_fly, fixed_path.split('/')[-1], moving_fly,
                                                                moving_path.split('/')[-1], type_of_transform,
-                                                               sec_to_hms(time() - t0)))
+                                                               utils.sec_to_hms(time() - t0)))
 
     ################################
     ### Save warp params if True ###
@@ -213,7 +242,7 @@ def align_anat(fly_directory):
         for source_path in fwdtransformlist:
             source_file = source_path.split('/')[-1]
             target_path = os.path.join(fwdtransforms_save_dir, source_file)
-            copyfile(source_path, target_path)
+            shutil.copyfile(source_path, target_path)
 
     # Added this saving of inv transforms 2020 Dec 19
     if save_warp_params:
@@ -228,7 +257,7 @@ def align_anat(fly_directory):
         for source_path in fwdtransformlist:
             source_file = source_path.split('/')[-1]
             target_path = os.path.join(fwdtransforms_save_dir, source_file)
-            copyfile(source_path, target_path)
+            shutil.copyfile(source_path, target_path)
 
     ##################################
     ### Apply warp params to mimic ###
@@ -242,16 +271,17 @@ def align_anat(fly_directory):
     ############
 
     # NOT SAVING MIMIC <------ MAY NEED TO CHANGE
-    if flip_X:
-        save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly)
-        # save_file = os.path.join(save_directory, mimic_fly + '_m' + '-to-' + fixed_fly + '.nii')
-    else:
-        save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly)
-        # save_file = os.path.join(save_directory, mimic_fly + '-to-' + fixed_fly + '.nii')
+    #if flip_X:
+    #    save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly)
+    #    # save_file = os.path.join(save_directory, mimic_fly + '_m' + '-to-' + fixed_fly + '.nii')
+    #else:
+    #    save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly)
+    #    # save_file = os.path.join(save_directory, mimic_fly + '-to-' + fixed_fly + '.nii')
+    save_file = 'comes from snakemake!'
     # nib.Nifti1Image(mimic_moco.numpy(), np.eye(4)).to_filename(save_file)
-    if low_res:
-        save_file += '_lowres'
-    save_file += '.nii'
+    #if low_res:
+    #    save_file += '_lowres'
+    #save_file += '.nii'
     nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(save_file)
 
     # if flip_X:
@@ -1636,8 +1666,11 @@ def make_mean_brain(fly_directory,
         # log success
         ###
         fly_print = pathlib.Path(fly_directory).name
-        func_print = current_path_to_read.name.split('/')[-2]
+        func_print = str(current_path_to_read).split('/imaging')[0].split('/'[-1])
+        #func_print = current_path_to_read.name.split('/')[-2]
         printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {brain_data.shape} ===> {meanbrain.shape}")
+        #printlog(F"meanbrn | COMPLETED | {fly_print}  | {brain_data.shape} ===> {meanbrain.shape}")
+
 
 def bleaching_qc(fly_directory,
                  path_to_read,
@@ -2007,7 +2040,7 @@ def copy_fly(import_dir, dataset_dir, printlog, user, fly_dirs_dict):
             current_import_file = current_import_file_or_folder
             if current_import_file_or_folder.name == 'fly.json':
                 target_path = pathlib.Path(dataset_dir, current_import_file.name)
-                copyfile(current_import_file, target_path)
+                shutil.copyfile(current_import_file, target_path)
             else:
                 printlog('Invalid file in fly folder (skipping): {}'.format(current_import_file.name))
 
@@ -2055,7 +2088,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
                 target_name = 'recording_metadata.xml'
                 target_path = pathlib.Path(destination, target_name)
                 if folder_type == 'func':
-                    copy_file(source_path, target_path, printlog)
+                    copy_file_func(source_path, target_path, printlog)
                     # Create json file
                     create_imaging_json(target_path, printlog)
                     continue
@@ -2087,9 +2120,9 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
 
             if target_path is not None:
                 # Actually copy the file
-                copy_file(source_path, target_path, printlog)
+                copy_file_func(source_path, target_path, printlog)
 
-def copy_file(source, target, printlog):
+def copy_file_func(source, target, printlog):
     # printlog('Transfering file {}'.format(target))
     #to_print = ('/').join(target.split('/')[-4:])
     #print('source: ' + str(source))
@@ -2098,7 +2131,7 @@ def copy_file(source, target, printlog):
     #width = 120
     printlog(f'Transfering file{to_print:.>{WIDTH - 16}}')
     ##sys.stdout.flush()
-    copyfile(source, target)
+    shutil.copyfile(source, target)
 
 def copy_visual(destination_region, printlog):
     print('copy_visual NOT IMPLEMENTED YET')
@@ -2158,7 +2191,7 @@ def copy_visual(destination_region, printlog):
         source_path = os.path.join(source_folder, file)
         ##print('Transfering from {} to {}'.format(source_path, target_path))
         ##sys.stdout.flush()
-        copyfile(source_path, target_path)
+        shutil.copyfile(source_path, target_path)
 
     # Create visual.json metadata
     # Try block to prevent quiting if visual stimuli timing is wonky (likely went too long)
@@ -2305,7 +2338,7 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
             # printlog('Transfering {}'.format(target_path))
             ##sys.stdout.flush()
 
-    copyfile(dat_path, target_path)
+    shutil.copyfile(dat_path, target_path)
 
     ### Create empty xml file.
     # Update this later

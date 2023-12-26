@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'SS84990_DNa03_x_UAS-CD8-GFP/fly_001' # folder to be processed
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_001' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -278,6 +278,34 @@ imaging_paths_clean_anatomy = []
 for current_path in imaging_file_paths:
     if 'anat' in current_path:
         imaging_paths_clean_anatomy.append(current_path.split('/imaging')[0])
+
+##
+# list of paths for func2anat
+imaging_paths_func2anat = []
+for current_path in imaging_file_paths:
+    if 'func' in current_path:
+        imaging_paths_func2anat.append(current_path.split('/imaging')[0])
+    # the folder name of the anatomical channel
+    elif 'anat' in current_path:
+        anat_path_func2anat = current_path.split('/imaging')[0]
+# the anatomical channel for func2anat
+if 'channel_1' in ANATOMY_CHANNEL:
+    file_path_func2anat_fixed = ['channel_1_moco']
+elif 'channel_2' in ANATOMY_CHANNEL:
+    file_path_func2anat_fixed = ['channel_2_moco']
+elif 'channel_3' in ANATOMY_CHANNEL:
+    file_path_func2anat_fixed = ['channel_3_moco']
+'''# the functional channels for func2anat
+file_path_func2anat_moving = []
+if 'channel_1' in FUNCTIONAL_CHANNELS:
+    file_path_func2anat_moving.append('channel_1_moco.h5')
+elif 'channel_2' in FUNCTIONAL_CHANNELS:
+    file_path_func2anat_moving.append('channel_2_moco.h5')
+elif 'channel_3' in FUNCTIONAL_CHANNELS:
+    file_path_func2anat_moving.append('channel_3_moco.h5')'''
+
+##
+
 ####
 
 '''
@@ -315,7 +343,7 @@ def convert_oak_path_to_scratch(oak_path):
 
 #fly_folder_to_process_scratch = convert_oak_path_to_scratch(fly_folder_to_process_oak) # Must be provided as a list
 '''
-
+'''
 ####
 # Path per folder
 # This is a bit different to path above as function (in this case bleaching) requires 2 or three input files
@@ -347,7 +375,7 @@ def create_paths_each_experiment(imaging_file_paths):
     return (imaging_path_by_folder_oak)
 
 #imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(imaging_file_paths)
-imaging_paths_by_folder_oak = create_paths_each_experiment(imaging_file_paths)
+imaging_paths_by_folder_oak = create_paths_each_experiment(imaging_file_paths)'''
 
 #####
 # Output data path
@@ -356,8 +384,8 @@ imaging_paths_by_folder_oak = create_paths_each_experiment(imaging_file_paths)
 print("full_fictrac_file_oak_paths" + repr(full_fictrac_file_oak_paths))
 fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_oak_paths,
                                                              filename='fictrac_2d_hist_fixed.png')
-bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder_oak,
-                                                           filename='bleaching.png')
+'''bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder_oak,
+                                                           filename='bleaching.png')'''
 
 rule all:
     """
@@ -377,8 +405,7 @@ rule all:
         # data in fly_dirs.json!
         ###
         # Bleaching QC
-        ###
-        #bleaching_qc_output_files,
+        ###,
         expand(str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png", bleaching_imaging_paths=imaging_paths_bleaching),
         ###
         # Meanbrain
@@ -422,7 +449,13 @@ rule all:
         ###
         # Clean anatomy
         ### directory = os.path.join(anat, 'moco')
-        expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels)
+        expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels),
+        ###
+        # func2anat
+        ###
+        #expand(str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii", func2anat_paths=imaging_paths_func2anat, func2anat_moving=file_path_func2anat_fixed, func2anat_fixed=file_path_func2anat_fixed)
+
+
 rule fictrac_qc_rule:
     """
     Benchmark with full (30 min vol dataset)
@@ -644,6 +677,17 @@ rule make_mean_brain_rule:
 
 rule motion_correction_rule:
     """
+    Had another MMO with a very small file (200Mb)
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 00:03:38
+    CPU Efficiency: 19.43% of 00:18:42 core-walltime
+    Job Wall-clock time: 00:03:07
+    Memory Utilized: 977.49 MB
+    Memory Efficiency: 97.75% of 1000.00 MB
+    -> Set minimal memory to 4GB? 
+    
     Current setting 
     (threads: 6
      resources:
@@ -948,7 +992,34 @@ rule clean_anatomy_rule:
 rule func_to_anat_rule:
     """
     """
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_input
+    input:
+        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}.h5',
+        path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}.h5"
+    output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii"
 
+    run:
+        try:
+            preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
+                                    path_to_read_fixed=input.path_to_read_fixed,
+                                    path_to_read_moving=input.path_to_read_moving,
+                                    path_to_save=output,
+                                    transform_type='Affine', # copy-paste from brainsss
+                                    resolution_of_fixed= (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
+                                    resolution_of_moving = (2.611, 2.611, 5), # Copy-paste from brainsss, probably can be read from metadate.xml!
+                                    iso_2um_fixed=True,
+                                    iso_2um_moving = False,
+                                    grad_step = 0.2,
+                                    flow_sigma = 3,
+                                    total_sigma = 0,
+                                    syn_sampling = 32
+            )
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_func_to_anat')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
