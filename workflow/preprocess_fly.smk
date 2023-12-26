@@ -367,7 +367,7 @@ rule all:
         ###
         # Meanbrain
         ###
-        #>>>>expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
+        expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
         #expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii" if CH1_EXISTS else[], meanbr_imaging_paths=imaging_paths_meanbrain),
         #expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [], meanbr_imaging_paths=imaging_paths_meanbrain),
         #expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else [], meanbr_imaging_paths=imaging_paths_meanbrain),

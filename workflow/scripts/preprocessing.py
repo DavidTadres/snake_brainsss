@@ -1359,6 +1359,8 @@ def make_mean_brain(fly_directory,
     path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
     path_to_save =utils.convert_list_of_string_to_posix_path(path_to_save)
 
+    printlog("path_to_read" + repr(path_to_read))
+
     for current_path_to_read, current_path_to_save in zip(path_to_read,path_to_save):
         brain_data = None # make sure the array does not exist.
         ###
@@ -1372,7 +1374,7 @@ def make_mean_brain(fly_directory,
             with h5py.File(current_path_to_read, 'r') as hf:
                 brain_data = np.asarray(hf['data'][:], dtype='uint16')
         else:
-            printlog('Current file has suffic ' + current_path_to_read.suffix)
+            printlog('Current file has suffix ' + current_path_to_read.suffix)
             printlog('Can currently only handle .nii and .h5 files!')
         #brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16')
         # get_fdata() loads data into memory and sometimes doesn't release it.
@@ -1397,7 +1399,7 @@ def make_mean_brain(fly_directory,
     # log success
     ###
     fly_print = fly_directory.name
-    func_print = path_to_read.split('/')[-2]
+    func_print = path_to_read.name.split('/')[-2]
     printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {brain_data.shape} ===> {meanbrain.shape}")
 
 def bleaching_qc(fly_directory,
