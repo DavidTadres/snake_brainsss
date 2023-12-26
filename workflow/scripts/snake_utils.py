@@ -84,4 +84,4 @@ def time_for_correlation(wildcards, input):
     :param input
     :return: time in seconds
     """
-    return(input.fictrac_data.size_mb*60)
+    return(input.fictrac_path.size_mb*60)
