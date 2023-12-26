@@ -254,7 +254,7 @@ for current_path in imaging_file_paths:
     if 'func' in current_path:
         imaging_paths_corr.append(current_path.split('/imaging')[0])
 # Behavior to be correlated with z scored brain activity
-corr_behaviors = ['dRotLabZneg']#, 'dRotLabZpos', 'dRotLabY']
+corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
 
 ##
 # List of paths for moco meanbrains
@@ -854,7 +854,7 @@ rule correlation_rule:
     threads: 1
     resources:
         mem_mb=snake_utils.mem_mb_less_times_input,
-        #runtime=snake_utils.time_for_correlation
+        runtime=snake_utils.time_for_correlation
     input:
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
@@ -904,8 +904,8 @@ rule moco_mean_brain_rule:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
                                             meanbrain_n_frames=meanbrain_n_frames,
-                                            path_to_read=[input.moco_ch1, input.moco_ch2, input.moco_ch3],
-                                            path_to_save=[output.moco_meanbrain_ch1, output.moco_meanbrain_ch2, output.moco_meanbrain_ch3])
+                                            path_to_read=[input],
+                                            path_to_save=[output])
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_moco_mean_brain')
             utils.write_error(logfile=logfile,

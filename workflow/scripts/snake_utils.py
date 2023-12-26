@@ -76,12 +76,17 @@ def time_for_moco_input(wildcards, input):
     #string_to_return = str(hours) + ':' + str(minutes) + ':00'
     return(str(time_in_minutes*60))
 
-'''def time_for_correlation(wildcards, input):
+def time_for_correlation(wildcards, input):
     """
     returns time in based on input - for a 5 min test case we need just under 5 minutes.
-    That's about 10 Mb of fictrac data. So each Mb of fictrac data is ~1 minute of compute time
+    That's about 4 Gb of h5 file for a single functional channel. Lets go with 10 minutes for 4Gb so 2.5 minutes
+    for each Gb
+
+    # >DOESNT WORKThat's about 10 Mb of fictrac data. So each Mb of fictrac data is ~1 minute of compute time
     :param wildcards:
     :param input
     :return: time in seconds
     """
-    return(input.fictrac_path.size_mb*60)'''
+    # return(input.fictrac_path.size_mb*60) DOESNT WORK!
+    time_in_minutes = (input.size_mb/1000)*2.5
+    return(time_in_minutes*60)
