@@ -18,7 +18,10 @@ import nibabel as nib
 import shutil
 import ants
 import h5py
-from scipy.ndimage import gaussian_filter1d
+from scipy import ndimage
+from scipy import filters
+import sklearn
+
 
 ####################
 # GLOBAL VARIABLES #
@@ -36,6 +39,68 @@ from brainsss import utils
 from brainsss import fictrac_utils
 from brainsss import corr_utils
 
+
+def clean_anatomy(fly_directory, dataset_path, save_path):
+    """
+    Only on folders called anatomy!
+    :param args:
+    :return:
+    """
+
+    #####################
+    ### SETUP LOGGING ###
+    #####################
+
+    logfile = utils.create_logfile(fly_directory, function_name='clean_anatomy')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'clean_anatomy')
+
+    #logfile = args['logfile']
+    #directory = args['directory'] # directory will be a full path anat/moco
+    #width = 120
+    #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+
+    ##########
+    ### Convert list of (sometimes empty) strings to pathlib.Path objects
+    ##########
+    dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
+    save_path = utils.convert_list_of_string_to_posix_path(save_path)
+
+    ##########
+    ### Load brain ###
+    ##########
+    # Since we only have a >>>single anatomy channel<<< no need to loop!
+    brain_proxy = nib.load(dataset_path[0])
+    brain = np.asarray(brain_proxy.dataobj, dtype=np.float32)
+    #try:
+    #    file = os.path.join(directory, 'stitched_brain_red_mean.nii')
+    #    brain = np.asarray(nib.load(file).get_data(), dtype='float32')
+    #except:
+    #    file = os.path.join(directory, 'anatomy_channel_1_moc_mean.nii')
+    #    brain = np.asarray(nib.load(file).get_data(), dtype='float32')
+
+    ### Blur brain and mask small values ###
+    brain_copy = brain.copy()# Not necessary, already cast as float32.astype('float32')
+    brain_copy = ndimage.gaussian_filter(brain_copy, sigma=10)
+    threshold = filters.triangle(brain_copy)
+    brain_copy[np.where(brain_copy < threshold/2)] = 0
+
+    ### Remove blobs outside contiguous brain ###
+    labels, label_nb = ndimage.label(brain_copy)
+    brain_label = np.bincount(labels.flatten())[1:].argmax()+1
+    brain_copy = brain.copy().astype('float32')
+    brain_copy[np.where(labels != brain_label)] = np.nan
+
+    ### Perform quantile normalization ###
+    brain_out = sklearn.preprocessing.quantile_transform(brain_copy.flatten().reshape(-1, 1), n_quantiles=500, random_state=0, copy=True)
+    brain_out = brain_out.reshape(brain.shape)
+    np.nan_to_num(brain_out, copy=False)
+
+    ### Save brain ###
+    #save_file = save_path[0].name[:-4] + '_clean.nii'
+    aff = np.eye(4)
+    img = nib.Nifti1Image(brain_out, aff)
+    img.to_filename(save_path[0])
 
 def stim_triggered_avg_neu(args):
     """
@@ -383,7 +448,8 @@ def correlation(fly_directory, dataset_path, save_path,
                             corr_brain[i, j, z] = \
                             pearsonr(fictrac_interp[idx_to_use], brain[i, j, z, :][idx_to_use])[0]
 
-            save_file = pathlib.Path(current_save_path.parent, current_save_path.name.split('.nii') + '_testing.nii')
+            save_file = pathlib.Path(current_save_path.parent, current_save_path.name.split('.nii')[0] + '_testing.nii')
+            printlog('Saving testfile to' + repr(save_file))
             aff = np.eye(4)
             object_to_save = nib.Nifti1Image(corr_brain, aff)
             # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
@@ -456,7 +522,7 @@ def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_fi
                 _ = f.create_dataset('data', dims, dtype='float32')
 
                 data_mean = np.mean(data, axis=-1)
-                smoothed_data = gaussian_filter1d(data, sigma=200, axis=-1, truncate=1) # This for sure makes a copy of
+                smoothed_data = ndimage.gaussian_filter1d(data, sigma=200, axis=-1, truncate=1) # This for sure makes a copy of
                 # the array, doubling memory requirements
 
                 # To save memory, do in-place operations where possible
@@ -700,6 +766,9 @@ def motion_correction(fly_directory,
 
     print("dataset_path" + repr(dataset_path))
 
+    #####
+    # CONVERT PATHS TO PATHLIB.PATH OBJECTS
+    #####
     dataset_path = utils.convert_list_of_string_to_posix_path(dataset_path)
     meanbrain_path =utils.convert_list_of_string_to_posix_path(meanbrain_path)
     h5_path = utils.convert_list_of_string_to_posix_path(h5_path)
@@ -1344,35 +1413,45 @@ def make_mean_brain(fly_directory,
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'make_mean_brain')
 
-    ###
-    # Read nii file
-    ###
-    # Input and output is passed as lists (or 'InputData') by Snakemake.
-    # an example would be: ['/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_004/func1/imaging/functional_channel_2.nii']
-    # Since we only have a single file in each path, we take the first entry
-    path_to_read = path_to_read[0]
-    path_to_save = path_to_save[0]
-    print(path_to_read)
-    brain_proxy = nib.load(path_to_read) # Doesn't load anything, just points to a given location
-    brain_data = np.asarray(brain_proxy.dataobj, dtype='uint16') # loads data to memory.
-    #brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16')
-    # get_fdata() loads data into memory and sometimes doesn't release it.
+    #####
+    # CONVERT PATHS TO PATHLIB.PATH OBJECTS
+    #####
+    path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
+    path_to_save =utils.convert_list_of_string_to_posix_path(path_to_save)
 
-    ###
-    # create meanbrain
-    ###
-    if meanbrain_n_frames is not None:
-        # average over first meanbrain_n_frames frames
-        meanbrain = np.mean(brain_data[..., :int(meanbrain_n_frames)], axis=-1)
-    else:  # average over all frames
-        meanbrain = np.mean(brain_data, axis=-1)
+    for current_path_to_read, current_path_to_save in zip(path_to_read,path_to_save):
+        brain_data = None # make sure the array does not exist.
+        ###
+        # Read imaging file
+        ###
+        print(current_path_to_read)
+        if current_path_to_save.suffix == 'nii':
+            brain_proxy = nib.load(current_path_to_read) # Doesn't load anything, just points to a given location
+            brain_data = np.asarray(brain_proxy.dataobj, dtype='uint16') # loads data to memory.
+        elif current_path_to_read.suffix == 'h5':
+            with h5py.File(current_path_to_read, 'r') as hf:
+                brain_data = np.asarray(hf['data'][:], dtype='uint16')
+        else:
+            printlog('Current file has suffic ' + current_path_to_read.suffix)
+            printlog('Can currently only handle .nii and .h5 files!')
+        #brain_data = np.asarray(nib.load(path_to_read).get_fdata(), dtype='uint16')
+        # get_fdata() loads data into memory and sometimes doesn't release it.
 
-    ###
-    # save meanbrain
-    ###
-    aff = np.eye(4)
-    object_to_save = nib.Nifti1Image(meanbrain, aff) # sys.getsizeof reports this as size 0! Probably just a view of the underlying data.
-    object_to_save.to_filename(path_to_save)
+        ###
+        # create meanbrain
+        ###
+        if meanbrain_n_frames is not None:
+            # average over first meanbrain_n_frames frames
+            meanbrain = np.mean(brain_data[..., :int(meanbrain_n_frames)], axis=-1)
+        else:  # average over all frames
+            meanbrain = np.mean(brain_data, axis=-1)
+
+        ###
+        # save meanbrain
+        ###
+        aff = np.eye(4)
+        object_to_save = nib.Nifti1Image(meanbrain, aff) # sys.getsizeof reports this as size 0! Probably just a view of the underlying data.
+        object_to_save.to_filename(current_path_to_save)
 
     ###
     # log success

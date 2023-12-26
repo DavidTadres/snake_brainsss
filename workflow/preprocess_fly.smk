@@ -212,15 +212,33 @@ paths_for_make_mean_brain_oak = create_file_paths(path_to_fly_folder=fly_folder_
                                                 imaging_file_paths=imaging_file_paths,
                                                 filename='')
 
+###
+# List of paths for meanbrain
+imaging_paths_meanbrain =[]
+for current_path in imaging_file_paths:
+    imaging_paths_meanbrain.append(current_path.split('/imaging')[0])
+channels = []
+if CH1_EXISTS:
+    channels.append("1")
+if CH2_EXISTS:
+    channels.append("2")
+if CH3_EXISTS:
+    channels.append("3")
+
+##
 # List of paths for moco
+# Identical to imaging_paths_meanbrain but define explicitly for readability
 list_of_imaging_paths_moco = []
 for current_path in imaging_file_paths:
     list_of_imaging_paths_moco.append(current_path.split('/imaging')[0])
+
+##
 # List of paths for zscore
 imaging_paths_zscore = []
 for current_path in imaging_file_paths:
     if 'func' in current_path:
         imaging_paths_zscore.append(current_path.split('/imaging')[0])
+##
 # list of paths for temporal highpass filter
 # identical to zscore imaging paths but for ease of readibility, explicitly create a new one
 imaging_paths_temp_HP_filter = []
@@ -228,6 +246,7 @@ for current_path in imaging_file_paths:
     if 'func' in current_path:
         imaging_paths_temp_HP_filter.append(current_path.split('/imaging')[0])
 
+##
 # list of paths for correlation
 # identical to zscore imaging paths but for ease of readibility, explicitly create a new one
 imaging_paths_corr = []
@@ -237,7 +256,9 @@ for current_path in imaging_file_paths:
 # Behavior to be correlated with z scored brain activity
 corr_behaviors = ['dRotLabZneg']#, 'dRotLabZpos', 'dRotLabY']
 
+##
 # List of paths for moco meanbrains
+# Identical to imaging_paths_meanbrain but define explicitly for readability
 imaging_paths_moco_meanbrain = []
 for current_path in imaging_file_paths:
     imaging_paths_moco_meanbrain.append(current_path.split('/imaging')[0])
@@ -346,7 +367,11 @@ rule all:
         ###
         # Meanbrain
         ###
-        expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_oak),
+        #>>>>expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
+        #expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii" if CH1_EXISTS else[], meanbr_imaging_paths=imaging_paths_meanbrain),
+        #expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [], meanbr_imaging_paths=imaging_paths_meanbrain),
+        #expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else [], meanbr_imaging_paths=imaging_paths_meanbrain),
+        # OLD expand("{mean_brains_output}_mean.nii", mean_brains_output=paths_for_make_mean_brain_oak),
         # Motion correction output
         # While we don't really need this image, it's a good idea to have it here because the empty h5 file
         # we actually want is created very early during the rule call and will be present even if the program
@@ -377,9 +402,10 @@ rule all:
         ###
         # Meanbrain of moco brain
         ###
-        #expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [], moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
-        #expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
-        #expand(str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels)
+        #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.nii" if CH1_EXISTS else [], moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.nii" if CH2_EXISTS else [] ,moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
+        #expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.nii" if CH3_EXISTS else [] ,moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain),
 
 rule fictrac_qc_rule:
     """
@@ -569,9 +595,18 @@ rule make_mean_brain_rule:
     """
     threads: 2  # It seems to go a bit faster. Can probably set to 1 if want to save cores
     resources: mem_mb=snake_utils.mem_mb_less_times_input  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
-    input: "{mean_brains_output}.nii"  #'/Users/dtadres/Documents/functional_channel_1.nii'
+    input:
+        ch1=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
+        ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else[],
+        ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else[],
+        # OLD"{mean_brains_output}.nii"  #'/Users/dtadres/Documents/functional_channel_1.nii'
 
-    output: "{mean_brains_output}_mean.nii"  # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
+    output:
+        meanbrain_ch1=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
+        meanbrain_ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
+        meanbrain_ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3_mean.nii" if CH2_EXISTS else [],
+
+        # OLD"{mean_brains_output}_mean.nii"  # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
     # every nii file is made to a mean brain! Can predict how they
     # are going to be called and put them here.
     run:
@@ -829,11 +864,29 @@ rule moco_mean_brain_rule:
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_less_times_input
     input:
-        fly_folder_to_process_oak
+        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco.h5"
+        #moco_ch1=str(fly_folder_to_process_oak) +"/{moco_meanbr_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else [],
+        #moco_ch2=str(fly_folder_to_process_oak) +"/{moco_meanbr_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[],
+        #moco_ch3=str(fly_folder_to_process_oak) +"/{moco_meanbr_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],
+
     output:
-        moco_meanbrain_ch1=str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-        moco_meanbrain_ch2=str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-        moco_meanbrain_ch3=str(fly_folder_to_process_oak) + "{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else []
+        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii"
+        #moco_meanbrain_ch1=str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_1_moco_mean.nii" if CH1_EXISTS else [],
+        #moco_meanbrain_ch2=str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_2_moco_mean.nii" if CH2_EXISTS else [],
+        #moco_meanbrain_ch3=str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_3_moco_mean.nii" if CH3_EXISTS else []
+    run:
+        try:
+            preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
+                                            meanbrain_n_frames=meanbrain_n_frames,
+                                            path_to_read=[input.moco_ch1, input.moco_ch2, input.moco_ch3],
+                                            path_to_save=[output.moco_meanbrain_ch1, output.moco_meanbrain_ch2, output.moco_meanbrain_ch3])
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_moco_mean_brain')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
+
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
