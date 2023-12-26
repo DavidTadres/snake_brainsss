@@ -301,7 +301,8 @@ def correlation(fly_directory, dataset_path, save_path,
 
     ### interpolate fictrac to match the timestamps from the microscope!
     fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw, fictrac_fps, resolution, expt_len, behavior,
-                                                        timestamps=timestamps.ravel())#, z=z)
+                                                        timestamps=timestamps
+                                                             )#, z=z)
     # z parameter is used as timestamps[:,z] to return the fictrac data for a given z slice
     # Since we now want all slices at the same time we can just ignore it
     print("fictrac_interp.shape " + repr(fictrac_interp.shape))
@@ -331,38 +332,38 @@ def correlation(fly_directory, dataset_path, save_path,
         ### Correlate ###
         printlog("Performing correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
 
-        # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
-        brain_mean = brain.mean(axis=-1)#, dtype=np.float64)
-        # When I plot the data plt.plot(fictrac_interp) and plt.plot(fictrac_interp.astype(np.float32) I
-        # can't see a difference. Should be ok to do this as float.
-        # This is advantagous because we have to do the dot product with the brain. np.dot will
-        # default to higher precision leading to making a copy of brain data which costs a lot of memory
-        fictrac_mean = fictrac_interp.mean(dtype=np.float32)
+        for z in brain.shape[2]:
+            # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
+            brain_mean = brain[:,:,z,:].mean(axis=-1)#, dtype=np.float64)
+            # When I plot the data plt.plot(fictrac_interp) and plt.plot(fictrac_interp.astype(np.float32) I
+            # can't see a difference. Should be ok to do this as float.
+            # This is advantagous because we have to do the dot product with the brain. np.dot will
+            # default to higher precision leading to making a copy of brain data which costs a lot of memory
+            # Unfortunately fictrac_interp comes in [time, z] as opposed to brain that comes in [x,y,z,t]
+            fictrac_mean = fictrac_interp[:,z].mean(dtype=np.float32)
 
-        print('mean done')
-        # >> Typical values for z scored brain seem to be between -25 and + 25.
-        # It shouldn't be necessary to cast as float64. This then allows us
-        # to do in-place operation!
-        #brain_mean_m = brain.astype(np.float64) - brain_mean[:,:,:,None]
-        brain-=brain_mean[:,:,:,None] # this overwrites original data of 'brain' in memory!
-        # expected dimensions=1
-        # for readability, assign a view of brain to brain_mean_m
-        brain_mean_m = brain
-        # fictrac data is small, so working with float64 shouldn't cost much memory!
-        fictrac_mean_m = fictrac_interp.astype(np.float32) - fictrac_mean
-        print('mean_m done')
+            # >> Typical values for z scored brain seem to be between -25 and + 25.
+            # It shouldn't be necessary to cast as float64. This then allows us
+            # to do in-place operation!
+            brain_mean_m = brain[:,:,z,:].astype(np.float32) - brain_mean[:,:,None]
+            #brain-=brain_mean[:,:,:,None] # this overwrites original data of 'brain' in memory!
+            # fictrac data is small, so working with float64 shouldn't cost much memory!
+            # Correction - if we cast as float64 and do dot product with brain, we'll copy the
+            # brain to float64 array, balloning the memory requirement
+            fictrac_mean_m = fictrac_interp[:,z].astype(np.float32) - fictrac_mean
+            print('mean_m done')
 
-        normbrain = np.linalg.norm(brain_mean_m, axis=-1) # Make a copy, but since there's no time dimension it's quite small
-        normfictrac = np.linalg.norm(fictrac_mean_m)
-        print('norm done')
+            normbrain = np.linalg.norm(brain_mean_m, axis=-1) # Make a copy, but since there's no time dimension it's quite small
+            normfictrac = np.linalg.norm(fictrac_mean_m)
+            print('norm done')
 
-        # Do another inplace operation to save memory
-        #corr_brain = np.dot(brain_mean_m/normbrain[:,:,:,None], fictrac_mean_m/normfictrac)
-        brain_mean_m/=normbrain[:,:,:,None]
-        print('brain/=normbrain done')
-        corr_brain = np.dot(brain, fictrac_mean_m/normfictrac) # here we of course make a full copy of the array again.
-        # To conclude, I expect to need more than 2x input size but not 3x. Todo test!
-        print('corr_brain.shape ' + repr(corr_brain.shape))
+            # Do another inplace operation to save memory
+            corr_brain = np.dot(brain_mean_m/normbrain[:,:,None], fictrac_mean_m/normfictrac)
+            #brain_mean_m/=normbrain[:,:,:,None]
+            print('brain/=normbrain done')
+            #corr_brain = np.dot(brain, fictrac_mean_m/normfictrac) # here we of course make a full copy of the array again.
+            # To conclude, I expect to need more than 2x input size but not 3x. Todo test!
+            print('corr_brain.shape ' + repr(corr_brain.shape))
         printlog("Finished calculating correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
 
         ### SAVE ###
@@ -423,6 +424,8 @@ def correlation(fly_directory, dataset_path, save_path,
             z_dim = brain.shape[2]
 
             idx_to_use = list(range(timestamps.shape[0]))
+            # timestamps.shape > (602, 49)
+            # So we'd get a list going from 0 - 601
 
             corr_brain = np.zeros((x_dim, y_dim, z_dim))
             # For z dimension

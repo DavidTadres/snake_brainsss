@@ -623,6 +623,21 @@ rule make_mean_brain_rule:
 
 rule motion_correction_rule:
     """
+    Current setting 
+    (threads: 6
+     resources:
+       mem_mb=snake_utils.mem_mb_more_times_input,
+       runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!)
+    seems to work for large anatomical files (2x10Gb)
+    State: COMPLETED (exit code 0)
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 22:10:11
+    CPU Efficiency: 61.96% of 1-11:46:48 core-walltime
+    Job Wall-clock time: 05:57:48
+    Memory Utilized: 60.57 GB
+    Memory Efficiency: 83.56% of 72.49 GB
+    
     with: snake_utils.mem_mb_times_input
     State: OUT_OF_MEMORY (exit code 0)
     Nodes: 1
