@@ -90,8 +90,10 @@ def clean_anatomy(fly_directory, dataset_path, save_path):
     # memory requirement!
 
     threshold = skimage.filters.threshold_triangle(brain_copy) # this is a threshold detection
-    # algorithm (Similar to Otsu).
-    brain_copy[np.where(brain_copy < threshold/2)] = 0
+    # algorithm (Similar to Otsu). https://pubmed.ncbi.nlm.nih.gov/70454/
+    # "The threshold (THR) was selected by normalizing the height and dynamic range of the intensity histogram"
+
+    brain_copy[np.where(brain_copy < threshold/2)] = 0 # Set every value below threshold to zero
 
     ### Remove blobs outside contiguous brain ###
     labels, label_nb = ndimage.label(brain_copy)
@@ -1376,10 +1378,10 @@ def make_mean_brain(fly_directory,
         # Read imaging file
         ###
         print(current_path_to_read)
-        if current_path_to_save.suffix == 'nii':
+        if current_path_to_save.suffix == '.nii':
             brain_proxy = nib.load(current_path_to_read) # Doesn't load anything, just points to a given location
             brain_data = np.asarray(brain_proxy.dataobj, dtype='uint16') # loads data to memory.
-        elif current_path_to_read.suffix == 'h5':
+        elif current_path_to_read.suffix == '.h5':
             with h5py.File(current_path_to_read, 'r') as hf:
                 brain_data = np.asarray(hf['data'][:], dtype='uint16')
         else:
