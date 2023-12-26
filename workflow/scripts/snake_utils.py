@@ -76,7 +76,7 @@ def time_for_moco_input(wildcards, input):
     #string_to_return = str(hours) + ':' + str(minutes) + ':00'
     return(str(time_in_minutes*60))
 
-def time_for_correlation(wildcards, input):
+'''def time_for_correlation(wildcards, input):
     """
     returns time in based on input - for a 5 min test case we need just under 5 minutes.
     That's about 10 Mb of fictrac data. So each Mb of fictrac data is ~1 minute of compute time
@@ -84,4 +84,4 @@ def time_for_correlation(wildcards, input):
     :param input
     :return: time in seconds
     """
-    return(input.fictrac_path.size_mb*60)
+    return(input.fictrac_path.size_mb*60)'''
