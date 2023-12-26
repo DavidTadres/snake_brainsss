@@ -304,8 +304,6 @@ def correlation(fly_directory, dataset_path, save_path,
                                                         timestamps=timestamps
                                                              )#, z=z)
     # z parameter is used as timestamps[:,z] to return the fictrac data for a given z slice
-    # Since we now want all slices at the same time we can just ignore it
-    print("fictrac_interp.shape " + repr(fictrac_interp.shape))
 
     ### Load brain ###
     printlog('loading brain')
@@ -332,7 +330,7 @@ def correlation(fly_directory, dataset_path, save_path,
         ### Correlate ###
         printlog("Performing correlation on {}; behavior: {}".format(current_dataset_path.name, behavior))
 
-        for z in brain.shape[2]:
+        for z in range(brain.shape[2]):
             # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
             brain_mean = brain[:,:,z,:].mean(axis=-1)#, dtype=np.float64)
             # When I plot the data plt.plot(fictrac_interp) and plt.plot(fictrac_interp.astype(np.float32) I
