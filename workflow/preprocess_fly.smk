@@ -513,7 +513,7 @@ rule bleaching_qc_rule:
     ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input
+    resources: mem_mb=snake_utils.mem_mb_times_input # This is probably overkill todo decrease!
     input:
         brains_paths_ch1=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
         brains_paths_ch2=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
@@ -616,15 +616,16 @@ rule make_mean_brain_rule:
     threads: 2  # It seems to go a bit faster. Can probably set to 1 if want to save cores
     resources: mem_mb=snake_utils.mem_mb_less_times_input  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
     input:
-        ch1=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
-        ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else[],
-        ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else[],
+        #ch1=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
+        #ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else[],
+        #ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else[],
         # OLD"{mean_brains_output}.nii"  #'/Users/dtadres/Documents/functional_channel_1.nii'
-
+        str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/moco/channel_{meanbr_ch}_moco.h5"
     output:
-        meanbrain_ch1=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
-        meanbrain_ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
-        meanbrain_ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3_mean.nii" if CH2_EXISTS else [],
+        str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/moco/channel_{meanbr_ch}_moco_mean.nii"
+        #meanbrain_ch1=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
+        #meanbrain_ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
+        #meanbrain_ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3_mean.nii" if CH2_EXISTS else [],
 
         # OLD"{mean_brains_output}_mean.nii"  # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
     # every nii file is made to a mean brain! Can predict how they
@@ -943,6 +944,10 @@ rule clean_anatomy_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
+
+rule func_to_anat_rule:
+    """
+    """
 
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html

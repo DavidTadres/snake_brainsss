@@ -98,9 +98,8 @@ def align_anat(fly_directory):
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'make_mean_brain')
 
-
-    logfile = args['logfile']
-    save_directory = args['save_directory']
+    #logfile = args['logfile']
+    #save_directory = args['save_directory']
     flip_X = args['flip_X']
     flip_Z = args['flip_Z']
     type_of_transform = args['type_of_transform']  # SyN or Affine
@@ -1690,7 +1689,7 @@ def bleaching_qc(fly_directory,
     for current_path_to_read, current_path_to_save in zip(path_to_read, path_to_save):
         printlog(F"Currently reading: {current_path_to_read.name:.>{WIDTH - 20}}")
         # Doesn't load anything to memory, just a pointer
-        brain_proxy = nib.load(current_path_to_save)
+        brain_proxy = nib.load(current_path_to_read)
         # Load data into memory
         brain = np.asarray(brain_proxy.dataobj, dtype=np.uint16)
         # calculate mean over time
