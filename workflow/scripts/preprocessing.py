@@ -41,7 +41,64 @@ from brainsss import fictrac_utils
 from brainsss import corr_utils
 
 
-def main(args):
+def align_anat(fly_directory):
+    """
+
+    :param args:
+    :return:
+    """
+    '''
+    Hardcoded stuff from preprocessing of brainsss
+    res_anat = (0.653, 0.653, 1)
+    res_func = (2.611, 2.611, 5)
+
+    for fly in fly_dirs:
+        fly_directory = os.path.join(dataset_path, fly)
+
+        if loco_dataset:
+            moving_path = os.path.join(fly_directory, 'func_0', 'imaging', 'functional_channel_1_mean.nii')
+        else:
+            moving_path = os.path.join(fly_directory, 'func_0', 'moco', 'functional_channel_1_moc_mean.nii')
+        moving_fly = 'func'
+        moving_resolution = res_func
+
+        if loco_dataset:
+            fixed_path = os.path.join(fly_directory, 'anat_0', 'moco', 'stitched_brain_red_mean.nii')
+        else:
+            fixed_path = os.path.join(fly_directory, 'anat_0', 'moco', 'anatomy_channel_1_moc_mean.nii')
+        fixed_fly = 'anat'
+        fixed_resolution = res_anat
+
+        save_directory = os.path.join(fly_directory, 'warp')
+        if not os.path.exists(save_directory):
+            os.mkdir(save_directory)
+
+        type_of_transform = 'Affine'
+        save_warp_params = True
+        flip_X = False
+        flip_Z = False
+
+        low_res = False
+        very_low_res = False
+
+        iso_2um_fixed = True
+        iso_2um_moving = False
+
+        grad_step = 0.2
+        flow_sigma = 3
+        total_sigma = 0
+        syn_sampling = 32
+
+    '''
+
+    ###
+    # Logging
+    ###
+    logfile = utils.create_logfile(fly_directory, function_name='make_mean_brain')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'make_mean_brain')
+
+
     logfile = args['logfile']
     save_directory = args['save_directory']
     flip_X = args['flip_X']
@@ -1584,8 +1641,10 @@ def make_mean_brain(fly_directory,
         printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {brain_data.shape} ===> {meanbrain.shape}")
 
 def bleaching_qc(fly_directory,
-                 imaging_data_path_read_from,
-                 imaging_data_path_save_to
+                 path_to_read,
+                 path_to_save,
+                 functional_channel_list,
+                 anatomical_channel
                  ):
     """
     TODO: use anatomical channel information from snakefile for fixing color scheme of the plot!
@@ -1593,7 +1652,13 @@ def bleaching_qc(fly_directory,
     Perform bleaching qc.
     This is based on Bella's 'bleaching_qc.py' script
 
-    :param: logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
+    :param logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
+    :param path_to_read: list of paths to images to read, can be more than one
+    :param path_to_save: list of paths to the 'bleaching.png' file
+    :param functional_channel_list: list with channels marked as functional channels by experimenter
+    :param anatomical_channel: the channel marked as the anatomy channel by the experimenter
+
+    '''# OLD VERSION!!!!
     :param imaging_data_path_read_from: a nested(!) list to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
                                         This is a list containing pathlibt.Path objects like this:
                                         [[PosixPath('../fly_001/func0/imaging/functional_channel_1.nii'),
@@ -1603,7 +1668,7 @@ def bleaching_qc(fly_directory,
                                         ]
     :param imaging_data_path_save_to: a list to the 'bleaching' target file as pathlib.Path objects like this:
                                       [PosixPath('../fly_001/func0/imaging/bleaching.png'),
-                                       PosixPath('../fly_001/func1/imaging/bleaching.png)]
+                                       PosixPath('../fly_001/func1/imaging/bleaching.png)]'''
 
     :return:
     """
@@ -1614,69 +1679,67 @@ def bleaching_qc(fly_directory,
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'bleaching_qc')
 
-    # Try to read SNAKEMAKE_CLUSTER_SIDECAR_VARS
-    #import os
-    #SIDECAR_VARS = os.environ.get("SNAKEMAKE_CLUSTER_SIDECAR_VARS", None)
-    #print(SIDECAR_VARS)
+    #####
+    # CONVERT PATHS TO PATHLIB.PATH OBJECTS
+    #####
+    path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
+    path_to_save =utils.convert_list_of_string_to_posix_path(path_to_save)
 
-    # For each experiment,
-    for current_folder_read, current_file_path_save in zip(imaging_data_path_read_from, imaging_data_path_save_to):
-        # yields e.g. current_folder_read = PosixPath('../fly_001/func0/imaging/functional_channel_1.nii'),
-        #                                           PosixPath('../fly_001/func0/imaging/functional_channel_2.nii')]
-        # and current_file_path_save = PosixPath('../fly_001/func0/imaging/bleaching.png')
-        data_mean = {}
-        for current_file_path_read in current_folder_read:
-            # yields e.g. '../fly_001/func0/imaging/functional_channel_1.nii')
-            printlog(F"Currently reading: {current_file_path_read.name:.>{WIDTH - 20}}")
-            # Read data
-            brain = np.asarray(nib.load(current_file_path_read).get_fdata(), dtype=np.uint16) # TODO<<<< Change to dataobj call to save memory!!!!
-            # take the mean of ALL values
-            data_mean[pathlib.Path(current_file_path_read).name] = np.mean(brain, axis=(0,1,2))
-        ##############################
-        ### Output Bleaching Curve ###
-        ##############################
-        # plotting params
-        plt.rcParams.update({'font.size': 24})
-        fig = plt.figure(figsize=(10,10))
-        ax = fig.add_subplot(111)
-        signal_loss = {}
+    data_mean = {}
+    # For each path in the list
+    for current_path_to_read, current_path_to_save in zip(path_to_read, path_to_save):
+        printlog(F"Currently reading: {current_path_to_read.name:.>{WIDTH - 20}}")
+        # Doesn't load anything to memory, just a pointer
+        brain_proxy = nib.load(current_path_to_save)
+        # Load data into memory
+        brain = np.asarray(brain_proxy.dataobj, dtype=np.uint16)
+        # calculate mean over time
+        data_mean[current_path_to_read.name] = np.mean(brain, axis=(0,1,2))
 
-        for filename in data_mean:
-            xs = np.arange(len(data_mean[filename]))
-            color='k'
-            if 'functional_channel_1.nii' in filename:
-                color='red'
-            if 'functional_channel_2.nii' in filename:
-                color='green'
-            ax.plot(data_mean[filename],color=color,label=filename)
-            # Fit polynomial to mean fluorescence.
-            linear_fit = np.polyfit(xs, data_mean[filename], 1)
-            # and plot it
-            ax.plot(np.poly1d(linear_fit)(xs),color='k',linewidth=3,linestyle='--')
-            # take the linear fit to calculate how much signal is lost and report it as the title
-            signal_loss[filename] = linear_fit[0]*len(data_mean[filename])/linear_fit[1]*-100
-        ax.set_xlabel('Frame Num')
-        ax.set_ylabel('Avg signal')
-        loss_string = ''
-        for filename in data_mean:
-            loss_string = loss_string + filename + ' lost' + F'{int(signal_loss[filename])}' +'%\n'
-        ax.set_title(loss_string, ha='center', va='bottom')
+    ##############################
+    ### Output Bleaching Curve ###
+    ##############################
+    # plotting params
+    plt.rcParams.update({'font.size': 24})
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111)
+    signal_loss = {}
 
-        ###
-        # Save plot
-        ###
-        save_file = pathlib.Path(current_file_path_save)
-        fig.savefig(save_file,dpi=300,bbox_inches='tight')
+    for filename in data_mean:
+        xs = np.arange(len(data_mean[filename]))
+        color = 'k'
+        # I slightly changed the colornames to make it obvious that data was analyzed
+        # with a pipeline different from the normal one
+        if 'channel_1' in filename:
+            color = 'tomato' # on our scope this is red
+        elif 'channel_2' in filename:
+            color = 'lime' # on our scope this is green
+        elif 'channel_3' in filename:
+            color = 'darkred' # on our scope this should be an IR channel
+        ax.plot(data_mean[filename], color=color, label=filename)
+        # Fit polynomial to mean fluorescence.
+        linear_fit = np.polyfit(xs, data_mean[filename], 1)
+        # and plot it
+        ax.plot(np.poly1d(linear_fit)(xs), color='k', linewidth=3, linestyle='--')
+        # take the linear fit to calculate how much signal is lost and report it as the title
+        signal_loss[filename] = linear_fit[0] * len(data_mean[filename]) / linear_fit[1] * -100
+    ax.set_xlabel('Frame Num')
+    ax.set_ylabel('Avg signal')
+    loss_string = ''
+    for filename in data_mean:
+        loss_string = loss_string + filename + ' lost' + F'{int(signal_loss[filename])}' + '%\n'
+    ax.set_title(loss_string, ha='center', va='bottom')
 
-        ###
-        # log success
-        ###
-        printlog(F"Prepared plot and saved as: {str(save_file):.>{WIDTH - 20}}")
+    ###
+    # Save plot
+    ###
+    save_file = pathlib.Path(current_path_to_save)
+    fig.savefig(save_file, dpi=300, bbox_inches='tight')
 
-        ###
-        # release memory, unsure if necessary
-        ###
-        del data_mean
+    ###
+    # log success
+    ###
+    printlog(F"Prepared plot and saved as: {str(save_file):.>{WIDTH - 20}}")
 
 def fictrac_qc(fly_directory, fictrac_file_paths, fictrac_fps):
     """
@@ -1803,9 +1866,9 @@ def fly_builder(user, import_dirs, dataset_dirs):
             # We can therefore delete the 'incomplete' file in this folder
             try:
                 pathlib.Path(current_dataset_dir, 'incomplete').unlink()
-                printlog(F'Deleted incomplete file in :{str(current_dataset_dir):.>{WIDTH}}')
+                printlog(F'Deleted "incomplete" file in :{str(current_dataset_dir):.>{WIDTH}}')
             except FileNotFoundError:
-                printlog(F'Incomplete file not found in! :{str(current_dataset_dir):.>{WIDTH}}')
+                printlog(F'"Incomplete" file not found in! :{str(current_dataset_dir):.>{WIDTH}}')
             # In case part of the import folder is being copied and the program crashes, it might
             # lead to accidentally copying all flies from import to new flies in data which might lead
             # to data duplication.

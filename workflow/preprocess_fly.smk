@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'fly_002' # folder to be processed
+fly_folder_to_process = 'SS84990_DNa03_x_UAS-CD8-GFP/fly_001' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -69,7 +69,7 @@ fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
 print('Analyze data in ' + repr(fly_folder_to_process_oak.as_posix()))
 
 # Read channel information from fly.json file
-with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
+with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file: # This probably means the folder specified doesn't exist. Check name
     fly_json = json.load(file)
 
 ANATOMY_CHANNEL = fly_json['anatomy_channel'] # < This needs to come from some sort of json file the experimenter
@@ -226,6 +226,14 @@ if CH3_EXISTS:
     channels.append("3")
 
 ##
+# List of paths for bleaching
+# Identical to imaging_paths_meanbrain but define explicitly for readability
+imaging_paths_bleaching = []
+for current_path in imaging_file_paths:
+    imaging_paths_bleaching.append(current_path.split('/imaging')[0])
+print("imaging_paths_bleaching" + repr(imaging_paths_bleaching))
+
+##
 # List of paths for moco
 # Identical to imaging_paths_meanbrain but define explicitly for readability
 list_of_imaging_paths_moco = []
@@ -365,11 +373,13 @@ rule all:
         ###
         # Fictrac QC
         ###
-        expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed),
+        expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed), # This is just empty if no fictrac
+        # data in fly_dirs.json!
         ###
         # Bleaching QC
         ###
-        bleaching_qc_output_files,
+        #bleaching_qc_output_files,
+        expand(str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png", bleaching_imaging_paths=imaging_paths_bleaching),
         ###
         # Meanbrain
         ###
@@ -505,15 +515,19 @@ rule bleaching_qc_rule:
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
     input:
-        imaging_paths_by_folder_oak
+        brains_paths_ch1=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
+        brains_paths_ch2=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
+        brains_paths_ch3=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
     output:
-        bleaching_qc_output_files
+        str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png"
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
-                                        imaging_data_path_read_from=imaging_paths_by_folder_oak, #imaging_paths_by_folder_scratch, # {input} didn't work, I think because it destroyed the list of list we expect to see here #imaging_paths_by_folder_scratch,
-                                        imaging_data_path_save_to=bleaching_qc_output_files # can't use output, messes things up here! #imaging_paths_by_folder_oak
+                                        path_to_read=[input.brains_paths_ch1, input.brains_paths_ch2, input.brains_paths_ch3], #imaging_paths_by_folder_scratch, # {input} didn't work, I think because it destroyed the list of list we expect to see here #imaging_paths_by_folder_scratch,
+                                        path_to_save=output, # can't use output, messes things up here! #imaging_paths_by_folder_oak
                                         #print_output = output
+                                        functional_channel_list=FUNCTIONAL_CHANNELS,
+                                        anatomical_channel=ANATOMY_CHANNEL
             )
             print('Done with bleaching_qc')
         except Exception as error_stack:
@@ -702,7 +716,7 @@ rule motion_correction_rule:
     threads: 6
     resources:
         mem_mb=snake_utils.mem_mb_more_times_input,
-        runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
+        #runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
     input:
         # Only use the Channels that exists
         brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
