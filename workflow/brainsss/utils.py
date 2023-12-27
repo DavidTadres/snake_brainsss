@@ -576,11 +576,21 @@ def check_for_nan_and_inf_func(array):
     :param array:
     :return:
     """
-    if np.isnan(array).any():
-        print('!!!!! WARNING - THERE ARE NAN IN THE ARRAY !!!!!')
-        print('The position(s) of np.nan is/are: ' + repr(np.where(np.isnan(array))))
-    if np.isinf(array).any():
-        print('!!!!! WARNING - THERE ARE INF IN THE ARRAY !!!!!')
-        print('The position(s) of np.inf is/are ' + repr(np.where(np.isnan(array))))
+    try:
+        if np.isnan(array).any():
+            print('!!!!! WARNING - THERE ARE NAN IN THE ARRAY !!!!!')
+            print('The position(s) of np.nan is/are: ' + repr(np.where(np.isnan(array))))
+    except:
+        print('Could not check for nan because:\n\n')
+        print(traceback.format_exc())
+        print('\n')
 
+    try:
+        if np.isinf(array).any():
+            print('!!!!! WARNING - THERE ARE INF IN THE ARRAY !!!!!')
+            print('The position(s) of np.inf is/are ' + repr(np.where(np.isnan(array))))
+    except:
+        print('Could not check for inf because:\n\n')
+        print(traceback.format_exc())
+        print('\n')
 

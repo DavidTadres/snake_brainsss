@@ -1320,6 +1320,27 @@ rule anat_to_atlas:
                 error_stack=error_stack,
                 width=width)
 
+rule apply_transforms_rule:
+    """
+    """
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_input
+    input:
+        path_to_read_fixed=atlas_path
+    output: 'bar'
+    run:
+        try:
+            preprocessing.apply_transforsm(fly_directory=fly_folder_to_process_oak,
+                                            path_to_read_fixed=input.path_to_read_fixed,
+
+
+                                            )
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_apply_transforms')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.

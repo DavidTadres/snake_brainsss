@@ -37,7 +37,8 @@ from brainsss import utils
 from brainsss import fictrac_utils
 from brainsss import corr_utils
 
-def apply_transforsm(fly_directory):
+def apply_transforsm(fly_directory,
+                     path_to_read_fixed):
     """
 
     :param fly_directory:
@@ -59,6 +60,8 @@ def apply_transforsm(fly_directory):
     #####
     path_to_read_fixed = utils.convert_list_of_string_to_posix_path(path_to_read_fixed)
 
+    # There can only be one fixed path!
+    path_to_read_fixed = path_to_read_fixed[0]
     fixed_path = args['fixed_path']
     fixed_fly = args['fixed_fly']
     fixed_resolution = args['fixed_resolution']
