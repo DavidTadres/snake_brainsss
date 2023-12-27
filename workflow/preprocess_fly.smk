@@ -1259,8 +1259,8 @@ rule func_to_anat_rule:
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
     input:
-        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}.h5',
-        path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}.h5"
+        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}.nii',
+        path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}.nii"
     output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii"
 
     run:
@@ -1292,7 +1292,7 @@ rule anat_to_atlas:
     resources: mem_mb=snake_utils.mem_mb_times_input
     input:
         path_to_read_fixed=atlas_path,
-        path_to_read_moving=str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/moco/{anat2atlas_moving}.h5"
+        path_to_read_moving=str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/moco/{anat2atlas_moving}.nii"
     output:
         str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii"
 
