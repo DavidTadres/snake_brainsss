@@ -1290,7 +1290,7 @@ rule anat_to_atlas:
     """
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input
+    resources: mem_mb=snake_utils.mem_mb_more_times_input
     input:
         path_to_read_fixed=atlas_path,
         path_to_read_moving=str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/moco/{anat2atlas_moving}.nii"
