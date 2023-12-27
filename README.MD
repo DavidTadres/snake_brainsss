@@ -102,10 +102,6 @@ source .env_snake_brainsss/bin/activate
    uint16 (happens for example when writing the h5 file back to a nii file).  
 2) Why use nibabel at all? e.g. motion correction ants.registration takes a numpy array it seems. > Probably because
    it can be opened natively in fiji?
-3) Unclear whether it's ok to use int16 and float32 interchangeably. E.g. Bruker gives uint16 and moco because (?)
-   of ants.registration yields floats. Everything that's saved in h5 is float. nii not always. Further downstream
-   we have for example input files of 'nii'(clean anat) after it was calculated as h5. How to test if we can go 
-   from one number space to another? -> Actually, maybe thats ok.
 
 ###
 # Other notes:
@@ -113,3 +109,6 @@ source .env_snake_brainsss/bin/activate
 1) Dangerous: in fictrac_utils.smooth_and_interp_fictrac the scipy.signal.savgol filter has a fixed smoothing
    length that does NOT depend on the framerate. This will yield different smoothing results depending on the 
    recording framerate!
+2) Check line 146/147 in motion_correction.py in brainsss. Data is loaded as uint16 and then cnoverted to float32
+   Meanbrain is made by calling np.mean which returns a float64 array. I think this might lead to a loss of precision
+   Better to avoid using uint16 in line 146 and use directly float32.  

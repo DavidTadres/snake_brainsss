@@ -7,6 +7,7 @@ import nibabel as nib
 import numpy as np
 import traceback
 import time
+import h5py
 
 def check_for_nan_and_inf_func(array):
     """
@@ -47,17 +48,33 @@ def read_nii_data_and_check(data_path, dtype):
     del data # Make sure to keep memory as empty as possible
     time.sleep(1)
 
+def read_h5_data_and_check(datapath, dtype):
+    with h5py.File(datapath, 'r') as file:
+        data_proxy = file['data']
+        data = np.asarray(data_proxy[:], dtype=dtype)
+
+        check_for_nan_and_inf_func(data)
+
+    del data
+    time.sleep(1)
+
+
 ###
 # 'Original' data
 data_path = pathlib.Path('/Users/dtadres/Documents/func1/imaging/functional_channel_1.nii')
 read_nii_data_and_check(data_path, dtype=np.uint16)
 # > No nan or inf found in this array
 
+###
+# Original data meanbrain
 data_path = pathlib.Path('/Users/dtadres/Documents/func1/imaging/functional_channel_1_mean.nii')
-read_nii_data_and_check(data_path, dtype=np.float32) # < make_mean_brain loads like this
+read_nii_data_and_check(data_path, dtype=np.float64) # < make_mean_brain outputs float64!
 # > No nan or inf found in this array
 
 ###
+# Moco corrected data
+data_path = pathlib.Path('/Users/dtadres/Documents/func1/moco/channel_1_moco.h5')
+read_h5_data_and_check(data_path, dtype=np.float32)
 
 data_path = pathlib.Path('/Users/dtadres/Documents/func1/moco/channel_1_moco_mean.nii')
 read_nii_data_and_check(data_path)

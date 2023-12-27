@@ -1388,7 +1388,8 @@ def motion_correction(fly_directory,
     #    printlog(F"Loaded meanbrain{existing_meanbrain_file:.>{width - 16}}")
 
     meanbrain_proxy = nib.load(path_meanbrain_anatomy)
-    meanbrain = np.asarray(meanbrain_proxy.dataobj, dtype=np.uint16)
+    # TODO change this to np.float32 (from np.uint16) to minimze precision loss
+    meanbrain = np.asarray(meanbrain_proxy.dataobj, dtype=np.uint16) # <<<<!!! This is quite strange - meanbrain is float64!!
     #meanbrain = np.asarray(nib.load(path_meanbrain_anatomy).get_fdata(), dtype='uint16')
     # get_fdata() loads data into memory and sometimes doesn't release it.
     fixed = ants.from_numpy(np.asarray(meanbrain, dtype='float32'))
@@ -1766,6 +1767,7 @@ def make_mean_brain(fly_directory,
         ###
         # create meanbrain
         ###
+        # TODO: call np.mean(brain_data..., axis=-1, dtype=np.float32) as we'll anyway only open it as float32
         if meanbrain_n_frames is not None:
             # average over first meanbrain_n_frames frames
             meanbrain = np.mean(brain_data[..., :int(meanbrain_n_frames)], axis=-1)
@@ -1773,6 +1775,7 @@ def make_mean_brain(fly_directory,
             meanbrain = np.mean(brain_data, axis=-1)
 
         printlog('Datatype of meanbrain: ' + repr(meanbrain.dtype))
+        # This yields float64! See docs https://numpy.org/doc/stable/reference/generated/numpy.mean.html
         ###
         # save meanbrain
         ###
