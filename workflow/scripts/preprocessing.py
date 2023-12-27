@@ -167,10 +167,12 @@ def align_anat(fly_directory,
     # Load to memory
     fixed_brain = np.asarry(fixed_brain_proxy.dataobj, dtype=np.float32) # I'm not using squeeze here! Might introduce
     # a bug so important to keep if statement below!
+    utils.check_for_nan_and_inf_func(fixed_brain)
+
     if len(fixed_brain.shape)>3:
         printlog('WARNING: Here we should only have 3 dimensions not '+ repr(fixed_brain.shape))
 
-    fixfixed_brained = ants.from_numpy(fixed_brain)
+    fixed_brained = ants.from_numpy(fixed_brain)
     fixed_brain.set_spacing(fixed_resolution)
     #if low_res:
     #    fixed = ants.resample_image(fixed, (256, 128, 49), 1, 0)
@@ -183,6 +185,7 @@ def align_anat(fly_directory,
     #moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')\
     moving_brain_proxy = nib.load(path_to_read_moving)
     moving_brain = np.asarray(moving_brain_proxy.dataobj, dtype=np.float32)
+    utils.check_for_nan_and_inf_func(fixed_brain)
     if len(moving_brain.shape)>3:
         printlog('WARNING: Here we should only have 3 dimensions not '+ repr(fixed_brain.shape))
     if flip_X:
@@ -291,7 +294,6 @@ def align_anat(fly_directory,
     #else:
     #    save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly)
     #    # save_file = os.path.join(save_directory, mimic_fly + '-to-' + fixed_fly + '.nii')
-    save_file = 'comes from snakemake!'
     # nib.Nifti1Image(mimic_moco.numpy(), np.eye(4)).to_filename(save_file)
     #if low_res:
     #    save_file += '_lowres'
@@ -1740,6 +1742,7 @@ def bleaching_qc(fly_directory,
         brain_proxy = nib.load(current_path_to_read)
         # Load data into memory
         brain = np.asarray(brain_proxy.dataobj, dtype=np.uint16)
+        utils.check_for_nan_and_inf_func(brain)
         # calculate mean over time
         data_mean[current_path_to_read.name] = np.mean(brain, axis=(0,1,2))
 

@@ -569,5 +569,18 @@ def sec_to_hms(t):
         hrs=F"{np.floor((t/3600)%60):02.0f}"
         return ':'.join([hrs, mins, secs])
 
+def check_for_nan_and_inf_func(array):
+    """
+    Check if there are any nan or inf in the array that is being passed.
+
+    :param array:
+    :return:
+    """
+    if np.isnan(array).any():
+        print('!!!!! WARNING - THERE ARE NAN IN THE ARRAY !!!!!')
+        print('The position(s) of np.nan is/are: ' + repr(np.where(np.isnan(array))))
+    if np.isinf(array).any():
+        print('!!!!! WARNING - THERE ARE INF IN THE ARRAY !!!!!')
+        print('The position(s) of np.inf is/are ' + repr(np.where(np.isnan(array))))
 
 
