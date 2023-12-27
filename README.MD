@@ -102,6 +102,10 @@ source .env_snake_brainsss/bin/activate
    uint16 (happens for example when writing the h5 file back to a nii file).  
 2) Why use nibabel at all? e.g. motion correction ants.registration takes a numpy array it seems. > Probably because
    it can be opened natively in fiji?
+3) Unclear whether it's ok to use int16 and float32 interchangeably. E.g. Bruker gives uint16 and moco because (?)
+   of ants.registration yields floats. Everything that's saved in h5 is float. nii not always. Further downstream
+   we have for example input files of 'nii'(clean anat) after it was calculated as h5. How to test if we can go 
+   from one number space to another? -> Actually, maybe thats ok.
 
 ###
 # Other notes:

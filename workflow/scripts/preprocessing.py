@@ -378,7 +378,7 @@ def clean_anatomy(fly_directory, path_to_read, save_path):
     ### Save brain ###
     #save_file = save_path[0].name[:-4] + '_clean.nii'
     aff = np.eye(4)
-    img = nib.Nifti1Image(brain_out, aff)
+    img = nib.Nifti1Image(brain_out, aff) # is this float32? check
     img.to_filename(save_path[0])
 
     printlog('Clean anatomy successfully saved in ' + repr(save_path[0]))

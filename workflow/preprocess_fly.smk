@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_001' # folder to be processed
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -942,6 +942,13 @@ rule temporal_high_pass_filter_rule:
     Memory Utilized: 7.42 GB
     Memory Efficiency: 58.86% of 12.60 GB
     
+    Cores per node: 10
+    CPU Utilized: 00:26:42
+    CPU Efficiency: 9.26% of 04:48:20 core-walltime
+    Job Wall-clock time: 00:28:50
+    Memory Utilized: 41.26 GB
+    Memory Efficiency: 58.24% of 70.84 GB
+    
     ##
     
     Benchmark with the func1 file (~3Gb)
@@ -1005,6 +1012,73 @@ rule temporal_high_pass_filter_rule:
 
 rule correlation_rule:
     """
+    Benchmark:
+    Cores: 1
+    CPU Utilized: 00:00:16
+    CPU Efficiency: 25.81% of 00:01:02 core-walltime
+    Job Wall-clock time: 00:01:02
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 5.49 GB (5.49 GB/node)
+    
+    State: COMPLETED (exit code 0)
+    Cores: 1
+    CPU Utilized: 00:00:29
+    CPU Efficiency: 34.12% of 00:01:25 core-walltime
+    Job Wall-clock time: 00:01:25
+    Memory Utilized: 643.89 MB
+    Memory Efficiency: 11.45% of 5.49 GB
+    
+    Cores: 1
+    CPU Utilized: 00:00:27
+    CPU Efficiency: 26.47% of 00:01:42 core-walltime
+    Job Wall-clock time: 00:01:42
+    Memory Utilized: 2.06 GB
+    Memory Efficiency: 37.62% of 5.48 GB
+    
+    Cores: 1
+    CPU Utilized: 00:00:27
+    CPU Efficiency: 26.47% of 00:01:42 core-walltime
+    Job Wall-clock time: 00:01:42
+    Memory Utilized: 2.07 GB
+    Memory Efficiency: 37.84% of 5.48 GB
+    
+    Cores: 1
+    CPU Utilized: 00:00:29
+    CPU Efficiency: 28.43% of 00:01:42 core-walltime
+    Job Wall-clock time: 00:01:42
+    Memory Utilized: 1.67 GB
+    Memory Efficiency: 30.40% of 5.49 GB
+    
+    Cores: 1
+    CPU Utilized: 00:00:27
+    CPU Efficiency: 26.47% of 00:01:42 core-walltime
+    Job Wall-clock time: 00:01:42
+    Memory Utilized: 2.08 GB
+    Memory Efficiency: 37.91% of 5.48 GB
+    
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:01:06
+    CPU Efficiency: 5.73% of 00:19:12 core-walltime
+    Job Wall-clock time: 00:04:48
+    Memory Utilized: 21.68 GB
+    Memory Efficiency: 70.38% of 30.81 GB
+    
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:01:05
+    CPU Efficiency: 5.64% of 00:19:12 core-walltime
+    Job Wall-clock time: 00:04:48
+    Memory Utilized: 21.68 GB
+    Memory Efficiency: 70.38% of 30.81 GB
+    
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:01:10
+    CPU Efficiency: 7.03% of 00:16:36 core-walltime
+    Job Wall-clock time: 00:04:09
+    Memory Utilized: 21.81 GB
+    Memory Efficiency: 70.78% of 30.81 GB
     
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
@@ -1140,7 +1214,21 @@ rule moco_mean_brain_rule:
 
 rule clean_anatomy_rule:
     """
-    TO BE TESTED!!!!sleep
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:57
+    CPU Efficiency: 36.54% of 00:02:36 core-walltime
+    Job Wall-clock time: 00:01:18
+    Memory Utilized: 2.89 GB
+    Memory Efficiency: 29.62% of 9.77 GB
+    
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:01:03
+    CPU Efficiency: 36.63% of 00:02:52 core-walltime
+    Job Wall-clock time: 00:01:26
+    Memory Utilized: 3.78 GB
+    Memory Efficiency: 38.66% of 9.77 GB
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_much_more_times_input # Todo, optimize memory usage of this function! #mem_mb_more_times_input #snake_utils.mem_mb_times_input # OOM!!!
