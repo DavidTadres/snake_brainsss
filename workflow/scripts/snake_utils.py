@@ -11,12 +11,12 @@ def mem_mb_times_threads(wildcards, threads):
 
 def mem_mb_less_times_input(wildcards, input):
     """
-    Returns memory in mb as 1.5*input memory size or 1Gb, whichever is larger
+    Returns memory in mb as 1.5*input memory size or 1.5Gb, whichever is larger
     :param wildcards:
     :param input:
     :return:
     """
-    return(max(input.size_mb*1.5, 1000))
+    return(max(input.size_mb*1.5, 1500))
 
 def mem_mb_times_input(wildcards, input):
     """
