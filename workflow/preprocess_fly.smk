@@ -290,11 +290,11 @@ for current_path in imaging_file_paths:
         anat_path_func2anat = current_path.split('/imaging')[0]
 # the anatomical channel for func2anat
 if 'channel_1' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed = ['channel_1_moco']
+    file_path_func2anat_fixed = ['channel_1_moco_mean']
 elif 'channel_2' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed = ['channel_2_moco']
+    file_path_func2anat_fixed = ['channel_2_moco_mean']
 elif 'channel_3' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed = ['channel_3_moco']
+    file_path_func2anat_fixed = ['channel_3_moco_mean']
 '''# the functional channels for func2anat
 file_path_func2anat_moving = []
 if 'channel_1' in FUNCTIONAL_CHANNELS:
