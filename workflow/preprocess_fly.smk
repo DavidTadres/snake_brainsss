@@ -307,8 +307,20 @@ elif 'channel_3' in FUNCTIONAL_CHANNELS:
 ##
 # list of paths for anat2atlas
 atlas_path = pathlib.Path("/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/anat_templates/20220301_luke_2_jfrc_affine_zflip_2umiso.nii") #luke.nii"
-
-
+imaging_paths_anat2atlas =[]
+for current_path in imaging_file_paths:
+    if 'anat' in current_path:
+        imaging_paths_anat2atlas.append(current_path.split('/imaging')[0])
+# here it's ok to have more than one anatomy folder! However, script will break before...
+# but at least this part doesn't have to break!
+# the anatomical channel for func2anat
+file_path_anat2atlas_moving = []
+if 'channel_1' in ANATOMY_CHANNEL:
+    file_path_func2anat_fixed.append('channel_1_moco_clean')
+elif 'channel_2' in ANATOMY_CHANNEL:
+    file_path_func2anat_fixed.append('channel_2_moco_clean')
+elif 'channel_3' in ANATOMY_CHANNEL:
+    file_path_func2anat_fixed.append('channel_3_moco_clean')
 ##
 
 ####
@@ -462,7 +474,7 @@ rule all:
         ##
         # anat2atlas
         ##
-        expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/")
+        #expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii", anat2atlas_paths=imaging_paths_anat2atlas, anat2atlas_moving=file_path_anat2atlas_moving)
 
 rule fictrac_qc_rule:
     """
@@ -991,7 +1003,6 @@ rule temporal_high_pass_filter_rule:
                 error_stack=error_stack,
                 width=width)
 
-
 rule correlation_rule:
     """
     
@@ -1184,10 +1195,10 @@ rule anat_to_atlas:
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
     input:
-        path_to_read_fixed='foo',
-        path_to_read_moving='bar'
+        path_to_read_fixed=atlas_path,
+        path_to_read_moving=str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/moco/{anat2atlas_moving}.h5"
     output:
-        'foobar'
+        str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii"
 
     run:
         try:
