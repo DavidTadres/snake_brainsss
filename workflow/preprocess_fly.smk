@@ -1326,14 +1326,16 @@ rule apply_transforms_rule:
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
     input:
-        path_to_read_fixed=atlas_path
+        path_to_read_fixed=atlas_path,
+        path_to_read_moving='foo'
     output: 'bar'
     run:
         try:
             preprocessing.apply_transforsm(fly_directory=fly_folder_to_process_oak,
-                                            path_to_read_fixed=input.path_to_read_fixed,
-
-
+                                            path_to_read_fixed=[input.path_to_read_fixed],
+                                            path_to_read_moving=[input.path_to_read_moving],
+                                            resolution_of_fixed=(2,2,2), # copy-paste from brainsss
+                                            final_2um_iso=False, # copy-paste from brainsss
                                             )
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_apply_transforms')

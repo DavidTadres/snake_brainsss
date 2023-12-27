@@ -38,7 +38,9 @@ from brainsss import fictrac_utils
 from brainsss import corr_utils
 
 def apply_transforsm(fly_directory,
-                     path_to_read_fixed):
+                     path_to_read_fixed,
+                     resolution_of_fixed,
+                     final_2um_iso):
     """
 
     :param fly_directory:
@@ -59,30 +61,31 @@ def apply_transforsm(fly_directory,
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
     #####
     path_to_read_fixed = utils.convert_list_of_string_to_posix_path(path_to_read_fixed)
+    path_to_read_moving = utils.convert_list_of_string_to_posix_path(path_to_read_moving)
 
     # There can only be one fixed path!
     path_to_read_fixed = path_to_read_fixed[0]
-    fixed_path = args['fixed_path']
-    fixed_fly = args['fixed_fly']
-    fixed_resolution = args['fixed_resolution']
+    #fixed_path = #args['fixed_path']
+    fixed_fly = path_to_read_fixed.name #args['fixed_fly']
+    #fixed_resolution = #args['fixed_resolution']
 
-    moving_path = args['moving_path']
-    moving_fly = args['moving_fly']
-    moving_resolution = args['moving_resolution']
-
-    final_2um_iso = args['final_2um_iso']
+    #final_2um_iso = args['final_2um_iso']
     #nonmyr_to_myr_transform = args['nonmyr_to_myr_transform']
-
-    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
 
     ###################
     ### Load Brains ###
     ###################
+
     fixed = np.asarray(nib.load(fixed_path).get_data().squeeze(), dtype='float32')
     fixed = ants.from_numpy(fixed)
     fixed.set_spacing(fixed_resolution)
     if final_2um_iso:
         fixed = ants.resample_image(fixed,(2,2,2),use_voxels=False)
+
+
+    #moving_path = args['moving_path']
+    moving_fly = args['moving_fly']
+    moving_resolution = args['moving_resolution']
 
     moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')
     moving = ants.from_numpy(moving)
@@ -302,7 +305,7 @@ def align_anat(fly_directory,
         ### Align ###
         #############
 
-        t0 = time()
+        t0 = time.time()
         # with stderr_redirected():  # to prevent dumb itk gaussian error bullshit infinite printing > Ohoh, hopefully doesn't
         # fill my log up
         moco = ants.registration(fixed_brain,
@@ -315,7 +318,7 @@ def align_anat(fly_directory,
 
         printlog('Fixed: {}, {} | Moving: {}, {} | {} | {}'.format(fixed_fly, fixed_path.split('/')[-1], moving_fly,
                                                                    moving_path.split('/')[-1], type_of_transform,
-                                                                   utils.sec_to_hms(time() - t0)))
+                                                                   utils.sec_to_hms(time.time() - t0)))
 
         ################################
         ### Save warp params if True ###
@@ -516,7 +519,7 @@ def stim_triggered_avg_neu(args):
 
         stas = []
         for slice_num in range(dims[2]):
-            t0 = time()
+            t0 = time.time()
             single_slice = load_slice(brain_path, slice_num)
             ynew = interpolation(slice_num, timestamps, single_slice)
             new_stim_timestamps = make_new_stim_timestamps(list_in_ms0[angle])
