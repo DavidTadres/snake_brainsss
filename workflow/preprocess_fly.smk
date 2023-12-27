@@ -1334,7 +1334,9 @@ rule apply_transforms_rule:
             preprocessing.apply_transforsm(fly_directory=fly_folder_to_process_oak,
                                             path_to_read_fixed=[input.path_to_read_fixed],
                                             path_to_read_moving=[input.path_to_read_moving],
+                                            path_to_save=output,
                                             resolution_of_fixed=(2,2,2), # copy-paste from brainsss
+                                            resolution_of_moving=(2.611, 2.611, 5), # copy-paste from brainsss
                                             final_2um_iso=False, # copy-paste from brainsss
                                             )
         except Exception as error_stack:

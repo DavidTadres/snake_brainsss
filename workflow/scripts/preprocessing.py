@@ -39,6 +39,8 @@ from brainsss import corr_utils
 
 def apply_transforsm(fly_directory,
                      path_to_read_fixed,
+                     path_to_read_moving,
+                     path_to_save,
                      resolution_of_fixed,
                      final_2um_iso):
     """
@@ -62,6 +64,7 @@ def apply_transforsm(fly_directory,
     #####
     path_to_read_fixed = utils.convert_list_of_string_to_posix_path(path_to_read_fixed)
     path_to_read_moving = utils.convert_list_of_string_to_posix_path(path_to_read_moving)
+    path_to_save = utils.convert_list_of_string_to_posix_path(path_to_save)
 
     # There can only be one fixed path!
     path_to_read_fixed = path_to_read_fixed[0]
@@ -76,46 +79,52 @@ def apply_transforsm(fly_directory,
     ### Load Brains ###
     ###################
 
-    fixed = np.asarray(nib.load(fixed_path).get_data().squeeze(), dtype='float32')
-    fixed = ants.from_numpy(fixed)
-    fixed.set_spacing(fixed_resolution)
+    #fixed = np.asarray(nib.load(fixed_path).get_data().squeeze(), dtype='float32')
+    fixed_brain_proxy = nib.load(path_to_read_fixed)
+    fixed_brain = np.asarray(fixed_brain_proxy.dataobj, dtype=np.float32)# I'm not using squeeze here! Might introduce
+    # a bug so important to keep if statement below!
+    utils.check_for_nan_and_inf_func(fixed_brain)
+    #
+    fixed_brain = ants.from_numpy(fixed_brain)
+    fixed_brain.set_spacing(resolution_of_fixed)
     if final_2um_iso:
-        fixed = ants.resample_image(fixed,(2,2,2),use_voxels=False)
+        fixed = ants.resample_image(fixed_brain,(2,2,2),use_voxels=False)
 
-
-    #moving_path = args['moving_path']
-    moving_fly = args['moving_fly']
     moving_resolution = args['moving_resolution']
-
-    moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')
-    moving = ants.from_numpy(moving)
-    moving.set_spacing(moving_resolution)
-
-    ###########################
-    ### Organize Transforms ###
-    ###########################
-    affine_file = os.listdir(os.path.join(save_directory, 'func-to-anat_fwdtransforms_2umiso'))[0]
-    affine_path = os.path.join(save_directory, 'func-to-anat_fwdtransforms_2umiso', affine_file)
+    for current_path_to_read_moving, current_path_to_save in zip(path_to_read_moving, path_to_save):
+        #moving_path = args['moving_path']
+        moving_fly = current_path_to_read_moving.name #args['moving_fly']
 
 
-    warp_dir = 'anat-to-non_myr_mean_fwdtransforms_2umiso'
-    #warp_dir = 'anat-to-meanbrain_fwdtransforms_2umiso'
-    syn_files = os.listdir(os.path.join(save_directory, warp_dir))
-    syn_linear_path = os.path.join(save_directory, warp_dir, [x for x in syn_files if '.mat' in x][0])
-    syn_nonlinear_path = os.path.join(save_directory, warp_dir, [x for x in syn_files if '.nii.gz' in x][0])
+        moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')
+        moving = ants.from_numpy(moving)
+        moving.set_spacing(moving_resolution)
 
-    transforms = [affine_path, syn_linear_path, syn_nonlinear_path]
+        ###########################
+        ### Organize Transforms ###
+        ###########################
+        affine_file = os.listdir(os.path.join(save_directory, 'func-to-anat_fwdtransforms_2umiso'))[0]
+        affine_path = os.path.join(save_directory, 'func-to-anat_fwdtransforms_2umiso', affine_file)
 
-    ########################
-    ### Apply Transforms ###
-    ########################
-    moco = ants.apply_transforms(fixed, moving, transforms)
 
-    ############
-    ### Save ###
-    ############
-    save_file = os.path.join(save_directory, moving_fly + '-applied-' + fixed_fly + '.nii')
-    nib.Nifti1Image(moco.numpy(), np.eye(4)).to_filename(save_file)
+        warp_dir = 'anat-to-non_myr_mean_fwdtransforms_2umiso'
+        #warp_dir = 'anat-to-meanbrain_fwdtransforms_2umiso'
+        syn_files = os.listdir(os.path.join(save_directory, warp_dir))
+        syn_linear_path = os.path.join(save_directory, warp_dir, [x for x in syn_files if '.mat' in x][0])
+        syn_nonlinear_path = os.path.join(save_directory, warp_dir, [x for x in syn_files if '.nii.gz' in x][0])
+
+        transforms = [affine_path, syn_linear_path, syn_nonlinear_path]
+
+        ########################
+        ### Apply Transforms ###
+        ########################
+        moco = ants.apply_transforms(fixed, moving, transforms)
+
+        ############
+        ### Save ###
+        ############
+        save_file = os.path.join(save_directory, moving_fly + '-applied-' + fixed_fly + '.nii')
+        nib.Nifti1Image(moco.numpy(), np.eye(4)).to_filename(save_file)
 
 def align_anat(fly_directory,
                path_to_read_fixed,
@@ -263,7 +272,7 @@ def align_anat(fly_directory,
 
     # It's possible to have to channels for the 'moving' brain. Do this in a loop
     for current_path_to_read_moving, current_path_to_save in zip(path_to_read_moving, path_to_save):
-        moving_path = current_path_to_read_moving  # args['moving_path']
+        #moving_path = current_path_to_read_moving  # args['moving_path']
         # moving_fly = 'func' #args['moving_fly']
         moving_fly = current_path_to_read_moving.name
         moving_resolution = resolution_of_moving  # args['moving_resolution']
@@ -316,8 +325,8 @@ def align_anat(fly_directory,
                                  total_sigma=total_sigma,
                                  syn_sampling=syn_sampling)
 
-        printlog('Fixed: {}, {} | Moving: {}, {} | {} | {}'.format(fixed_fly, fixed_path.split('/')[-1], moving_fly,
-                                                                   moving_path.split('/')[-1], type_of_transform,
+        printlog('Fixed: {}, {} | Moving: {}, {} | {} | {}'.format(fixed_fly, fixed_path.name.split('/')[-1],
+                                                                   moving_fly, current_path_to_read_moving.name.split('/')[-1], type_of_transform,
                                                                    utils.sec_to_hms(time.time() - t0)))
 
         ################################
