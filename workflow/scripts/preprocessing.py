@@ -37,6 +37,79 @@ from brainsss import utils
 from brainsss import fictrac_utils
 from brainsss import corr_utils
 
+def apply_transforsm(fly_directory):
+    """
+
+    :param fly_directory:
+    :return:
+    """
+
+    ###
+    # Logging
+    ###
+    logfile = utils.create_logfile(fly_directory, function_name='func2anat')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'func2anat')
+
+    #logfile = args['logfile']
+    #save_directory = args['save_directory']
+
+    #####
+    # CONVERT PATHS TO PATHLIB.PATH OBJECTS
+    #####
+    path_to_read_fixed = utils.convert_list_of_string_to_posix_path(path_to_read_fixed)
+
+    fixed_path = args['fixed_path']
+    fixed_fly = args['fixed_fly']
+    fixed_resolution = args['fixed_resolution']
+
+    moving_path = args['moving_path']
+    moving_fly = args['moving_fly']
+    moving_resolution = args['moving_resolution']
+
+    final_2um_iso = args['final_2um_iso']
+    #nonmyr_to_myr_transform = args['nonmyr_to_myr_transform']
+
+    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+
+    ###################
+    ### Load Brains ###
+    ###################
+    fixed = np.asarray(nib.load(fixed_path).get_data().squeeze(), dtype='float32')
+    fixed = ants.from_numpy(fixed)
+    fixed.set_spacing(fixed_resolution)
+    if final_2um_iso:
+        fixed = ants.resample_image(fixed,(2,2,2),use_voxels=False)
+
+    moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')
+    moving = ants.from_numpy(moving)
+    moving.set_spacing(moving_resolution)
+
+    ###########################
+    ### Organize Transforms ###
+    ###########################
+    affine_file = os.listdir(os.path.join(save_directory, 'func-to-anat_fwdtransforms_2umiso'))[0]
+    affine_path = os.path.join(save_directory, 'func-to-anat_fwdtransforms_2umiso', affine_file)
+
+
+    warp_dir = 'anat-to-non_myr_mean_fwdtransforms_2umiso'
+    #warp_dir = 'anat-to-meanbrain_fwdtransforms_2umiso'
+    syn_files = os.listdir(os.path.join(save_directory, warp_dir))
+    syn_linear_path = os.path.join(save_directory, warp_dir, [x for x in syn_files if '.mat' in x][0])
+    syn_nonlinear_path = os.path.join(save_directory, warp_dir, [x for x in syn_files if '.nii.gz' in x][0])
+
+    transforms = [affine_path, syn_linear_path, syn_nonlinear_path]
+
+    ########################
+    ### Apply Transforms ###
+    ########################
+    moco = ants.apply_transforms(fixed, moving, transforms)
+
+    ############
+    ### Save ###
+    ############
+    save_file = os.path.join(save_directory, moving_fly + '-applied-' + fixed_fly + '.nii')
+    nib.Nifti1Image(moco.numpy(), np.eye(4)).to_filename(save_file)
 
 def align_anat(fly_directory,
                path_to_read_fixed,
@@ -112,7 +185,7 @@ def align_anat(fly_directory,
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
     #####
     path_to_read_fixed = utils.convert_list_of_string_to_posix_path(path_to_read_fixed)
-    path_to_read_moving =utils.convert_list_of_string_to_posix_path(path_to_read_moving)
+    path_to_read_moving = utils.convert_list_of_string_to_posix_path(path_to_read_moving)
     path_to_save = utils.convert_list_of_string_to_posix_path(path_to_save)
 
     print("path_to_read_fixed" + repr(path_to_read_fixed))

@@ -1266,8 +1266,8 @@ rule func_to_anat_rule:
     run:
         try:
             preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
-                                    path_to_read_fixed=input.path_to_read_fixed,
-                                    path_to_read_moving=input.path_to_read_moving,
+                                    path_to_read_fixed=[input.path_to_read_fixed],
+                                    path_to_read_moving=[input.path_to_read_moving],
                                     path_to_save=output,
                                     transform_type='Affine', # copy-paste from brainsss
                                     resolution_of_fixed= (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
@@ -1280,7 +1280,7 @@ rule func_to_anat_rule:
                                     syn_sampling = 32
             )
         except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_func_to_anat')
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_func2anat')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
@@ -1299,8 +1299,8 @@ rule anat_to_atlas:
     run:
         try:
             preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
-                                    path_to_read_fixed=input.path_to_read_fixed,
-                                    path_to_read_moving=input.path_to_read_moving,
+                                    path_to_read_fixed=[input.path_to_read_fixed],
+                                    path_to_read_moving=[input.path_to_read_moving],
                                     path_to_save=output,
                                     transform_type='Syn', # copy-paste from brainsss
                                     resolution_of_fixed= (2,2,2), # Copy-paste from brainsss, probably can be read from metadate.xml!
@@ -1313,7 +1313,7 @@ rule anat_to_atlas:
                                     syn_sampling = 32
             )
         except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_func_to_anat')
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_anat2atlas')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
