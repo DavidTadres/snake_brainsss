@@ -192,6 +192,7 @@ def align_anat(fly_directory,
     print('path_to_read_moving' + repr(path_to_read_moving))
     print('path_to_save'+repr(path_to_save))
 
+
     #logfile = args['logfile']
     #save_directory = args['save_directory']
     flip_X = False # args['flip_X'] # Todo - what does this do? Was set to false in brainsss
@@ -199,15 +200,14 @@ def align_anat(fly_directory,
     type_of_transform = transform_type # args['type_of_transform']  # SyN or Affine,
     save_warp_params = True # copy-paste from brainsss. args['save_warp_params']
 
-    fixed_path = path_to_read_fixed #args['fixed_path']
-    #fixed_fly = 'anat' #args['fixed_fly']
-    fixed_fly = path_to_read_fixed.name
-    fixed_resolution = resolution_of_fixed # args['fixed_resolution']
+    # There can only be one fixed brain, of course
+    path_to_read_fixed = path_to_read_fixed[0]
 
-    moving_path = path_to_read_moving # args['moving_path']
-    #moving_fly = 'func' #args['moving_fly']
-    moving_fly = path_to_read_moving.name
-    moving_resolution = resolution_of_moving #args['moving_resolution']
+    fixed_path = path_to_read_fixed  # args['fixed_path']
+    # fixed_fly = 'anat' #args['fixed_fly']
+    fixed_fly = path_to_read_fixed.name
+    fixed_resolution = resolution_of_fixed  # args['fixed_resolution']
+
 
     #low_res = False # args['low_res']
     #very_low_res = False # args['very_low_res']
@@ -254,130 +254,137 @@ def align_anat(fly_directory,
     #elif iso_2um_fixed:
     fixed_brain = ants.resample_image(fixed_brain, (2, 2, 2), use_voxels=False)
 
-    ### Moving
-    #moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')\
-    moving_brain_proxy = nib.load(path_to_read_moving)
-    moving_brain = np.asarray(moving_brain_proxy.dataobj, dtype=np.float32)
-    utils.check_for_nan_and_inf_func(fixed_brain)
-    if len(moving_brain.shape)>3:
-        printlog('WARNING: Here we should only have 3 dimensions not '+ repr(fixed_brain.shape))
-    if flip_X:
-        moving_brain = moving_brain[::-1, :, :]
-    if flip_Z:
-        moving_brain = moving_brain[:, :, ::-1]
-    moving_brain = ants.from_numpy(moving_brain)
-    moving_brain.set_spacing(moving_resolution)
-    #if low_res:
-    #    moving = ants.resample_image(moving, (256, 128, 49), 1, 0)
-    #elif very_low_res:
-    #    moving = ants.resample_image(moving, (128, 64, 49), 1, 0)
-    #elif iso_2um_moving:
-    moving_brain = ants.resample_image(moving_brain, (2, 2, 2), use_voxels=False)
+    # It's possible to have to channels for the 'moving' brain. Do this in a loop
+    for current_path_to_read_moving, current_path_to_save in zip(path_to_read_moving, path_to_save):
+        moving_path = current_path_to_read_moving  # args['moving_path']
+        # moving_fly = 'func' #args['moving_fly']
+        moving_fly = current_path_to_read_moving.name
+        moving_resolution = resolution_of_moving  # args['moving_resolution']
 
-    ### Mimic
-    #if mimic_path is not None:
-    #    mimic = np.asarray(nib.load(mimic_path).get_data().squeeze(), dtype='float32')
-    #    if flip_X:
-    #        mimic = mimic[::-1, :, :]
-    #    if flip_Z:
-    #        mimic = mimic[:, :, ::-1]
-    #    mimic = ants.from_numpy(mimic)
-    #    mimic.set_spacing(mimic_resolution)
-    #    printlog('Starting {} to {}, with mimic {}'.format(moving_fly, fixed_fly, mimic_fly))
-    #else:
-    printlog('Starting registration of {} to {}'.format(moving_fly, fixed_fly))
-
-    #############
-    ### Align ###
-    #############
-
-    t0 = time()
-    # with stderr_redirected():  # to prevent dumb itk gaussian error bullshit infinite printing > Ohoh, hopefully doesn't
-    # fill my log up
-    moco = ants.registration(fixed_brain,
-                             moving_brain,
-                             type_of_transform=type_of_transform,
-                             grad_step=grad_step,
-                             flow_sigma=flow_sigma,
-                             total_sigma=total_sigma,
-                             syn_sampling=syn_sampling)
-
-    printlog('Fixed: {}, {} | Moving: {}, {} | {} | {}'.format(fixed_fly, fixed_path.split('/')[-1], moving_fly,
-                                                               moving_path.split('/')[-1], type_of_transform,
-                                                               utils.sec_to_hms(time() - t0)))
-
-    ################################
-    ### Save warp params if True ###
-    ################################
-
-    if save_warp_params:
-        fwdtransformlist = moco['fwdtransforms']
-        #fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_fwdtransforms'.format(moving_fly, fixed_fly))
-        fwdtransforms_save_folder = pathlib.Path(path_to_save.parent,'{}-to-{}_fwdtransforms'.format(moving_fly, fixed_fly))
+        ### Moving
+        #moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')\
+        moving_brain_proxy = nib.load(current_path_to_read_moving)
+        moving_brain = np.asarray(moving_brain_proxy.dataobj, dtype=np.float32)
+        utils.check_for_nan_and_inf_func(fixed_brain)
+        if len(moving_brain.shape)>3:
+            printlog('WARNING: Here we should only have 3 dimensions not '+ repr(fixed_brain.shape))
+        if flip_X:
+            moving_brain = moving_brain[::-1, :, :]
+        if flip_Z:
+            moving_brain = moving_brain[:, :, ::-1]
+        moving_brain = ants.from_numpy(moving_brain)
+        moving_brain.set_spacing(moving_resolution)
         #if low_res:
-        #    fwdtransforms_save_dir += '_lowres'
-        if True in [iso_2um_moving, iso_2um_fixed]:
-            fwdtransforms_save_path = pathlib.Path(fwdtransforms_save_folder, '_2umiso')
-            #fwdtransforms_save_dir += '_2umiso'
-        #if not os.path.exists(fwdtransforms_save_dir):
-        #    os.mkdir(fwdtransforms_save_dir)
-        fwdtransforms_save_folder.mkdir(exist_ok=True, parents=True)
-        for source_path in fwdtransformlist:
-            #source_file = source_path.split('/')[-1] # This should be correct - this comes from moco from ants
-            source_file = pathlib.Path(source_path).name
-            #target_path = os.path.join(fwdtransforms_save_dir, source_file)
-            target_path = pathlib.Path(fwdtransforms_save_folder, source_file)
-            shutil.copyfile(source_path, target_path)
+        #    moving = ants.resample_image(moving, (256, 128, 49), 1, 0)
+        #elif very_low_res:
+        #    moving = ants.resample_image(moving, (128, 64, 49), 1, 0)
+        #elif iso_2um_moving:
+        moving_brain = ants.resample_image(moving_brain, (2, 2, 2), use_voxels=False)
 
-    # Added this saving of inv transforms 2020 Dec 19
-    if save_warp_params:
-        invransformlist = moco['invtransforms']
-        #fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_invtransforms'.format(moving_fly, fixed_fly))
-        invtransforms_save_folder = pathlib.Path(path_to_save.parent, '{}-to-{}_invtransforms'.format(moving_fly, fixed_fly))
+        ### Mimic
+        #if mimic_path is not None:
+        #    mimic = np.asarray(nib.load(mimic_path).get_data().squeeze(), dtype='float32')
+        #    if flip_X:
+        #        mimic = mimic[::-1, :, :]
+        #    if flip_Z:
+        #        mimic = mimic[:, :, ::-1]
+        #    mimic = ants.from_numpy(mimic)
+        #    mimic.set_spacing(mimic_resolution)
+        #    printlog('Starting {} to {}, with mimic {}'.format(moving_fly, fixed_fly, mimic_fly))
+        #else:
+        printlog('Starting registration of {} to {}'.format(moving_fly, fixed_fly))
+
+        #############
+        ### Align ###
+        #############
+
+        t0 = time()
+        # with stderr_redirected():  # to prevent dumb itk gaussian error bullshit infinite printing > Ohoh, hopefully doesn't
+        # fill my log up
+        moco = ants.registration(fixed_brain,
+                                 moving_brain,
+                                 type_of_transform=type_of_transform,
+                                 grad_step=grad_step,
+                                 flow_sigma=flow_sigma,
+                                 total_sigma=total_sigma,
+                                 syn_sampling=syn_sampling)
+
+        printlog('Fixed: {}, {} | Moving: {}, {} | {} | {}'.format(fixed_fly, fixed_path.split('/')[-1], moving_fly,
+                                                                   moving_path.split('/')[-1], type_of_transform,
+                                                                   utils.sec_to_hms(time() - t0)))
+
+        ################################
+        ### Save warp params if True ###
+        ################################
+
+        if save_warp_params:
+            fwdtransformlist = moco['fwdtransforms']
+            #fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_fwdtransforms'.format(moving_fly, fixed_fly))
+            fwdtransforms_save_folder = pathlib.Path(current_path_to_save.parent,'{}-to-{}_fwdtransforms'.format(moving_fly, fixed_fly))
+            #if low_res:
+            #    fwdtransforms_save_dir += '_lowres'
+            if True in [iso_2um_moving, iso_2um_fixed]:
+                fwdtransforms_save_path = pathlib.Path(fwdtransforms_save_folder, '_2umiso')
+                #fwdtransforms_save_dir += '_2umiso'
+            #if not os.path.exists(fwdtransforms_save_dir):
+            #    os.mkdir(fwdtransforms_save_dir)
+            fwdtransforms_save_folder.mkdir(exist_ok=True, parents=True)
+            for source_path in fwdtransformlist:
+                #source_file = source_path.split('/')[-1] # This should be correct - this comes from moco from ants
+                source_file = pathlib.Path(source_path).name
+                #target_path = os.path.join(fwdtransforms_save_dir, source_file)
+                target_path = pathlib.Path(fwdtransforms_save_folder, source_file)
+                shutil.copyfile(source_path, target_path)
+
+        # Added this saving of inv transforms 2020 Dec 19
+        if save_warp_params:
+            invransformlist = moco['invtransforms']
+            #fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_invtransforms'.format(moving_fly, fixed_fly))
+            invtransforms_save_folder = pathlib.Path(current_path_to_save.parent, '{}-to-{}_invtransforms'.format(moving_fly, fixed_fly))
+            #if low_res:
+            #    fwdtransforms_save_dir += '_lowres'
+            if True in [iso_2um_moving, iso_2um_fixed]:
+                invtransforms_save_folder = pathlib.Path(invtransforms_save_folder,'_2umiso')
+                #fwdtransforms_save_dir += '_2umiso'
+            #if not os.path.exists(fwdtransforms_save_dir):
+            #    os.mkdir(fwdtransforms_save_dir)
+            invtransforms_save_folder.mkdir(exist_ok=True, parents=True)
+            for source_path in fwdtransformlist:
+                #source_file = source_path.split('/')[-1]
+                source_file = pathlib.Path(source_path).name
+                #target_path = os.path.join(fwdtransforms_save_dir, source_file)
+                target_path = pathlib.Path(invtransforms_save_folder, source_file)
+                shutil.copyfile(source_path, target_path)
+
+        ##################################
+        ### Apply warp params to mimic ###
+        ##################################
+
+        #if mimic_path is not None:
+        #    mimic_moco = ants.apply_transforms(fixed, mimic, moco['fwdtransforms'])
+
+        ############
+        ### Save ###
+        ############
+
+        # NOT SAVING MIMIC <------ MAY NEED TO CHANGE
+        #if flip_X:
+        #    save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly)
+        #    # save_file = os.path.join(save_directory, mimic_fly + '_m' + '-to-' + fixed_fly + '.nii')
+        #else:
+        #    save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly)
+        #    # save_file = os.path.join(save_directory, mimic_fly + '-to-' + fixed_fly + '.nii')
+        # nib.Nifti1Image(mimic_moco.numpy(), np.eye(4)).to_filename(save_file)
         #if low_res:
-        #    fwdtransforms_save_dir += '_lowres'
-        if True in [iso_2um_moving, iso_2um_fixed]:
-            invtransforms_save_folder = pathlib.Path(invtransforms_save_folder,'_2umiso')
-            #fwdtransforms_save_dir += '_2umiso'
-        #if not os.path.exists(fwdtransforms_save_dir):
-        #    os.mkdir(fwdtransforms_save_dir)
-        invtransforms_save_folder.mkdir(exist_ok=True, parents=True)
-        for source_path in fwdtransformlist:
-            #source_file = source_path.split('/')[-1]
-            source_file = pathlib.Path(source_path).name
-            #target_path = os.path.join(fwdtransforms_save_dir, source_file)
-            target_path = pathlib.Path(invtransforms_save_folder, source_file)
-            shutil.copyfile(source_path, target_path)
+        #    save_file += '_lowres'
+        #save_file += '.nii'
+        nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(current_path_to_save)
 
-    ##################################
-    ### Apply warp params to mimic ###
-    ##################################
-
-    #if mimic_path is not None:
-    #    mimic_moco = ants.apply_transforms(fixed, mimic, moco['fwdtransforms'])
-
-    ############
-    ### Save ###
-    ############
-
-    # NOT SAVING MIMIC <------ MAY NEED TO CHANGE
-    #if flip_X:
-    #    save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly)
-    #    # save_file = os.path.join(save_directory, mimic_fly + '_m' + '-to-' + fixed_fly + '.nii')
-    #else:
-    #    save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly)
-    #    # save_file = os.path.join(save_directory, mimic_fly + '-to-' + fixed_fly + '.nii')
-    # nib.Nifti1Image(mimic_moco.numpy(), np.eye(4)).to_filename(save_file)
-    #if low_res:
-    #    save_file += '_lowres'
-    #save_file += '.nii'
-    nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(path_to_save)
-
-    # if flip_X:
-    #     save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly + '.nii')
-    # else:
-    #     save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly + '.nii')
-    # nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(save_file)
+        # if flip_X:
+        #     save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly + '.nii')
+        # else:
+        #     save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly + '.nii')
+        # nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(save_file)
 
 
 def clean_anatomy(fly_directory, path_to_read, save_path):
