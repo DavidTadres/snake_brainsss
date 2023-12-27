@@ -316,11 +316,11 @@ for current_path in imaging_file_paths:
 # the anatomical channel for func2anat
 file_path_anat2atlas_moving = []
 if 'channel_1' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed.append('channel_1_moco_clean')
+    file_path_func2anat_fixed.append('channel_1_moco_mean_clean')
 elif 'channel_2' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed.append('channel_2_moco_clean')
+    file_path_func2anat_fixed.append('channel_2_moco_mean_clean')
 elif 'channel_3' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed.append('channel_3_moco_clean')
+    file_path_func2anat_fixed.append('channel_3_moco_mean_clean')
 ##
 
 ####
