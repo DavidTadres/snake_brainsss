@@ -68,7 +68,9 @@ def time_for_moco_input(wildcards, input):
     :param input:
     :return:
     """
-    if input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []:
+    if input == '<TBD>': # This should ONLY happen during a -np call of snakemake.
+        string_to_return=str(2) + 'h'
+    elif input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []:
         # if all three channels are used
         time_in_minutes = (input.size_mb/1000)*15 # /1000 to get Gb, then *minutes
     elif (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != []) or \

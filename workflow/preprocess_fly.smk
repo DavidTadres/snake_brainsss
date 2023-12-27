@@ -306,7 +306,7 @@ elif 'channel_3' in FUNCTIONAL_CHANNELS:
 
 ##
 # list of paths for anat2atlas
-atlas_path = pathlib.Path("/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/anat_templates/20220301_luke_2_jfrc_affine_zflip_2umiso.nii") #luke.nii"
+atlas_path = pathlib.Path("brain_atlases/jfrc_atlas_from_brainsss.nii") #luke.nii"
 imaging_paths_anat2atlas =[]
 for current_path in imaging_file_paths:
     if 'anat' in current_path:
@@ -316,11 +316,11 @@ for current_path in imaging_file_paths:
 # the anatomical channel for func2anat
 file_path_anat2atlas_moving = []
 if 'channel_1' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed.append('channel_1_moco_mean_clean')
+    file_path_anat2atlas_moving.append('channel_1_moco_mean_clean')
 elif 'channel_2' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed.append('channel_2_moco_mean_clean')
+    file_path_anat2atlas_moving.append('channel_2_moco_mean_clean')
 elif 'channel_3' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed.append('channel_3_moco_mean_clean')
+    file_path_anat2atlas_moving.append('channel_3_moco_mean_clean')
 ##
 
 ####
@@ -701,26 +701,16 @@ rule make_mean_brain_rule:
     threads: 2  # It seems to go a bit faster. Can probably set to 1 if want to save cores
     resources: mem_mb=snake_utils.mem_mb_less_times_input  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
     input:
-        #ch1=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
-        #ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else[],
-        #ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else[],
-        # OLD"{mean_brains_output}.nii"  #'/Users/dtadres/Documents/functional_channel_1.nii'
-        str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}.nii"
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}.nii"
     output:
-        str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii"
-        #meanbrain_ch1=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
-        #meanbrain_ch2=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
-        #meanbrain_ch3=str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_3_mean.nii" if CH2_EXISTS else [],
-
-        # OLD"{mean_brains_output}_mean.nii"  # '/Users/dtadres/Documents/functional_channel_1_mean.nii'
-    # every nii file is made to a mean brain! Can predict how they
-    # are going to be called and put them here.
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii"
     run:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
                 meanbrain_n_frames=meanbrain_n_frames,
                 path_to_read=input,
-                path_to_save=output)
+                path_to_save=output,
+                rule_name='make_mean_brain_rule')
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_mean_brain')
             utils.write_error(logfile=logfile,
@@ -1213,7 +1203,8 @@ rule moco_mean_brain_rule:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
                                             meanbrain_n_frames=meanbrain_n_frames,
                                             path_to_read=input,
-                                            path_to_save=output)
+                                            path_to_save=output,
+                                            rule_name='moco_mean_brain_rule',)
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_moco_mean_brain')
             utils.write_error(logfile=logfile,
@@ -1255,6 +1246,34 @@ rule clean_anatomy_rule:
 
 rule func_to_anat_rule:
     """
+        Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:01:21
+    CPU Efficiency: 38.21% of 00:03:32 core-walltime
+    Job Wall-clock time: 00:01:46
+    Memory Utilized: 1.09 GB
+    Memory Efficiency: 27.97% of 3.91 GB
+    
+    Cores per node: 2
+    CPU Utilized: 00:01:15
+    CPU Efficiency: 35.71% of 00:03:30 core-walltime
+    Job Wall-clock time: 00:01:45
+    Memory Utilized: 1.09 GB
+    Memory Efficiency: 27.86% of 3.91 GB
+    
+    Cores per node: 2
+    CPU Utilized: 00:01:19
+    CPU Efficiency: 34.96% of 00:03:46 core-walltime
+    Job Wall-clock time: 00:01:53
+    Memory Utilized: 1.12 GB
+    Memory Efficiency: 28.78% of 3.91 GB
+    
+    Cores per node: 2
+    CPU Utilized: 00:01:14
+    CPU Efficiency: 46.25% of 00:02:40 core-walltime
+    Job Wall-clock time: 00:01:20
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 3.91 GB (3.91 GB/node)
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_more_times_input
@@ -1288,6 +1307,8 @@ rule func_to_anat_rule:
 
 rule anat_to_atlas:
     """
+    Benchmark
+
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_more_times_input
@@ -1306,7 +1327,7 @@ rule anat_to_atlas:
                                     transform_type='Syn', # copy-paste from brainsss
                                     resolution_of_fixed= (2,2,2), # Copy-paste from brainsss, probably can be read from metadate.xml!
                                     resolution_of_moving = (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
-                                    rule_name='anat_to_atlas0',
+                                    rule_name='anat_to_atlas',
                                     iso_2um_fixed=False,
                                     iso_2um_moving = True,
                                     grad_step = 0.2,

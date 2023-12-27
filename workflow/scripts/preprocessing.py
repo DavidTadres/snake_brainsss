@@ -42,6 +42,7 @@ def apply_transforsm(fly_directory,
                      path_to_read_moving,
                      path_to_save,
                      resolution_of_fixed,
+                     resolution_of_moving,
                      final_2um_iso):
     """
 
@@ -90,15 +91,17 @@ def apply_transforsm(fly_directory,
     if final_2um_iso:
         fixed = ants.resample_image(fixed_brain,(2,2,2),use_voxels=False)
 
-    moving_resolution = args['moving_resolution']
+    moving_resolution = resolution_of_moving #args['moving_resolution']
     for current_path_to_read_moving, current_path_to_save in zip(path_to_read_moving, path_to_save):
         #moving_path = args['moving_path']
         moving_fly = current_path_to_read_moving.name #args['moving_fly']
 
+        #moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')
+        moving_brain_proxy = nib.load(current_path_to_read_moving)
+        moving_brain = np.asarray(moving_brain_proxy.dataobj, dtype=np.float32)
 
-        moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')
-        moving = ants.from_numpy(moving)
-        moving.set_spacing(moving_resolution)
+        moving_brain = ants.from_numpy(moving_brain)
+        moving_brain.set_spacing(moving_brain)
 
         ###########################
         ### Organize Transforms ###
@@ -1712,7 +1715,8 @@ def copy_to_scratch(fly_directory, paths_on_oak, paths_on_scratch):
 def make_mean_brain(fly_directory,
                     meanbrain_n_frames,
                     path_to_read,
-                    path_to_save):
+                    path_to_save,
+                    rule_name):
     """
     Note: Unclear why it seems to require more than 2.5x input memory! Does nibabel do something strange?
     -> Avoid using get_fdata as it chaches data and I'm not sure when it releases it again.
@@ -1728,9 +1732,9 @@ def make_mean_brain(fly_directory,
     ###
     # Logging
     ###
-    logfile = utils.create_logfile(fly_directory, function_name='make_mean_brain')
+    logfile = utils.create_logfile(fly_directory, function_name=rule_name)
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
-    utils.print_function_start(logfile, WIDTH, 'make_mean_brain')
+    utils.print_function_start(logfile, WIDTH, rule_name)
 
     print('path_to_read before convert' + repr(path_to_read))
     #####
@@ -1779,7 +1783,7 @@ def make_mean_brain(fly_directory,
         # log success
         ###
         fly_print = pathlib.Path(fly_directory).name
-        func_print = str(current_path_to_read).split('/imaging')[0].split('/'[-1])
+        func_print = str(current_path_to_read).split('/imaging')[0].split('/')[-1]
         #func_print = current_path_to_read.name.split('/')[-2]
         printlog(F"meanbrn | COMPLETED | {fly_print} | {func_print} | {brain_data.shape} ===> {meanbrain.shape}")
         #printlog(F"meanbrn | COMPLETED | {fly_print}  | {brain_data.shape} ===> {meanbrain.shape}")

@@ -1,0 +1,4 @@
+# Keep track of where the atlases are coming from
+
+jfrc_atlas_from_brainsss.nii was taken from:
+oak/stanford/groups/trc/data/David/Bruker/preprocessed/anat_templates/20220301_luke_2_jfrc_affine_zflip_2umiso.nii
