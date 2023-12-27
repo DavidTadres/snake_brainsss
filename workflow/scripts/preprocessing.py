@@ -115,6 +115,10 @@ def align_anat(fly_directory,
     path_to_read_moving =utils.convert_list_of_string_to_posix_path(path_to_read_moving)
     path_to_save = utils.convert_list_of_string_to_posix_path(path_to_save)
 
+    print("path_to_read_fixed" + repr(path_to_read_fixed))
+    print('path_to_read_moving' + repr(path_to_read_moving))
+    print('path_to_save'+repr(path_to_save))
+
     #logfile = args['logfile']
     #save_directory = args['save_directory']
     flip_X = False # args['flip_X'] # Todo - what does this do? Was set to false in brainsss
@@ -232,39 +236,49 @@ def align_anat(fly_directory,
 
     if save_warp_params:
         fwdtransformlist = moco['fwdtransforms']
-        fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_fwdtransforms'.format(moving_fly, fixed_fly))
-        if low_res:
-            fwdtransforms_save_dir += '_lowres'
+        #fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_fwdtransforms'.format(moving_fly, fixed_fly))
+        fwdtransforms_save_folder = pathlib.Path(path_to_save.parent,'{}-to-{}_fwdtransforms'.format(moving_fly, fixed_fly))
+        #if low_res:
+        #    fwdtransforms_save_dir += '_lowres'
         if True in [iso_2um_moving, iso_2um_fixed]:
-            fwdtransforms_save_dir += '_2umiso'
-        if not os.path.exists(fwdtransforms_save_dir):
-            os.mkdir(fwdtransforms_save_dir)
+            fwdtransforms_save_path = pathlib.Path(fwdtransforms_save_folder, '_2umiso')
+            #fwdtransforms_save_dir += '_2umiso'
+        #if not os.path.exists(fwdtransforms_save_dir):
+        #    os.mkdir(fwdtransforms_save_dir)
+        fwdtransforms_save_folder.mkdir(exist_ok=True, parents=True)
         for source_path in fwdtransformlist:
-            source_file = source_path.split('/')[-1]
-            target_path = os.path.join(fwdtransforms_save_dir, source_file)
+            #source_file = source_path.split('/')[-1] # This should be correct - this comes from moco from ants
+            source_file = pathlib.Path(source_path).name
+            #target_path = os.path.join(fwdtransforms_save_dir, source_file)
+            target_path = pathlib.Path(fwdtransforms_save_folder, source_file)
             shutil.copyfile(source_path, target_path)
 
     # Added this saving of inv transforms 2020 Dec 19
     if save_warp_params:
-        fwdtransformlist = moco['invtransforms']
-        fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_invtransforms'.format(moving_fly, fixed_fly))
-        if low_res:
-            fwdtransforms_save_dir += '_lowres'
+        invransformlist = moco['invtransforms']
+        #fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_invtransforms'.format(moving_fly, fixed_fly))
+        invtransforms_save_folder = pathlib.Path(path_to_save.parent, '{}-to-{}_invtransforms'.format(moving_fly, fixed_fly))
+        #if low_res:
+        #    fwdtransforms_save_dir += '_lowres'
         if True in [iso_2um_moving, iso_2um_fixed]:
-            fwdtransforms_save_dir += '_2umiso'
-        if not os.path.exists(fwdtransforms_save_dir):
-            os.mkdir(fwdtransforms_save_dir)
+            invtransforms_save_folder = pathlib.Path(invtransforms_save_folder,'_2umiso')
+            #fwdtransforms_save_dir += '_2umiso'
+        #if not os.path.exists(fwdtransforms_save_dir):
+        #    os.mkdir(fwdtransforms_save_dir)
+        invtransforms_save_folder.mkdir(exist_ok=True, parents=True)
         for source_path in fwdtransformlist:
-            source_file = source_path.split('/')[-1]
-            target_path = os.path.join(fwdtransforms_save_dir, source_file)
+            #source_file = source_path.split('/')[-1]
+            source_file = pathlib.Path(source_path).name
+            #target_path = os.path.join(fwdtransforms_save_dir, source_file)
+            target_path = pathlib.Path(invtransforms_save_folder, source_file)
             shutil.copyfile(source_path, target_path)
 
     ##################################
     ### Apply warp params to mimic ###
     ##################################
 
-    if mimic_path is not None:
-        mimic_moco = ants.apply_transforms(fixed, mimic, moco['fwdtransforms'])
+    #if mimic_path is not None:
+    #    mimic_moco = ants.apply_transforms(fixed, mimic, moco['fwdtransforms'])
 
     ############
     ### Save ###
@@ -282,7 +296,7 @@ def align_anat(fly_directory,
     #if low_res:
     #    save_file += '_lowres'
     #save_file += '.nii'
-    nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(save_file)
+    nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(path_to_save)
 
     # if flip_X:
     #     save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly + '.nii')

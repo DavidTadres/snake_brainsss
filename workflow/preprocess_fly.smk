@@ -302,7 +302,11 @@ if 'channel_1' in FUNCTIONAL_CHANNELS:
 elif 'channel_2' in FUNCTIONAL_CHANNELS:
     file_path_func2anat_moving.append('channel_2_moco.h5')
 elif 'channel_3' in FUNCTIONAL_CHANNELS:
-    file_path_func2anat_moving.append('channel_3_moco.h5')'''
+    file_path_func2anat_moving.append('channel_3_moco.h5') <--not needed, delete!'''
+
+##
+# list of paths for anat2atlas
+atlas_path = pathlib.Path()
 
 ##
 
@@ -489,6 +493,36 @@ rule fictrac_qc_rule:
 
 rule bleaching_qc_rule:
     """
+    Benchmarking:
+    Cores per node: 2
+    CPU Utilized: 00:00:05
+    CPU Efficiency: 5.56% of 00:01:30 core-walltime
+    Job Wall-clock time: 00:00:45
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 9.00 GB (9.00 GB/node)
+    
+    Cores per node: 6
+    CPU Utilized: 00:00:08
+    CPU Efficiency: 1.65% of 00:08:06 core-walltime
+    Job Wall-clock time: 00:01:21
+    Memory Utilized: 9.87 GB
+    Memory Efficiency: 20.98% of 47.07 GB
+    
+    Cores per node: 6
+    CPU Utilized: 00:00:09
+    CPU Efficiency: 0.84% of 00:17:48 core-walltime
+    Job Wall-clock time: 00:02:58
+    Memory Utilized: 7.32 GB
+    Memory Efficiency: 14.46% of 50.60 GB
+    
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:08
+    CPU Efficiency: 3.60% of 00:03:42 core-walltime
+    Job Wall-clock time: 00:01:51
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 9.00 GB (9.00 GB/node)
+        
     Now it works but I need to optimize the input/output files - check the memory requirement!!! This is overkill!
     Cores per node: 14
     CPU Utilized: 00:01:38
@@ -546,7 +580,9 @@ rule bleaching_qc_rule:
     ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input # This is probably overkill todo decrease!
+    resources:
+        mem_mb=snake_utils.mem_mb_less_times_input, # This is probably overkill todo decrease!
+        runtime='10m' # In my test cases it was never more than 5 minutes!
     input:
         brains_paths_ch1=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
         brains_paths_ch2=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
@@ -798,6 +834,37 @@ rule motion_correction_rule:
 
 rule zscore_rule:
     """
+    Benchmarking:
+    Cores per node: 2
+    CPU Utilized: 00:00:48
+    CPU Efficiency: 5.77% of 00:13:52 core-walltime
+    Job Wall-clock time: 00:06:56
+    Memory Utilized: 2.91 GB
+    Memory Efficiency: 31.98% of 9.09 GB
+    
+    Cores per node: 2
+    CPU Utilized: 00:00:55
+    CPU Efficiency: 3.43% of 00:26:44 core-walltime
+    Job Wall-clock time: 00:13:22
+    Memory Utilized: 3.60 GB
+    Memory Efficiency: 39.62% of 9.09 GB
+    
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:48
+    CPU Efficiency: 5.77% of 00:13:52 core-walltime
+    Job Wall-clock time: 00:06:56
+    Memory Utilized: 2.91 GB
+    Memory Efficiency: 31.98% of 9.09 GB
+    
+    Cores per node: 7
+    CPU Utilized: 00:02:06
+    CPU Efficiency: 0.64% of 05:30:10 core-walltime
+    Job Wall-clock time: 00:47:10
+    Memory Utilized: 26.30 GB
+    Memory Efficiency: 48.85% of 53.84 GB
+    
+    ########
     Benchmarking: Did 2.5*input file size and got a 86% efficiency on the memory, 4 threads only 12% efficiency
     Did same with 1 thread and seemed to be enough. Keep at 1 thread for now, might break with larger files.
     
@@ -951,6 +1018,73 @@ rule STA_rule:
 rule moco_mean_brain_rule:
     """
     Similar to make mean brain but takes moco corrected brain! 
+    Benchmark:
+    Cores per node: 2
+    CPU Utilized: 00:00:09
+    CPU Efficiency: 1.29% of 00:11:38 core-walltime
+    Job Wall-clock time: 00:05:49
+    Memory Utilized: 4.00 GB
+    Memory Efficiency: 43.99% of 9.09 GB
+    
+    Cores per node: 6 <- automatically increases if memory requirement is hig!
+    CPU Utilized: 00:01:25
+    CPU Efficiency: 6.62% of 00:21:24 core-walltime
+    Job Wall-clock time: 00:03:34
+    Memory Utilized: 13.38 GB
+    Memory Efficiency: 25.48% of 52.51 GB
+    
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:09
+    CPU Efficiency: 2.37% of 00:06:20 core-walltime
+    Job Wall-clock time: 00:03:10
+    Memory Utilized: 3.21 GB
+    Memory Efficiency: 35.31% of 9.09 GB
+    
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:18
+    CPU Efficiency: 4.05% of 00:07:24 core-walltime
+    Job Wall-clock time: 00:03:42
+    Memory Utilized: 3.90 GB
+    Memory Efficiency: 42.88% of 9.09 GB
+    
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:00:21
+    CPU Efficiency: 3.86% of 00:09:04 core-walltime
+    Job Wall-clock time: 00:04:32
+    Memory Utilized: 3.31 GB
+    Memory Efficiency: 36.45% of 9.09 GB
+    
+    Cores per node: 6
+    CPU Utilized: 00:00:39
+    CPU Efficiency: 3.05% of 00:21:18 core-walltime
+    Job Wall-clock time: 00:03:33
+    Memory Utilized: 13.27 GB
+    Memory Efficiency: 25.28% of 52.51 GB
+    
+    Cores per node: 6
+    CPU Utilized: 00:01:25
+    CPU Efficiency: 6.62% of 00:21:24 core-walltime
+    Job Wall-clock time: 00:03:34
+    Memory Utilized: 13.38 GB
+    Memory Efficiency: 25.48% of 52.51 GB
+    
+    Cores per node: 6
+    CPU Utilized: 00:01:21
+    CPU Efficiency: 1.46% of 01:32:36 core-walltime
+    Job Wall-clock time: 00:15:26
+    Memory Utilized: 23.73 GB
+    Memory Efficiency: 44.07% of 53.84 GB
+    
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 00:00:30
+    CPU Efficiency: 0.39% of 02:09:00 core-walltime
+    Job Wall-clock time: 00:21:30
+    Memory Utilized: 20.80 GB
+    Memory Efficiency: 38.64% of 53.84 GB
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
@@ -975,7 +1109,7 @@ rule clean_anatomy_rule:
     TO BE TESTED!!!!sleep
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input
+    resources: mem_mb=snake_utils.mem_mb_more_times_input #snake_utils.mem_mb_times_input # OOM!!!
     input: str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean.nii",
     output: str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
     run:
@@ -1020,6 +1154,40 @@ rule func_to_anat_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
+
+rule anat_to_atlas:
+    """
+    """
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_input
+    input:
+        path_to_read_fixed='foo',
+        path_to_read_moving='bar'
+    output:
+        'foobar'
+
+    run:
+        try:
+            preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
+                                    path_to_read_fixed=input.path_to_read_fixed,
+                                    path_to_read_moving=input.path_to_read_moving,
+                                    path_to_save=output,
+                                    transform_type='Syn', # copy-paste from brainsss
+                                    resolution_of_fixed= (2,2,2), # Copy-paste from brainsss, probably can be read from metadate.xml!
+                                    resolution_of_moving = (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
+                                    iso_2um_fixed=False,
+                                    iso_2um_moving = True,
+                                    grad_step = 0.2,
+                                    flow_sigma = 3,
+                                    total_sigma = 0,
+                                    syn_sampling = 32
+            )
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_func_to_anat')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.

@@ -74,7 +74,11 @@ def time_for_moco_input(wildcards, input):
     #hours = int(np.floor(time_in_minutes / 60))
     #minutes = int(np.ceil(time_in_minutes % 60))
     #string_to_return = str(hours) + ':' + str(minutes) + ':00'
-    return(str(time_in_minutes*60))
+
+    #https: // snakemake.readthedocs.io / en / stable / snakefiles / rules.html
+    # If we want minutes we just add a 'm' after the number - TEST!!!
+    string_to_return=str(time_in_minutes*60)+'m'
+    return(string_to_return)
 
 '''def time_for_correlation(wildcards, input):
     """
