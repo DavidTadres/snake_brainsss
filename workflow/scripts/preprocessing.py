@@ -238,7 +238,7 @@ def align_anat(fly_directory,
     # Doesn't load to memory
     fixed_brain_proxy = nib.load(path_to_read_fixed)
     # Load to memory
-    fixed_brain = np.asarry(fixed_brain_proxy.dataobj, dtype=np.float32) # I'm not using squeeze here! Might introduce
+    fixed_brain = np.asarray(fixed_brain_proxy.dataobj, dtype=np.float32) # I'm not using squeeze here! Might introduce
     # a bug so important to keep if statement below!
     utils.check_for_nan_and_inf_func(fixed_brain)
 
