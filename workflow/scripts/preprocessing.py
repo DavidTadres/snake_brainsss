@@ -118,12 +118,13 @@ def align_anat(fly_directory,
                transform_type,
                resolution_of_fixed,
                resolution_of_moving,
+               rule_name,
                iso_2um_fixed=True,
                iso_2um_moving=False,
                grad_step=0.2,
                flow_sigma=3,
                total_sigma=0,
-               syn_sampling=32
+               syn_sampling=32,
                ):
     """
 
@@ -177,9 +178,9 @@ def align_anat(fly_directory,
     ###
     # Logging
     ###
-    logfile = utils.create_logfile(fly_directory, function_name='func2anat')
+    logfile = utils.create_logfile(fly_directory, function_name=rule_name)
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
-    utils.print_function_start(logfile, WIDTH, 'func2anat')
+    utils.print_function_start(logfile, WIDTH, rule_name)
 
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
@@ -245,7 +246,7 @@ def align_anat(fly_directory,
     if len(fixed_brain.shape)>3:
         printlog('WARNING: Here we should only have 3 dimensions not '+ repr(fixed_brain.shape))
 
-    fixed_brained = ants.from_numpy(fixed_brain)
+    fixed_brain = ants.from_numpy(fixed_brain)
     fixed_brain.set_spacing(fixed_resolution)
     #if low_res:
     #    fixed = ants.resample_image(fixed, (256, 128, 49), 1, 0)

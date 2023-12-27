@@ -1272,6 +1272,7 @@ rule func_to_anat_rule:
                                     transform_type='Affine', # copy-paste from brainsss
                                     resolution_of_fixed= (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
                                     resolution_of_moving = (2.611, 2.611, 5), # Copy-paste from brainsss, probably can be read from metadate.xml!
+                                    rule_name='func_to_anat',
                                     iso_2um_fixed=True,
                                     iso_2um_moving = False,
                                     grad_step = 0.2,
@@ -1305,6 +1306,7 @@ rule anat_to_atlas:
                                     transform_type='Syn', # copy-paste from brainsss
                                     resolution_of_fixed= (2,2,2), # Copy-paste from brainsss, probably can be read from metadate.xml!
                                     resolution_of_moving = (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
+                                    rule_name='anat_to_atlas0,'
                                     iso_2um_fixed=False,
                                     iso_2um_moving = True,
                                     grad_step = 0.2,
