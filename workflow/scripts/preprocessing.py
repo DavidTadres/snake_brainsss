@@ -1772,6 +1772,7 @@ def make_mean_brain(fly_directory,
         else:  # average over all frames
             meanbrain = np.mean(brain_data, axis=-1)
 
+        printlog('Datatype of meanbrain: ' + repr(meanbrain.dtype))
         ###
         # save meanbrain
         ###
