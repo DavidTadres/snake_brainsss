@@ -1284,7 +1284,7 @@ rule func_to_anat_rule:
                                     path_to_read_fixed=[input.path_to_read_fixed],
                                     path_to_read_moving=[input.path_to_read_moving],
                                     path_to_save=output,
-                                    transform_type='Affine', # copy-paste from brainsss
+                                    type_of_transform='Affine', # copy-paste from brainsss
                                     resolution_of_fixed= (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
                                     resolution_of_moving = (2.611, 2.611, 5), # Copy-paste from brainsss, probably can be read from metadate.xml!
                                     rule_name='func_to_anat',
@@ -1320,7 +1320,7 @@ rule anat_to_atlas:
                                     path_to_read_fixed=[input.path_to_read_fixed],
                                     path_to_read_moving=[input.path_to_read_moving],
                                     path_to_save=output,
-                                    transform_type='Syn', # copy-paste from brainsss
+                                    type_of_transform='SyN', # copy-paste from brainsss
                                     resolution_of_fixed= (2,2,2), # Copy-paste from brainsss, probably can be read from metadate.xml!
                                     resolution_of_moving = (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
                                     rule_name='anat_to_atlas',
@@ -1361,6 +1361,14 @@ rule apply_transforms_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
+
+rule make_supervoxels_rule:
+    """
+    """
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_input
+    input: "functional_channel_2_moco_zscore_highpass.h5"
+    output: 'bar'
 
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html

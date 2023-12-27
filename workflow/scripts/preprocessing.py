@@ -19,6 +19,8 @@ import h5py
 from scipy import ndimage
 import sklearn
 import skimage.filters
+import sklearn.feature_extraction
+import sklearn.cluster
 
 
 ####################
@@ -37,6 +39,102 @@ from brainsss import utils
 from brainsss import fictrac_utils
 from brainsss import corr_utils
 
+def make_supervoxels(fly_directory,
+                     path_to_read,
+                     save_path):
+    """
+
+    :param fly_directory:
+    :param path_to_read:
+    :param save_path:
+    :return:
+    """
+    #####################
+    ### SETUP LOGGING ###
+    #####################
+
+    logfile = utils.create_logfile(fly_directory, function_name='clean_anatomy')
+    printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
+    utils.print_function_start(logfile, WIDTH, 'clean_anatomy')
+
+    #func_path = args['func_path']
+    #logfile = args['logfile']
+    #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
+
+    n_clusters = 2000 # Hardcoded?
+
+    ##########
+    ### Convert list of (sometimes empty) strings to pathlib.Path objects
+    ##########
+    path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
+    save_path = utils.convert_list_of_string_to_posix_path(save_path)
+
+    # Can have more than one functional channel!
+    for current_path_to_read, current_path_to_save in zip(path_to_read, save_path):
+        ### LOAD BRAIN ###
+
+        #brain_path = os.path.join(func_path, 'functional_channel_2_moco_zscore_highpass.h5')
+        t0 = time.time()
+        #with h5py.File(brain_path, 'r+') as h5_file:
+        with h5py.File(current_path_to_read, 'r+') as file:
+            # Load everything into memory, cast as float 32
+            brain = file['data'][:].astype(np.float32)
+            # Convert nan to num, ideally in place to avoid duplication of data
+            brain = np.nan_to_num(brain, copy=False)
+            #brain = np.nan_to_num(h5_file.get("data")[:].astype('float32'))
+        printlog('brain shape: {}'.format(brain.shape))
+        printlog('load duration: {} sec'.format(time.time()-t0))
+
+        ### MAKE CLUSTER DIRECTORY ###
+
+        #cluster_dir = os.path.join(func_path, 'clustering')
+        #if not os.path.exists(cluster_dir):
+        #    os.mkdir(cluster_dir)
+        current_path_to_save.parent.makedir(exist_ok=True, parents=True)
+
+        ### FIT CLUSTERS ###
+
+        printlog('fitting clusters')
+        t0 = time.time()
+        connectivity = sklearn.feature_extraction.image.grid_to_graph(256,128)
+        cluster_labels = []
+        for z in range(49):
+            neural_activity = brain[:,:,z,:].reshape(-1, 3384)
+            cluster_model = sklearn.cluster.AgglomerativeClustering(
+                n_clusters=n_clusters,
+                memory=current_path_to_save.parent,
+                linkage='ward',
+                connectivity=connectivity)
+            cluster_model.fit(neural_activity)
+            cluster_labels.append(cluster_model.labels_)
+
+        cluster_labels = np.asarray(cluster_labels)
+        #save_file = os.path.join(cluster_dir, 'cluster_labels.npy')
+        np.save(current_path_to_save,cluster_labels)
+        printlog('cluster fit duration: {} sec'.format(time.time()-t0))
+
+        ### GET CLUSTER AVERAGE SIGNAL ###
+
+        printlog('getting cluster averages')
+        t0 = time.time()
+        all_signals = []
+        #for z in range(49): # < CHANGE, this is just dim=3
+        for z in range(brain.shape[2]):
+            #neural_activity = brain[:,:,z,:].reshape(-1, 3384) # I *THINK* 3384 is frames at 30 minutes
+            neural_activity = brain[:,:,z,:].reshape(-1, brain.shape[3])
+            signals = []
+            for cluster_num in range(n_clusters):
+                cluster_indicies = np.where(cluster_labels[z,:]==cluster_num)[0]
+                mean_signal = np.mean(neural_activity[cluster_indicies,:], axis=0)
+                signals.append(mean_signal)
+            signals = np.asarray(signals)
+            all_signals.append(signals)
+        all_signals = np.asarray(all_signals)
+        save_file = os.path.join(cluster_dir, 'cluster_signals.npy')
+        np.save(save_file, all_signals)
+        printlog('cluster average duration: {} sec'.format(time.time()-t0))
+
+
 def apply_transforsm(fly_directory,
                      path_to_read_fixed,
                      path_to_read_moving,
@@ -44,6 +142,7 @@ def apply_transforsm(fly_directory,
                      resolution_of_fixed,
                      resolution_of_moving,
                      final_2um_iso):
+    # TODO!!!!!<<<<<<<<<<<<< NOT FINISHED YET.
     """
 
     :param fly_directory:
@@ -133,7 +232,7 @@ def align_anat(fly_directory,
                path_to_read_fixed,
                path_to_read_moving,
                path_to_save,
-               transform_type,
+               type_of_transform,
                resolution_of_fixed,
                resolution_of_moving,
                rule_name,
@@ -216,7 +315,7 @@ def align_anat(fly_directory,
     #save_directory = args['save_directory']
     flip_X = False # args['flip_X'] # Todo - what does this do? Was set to false in brainsss
     flip_Z = False # args['flip_Z'] # Todo - what does this do? Was set to false in brainsss
-    type_of_transform = transform_type # args['type_of_transform']  # SyN or Affine,
+    #type_of_transform = transform_type # args['type_of_transform']  # SyN or Affine,
     save_warp_params = True # copy-paste from brainsss. args['save_warp_params']
 
     # There can only be one fixed brain, of course
