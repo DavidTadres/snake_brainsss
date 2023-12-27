@@ -1193,6 +1193,14 @@ rule moco_mean_brain_rule:
     Job Wall-clock time: 00:21:30
     Memory Utilized: 20.80 GB
     Memory Efficiency: 38.64% of 53.84 GB
+    
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 00:00:27
+    CPU Efficiency: 2.24% of 00:20:06 core-walltime
+    Job Wall-clock time: 00:03:21
+    Memory Utilized: 16.89 GB
+    Memory Efficiency: 37.79% of 44.70 GB
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input

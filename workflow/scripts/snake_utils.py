@@ -20,16 +20,16 @@ def mem_mb_less_times_input(wildcards, input):
 
 def mem_mb_times_input(wildcards, input):
     """
-    Returns memory in mb as 2.5*input memory size or 1Gb, whichever is larger
+    Returns memory in mb as 2.5*input memory size or 2Gb, whichever is larger
     :param wildcards:
     :param input:
     :return:
     """
-    return(max(input.size_mb*2.5, 1000))
+    return(max(input.size_mb*2.5, 2000))
 
 def mem_mb_more_times_input(wildcards, input):
     """
-    Returns memory in mb as 3.5*input memory size or 1Gb, whichever is larger
+    Returns memory in mb as 3.5*input memory size or 4Gb, whichever is larger
     :param wildcards:
     :param input:
     :return:
@@ -86,7 +86,7 @@ def time_for_moco_input(wildcards, input):
 
     #https: // snakemake.readthedocs.io / en / stable / snakefiles / rules.html
     # If we want minutes we just add a 'm' after the number - TEST!!!mem_mb_more_times_input
-    string_to_return=str(time_in_minutes*60)+'m'
+    string_to_return=str(time_in_minutes)+'m'
     return(string_to_return)
 
 '''def time_for_correlation(wildcards, input):
