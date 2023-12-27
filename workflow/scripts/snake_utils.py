@@ -36,6 +36,15 @@ def mem_mb_more_times_input(wildcards, input):
     """
     return(max(input.size_mb*3.5, 4000))
 
+def mem_mb_much_more_times_input(wildcards, input):
+    """
+    Returns memory in mb as 5.5*input memory size or 1Gb, whichever is larger
+    :param wildcards:
+    :param input:
+    :return:
+    """
+    return(max(input.size_mb*5.5, 10000))
+
 def disk_mb_times_input(wildcards, input):
     """
     Returns memory in mb as 2.5*input memory size or 1Gb, whichever is larger
@@ -76,7 +85,7 @@ def time_for_moco_input(wildcards, input):
     #string_to_return = str(hours) + ':' + str(minutes) + ':00'
 
     #https: // snakemake.readthedocs.io / en / stable / snakefiles / rules.html
-    # If we want minutes we just add a 'm' after the number - TEST!!!
+    # If we want minutes we just add a 'm' after the number - TEST!!!mem_mb_more_times_input
     string_to_return=str(time_in_minutes*60)+'m'
     return(string_to_return)
 

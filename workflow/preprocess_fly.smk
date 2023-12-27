@@ -306,7 +306,8 @@ elif 'channel_3' in FUNCTIONAL_CHANNELS:
 
 ##
 # list of paths for anat2atlas
-atlas_path = pathlib.Path()
+atlas_path = pathlib.Path("/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/anat_templates/20220301_luke_2_jfrc_affine_zflip_2umiso.nii") #luke.nii"
+
 
 ##
 
@@ -458,7 +459,10 @@ rule all:
         # func2anat
         ###
         #expand(str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii", func2anat_paths=imaging_paths_func2anat, func2anat_moving=file_path_func2anat_fixed, func2anat_fixed=file_path_func2anat_fixed)
-
+        ##
+        # anat2atlas
+        ##
+        expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/")
 
 rule fictrac_qc_rule:
     """
@@ -909,6 +913,25 @@ rule zscore_rule:
 
 rule temporal_high_pass_filter_rule:
     """
+    Benchmark:
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:02:41
+    CPU Efficiency: 39.46% of 00:06:48 core-walltime
+    Job Wall-clock time: 00:03:24
+    Memory Utilized: 7.80 GB
+    Memory Efficiency: 61.86% of 12.60 GB
+    
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:02:42
+    CPU Efficiency: 34.62% of 00:07:48 core-walltime
+    Job Wall-clock time: 00:03:54
+    Memory Utilized: 7.42 GB
+    Memory Efficiency: 58.86% of 12.60 GB
+    
+    ##
+    
     Benchmark with the func1 file (~3Gb)
     State: OUT_OF_MEMORY (exit code 0)
     Nodes: 1
@@ -1109,7 +1132,7 @@ rule clean_anatomy_rule:
     TO BE TESTED!!!!sleep
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_more_times_input #snake_utils.mem_mb_times_input # OOM!!!
+    resources: mem_mb=snake_utils.mem_mb_much_more_times_input # Todo, optimize memory usage of this function! #mem_mb_more_times_input #snake_utils.mem_mb_times_input # OOM!!!
     input: str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean.nii",
     output: str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
     run:

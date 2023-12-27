@@ -307,6 +307,7 @@ def align_anat(fly_directory,
 
 def clean_anatomy(fly_directory, path_to_read, save_path):
     """
+    Requires a surprising amount of memory.
     Only on folders called anatomy!
     Todo: Possible to save on RAM by reading brain twice instead of copying arrays!
     Make sure to not accidentaly overwrite the original file, though.
