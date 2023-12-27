@@ -1306,7 +1306,7 @@ rule anat_to_atlas:
                                     transform_type='Syn', # copy-paste from brainsss
                                     resolution_of_fixed= (2,2,2), # Copy-paste from brainsss, probably can be read from metadate.xml!
                                     resolution_of_moving = (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
-                                    rule_name='anat_to_atlas0,'
+                                    rule_name='anat_to_atlas0',
                                     iso_2um_fixed=False,
                                     iso_2um_moving = True,
                                     grad_step = 0.2,
