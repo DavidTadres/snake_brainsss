@@ -1,5 +1,7 @@
 # Functions to be called from snakefiles
 import numpy as np
+
+
 def mem_mb_times_threads(wildcards, threads):
     """
     Returns memory in mb as 7500Mb/thread (I think we have ~8Gb/thread? to be confirmed)
@@ -7,7 +9,8 @@ def mem_mb_times_threads(wildcards, threads):
     :param threads:
     :return:
     """
-    return(threads * 7500)
+    return threads * 7500
+
 
 def mem_mb_less_times_input(wildcards, input):
     """
@@ -16,7 +19,8 @@ def mem_mb_less_times_input(wildcards, input):
     :param input:
     :return:
     """
-    return(max(input.size_mb*1.5, 1500))
+    return max(input.size_mb * 1.5, 1500)
+
 
 def mem_mb_times_input(wildcards, input):
     """
@@ -25,7 +29,8 @@ def mem_mb_times_input(wildcards, input):
     :param input:
     :return:
     """
-    return(max(input.size_mb*2.5, 2000))
+    return max(input.size_mb * 2.5, 2000)
+
 
 def mem_mb_more_times_input(wildcards, input):
     """
@@ -34,7 +39,8 @@ def mem_mb_more_times_input(wildcards, input):
     :param input:
     :return:
     """
-    return(max(input.size_mb*3.5, 4000))
+    return max(input.size_mb * 3.5, 4000)
+
 
 def mem_mb_much_more_times_input(wildcards, input):
     """
@@ -43,7 +49,8 @@ def mem_mb_much_more_times_input(wildcards, input):
     :param input:
     :return:
     """
-    return(max(input.size_mb*5.5, 10000))
+    return max(input.size_mb * 5.5, 10000)
+
 
 def disk_mb_times_input(wildcards, input):
     """
@@ -52,7 +59,8 @@ def disk_mb_times_input(wildcards, input):
     :param input:
     :return:
     """
-    return(max(input.size_mb*2.5, 1000))
+    return max(input.size_mb * 2.5, 1000)
+
 
 def time_for_moco_input(wildcards, input):
     """
@@ -68,28 +76,35 @@ def time_for_moco_input(wildcards, input):
     :param input:
     :return:
     """
-    if input == '<TBD>': # This should ONLY happen during a -np call of snakemake.
-        string_to_return=str(2) + 'h'
-    elif input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []:
+    if input == "<TBD>":  # This should ONLY happen during a -np call of snakemake.
+        string_to_return = str(2) + "h"
+    elif (
+        input.brain_paths_ch1 != []
+        and input.brain_paths_ch2 != []
+        and input.brain_paths_ch3 != []
+    ):
         # if all three channels are used
-        time_in_minutes = (input.size_mb/1000)*15 # /1000 to get Gb, then *minutes
-    elif (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != []) or \
-        (input.brain_paths_ch1 != [] and input.brain_paths_ch3 != []) or \
-        (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != []):
+        time_in_minutes = (input.size_mb / 1000) * 15  # /1000 to get Gb, then *minutes
+    elif (
+        (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [])
+        or (input.brain_paths_ch1 != [] and input.brain_paths_ch3 != [])
+        or (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != [])
+    ):
         # if only two channels are in use
-        time_in_minutes = (input.size_mb/1000)*30 # /1000 to get Gb, then *minutes
+        time_in_minutes = (input.size_mb / 1000) * 30  # /1000 to get Gb, then *minutes
     else:
         # only one channel is provided:
-        time_in_minutes = (input.size_mb/1000)*45 # /1000 to get Gb, then *minutes
+        time_in_minutes = (input.size_mb / 1000) * 45  # /1000 to get Gb, then *minutes
 
-    #hours = int(np.floor(time_in_minutes / 60))
-    #minutes = int(np.ceil(time_in_minutes % 60))
-    #string_to_return = str(hours) + ':' + str(minutes) + ':00'
+    # hours = int(np.floor(time_in_minutes / 60))
+    # minutes = int(np.ceil(time_in_minutes % 60))
+    # string_to_return = str(hours) + ':' + str(minutes) + ':00'
 
-    #https: // snakemake.readthedocs.io / en / stable / snakefiles / rules.html
+    # https: // snakemake.readthedocs.io / en / stable / snakefiles / rules.html
     # If we want minutes we just add a 'm' after the number - TEST!!!mem_mb_more_times_input
-    string_to_return=str(time_in_minutes)+'m'
-    return(string_to_return)
+    string_to_return = str(time_in_minutes) + "m"
+    return string_to_return
+
 
 '''def time_for_correlation(wildcards, input):
     """

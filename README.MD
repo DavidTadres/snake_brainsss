@@ -93,6 +93,14 @@ source .env_snake_brainsss/bin/activate
    Correlation now takes <1 minute. Result is expected to be almost identical (float32 as opposed to scipy float64) and
    precision can be increased if need be. 
 
+###
+# Small but important differences to Bella's brainsss
+###
+1) make_mean_brain was previously calculated with standard settings which casts a float64 array.
+   For example: meanbrain = np.mean(brain_data, axis=-1), meanbrain.dtype -> dtype('float64')
+   However, we never seem to be in float64 space so I changed it to:
+   meanbrain = np.mean(brain_data, axis=-1, dtype=np.float32), meanbrain.dtype -> dtype('float32')
+
 ####
 # Current limitations:
 ####

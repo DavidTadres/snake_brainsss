@@ -9,6 +9,7 @@ import traceback
 import time
 import h5py
 
+
 def check_for_nan_and_inf_func(array):
     """
     Check if there are any nan or inf in the array that is being passed.
@@ -16,41 +17,46 @@ def check_for_nan_and_inf_func(array):
     :param array:
     :return:
     """
-    no_nan_inf=True
+    no_nan_inf = True
     try:
         if np.isnan(array).any():
-            print('!!!!! WARNING - THERE ARE NAN IN THE ARRAY !!!!!')
-            print('The position(s) of np.nan is/are: ' + repr(np.where(np.isnan(array))))
-            no_nan_inf=False
+            print("!!!!! WARNING - THERE ARE NAN IN THE ARRAY !!!!!")
+            print(
+                "The position(s) of np.nan is/are: " + repr(np.where(np.isnan(array)))
+            )
+            no_nan_inf = False
     except:
-        print('Could not check for nan because:\n\n')
+        print("Could not check for nan because:\n\n")
         print(traceback.format_exc())
-        print('\n')
-        no_nan_inf=False
+        print("\n")
+        no_nan_inf = False
 
     try:
         if np.isinf(array).any():
-            print('!!!!! WARNING - THERE ARE INF IN THE ARRAY !!!!!')
-            print('The position(s) of np.inf is/are ' + repr(np.where(np.isnan(array))))
-            no_nan_inf=False
+            print("!!!!! WARNING - THERE ARE INF IN THE ARRAY !!!!!")
+            print("The position(s) of np.inf is/are " + repr(np.where(np.isnan(array))))
+            no_nan_inf = False
     except:
-        print('Could not check for inf because:\n\n')
+        print("Could not check for inf because:\n\n")
         print(traceback.format_exc())
-        print('\n')
-        no_nan_inf=False
+        print("\n")
+        no_nan_inf = False
 
     if no_nan_inf:
-        print('No nan or inf found in this array')
+        print("No nan or inf found in this array")
+
+
 def read_nii_data_and_check(data_path, dtype):
     data_proxy = nib.load(data_path)
     data = np.asarray(data_proxy.dataobj, dtype=dtype)
     check_for_nan_and_inf_func(data)
-    del data # Make sure to keep memory as empty as possible
+    del data  # Make sure to keep memory as empty as possible
     time.sleep(1)
 
+
 def read_h5_data_and_check(datapath, dtype):
-    with h5py.File(datapath, 'r') as file:
-        data_proxy = file['data']
+    with h5py.File(datapath, "r") as file:
+        data_proxy = file["data"]
         data = np.asarray(data_proxy[:], dtype=dtype)
 
         check_for_nan_and_inf_func(data)
@@ -61,20 +67,26 @@ def read_h5_data_and_check(datapath, dtype):
 
 ###
 # 'Original' data
-data_path = pathlib.Path('/Users/dtadres/Documents/func1/imaging/functional_channel_1.nii')
+data_path = pathlib.Path(
+    "/Users/dtadres/Documents/func1/imaging/functional_channel_1.nii"
+)
 read_nii_data_and_check(data_path, dtype=np.uint16)
 # > No nan or inf found in this array
 
 ###
 # Original data meanbrain
-data_path = pathlib.Path('/Users/dtadres/Documents/func1/imaging/functional_channel_1_mean.nii')
-read_nii_data_and_check(data_path, dtype=np.float64) # < make_mean_brain outputs float64!
+data_path = pathlib.Path(
+    "/Users/dtadres/Documents/func1/imaging/functional_channel_1_mean.nii"
+)
+read_nii_data_and_check(
+    data_path, dtype=np.float64
+)  # < make_mean_brain outputs float64!
 # > No nan or inf found in this array
 
 ###
 # Moco corrected data
-data_path = pathlib.Path('/Users/dtadres/Documents/func1/moco/channel_1_moco.h5')
+data_path = pathlib.Path("/Users/dtadres/Documents/func1/moco/channel_1_moco.h5")
 read_h5_data_and_check(data_path, dtype=np.float32)
 
-data_path = pathlib.Path('/Users/dtadres/Documents/func1/moco/channel_1_moco_mean.nii')
+data_path = pathlib.Path("/Users/dtadres/Documents/func1/moco/channel_1_moco_mean.nii")
 read_nii_data_and_check(data_path)

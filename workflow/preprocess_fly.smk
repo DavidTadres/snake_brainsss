@@ -635,8 +635,6 @@ rule bleaching_qc_rule:
                                         path_to_read=[input.brains_paths_ch1, input.brains_paths_ch2, input.brains_paths_ch3], #imaging_paths_by_folder_scratch, # {input} didn't work, I think because it destroyed the list of list we expect to see here #imaging_paths_by_folder_scratch,
                                         path_to_save=output, # can't use output, messes things up here! #imaging_paths_by_folder_oak
                                         #print_output = output
-                                        functional_channel_list=FUNCTIONAL_CHANNELS,
-                                        anatomical_channel=ANATOMY_CHANNEL
             )
             print('Done with bleaching_qc')
         except Exception as error_stack:
