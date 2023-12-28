@@ -108,7 +108,7 @@ def make_supervoxels(fly_directory,
             neural_activity = brain[:, :, z, :].reshape(-1, brain.shape[3])
             cluster_model = sklearn.cluster.AgglomerativeClustering(
                 n_clusters=n_clusters,
-                memory=current_path_to_save_labels.parent,
+                memory=str(current_path_to_save_labels.parent),
                 linkage='ward',
                 connectivity=connectivity)
             cluster_model.fit(neural_activity)
@@ -140,8 +140,7 @@ def make_supervoxels(fly_directory,
         np.save(current_path_to_save_signals, all_signals)
         printlog('cluster average duration: {} sec'.format(time.time()-t0))
 
-
-def apply_transforsm(fly_directory,
+def apply_transforms(fly_directory,
                      path_to_read_fixed,
                      path_to_read_moving,
                      path_to_save,
@@ -1175,14 +1174,13 @@ def motion_correction(fly_directory,
                       anatomy_channel,
                       functional_channels):
     """
-    TODO After discussing with Jacob: Make sure to somewhere explicitly define which channel
-    is the anatomical (GFP, Tomato or mCardinal) and which one is the functional (e.g.
-    GCaMP).
     Then make sure to not use 'ch1' or 'ch2' anywhere in this function as it's not predictive
     of whether it's the anatomical channel!
 
     motion-correction works by using the anatomical channel. Then the warping is just applied
     to the functional channel.
+
+    Notes: - ants seems to have a motion correction function. Try it.
     :param dataset_path: A list of paths
     :return:
     """
