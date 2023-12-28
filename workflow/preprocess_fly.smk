@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'fly_002' # folder to be processed
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -1270,6 +1270,13 @@ rule clean_anatomy_rule:
 
 rule make_supervoxels_rule:
     """
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:03:05
+    CPU Efficiency: 43.84% of 00:07:02 core-walltime
+    Job Wall-clock time: 00:03:31
+    Memory Utilized: 4.66 GB
+    Memory Efficiency: 51.74% of 9.00 GB
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
