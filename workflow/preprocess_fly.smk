@@ -1280,7 +1280,7 @@ rule make_supervoxels_rule:
     run:
         try:
             preprocessing.make_supervoxels(fly_directory=fly_folder_to_process_oak,
-                                            path_to_read=[input,],
+                                            path_to_read=input,
                                             save_path_cluster_labels=[output.cluster_labels],
                                             save_path_cluster_signals=[output.cluster_signals],
                                             n_clusters = 2000) # for sklearn.cluster.AgglomerativeClustering
