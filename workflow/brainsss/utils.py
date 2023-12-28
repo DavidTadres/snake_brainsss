@@ -57,13 +57,13 @@ def get_new_fly_number(target_path, first_fly_with_genotype_this_run,
         fly_folders = [s for s in (target_path).iterdir() if "fly" in s.name and s.is_dir()]
         # fly folders should then be sorted like this: ['fly_999', 'fly_998',.., 'fly_001']
         sorted_fly_folder = natsort.natsorted(fly_folders,reverse=True)
-
         oldest_fly = None
         # If we have not yet created any folders with this genotype in this run...
         if first_fly_with_genotype_this_run:
             # ...check if the 'incomplete' flag is present in the most recent
             # 'fly_XXX' folder
             for current_fly_folder in sorted_fly_folder:
+                print("current_fly_folder " + repr(current_fly_folder))
                 if pathlib.Path(current_fly_folder, 'incomplete').exists():
                     # If incomplete exists, continue 'down' the folders. i.e. if
                     # the incomplete file exists in 'fly_999', go to 'fly_998' and
@@ -75,6 +75,7 @@ def get_new_fly_number(target_path, first_fly_with_genotype_this_run,
                 else:
                     # if no 'incomplete' file exists, we have found the oldest fly folder
                     oldest_fly = current_fly_folder.name.split('_')[-1]
+                    break
             # if even 'fly_001' has a 'incomplete' file, the 'new_fly_number' is '001'.
             if oldest_fly is None:
                 new_fly_number = str(1).zfill(3)  # fly number 001
@@ -92,7 +93,6 @@ def get_new_fly_number(target_path, first_fly_with_genotype_this_run,
             sorted_relevant_paths = natsort.natsorted(relevant_paths,reverse=True)
             # and pick out the oldest fly
             oldest_fly = sorted_relevant_paths[0].name.split('_')[-1]
-
         new_fly_number = str(int(oldest_fly) + 1).zfill(3)
     else:
         new_fly_number = str(1).zfill(3) # fly number 001
