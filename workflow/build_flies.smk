@@ -106,6 +106,12 @@ rule fly_builder_rule:
     """
     Benchmark - Yandan dataset
     
+    Cores: 1
+    CPU Utilized: 00:02:34
+    CPU Efficiency: 46.25% of 00:05:33 core-walltime
+    Job Wall-clock time: 00:05:33
+    Memory Utilized: 878.01 MB
+    Memory Efficiency: 11.71% of 7.32 GB
     
     Not parallelized right now. Since this is just file transfer it's probably fine to have a single one
     Benchmark: copy full dataset (1x anat, 1x func 30 minutes volumetric and 2x5 minutes) took:

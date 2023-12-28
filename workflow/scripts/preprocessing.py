@@ -2292,7 +2292,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             target_path = None
             # each source path file can only be a single file - why if..if instead of if..elif?
             ### Change file names and filter various files
-            if 'concat.nii' in source_path.name and folder_type == 'func':
+            if '.nii' in source_path.name and folder_type == 'func' and not '_s' in source_path.name:
                 target_name = 'channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
                 target_path = pathlib.Path(destination, target_name)
             # Rename anatomy file to anatomy_channel_x.nii
@@ -2343,7 +2343,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             # Don't copy these files
             elif 'SingleImage' in source_path.name:
                 continue # skip rest of the 'else' term
-            elif '.nii' in source_path.name and folder_type == 'func':
+            elif '.nii' in source_path.name and folder_type == 'func' and '_s' in source_path.name:
                 continue  # do not copy!! Else we'll copy all the split nii files as well.
                 # This is an artifact of splitting the nii file on Brukerbridge and might not be
                 # relevant in the future/for other users!
