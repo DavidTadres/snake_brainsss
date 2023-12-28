@@ -1926,18 +1926,6 @@ def bleaching_qc(fly_directory,
     :param functional_channel_list: list with channels marked as functional channels by experimenter
     :param anatomical_channel: the channel marked as the anatomy channel by the experimenter
 
-    '''# OLD VERSION!!!!
-    :param imaging_data_path_read_from: a nested(!) list to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
-                                        This is a list containing pathlibt.Path objects like this:
-                                        [[PosixPath('../fly_001/func0/imaging/functional_channel_1.nii'),
-                                          PosixPath('../fly_001/func0/imaging/functional_channel_2.nii')],
-                                         [PosixPath('../fly_001/func1/imaging/functional_channel_1.nii'),
-                                          PosixPath('../fly_001/func1/imaging/functional_channel_2.nii')]
-                                        ]
-    :param imaging_data_path_save_to: a list to the 'bleaching' target file as pathlib.Path objects like this:
-                                      [PosixPath('../fly_001/func0/imaging/bleaching.png'),
-                                       PosixPath('../fly_001/func1/imaging/bleaching.png)]'''
-
     :return:
     """
     ###
@@ -1950,8 +1938,11 @@ def bleaching_qc(fly_directory,
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
     #####
+
+    print("path_to_read " + repr(path_to_read))
     path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
-    path_to_save =utils.convert_list_of_string_to_posix_path(path_to_save)
+    path_to_save = utils.convert_list_of_string_to_posix_path(path_to_save)
+    print("path_to_read " + repr(path_to_read))
 
     data_mean = {}
     # For each path in the list
