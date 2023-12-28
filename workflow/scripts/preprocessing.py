@@ -1627,6 +1627,13 @@ def motion_correction(fly_directory,
             moving = ants.from_numpy(np.asarray(vol, dtype='float32'))
 
             ### MOTION CORRECT ###
+            # Control print
+            print('fixed.shape' + repr(fixed.shape))
+            print('moving.shape' + repr(moving.shape))
+            print('type_of_transform' + repr(type_of_transform))
+            print('flow_sigma' + repr(flow_sigma))
+            print('total_sigma' + repr(total_sigma))
+            print('aff_metric' + repr(aff_metric))
             # by comparing a given frame in time against the meanbrain (fixed)
             moco = ants.registration(fixed, moving,
                                      type_of_transform=type_of_transform,
@@ -1994,9 +2001,12 @@ def bleaching_qc(fly_directory,
 
     ax.set_xlabel('Frame Num')
     ax.set_ylabel('Avg signal')
-    loss_string = ''
-    for filename in data_mean:
-        loss_string = loss_string + filename + ' lost' + F'{int(signal_loss[filename])}' + '%\n'
+    try:
+        loss_string = ''
+        for filename in data_mean:
+            loss_string = loss_string + filename + ' lost' + F'{int(signal_loss[filename])}' + '%\n'
+    except: # This happens when unable to peform fit.
+        pass
     ax.set_title(loss_string, ha='center', va='bottom')
 
     ###
