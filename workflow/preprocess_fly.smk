@@ -1401,7 +1401,11 @@ rule make_supervoxels_rule:
                                             n_clusters = 2000) # for sklearn.cluster.AgglomerativeClustering
                                             # https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html
 
-
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_supervoxels')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
