@@ -111,13 +111,6 @@ rule fly_builder_rule:
     threads: 1
     resources: mem_mb=snake_utils.mem_mb_times_threads
     run:
-
-        # Only run the code to copy data from imports to 'fly_00X' if the
-        # user defined fly folder does not exist yet.
-        # Note: it seems that the fly folder is somehow created
-        #if not pathlib.Path(fly_folder_to_process, 'anat').exists() or \
-        #        not pathlib.Path(fly_folder_to_process, 'func').exists:
-
         preprocessing.fly_builder(user=current_user,
                                   import_dirs= all_imports_paths,
                                   dataset_dirs = all_fly_dataset_paths

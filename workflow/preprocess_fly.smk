@@ -287,10 +287,12 @@ for current_path in imaging_file_paths:
 ##
 # list of paths for supervoxel
 # identical to zscore imaging paths but for ease of readibility, explicitly create a new one
+atlas_path = pathlib.Path("brain_atlases/jfrc_atlas_from_brainsss.nii") #luke.nii"
 imaging_paths_supervoxels = []
 for current_path in imaging_file_paths:
     if 'func' in current_path:
         imaging_paths_supervoxels.append(current_path.split('/imaging')[0])
+
 
 ####
 '''# probably not relevant - I think this is what bifrost does (better)
@@ -313,7 +315,7 @@ elif 'channel_3' in ANATOMY_CHANNEL:
 
 ##
 # list of paths for anat2atlas
-atlas_path = pathlib.Path("brain_atlases/jfrc_atlas_from_brainsss.nii") #luke.nii"
+
 imaging_paths_anat2atlas =[]
 for current_path in imaging_file_paths:
     if 'anat' in current_path:
@@ -1251,103 +1253,6 @@ rule clean_anatomy_rule:
                 error_stack=error_stack,
                 width=width)
 
-rule func_to_anat_rule:
-    """
-        Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:01:21
-    CPU Efficiency: 38.21% of 00:03:32 core-walltime
-    Job Wall-clock time: 00:01:46
-    Memory Utilized: 1.09 GB
-    Memory Efficiency: 27.97% of 3.91 GB
-    
-    Cores per node: 2
-    CPU Utilized: 00:01:15
-    CPU Efficiency: 35.71% of 00:03:30 core-walltime
-    Job Wall-clock time: 00:01:45
-    Memory Utilized: 1.09 GB
-    Memory Efficiency: 27.86% of 3.91 GB
-    
-    Cores per node: 2
-    CPU Utilized: 00:01:19
-    CPU Efficiency: 34.96% of 00:03:46 core-walltime
-    Job Wall-clock time: 00:01:53
-    Memory Utilized: 1.12 GB
-    Memory Efficiency: 28.78% of 3.91 GB
-    
-    Cores per node: 2
-    CPU Utilized: 00:01:14
-    CPU Efficiency: 46.25% of 00:02:40 core-walltime
-    Job Wall-clock time: 00:01:20
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 3.91 GB (3.91 GB/node)
-    """
-    threads: 2
-    resources: mem_mb=snake_utils.mem_mb_more_times_input
-    input:
-        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}.nii',
-        path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}.nii"
-    output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii"
-
-    run:
-        try:
-            preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
-                                    path_to_read_fixed=[input.path_to_read_fixed],
-                                    path_to_read_moving=[input.path_to_read_moving],
-                                    path_to_save=output,
-                                    type_of_transform='Affine', # copy-paste from brainsss
-                                    resolution_of_fixed= (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
-                                    resolution_of_moving = (2.611, 2.611, 5), # Copy-paste from brainsss, probably can be read from metadate.xml!
-                                    rule_name='func_to_anat',
-                                    iso_2um_fixed=True,
-                                    iso_2um_moving = False,
-                                    grad_step = 0.2,
-                                    flow_sigma = 3,
-                                    total_sigma = 0,
-                                    syn_sampling = 32
-            )
-        except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_func2anat')
-            utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
-
-rule anat_to_atlas:
-    """
-    Benchmark
-
-    """
-    threads: 2
-    resources: mem_mb=snake_utils.mem_mb_more_times_input
-    input:
-        path_to_read_fixed=atlas_path,
-        path_to_read_moving=str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/moco/{anat2atlas_moving}.nii"
-    output:
-        str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii"
-
-    run:
-        try:
-            preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
-                                    path_to_read_fixed=[input.path_to_read_fixed],
-                                    path_to_read_moving=[input.path_to_read_moving],
-                                    path_to_save=output,
-                                    type_of_transform='SyN', # copy-paste from brainsss
-                                    resolution_of_fixed= (2,2,2), # Copy-paste from brainsss, probably can be read from metadate.xml!
-                                    resolution_of_moving = (0.653, 0.653, 1), # Copy-paste from brainsss, probably can be read from metadate.xml!
-                                    rule_name='anat_to_atlas',
-                                    iso_2um_fixed=False,
-                                    iso_2um_moving = True,
-                                    grad_step = 0.2,
-                                    flow_sigma = 3,
-                                    total_sigma = 0,
-                                    syn_sampling = 32
-            )
-        except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_anat2atlas')
-            utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
-
 rule apply_transforms_rule:
     """
     """
@@ -1403,6 +1308,108 @@ rule make_supervoxels_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
+'''
+# Probably Bifrost does it better.
+rule func_to_anat_rule:
+    """
+    Nodes: 1
+    Cores per node: 2
+    CPU Utilized: 00:01:21
+    CPU Efficiency: 38.21% of 00:03:32 core-walltime
+    Job Wall-clock time: 00:01:46
+    Memory Utilized: 1.09 GB
+    Memory Efficiency: 27.97% of 3.91 GB
+
+    Cores per node: 2
+    CPU Utilized: 00:01:15
+    CPU Efficiency: 35.71% of 00:03:30 core-walltime
+    Job Wall-clock time: 00:01:45
+    Memory Utilized: 1.09 GB
+    Memory Efficiency: 27.86% of 3.91 GB
+
+    Cores per node: 2
+    CPU Utilized: 00:01:19
+    CPU Efficiency: 34.96% of 00:03:46 core-walltime
+    Job Wall-clock time: 00:01:53
+    Memory Utilized: 1.12 GB
+    Memory Efficiency: 28.78% of 3.91 GB
+
+    Cores per node: 2
+    CPU Utilized: 00:01:14
+    CPU Efficiency: 46.25% of 00:02:40 core-walltime
+    Job Wall-clock time: 00:01:20
+    Memory Utilized: 0.00 MB (estimated maximum)
+    Memory Efficiency: 0.00% of 3.91 GB (3.91 GB/node)
+    """
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_more_times_input
+    input:
+        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}.nii',
+        path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}.nii"
+    output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii"
+
+    run:
+        try:
+            preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
+                path_to_read_fixed=[input.path_to_read_fixed],
+                path_to_read_moving=[input.path_to_read_moving],
+                path_to_save=output,
+                type_of_transform='Affine',# copy-paste from brainsss
+                resolution_of_fixed=(
+                0.653, 0.653, 1),# Copy-paste from brainsss, probably can be read from metadate.xml!
+                resolution_of_moving=(
+                2.611, 2.611, 5),# Copy-paste from brainsss, probably can be read from metadate.xml!
+                rule_name='func_to_anat',
+                iso_2um_fixed=True,
+                iso_2um_moving=False,
+                grad_step=0.2,
+                flow_sigma=3,
+                total_sigma=0,
+                syn_sampling=32
+            )
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_func2anat')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
+rule anat_to_atlas:
+    """
+    Benchmark
+
+    """
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_more_times_input
+    input:
+        path_to_read_fixed=atlas_path,
+        path_to_read_moving=str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/moco/{anat2atlas_moving}.nii"
+    output:
+        str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii"
+
+    run:
+        try:
+            preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
+                path_to_read_fixed=[input.path_to_read_fixed],
+                path_to_read_moving=[input.path_to_read_moving],
+                path_to_save=output,
+                type_of_transform='SyN',# copy-paste from brainsss
+                resolution_of_fixed=(2, 2, 2),# Copy-paste from brainsss, probably can be read from metadate.xml!
+                resolution_of_moving=(
+                0.653, 0.653, 1),# Copy-paste from brainsss, probably can be read from metadate.xml!
+                rule_name='anat_to_atlas',
+                iso_2um_fixed=False,
+                iso_2um_moving=True,
+                grad_step=0.2,
+                flow_sigma=3,
+                total_sigma=0,
+                syn_sampling=32
+            )
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_anat2atlas')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+'''
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
@@ -1416,6 +1423,7 @@ They are recipes that say, "when you want to make a file with name that looks li
 you can do so from files that look like THAT, and here's what to run to make that happen.
 
 """
+
 
 """
 Maybe useful in the future
