@@ -113,7 +113,7 @@ def make_supervoxels(fly_directory,
                 connectivity=connectivity)
             cluster_model.fit(neural_activity)
             cluster_labels.append(cluster_model.labels_)
-
+        print('str(current_path_to_save_labels.parent) ' + repr(str(current_path_to_save_labels.parent)))
         cluster_labels = np.asarray(cluster_labels)
         #save_file = os.path.join(cluster_dir, 'cluster_labels.npy')
         np.save(current_path_to_save_labels,cluster_labels)
