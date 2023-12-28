@@ -114,8 +114,10 @@ fictrac_file_paths = []
 for key in fly_dirs_dict:
     if 'Imaging' in key:
         imaging_file_paths.append(fly_dirs_dict[key][1::])
+        # this yields for example 'func2/imaging'
     elif 'Fictrac' in key:
         fictrac_file_paths.append(fly_dirs_dict[key][1::])
+        # This yields for example 'func1/fictrac/fictrac_behavior_data.dat'
 def create_path_func(fly_folder_to_process, list_of_paths, filename='', func_only=False):
     """
     Creates lists of path that can be feed as input/output to snakemake rules
@@ -216,6 +218,10 @@ full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process_oak, fictra
 paths_for_make_mean_brain_oak = create_file_paths(path_to_fly_folder=fly_folder_to_process_oak,
                                                 imaging_file_paths=imaging_file_paths,
                                                 filename='')'''
+
+FICTRAC_PATHS = []
+for current_path in fictrac_file_paths:
+    FICTRAC_PATHS.append(current_path.split('/fictrac_behavior_data.dat')[0])
 
 ###
 # List of paths for meanbrain
@@ -430,7 +436,8 @@ rule all:
         ###
         # Fictrac QC
         ###
-        expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed), # This is just empty if no fictrac
+        #expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed), # This is just empty if no fictrac
+        expand(str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png", fictrac_paths=FICTRAC_PATHS),
         # data in fly_dirs.json!
         ###
         # Bleaching QC
@@ -506,10 +513,12 @@ rule fictrac_qc_rule:
     threads: 1
     resources: mem_mb=snake_utils.mem_mb_times_threads
     input:
-        full_fictrac_file_oak_paths
+        str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_behavior_data.dat"
+        #full_fictrac_file_oak_paths
         #fictrac_file_paths = expand("{fictrac}", fictrac=full_fictrac_file_scratch_paths)
     output:
-        expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed)
+        str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png"
+        #expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed)
     run:
         try:
             preprocessing.fictrac_qc(fly_folder_to_process_oak,
@@ -1259,38 +1268,6 @@ rule clean_anatomy_rule:
                 error_stack=error_stack,
                 width=width)
 
-rule apply_transforms_rule:
-    """
-    """
-    threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input
-    input:
-        path_to_read_fixed=atlas_path,
-        path_to_read_moving='foo',
-        path_to_syn_linear='foo.mat',
-        path_to_syn_nonlinear='foo.nii.gz'
-    output:
-        path_to_save_result='warp/moving_fly-applied-fixed_fly.nii',
-        path_to_save_mat='warp/bar.mat',
-        path_to_save_nii_gz='warp/bar.nii.gz'
-    run:
-        try:
-            preprocessing.apply_transforsm(fly_directory=fly_folder_to_process_oak,
-                                            path_to_read_fixed=[input.path_to_read_fixed],
-                                            path_to_read_moving=[input.path_to_read_moving],
-                                            path_to_syn_linear=[input.path_to_syn_linear],
-                                            path_to_syn_nonlinear=[input.path_to_syn_nonlinear],
-                                            path_to_save=output,
-                                            resolution_of_fixed=(2,2,2), # copy-paste from brainsss
-                                            resolution_of_moving=(2.611, 2.611, 5), # copy-paste from brainsss
-                                            final_2um_iso=False, # copy-paste from brainsss
-                                            )
-        except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_apply_transforms')
-            utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
-
 rule make_supervoxels_rule:
     """
     """
@@ -1303,7 +1280,7 @@ rule make_supervoxels_rule:
     run:
         try:
             preprocessing.make_supervoxels(fly_directory=fly_folder_to_process_oak,
-                                            path_to_read=input,
+                                            path_to_read=[input],
                                             save_path_cluster_labels=output.cluster_labels,
                                             save_path_cluster_signals=output.cluster_signals,
                                             n_clusters = 2000) # for sklearn.cluster.AgglomerativeClustering
@@ -1415,6 +1392,40 @@ rule anat_to_atlas:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
+                
+
+rule apply_transforms_rule:
+    """
+    """
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_input
+    input:
+        path_to_read_fixed=atlas_path,
+        path_to_read_moving='foo',
+        path_to_syn_linear='foo.mat',
+        path_to_syn_nonlinear='foo.nii.gz'
+    output:
+        path_to_save_result='warp/moving_fly-applied-fixed_fly.nii',
+        path_to_save_mat='warp/bar.mat',
+        path_to_save_nii_gz='warp/bar.nii.gz'
+    run:
+        try:
+            preprocessing.apply_transforms(fly_directory=fly_folder_to_process_oak,
+                                            path_to_read_fixed=[input.path_to_read_fixed],
+                                            path_to_read_moving=[input.path_to_read_moving],
+                                            path_to_syn_linear=[input.path_to_syn_linear],
+                                            path_to_syn_nonlinear=[input.path_to_syn_nonlinear],
+                                            path_to_save=output,
+                                            resolution_of_fixed=(2,2,2), # copy-paste from brainsss
+                                            resolution_of_moving=(2.611, 2.611, 5), # copy-paste from brainsss
+                                            final_2um_iso=False, # copy-paste from brainsss
+                                            )
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_apply_transforms')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
 '''
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html

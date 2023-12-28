@@ -53,9 +53,9 @@ def make_supervoxels(fly_directory,
     ### SETUP LOGGING ###
     #####################
 
-    logfile = utils.create_logfile(fly_directory, function_name='clean_anatomy')
+    logfile = utils.create_logfile(fly_directory, function_name='make_supervoxels')
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
-    utils.print_function_start(logfile, WIDTH, 'clean_anatomy')
+    utils.print_function_start(logfile, WIDTH, 'make_supervoxels')
 
     #func_path = args['func_path']
     #logfile = args['logfile']
