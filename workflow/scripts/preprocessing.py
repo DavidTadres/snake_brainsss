@@ -2298,7 +2298,8 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
                 target_path = pathlib.Path(destination, target_name)
             # This is for non-split files from Brukerbridge
             elif '.nii' in source_path.name and '_s' not in source_path.name and folder_type == 'func':
-                target_name = 'channel_' + source_path.name.split('channel')[1].split('_')[0] + '.nii'
+                target_name = 'channel_' + source_path.name.split('channel')[1].split('_')[1] + '.nii'
+                print('target name' + repr(target_name))
                 target_path = pathlib.Path(destination, target_name)
             # Rename anatomy file to anatomy_channel_x.nii
             elif '.nii' in source_path.name and folder_type == 'anat':
