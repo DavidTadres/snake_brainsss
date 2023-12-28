@@ -105,7 +105,12 @@ print('all_fly_dataset_paths' + repr(all_fly_dataset_paths))
 rule fly_builder_rule:
     """
     Benchmark - Yandan dataset (a typical 30 minute vol recording + anat scan at high res)
-
+    Cores: 1
+    CPU Utilized: 00:04:26
+    CPU Efficiency: 88.37% of 00:05:01 core-walltime
+    Job Wall-clock time: 00:05:01
+    Memory Utilized: 878.44 MB
+    Memory Efficiency: 11.71% of 7.32 GB
 
     Not parallelized right now. Since this is just file transfer it's probably fine to have a single one
     Benchmark: copy full dataset (1x anat, 1x func 30 minutes volumetric and 2x5 minutes) took:

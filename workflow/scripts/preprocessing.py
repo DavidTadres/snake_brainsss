@@ -1628,12 +1628,12 @@ def motion_correction(fly_directory,
 
             ### MOTION CORRECT ###
             # Control print
-            print('fixed.shape' + repr(fixed.shape))
-            print('moving.shape' + repr(moving.shape))
-            print('type_of_transform' + repr(type_of_transform))
-            print('flow_sigma' + repr(flow_sigma))
-            print('total_sigma' + repr(total_sigma))
-            print('aff_metric' + repr(aff_metric))
+            #print('fixed.shape' + repr(fixed.shape))
+            #print('moving.shape' + repr(moving.shape))
+            #print('type_of_transform' + repr(type_of_transform))
+            #print('flow_sigma' + repr(flow_sigma))
+            #print('total_sigma' + repr(total_sigma))
+            #print('aff_metric' + repr(aff_metric))
             # by comparing a given frame in time against the meanbrain (fixed)
             moco = ants.registration(fixed, moving,
                                      type_of_transform=type_of_transform,
