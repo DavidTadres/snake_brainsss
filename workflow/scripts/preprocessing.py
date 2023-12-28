@@ -2303,7 +2303,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             # To be tested once I have such data!!
             elif '.csv' in source_path.name:
                 source_name = 'photodiode.csv'
-                visual_folder_path= pathlib.Path(destination.name, 'visual')
+                visual_folder_path= pathlib.Path(destination, 'visual')
                 visual_folder_path.mkdir(exist_ok=True)
                 target_path = pathlib.Path(visual_folder_path, source_name)
             # Special copy for visprotocol metadata since it goes in visual folder
