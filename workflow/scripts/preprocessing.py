@@ -1938,14 +1938,14 @@ def bleaching_qc(fly_directory,
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
     #####
-    print('path_to_save ' + repr(path_to_save))
     path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
     path_to_save = utils.convert_list_of_string_to_posix_path(path_to_save)
-    print("path_to_save " + repr(path_to_save))
+    # There is only one path to save! It comes as a list
+    path_to_save = path_to_save[0]
 
     data_mean = {}
     # For each path in the list
-    for current_path_to_read, current_path_to_save in zip(path_to_read, path_to_save):
+    for current_path_to_read in path_to_read:
         printlog(F"Currently reading: {current_path_to_read.name:.>{WIDTH - 20}}")
         # Doesn't load anything to memory, just a pointer
         brain_proxy = nib.load(current_path_to_read)
@@ -2002,7 +2002,7 @@ def bleaching_qc(fly_directory,
     ###
     # Save plot
     ###
-    save_file = pathlib.Path(current_path_to_save)
+    save_file = pathlib.Path(path_to_save)
     fig.savefig(save_file, dpi=300, bbox_inches='tight')
 
     ###
