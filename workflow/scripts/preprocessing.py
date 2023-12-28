@@ -2307,10 +2307,17 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
         # If the item is a file
         else:
             target_path = None
+            # Don't copy these files
+            if 'SingleImage' in source_path.name:
+                continue # skip rest of the 'else' term
+            #elif '.nii' in source_path.name and folder_type == 'func': # Shouldn't be necessary with '_s' check!
+            #    continue  # do not copy!! Else we'll copy all the split nii files as well.
+            #    # This is an artifact of splitting the nii file on Brukerbridge and might not be
+            #    # relevant in the future/for other users!
             # each source path file can only be a single file - why if..if instead of if..elif?
             ### Change file names and filter various files
             # This is for split files from brukerbridge
-            if 'concat.nii' in source_path.name and folder_type == 'func':
+            elif 'concat.nii' in source_path.name and folder_type == 'func':
                 target_name = 'channel_' + source_path.name.split('ch')[1].split('_')[0] + '.nii'
                 target_path = pathlib.Path(destination, target_name)
             # This is for non-split files from Brukerbridge
@@ -2365,13 +2372,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             #    continue
             elif '.xml' in source_path.name and 'VoltageOutput' in source_path.name:
                 target_path = pathlib.Path(destination, 'voltage_output.xml')
-            # Don't copy these files
-            elif 'SingleImage' in source_path.name:
-                continue # skip rest of the 'else' term
-            elif '.nii' in source_path.name and folder_type == 'func':
-                continue  # do not copy!! Else we'll copy all the split nii files as well.
-                # This is an artifact of splitting the nii file on Brukerbridge and might not be
-                # relevant in the future/for other users!
+
 
             if target_path is not None:
                 # Actually copy the file
