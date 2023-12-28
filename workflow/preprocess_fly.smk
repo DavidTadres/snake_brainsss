@@ -321,7 +321,14 @@ elif 'channel_2' in ANATOMY_CHANNEL:
     file_path_anat2atlas_moving.append('channel_2_moco_mean_clean')
 elif 'channel_3' in ANATOMY_CHANNEL:
     file_path_anat2atlas_moving.append('channel_3_moco_mean_clean')
+
 ##
+# list of paths for supervoxel
+# identical to zscore imaging paths but for ease of readibility, explicitly create a new one
+imaging_paths_supervoxels = []
+for current_path in imaging_file_paths:
+    if 'func' in current_path:
+        imaging_paths_supervoxels.append(current_path.split('/imaging')[0])
 
 ####
 
@@ -463,14 +470,21 @@ rule all:
         # Clean anatomy
         ### directory = os.path.join(anat, 'moco')
         expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels),
+        ##
+        # make supervoxels
+        ###
+        #expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=channels),
+        #expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=channels)
+
+        # Below might be Bifrost territory - ignore for now.
         ###
         # func2anat
         ###
-        expand(str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii", func2anat_paths=imaging_paths_func2anat, func2anat_moving=file_path_func2anat_fixed, func2anat_fixed=file_path_func2anat_fixed),
+        ##>>expand(str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii", func2anat_paths=imaging_paths_func2anat, func2anat_moving=file_path_func2anat_fixed, func2anat_fixed=file_path_func2anat_fixed),
         ##
         # anat2atlas
         ##
-        expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii", anat2atlas_paths=imaging_paths_anat2atlas, anat2atlas_moving=file_path_anat2atlas_moving)
+        ##>>expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii", anat2atlas_paths=imaging_paths_anat2atlas, anat2atlas_moving=file_path_anat2atlas_moving),
 
 rule fictrac_qc_rule:
     """
@@ -1344,13 +1358,20 @@ rule apply_transforms_rule:
     resources: mem_mb=snake_utils.mem_mb_times_input
     input:
         path_to_read_fixed=atlas_path,
-        path_to_read_moving='foo'
-    output: 'bar'
+        path_to_read_moving='foo',
+        path_to_syn_linear='foo.mat',
+        path_to_syn_nonlinear='foo.nii.gz'
+    output:
+        path_to_save_result='warp/moving_fly-applied-fixed_fly.nii',
+        path_to_save_mat='warp/bar.mat',
+        path_to_save_nii_gz='warp/bar.nii.gz'
     run:
         try:
             preprocessing.apply_transforsm(fly_directory=fly_folder_to_process_oak,
                                             path_to_read_fixed=[input.path_to_read_fixed],
                                             path_to_read_moving=[input.path_to_read_moving],
+                                            path_to_syn_linear=[input.path_to_syn_linear],
+                                            path_to_syn_nonlinear=[input.path_to_syn_nonlinear],
                                             path_to_save=output,
                                             resolution_of_fixed=(2,2,2), # copy-paste from brainsss
                                             resolution_of_moving=(2.611, 2.611, 5), # copy-paste from brainsss
@@ -1367,8 +1388,19 @@ rule make_supervoxels_rule:
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
-    input: "functional_channel_2_moco_zscore_highpass.h5"
-    output: 'bar'
+    input: str(fly_folder_to_process_oak) + "/{supervoxel_paths}/channel_{supervoxel_ch}_moco_zscore_highpass.h5"
+    output:
+        cluster_labels = str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy",
+        cluster_signals = str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy"
+    run:
+        try:
+            preprocessing.make_supervoxels(fly_directory=fly_folder_to_process_oak,
+                                            path_to_read=input,
+                                            save_path_cluster_labels=output.cluster_labels,
+                                            save_path_cluster_signals=output.cluster_signals,
+                                            n_clusters = 2000) # for sklearn.cluster.AgglomerativeClustering
+                                            # https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html
+
 
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html

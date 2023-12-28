@@ -22,26 +22,26 @@ import skimage.filters
 import sklearn.feature_extraction
 import sklearn.cluster
 
+# To import files (or 'modules') from the brainsss folder, define path to scripts!
+scripts_path = pathlib.Path(__file__).parent.resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
+sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
+# This just imports '*.py' files from the folder 'brainsss'.
+from brainsss import moco_utils
+from brainsss import utils
+from brainsss import fictrac_utils
+from brainsss import corr_utils
+
 
 ####################
 # GLOBAL VARIABLES #
 ####################
 WIDTH = 120 # This is used in all logging files
 
-# To import brainsss, define path to scripts!
-scripts_path = pathlib.Path(__file__).parent.resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
-sys.path.insert(0, pathlib.Path(scripts_path, 'workflow'))
-# print(pathlib.Path(scripts_path, 'workflow'))
-#import brainsss
-
-from brainsss import moco_utils
-from brainsss import utils
-from brainsss import fictrac_utils
-from brainsss import corr_utils
-
 def make_supervoxels(fly_directory,
                      path_to_read,
-                     save_path):
+                     save_path_cluster_labels,
+                     save_path_cluster_signals,
+                     n_clusters):
     """
 
     :param fly_directory:
@@ -61,16 +61,16 @@ def make_supervoxels(fly_directory,
     #logfile = args['logfile']
     #printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
 
-    n_clusters = 2000 # Hardcoded?
-
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
     ##########
     path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
-    save_path = utils.convert_list_of_string_to_posix_path(save_path)
+    save_path_cluster_labels = utils.convert_list_of_string_to_posix_path(save_path_cluster_labels)
+    save_path_cluster_signals = utils.convert_list_of_string_to_posix_path(save_path_cluster_signals)
 
     # Can have more than one functional channel!
-    for current_path_to_read, current_path_to_save in zip(path_to_read, save_path):
+    for current_path_to_read, current_path_to_save_labels, current_path_to_save_signals in zip(path_to_read, save_path_cluster_labels, save_path_cluster_signals):
+        printlog('Clustering ' + repr(current_path_to_read))
         ### LOAD BRAIN ###
 
         #brain_path = os.path.join(func_path, 'functional_channel_2_moco_zscore_highpass.h5')
@@ -90,19 +90,25 @@ def make_supervoxels(fly_directory,
         #cluster_dir = os.path.join(func_path, 'clustering')
         #if not os.path.exists(cluster_dir):
         #    os.mkdir(cluster_dir)
-        current_path_to_save.parent.makedir(exist_ok=True, parents=True)
+        current_path_to_save_labels.parent.makedir(exist_ok=True, parents=True)
 
         ### FIT CLUSTERS ###
 
         printlog('fitting clusters')
         t0 = time.time()
-        connectivity = sklearn.feature_extraction.image.grid_to_graph(256,128)
+        #connectivity = sklearn.feature_extraction.image.grid_to_graph(256,128)
+        connectivity = sklearn.feature_extraction.image.grid_to_graph(brain.shape[0],brain.shape[1])
         cluster_labels = []
-        for z in range(49):
-            neural_activity = brain[:,:,z,:].reshape(-1, 3384)
+        #for z in range(49):
+        # WHY NOT CLUSTER EVERYTHING? Why z slices?
+        # Won't this limit supervoxel to a given slice? If we did neural activity = brain.reshape(-1,brain.shape[3])
+        # it probably takes much longer (and more memory) but supervoxels would be in 3D?
+        for z in range(brain.shape[2]):
+            #neural_activity = brain[:,:,z,:].reshape(-1, 3384) # I *THINK* 3384 is frames at 30 minutes
+            neural_activity = brain[:, :, z, :].reshape(-1, brain.shape[3])
             cluster_model = sklearn.cluster.AgglomerativeClustering(
                 n_clusters=n_clusters,
-                memory=current_path_to_save.parent,
+                memory=current_path_to_save_labels.parent,
                 linkage='ward',
                 connectivity=connectivity)
             cluster_model.fit(neural_activity)
@@ -110,7 +116,7 @@ def make_supervoxels(fly_directory,
 
         cluster_labels = np.asarray(cluster_labels)
         #save_file = os.path.join(cluster_dir, 'cluster_labels.npy')
-        np.save(current_path_to_save,cluster_labels)
+        np.save(current_path_to_save_labels,cluster_labels)
         printlog('cluster fit duration: {} sec'.format(time.time()-t0))
 
         ### GET CLUSTER AVERAGE SIGNAL ###
@@ -130,8 +136,8 @@ def make_supervoxels(fly_directory,
             signals = np.asarray(signals)
             all_signals.append(signals)
         all_signals = np.asarray(all_signals)
-        save_file = os.path.join(cluster_dir, 'cluster_signals.npy')
-        np.save(save_file, all_signals)
+        #save_file = os.path.join(cluster_dir, 'cluster_signals.npy')
+        np.save(current_path_to_save_signals, all_signals)
         printlog('cluster average duration: {} sec'.format(time.time()-t0))
 
 
@@ -142,7 +148,7 @@ def apply_transforsm(fly_directory,
                      resolution_of_fixed,
                      resolution_of_moving,
                      final_2um_iso):
-    # TODO!!!!!<<<<<<<<<<<<< NOT FINISHED YET.
+    # TODO!!!!!<<<<<<<<<<<<< NOT FINISHED YET. -> Check with Bella/Andrew - this might be Bifrost territory
     """
 
     :param fly_directory:
@@ -876,7 +882,6 @@ def correlation(fly_directory, dataset_path, save_path,
             # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
             object_to_save.to_filename(save_file)
 
-
 def temporal_high_pass_filter(fly_directory, dataset_path, temporal_high_pass_filtered_path):
     """
     Filters z-scored brain with scipt.ndimage.gaussian_filter1d in chunks due to memory demand of the large files
@@ -1181,6 +1186,11 @@ def motion_correction(fly_directory,
     :param dataset_path: A list of paths
     :return:
     """
+
+    #####################
+    ### SETUP LOGGING ###
+    #####################
+
     logfile = utils.create_logfile(fly_directory, function_name='motion_correction')
     printlog = getattr(utils.Printlog(logfile=logfile), 'print_to_log')
     utils.print_function_start(logfile, WIDTH, 'motion_correction')
@@ -1339,9 +1349,6 @@ def motion_correction(fly_directory,
     #                      'mattes')  # For ants.registration(), metric for affine registration | Default 'mattes'. Also allowed: 'GC', 'meansquares'
     #meanbrain_target = args.get('meanbrain_target', None)  # filename of precomputed target meanbrain to register to
 
-    #####################
-    ### SETUP LOGGING ###
-    #####################
 
     #width = 120
 
