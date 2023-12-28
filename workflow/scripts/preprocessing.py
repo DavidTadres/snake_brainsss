@@ -1979,12 +1979,19 @@ def bleaching_qc(fly_directory,
         elif 'channel_3' in filename:
             color = 'darkred' # on our scope this should be an IR channel
         ax.plot(data_mean[filename], color=color, label=filename)
-        # Fit polynomial to mean fluorescence.
-        linear_fit = np.polyfit(xs, data_mean[filename], 1)
-        # and plot it
-        ax.plot(np.poly1d(linear_fit)(xs), color='k', linewidth=3, linestyle='--')
-        # take the linear fit to calculate how much signal is lost and report it as the title
-        signal_loss[filename] = linear_fit[0] * len(data_mean[filename]) / linear_fit[1] * -100
+        try:
+            # Fit polynomial to mean fluorescence.
+            linear_fit = np.polyfit(xs, data_mean[filename], 1)
+            # and plot it
+            ax.plot(np.poly1d(linear_fit)(xs), color='k', linewidth=3, linestyle='--')
+            # take the linear fit to calculate how much signal is lost and report it as the title
+            signal_loss[filename] = linear_fit[0] * len(data_mean[filename]) / linear_fit[1] * -100
+        except:
+            print('unable to perform fit because of error: ')
+            print(traceback.format_exc())
+            print('\n Checking for nan and inf as possible cause - if no output, no nan and inf found')
+            print(utils.check_for_nan_and_inf_func(data_mean[filename]))
+
     ax.set_xlabel('Frame Num')
     ax.set_ylabel('Avg signal')
     loss_string = ''
@@ -2303,7 +2310,9 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
                 target_path = pathlib.Path(destination, target_name)
             # Rename anatomy file to anatomy_channel_x.nii
             elif '.nii' in source_path.name and folder_type == 'anat':
-                target_name = 'channel_' + source_path.name.split('channel')[1].split('_')[1] + '.nii'
+                target_name = 'channel_' + source_path.name.split('channel')[1].split('_')[1]
+                if '.nii' not in target_name:
+                    target_name += 'nii' # Data I got from Yandan had double .nii!
                 target_path = pathlib.Path(destination, target_name)
             # Special copy for photodiode since it goes in visual folder
             # To be tested once I have such data!!
