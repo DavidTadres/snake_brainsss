@@ -104,20 +104,17 @@ print('all_fly_dataset_paths' + repr(all_fly_dataset_paths))
 # does not exist yet
 rule fly_builder_rule:
     """
-    Benchmark - Yandan dataset
-    
-    CPU Utilized: 00:03:04
-    CPU Efficiency: 51.40% of 00:05:58 core-walltime
-    Job Wall-clock time: 00:05:58
-    Memory Utilized: 1.45 GB
-    Memory Efficiency: 19.73% of 7.32 GB
-    
+    Benchmark - Yandan dataset (a typical 30 minute vol recording + anat scan at high res)
+
+
     Not parallelized right now. Since this is just file transfer it's probably fine to have a single one
     Benchmark: copy full dataset (1x anat, 1x func 30 minutes volumetric and 2x5 minutes) took:
             ~1.16Gb of memory + ~5minutes of CPU on 2 threads. One should be ok
     """
     threads: 1
-    resources: mem_mb=snake_utils.mem_mb_times_threads
+    resources: mem_mb=snake_utils.mem_mb_times_threads,
+                runtime='10m' # should generally be sufficient
+
     run:
         preprocessing.fly_builder(user=current_user,
                                   import_dirs= all_imports_paths,
