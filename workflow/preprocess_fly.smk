@@ -36,7 +36,7 @@ fly_folder_to_process = 'fly_002' # folder to be processed
 current_user = 'dtadres'
 
 #>>>>
-fictrac_fps = 50 # AUTOMATE THIS!!!! ELSE BUG PRONE!!!!
+fictrac_fps = 50 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE FUTURE!!!!
 #<<<<
 
 # First n frames to average over when computing mean/fixed brain | Default None
@@ -164,6 +164,8 @@ def create_output_path_func(list_of_paths, filename):
 #######
 # Data path on OAK
 #######
+'''
+# Maybe not used anymore. Might be useful to create paths to SCRATCH, though...
 def create_file_paths(path_to_fly_folder, imaging_file_paths, filename, func_only=False):
     """
     Creates lists of path that can be feed as input/output to snakemake rules taking into account that
@@ -191,26 +193,29 @@ def create_file_paths(path_to_fly_folder, imaging_file_paths, filename, func_onl
                 list_of_filepaths.append(pathlib.Path(path_to_fly_folder,current_path,'channel_2' + filename))
             if CH3_EXISTS:
                 list_of_filepaths.append(pathlib.Path(path_to_fly_folder,current_path,'channel_3' + filename))
-    return(list_of_filepaths)
-
+    return(list_of_filepaths)'''
+'''
+# Not used anymore
 # This will create path to the imaging files that exists so we'll get a list like this:
 # ['/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_001/anat1/imaging/channel_1.nii',
 #  '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_001/anat1/imaging/channel_2.nii', ...]
 all_imaging_oak_paths = create_file_paths(path_to_fly_folder=fly_folder_to_process_oak,
                                         imaging_file_paths=imaging_file_paths,
                                          filename='.nii')
-
+'''
 # >>>> This will hopefully change
 # Fictrac files are named non-deterministically (could be changed of course) but for now
 # the full filename is in the fly_dirs_dict
 full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process_oak, fictrac_file_paths)
 # <<<<
 
+'''
+# Not used anymore
 # Path for make_mean_brain_rule
 # will look like this: [PosixPath('../data/../imaging/channel_1'),PosixPath('../data/../imaging/channel_2')]
 paths_for_make_mean_brain_oak = create_file_paths(path_to_fly_folder=fly_folder_to_process_oak,
                                                 imaging_file_paths=imaging_file_paths,
-                                                filename='')
+                                                filename='')'''
 
 ###
 # List of paths for meanbrain
@@ -280,6 +285,16 @@ for current_path in imaging_file_paths:
         imaging_paths_clean_anatomy.append(current_path.split('/imaging')[0])
 
 ##
+# list of paths for supervoxel
+# identical to zscore imaging paths but for ease of readibility, explicitly create a new one
+imaging_paths_supervoxels = []
+for current_path in imaging_file_paths:
+    if 'func' in current_path:
+        imaging_paths_supervoxels.append(current_path.split('/imaging')[0])
+
+####
+'''# probably not relevant - I think this is what bifrost does (better)
+##
 # list of paths for func2anat
 imaging_paths_func2anat = []
 for current_path in imaging_file_paths:
@@ -295,14 +310,6 @@ elif 'channel_2' in ANATOMY_CHANNEL:
     file_path_func2anat_fixed = ['channel_2_moco_mean']
 elif 'channel_3' in ANATOMY_CHANNEL:
     file_path_func2anat_fixed = ['channel_3_moco_mean']
-'''# the functional channels for func2anat
-file_path_func2anat_moving = []
-if 'channel_1' in FUNCTIONAL_CHANNELS:
-    file_path_func2anat_moving.append('channel_1_moco.h5')
-elif 'channel_2' in FUNCTIONAL_CHANNELS:
-    file_path_func2anat_moving.append('channel_2_moco.h5')
-elif 'channel_3' in FUNCTIONAL_CHANNELS:
-    file_path_func2anat_moving.append('channel_3_moco.h5') <--not needed, delete!'''
 
 ##
 # list of paths for anat2atlas
@@ -320,17 +327,7 @@ if 'channel_1' in ANATOMY_CHANNEL:
 elif 'channel_2' in ANATOMY_CHANNEL:
     file_path_anat2atlas_moving.append('channel_2_moco_mean_clean')
 elif 'channel_3' in ANATOMY_CHANNEL:
-    file_path_anat2atlas_moving.append('channel_3_moco_mean_clean')
-
-##
-# list of paths for supervoxel
-# identical to zscore imaging paths but for ease of readibility, explicitly create a new one
-imaging_paths_supervoxels = []
-for current_path in imaging_file_paths:
-    if 'func' in current_path:
-        imaging_paths_supervoxels.append(current_path.split('/imaging')[0])
-
-####
+    file_path_anat2atlas_moving.append('channel_3_moco_mean_clean')'''
 
 '''
 #######
@@ -473,8 +470,8 @@ rule all:
         ##
         # make supervoxels
         ###
-        #expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=channels),
-        #expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=channels)
+        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=channels),
+        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=channels)
 
         # Below might be Bifrost territory - ignore for now.
         ###
