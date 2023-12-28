@@ -1938,12 +1938,10 @@ def bleaching_qc(fly_directory,
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
     #####
-
-    print("path_to_read " + repr(path_to_read))
+    print('path_to_save ' + repr(path_to_save))
     path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
     path_to_save = utils.convert_list_of_string_to_posix_path(path_to_save)
-    print("path_to_read " + repr(path_to_read))
-    print("len(path_to_read" + repr(len(path_to_read)))
+    print("path_to_save " + repr(path_to_save))
 
     data_mean = {}
     # For each path in the list
