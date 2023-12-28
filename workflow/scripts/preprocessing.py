@@ -1943,7 +1943,7 @@ def bleaching_qc(fly_directory,
     path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
     path_to_save = utils.convert_list_of_string_to_posix_path(path_to_save)
     print("path_to_read " + repr(path_to_read))
-    print("len(path_to_read" + len(path_to_read))
+    print("len(path_to_read" + repr(len(path_to_read)))
 
     data_mean = {}
     # For each path in the list
