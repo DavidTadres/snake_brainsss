@@ -36,7 +36,7 @@ fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
 current_user = 'dtadres'
 
 #>>>>
-fictrac_fps = 50 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE FUTURE!!!!
+fictrac_fps = 100 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE FUTURE!!!!
 #<<<<
 
 # First n frames to average over when computing mean/fixed brain | Default None
@@ -69,7 +69,7 @@ fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
 print('Analyze data in ' + repr(fly_folder_to_process_oak.as_posix()))
 
 # Read channel information from fly.json file
-with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file: # This probably means the folder specified doesn't exist. Check name
+with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file: # If fails here, means the folder specified doesn't exist. Check name
     fly_json = json.load(file)
 
 ANATOMY_CHANNEL = fly_json['anatomy_channel'] # < This needs to come from some sort of json file the experimenter
