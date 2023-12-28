@@ -1,5 +1,5 @@
 STITCH_NII_FILES = True
-data_to_stitch = ['20231207__queue__']  # Data deposited by Brukerbridge on oak
+data_to_stitch = ['20231219']  # Data deposited by Brukerbridge on oak
 
 fly_folder_to_process = ''  # if already copied to 'fly_00X' folder and only
 # do follow up analysis, enter the fly folder to be analyzed here.
