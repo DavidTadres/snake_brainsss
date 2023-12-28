@@ -64,7 +64,7 @@ def make_supervoxels(fly_directory,
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
     ##########
-    path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
+    #path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
     print('path_to_read ' + repr(path_to_read))
     save_path_cluster_labels = utils.convert_list_of_string_to_posix_path(save_path_cluster_labels)
     print('save_path_cluster_labels ' + repr(save_path_cluster_labels))
