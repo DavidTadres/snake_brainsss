@@ -89,6 +89,10 @@ source .env_snake_brainsss/bin/activate
    - Genotype is used to create subfolders for each genotype which contain 'fly_001', 'fly_002' etc.
    - anatomy channel is a string with one of the following three values: 'channel1', 'channel2' or 'channel3'
    - functional channel is a list of strings, for example ['channel2',''], or ['channel1','channel2']
+3) correlation is done with a vectorized function I wrote instead of the scipy-pearson function which only works in 1D.
+   Correlation now takes <1 minute. Result is expected to be almost identical (float32 as opposed to scipy float64) and
+   precision can be increased if need be. 
+
 ####
 # Current limitations:
 ####

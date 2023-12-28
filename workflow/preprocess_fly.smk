@@ -292,7 +292,13 @@ imaging_paths_supervoxels = []
 for current_path in imaging_file_paths:
     if 'func' in current_path:
         imaging_paths_supervoxels.append(current_path.split('/imaging')[0])
-
+func_channels=[]
+if 'channel_1' in FUNCTIONAL_CHANNELS:
+    func_channels.append('1')
+if 'channel_2' in FUNCTIONAL_CHANNELS:
+    func_channels.append('2')
+if 'channel_3' in FUNCTIONAL_CHANNELS:
+    func_channels.append('3')
 
 ####
 '''# probably not relevant - I think this is what bifrost does (better)
@@ -472,8 +478,8 @@ rule all:
         ##
         # make supervoxels
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=channels),
-        #>expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=channels)
+        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
+        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels)
 
         # Below might be Bifrost territory - ignore for now.
         ###
