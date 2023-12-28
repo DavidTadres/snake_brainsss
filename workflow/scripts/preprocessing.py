@@ -90,7 +90,7 @@ def make_supervoxels(fly_directory,
         #cluster_dir = os.path.join(func_path, 'clustering')
         #if not os.path.exists(cluster_dir):
         #    os.mkdir(cluster_dir)
-        current_path_to_save_labels.parent.makedir(exist_ok=True, parents=True)
+        current_path_to_save_labels.parent.mkdir(exist_ok=True, parents=True)
 
         ### FIT CLUSTERS ###
 
