@@ -6,21 +6,19 @@ fly_folder_to_process = ''  # if already copied to 'fly_00X' folder and only
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 
 import pathlib
-from scripts import preprocessing
 from scripts import stitch_split_nii
-import brainsss
 import time
 import sys
+
+scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
+#print(scripts_path)
+from brainsss import utils
+from scripts import snake_utils
 
 # YOUR SUNET ID
 current_user = 'dtadres'
 
-# David's datapaths
-#original_data_path = '/Volumes/groups/trc/data/David/Bruker/imports' # Mac
-#target_data_path = '/Volumes/groups/trc/data/David/Bruker/preprocessed'
-#current_fly = pathlib.Path(original_data_path, '20231207__queue__')
-
-settings = brainsss.load_user_settings(current_user)
+settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
 imports_path = pathlib.Path(settings['imports_path'])
 
@@ -31,14 +29,15 @@ fly is not yet defined.
 """
 logfile_stitcher = './logs/stitching/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
 pathlib.Path('./logs/stitching').mkdir(exist_ok=True)
-sys.stderr = brainsss.LoggerRedirect(logfile_stitcher)
-sys.stdout = brainsss.LoggerRedirect(logfile_stitcher)
+sys.stderr = utils.LoggerRedirect(logfile_stitcher)
+sys.stdout = utils.LoggerRedirect(logfile_stitcher)
 # This doesn't work as part of the main function as the log is not used
 # I think because the code runs twice
 width = 120 # can go into a config file as well.
 
 rule stitch_split_nii_rule:
-    threads: 16
+    threads: 2
+    resources: mem_mb=snake_utils.mem_mb_times_input()
     run:
         try:
             stitch_split_nii.find_split_files(logfile=logfile_stitcher,
@@ -46,6 +45,6 @@ rule stitch_split_nii_rule:
                 data_to_stitch=data_to_stitch
             )
         except Exception as error_stack:
-            brainsss.write_error(logfile=logfile_stitcher,
+            utils.write_error(logfile=logfile_stitcher,
                 error_stack=error_stack,
                 width=width)
