@@ -739,7 +739,7 @@ rule make_mean_brain_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-
+'''
 rule motion_correction_rule:
     """
     Yandan file anat file(25GB)
@@ -879,7 +879,7 @@ rule motion_correction_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-
+'''
 rule zscore_rule:
     """
     Benchmarking:
