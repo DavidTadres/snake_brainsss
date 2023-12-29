@@ -1,6 +1,5 @@
 import pathlib
 import matplotlib.pyplot as plt
-import h5py
 import numpy as np
 
 
@@ -12,6 +11,8 @@ my_fly_paths = pathlib.Path(
 )
 my_savepaths = pathlib.Path(my_fly_paths, "testing")
 
-def compare_two_h5py_vol_arrays(original_brain_path, my_brain_path, savepath):
-    with h5py.File(original_brain_path, "r") as hf:
-        original_moco_brain = hf["data"][:] # this should load the data
+original_motcorr_params = np.load(pathlib.Path(original_fly_path, 'anat_0/moco/motcorr_params.npy'))
+
+my_motcorr_params = np.load(pathlib.Path(my_fly_paths, 'anat_0/moco/motcorr_params.npy'))
+
+diff_motcorr_params = original_motcorr_params - my_motcorr_params
