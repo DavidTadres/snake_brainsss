@@ -1,5 +1,5 @@
 STITCH_NII_FILES = True
-data_to_stitch = ['20231219']  # Data deposited by Brukerbridge on oak
+data_to_stitch = ['20231217']  # Data deposited by Brukerbridge on oak
 
 fly_folder_to_process = ''  # if already copied to 'fly_00X' folder and only
 # do follow up analysis, enter the fly folder to be analyzed here.
@@ -37,7 +37,7 @@ width = 120 # can go into a config file as well.
 
 rule stitch_split_nii_rule:
     threads: 2
-    resources: mem_mb=128000, disk_mem=40000
+    resources: mem_mb=30000, disk_mem=20000
     run:
         try:
             stitch_split_nii.find_split_files(logfile=logfile_stitcher,
