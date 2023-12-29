@@ -1,19 +1,4 @@
 {
-    "imports_path": "/oak/stanford/groups/trc/data/David/Bruker/imports",
-    "dataset_path": "/oak/stanford/groups/trc/data/David/Bruker/preprocessed",
-    "fictrac_qc": "False",
-    "stim_triggered_beh": "False",
-    "bleaching_qc": "True",
-    "temporal_mean_brain_pre": "True",
-    "motion_correction": "True",
-    "temporal_mean_brain_post": "True",
-    "zscore": "True",
-    "highpass": "True",
-    "correlation": "True",
-    "STA": "True",
-    "h5_to_nii": "False",
-    "clean_anat": "True",
-    "func2anat": "True",
-    "anat2atlas": "True",
-    "apply_transforms": "True"
+    "imports_path": "/Volumes/groups/trc/data/David/Bruker/imports",
+    "dataset_path": "/Volumes/groups/trc/data/David/Bruker/preprocessed"
 }
