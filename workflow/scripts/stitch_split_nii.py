@@ -107,7 +107,7 @@ def find_split_files(logfile, imports_path, data_to_stitch):
     print(time.strftime("%Y%m%d-%H%M%S" + "\n"))
     print("Will stitch the following folders: " + repr(data_to_stitch))
 
-    folder_name_to_target = "anat"  # All my folders with functional imaging are called func, e.g. 'func1', 'func2' etc.
+    folder_name_to_target = "anat_low_res"  # All my folders with functional imaging are called func, e.g. 'func1', 'func2' etc.
     # PROBLEM: the splitter also splits folders called 'anat' if there is more than one per fly!
     for current_import_path in data_to_stitch:
         current_path = Path(imports_path, current_import_path)
