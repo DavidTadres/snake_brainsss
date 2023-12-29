@@ -2619,7 +2619,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             # each source path file can only be a single file - why if..if instead of if..elif?
             ### Change file names and filter various files
             # This is for split files from brukerbridge
-            elif "concat.nii" in source_path.name and folder_type == "func":
+            elif "concat.nii" in source_path.name and folder_type == "anat": # <this should be 'func'
                 target_name = (
                     "channel_" + source_path.name.split("ch")[1].split("_")[0] + ".nii"
                 )
@@ -2628,7 +2628,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             elif (
                 ".nii" in source_path.name
                 and "_s" not in source_path.name
-                and folder_type == "func"
+                and folder_type == "anat" # <this should be 'func'
             ):
                 target_name = (
                     "channel_" + source_path.name.split("channel")[1].split("_")[1]
