@@ -486,8 +486,8 @@ rule all:
         ##
         # make supervoxels
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
-        #>expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels)
+        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
+        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels)
 
         # Below might be Bifrost territory - ignore for now.
         ###
@@ -739,7 +739,7 @@ rule make_mean_brain_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-'''
+
 rule motion_correction_rule:
     """
     Yandan file anat file(25GB)
@@ -879,7 +879,7 @@ rule motion_correction_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-'''
+
 rule zscore_rule:
     """
     Benchmarking:
@@ -1044,6 +1044,15 @@ rule temporal_high_pass_filter_rule:
 
 rule correlation_rule:
     """
+    Benchmark Yandan's data
+    Nodes: 1
+    Cores per node: 4
+    CPU Utilized: 00:01:42
+    CPU Efficiency: 9.51% of 00:17:52 core-walltime
+    Job Wall-clock time: 00:04:28
+    Memory Utilized: 21.77 GB
+    Memory Efficiency: 70.63% of 30.83 GB
+    
     Benchmark:
     Cores: 1
     CPU Utilized: 00:00:16

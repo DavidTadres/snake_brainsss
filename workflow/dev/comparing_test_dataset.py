@@ -112,7 +112,7 @@ compare_two_3D_arrays(
 #######
 # MOCO MEAN BRAINS
 #######
-
+'''
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "anat_0/moco/anatomy_channel_1_moc_mean.nii"
@@ -145,5 +145,31 @@ compare_two_3D_arrays(
     savepath=pathlib.Path(my_savepaths, "meanbrain_func_0_moco_ch2.png"),
 )
 
+'''
 
+###
+# BEHAVIOR-Z SCORE CORRELATED BRAINS
+###
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "func_0/corr/20220420_corr_dRotLabY.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "func_0/corr/channel_2_corr_dRotLabY.nii"),
+    savepath=pathlib.Path(my_savepaths, "corr_dRotLabY_func_0_ch2.png"),
+)
 
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "func_0/corr/20220420_corr_dRotLabZneg.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "func_0/corr/channel_2_corr_dRotLabZneg.nii"),
+    savepath=pathlib.Path(my_savepaths, "corr_dRotLabZ_func_0_ch2.png"),
+)
+
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "func_0/corr/20220420_corr_dRotLabZpos.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "func_0/corr/channel_2_corr_dRotLabZpos.nii"),
+    savepath=pathlib.Path(my_savepaths, "corr_dRotLabZpos_func_0_ch2.png"),
+)

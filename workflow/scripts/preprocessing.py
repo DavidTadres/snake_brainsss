@@ -1340,14 +1340,26 @@ def motion_correction(
     functional_channels,
 ):
     """
-    Then make sure to not use 'ch1' or 'ch2' anywhere in this function as it's not predictive
-    of whether it's the anatomical channel!
+    Motion correction function, essentially a copy from Bella's motion_correction.py script.
+    The 'anatomy' and 'functional' channel(s) are defined in the 'fly.json' file of a given experimental folder.
+    Here, we assume that there is a single 'anatomy' channel per experiment but it's possible to have zero, one or two
+    functional channels.
 
-    motion-correction works by using the anatomical channel. Then the warping is just applied
-    to the functional channel.
+    TODO: - ants seems to have a motion correction function. Try it.
 
-    Notes: - ants seems to have a motion correction function. Try it.
     :param dataset_path: A list of paths
+    :return:
+    :param fly_directory:
+    :param dataset_path:
+    :param meanbrain_path:
+    :param type_of_transform:
+    :param output_format:
+    :param flow_sigma:
+    :param total_sigma:
+    :param aff_metric:
+    :param h5_path:
+    :param anatomy_channel:
+    :param functional_channels:
     :return:
     """
 
@@ -1372,45 +1384,12 @@ def motion_correction(
         0
     ].parent  # the path witout filename, i.e. ../fly_001/func1/imaging/
 
-    # if h5_path_scratch == "NotScratch":
-    #    h5_path_scratch = dataset_path # for testing on local machines!
-
-    # standalone = True  # I'll add if statements to be able to go back to Bella's script easliy
-
-    """
-    # copy from preprocess.py
-    directory = os.path.join(funcanat, 'imaging')
-    if dirtype == 'func':
-        brain_master = 'functional_channel_1.nii'
-        brain_mirror = 'functional_channel_2.nii'
-    if dirtype == 'anat':
-        brain_master = 'anatomy_channel_1.nii'
-        brain_mirror = 'anatomy_channel_2.nii'
-        args = {'logfile': logfile,
-            'directory': directory,
-            'brain_master': brain_master,
-            'brain_mirror': brain_mirror,
-            'scantype': dirtype}
-
-    global_resources = True
-    dur = 48
-    mem = 8
-    """
-    # REQUIRED args
-    # if standalone:
-    #    dataset_path = '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001/func1/imaging'
-    #    if 'func' in dataset_path:
-    #        brain_master = 'functional_channel_1.nii'
-    #        brain_mirror = 'functional_channel_2.nii'
-    #    elif 'anat' in dataset_path:
-    #        brain_master = 'anatomy_channel_1.nii'
-    #        brain_mirror = 'anatomy_channel_2.nii'
-
     ####
     # Identify which channel is the anatomy, or 'master' channel
-    ###
+    ####
 
-    # First, define master, or anatomy channel
+    # This first loop assigns a pathlib.Path object to the path_brain_anatomy variable
+    # Here we assume that there is ONLY ONE anatomy channel
     path_brain_anatomy = None
     for current_brain_path, current_meanbrain_path in zip(dataset_path, meanbrain_path):
         if (
@@ -1452,9 +1431,8 @@ def motion_correction(
                     + repr(path_brain_anatomy)
                     + "!!! MAKE SURE TO HAVE ONLY ONE ANATOMY CHANNEL IN FLY.JSON"
                 )
-    # Here we assume that there is ONLY ONE anatomy channel
 
-    # Mirror path is optional - to empty list in case no functional channel is provided
+    # Next, check if there are any functional channels.
     path_brain_functional = []
     path_meanbrain_functional = []
     for current_brain_path, current_meanbrain_path in zip(dataset_path, meanbrain_path):
@@ -1477,24 +1455,12 @@ def motion_correction(
             path_brain_functional.append(current_brain_path)
             path_meanbrain_functional.append(current_meanbrain_path)
 
-    # path_brain_mirror = current_path
-    # if path_brain_mirror is None:
-    #     printlog("Brain mirror not provided. Continuing without a mirror brain.")
+    ####
+    # DEFINE SAVEPATH
+    ####
 
-    # print("path_brain_master " + repr(path_brain_master))
-    # print("path_brain_mirror " + repr(path_brain_mirror))
-
-    # Same as for nii file for mean brain
-    # path_mean_brain_mirror = None
-    # for current_mean_path in meanbrain_path:
-    #    if 'channel_1_mean.nii' in current_mean_path.name:
-    #        path_mean_brain_master = current_mean_path
-    #    elif 'channel_2_mean.nii' in current_mean_path.name:
-    #        path_mean_brain_mirror = current_mean_path
-    # print("path_mean_brain_master " + repr(path_mean_brain_master))
-    # print("path_mean_brain_mirror " + repr(path_mean_brain_mirror))
-
-    # This could be integrated in loop above but for readability I'll make an extra loop here
+    # This could be integrated in loop above but for readability I'll make extra loops here
+    # First, path to resulting anatomy motion corrected file.
     for current_h5_path in h5_path:
         if "channel_1" in current_h5_path.name and "channel_1" in anatomy_channel:
             path_h5_anatomy = current_h5_path
@@ -1512,61 +1478,8 @@ def motion_correction(
             path_h5_functional.append(current_h5_path)
         if "channel_3" in current_h5_path.name and "channel_3" in functional_channels:
             path_h5_functional.append(current_h5_path)
-    # Here we assume that there is ONLY ONE anatomy channel
-    # path_h5_mirror = None
-    # for current_h5_path in h5_path:
-    #    if 'channel_1' in current_h5_path.name:
-    #        path_h5_master = current_h5_path
-    #    elif 'channel_2' in current_h5_path.name:
-    #        path_h5_mirror = current_h5_path
-    # print("path_h5_master " + repr(path_h5_master))
-    # print("path_h5_mirror " + repr(path_h5_mirror))
 
-    # else:
-    #    dataset_path = args[
-    #        'directory']  # directory will be a full path to either an anat/imaging folder or a func/imaging folder
-    #    # OPTIONAL brain_mirror
-    #    brain_mirror = args.get('brain_mirror', None)
-
-    # OPTIONAL PARAMETERS
-    # Unsure how to use those - lets see if it throws an error.
-    # type_of_transform = args.get('type_of_transform', 'SyN')  # For ants.registration(), see ANTsPy docs | Default 'SyN'
-    # output_format = args.get('output_format',
-    #                         'h5')  # Save format for registered image data | Default h5. Also allowed: 'nii'
-    # assert output_format in ['h5', 'nii'], 'OPTIONAL PARAM output_format MUST BE ONE OF: "h5", "nii"'
-    # flow_sigma = int(
-    #    args.get('flow_sigma', 3))  # For ants.registration(), higher sigma focuses on coarser features | Default 3
-    # total_sigma = int(args.get('total_sigma',
-    #                           0))  # For ants.registration(), higher values will restrict the amount of deformation allowed | Default 0
-    # meanbrain_n_frames = args.get('meanbrain_n_frames',
-    #                              None)  # First n frames to average over when computing mean/fixed brain | Default None (average over all frames)
-    # aff_metric = args.get('aff_metric',
-    #                      'mattes')  # For ants.registration(), metric for affine registration | Default 'mattes'. Also allowed: 'GC', 'meansquares'
-    # meanbrain_target = args.get('meanbrain_target', None)  # filename of precomputed target meanbrain to register to
-
-    # width = 120
-
-    # try:
-    #    logfile = args['logfile']
-    #    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    #    save_type = 'parent_dir'
-    # except:
-    #    # no logfile provided; create one
-    #    # this will be the case if this script was directly run from a .sh file
-    #    logfile = './logs/' + strftime("%Y%m%d-%H%M%S") + '.txt'
-    #    printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-    #    sys.stderr = brainsss.Logger_stderr_sherlock(logfile)
-    #    save_type = 'curr_dir'
-    #
-    #    title = pyfiglet.figlet_format("Brainsss", font="cyberlarge")  # 28 #shimrod
-    #    title_shifted = ('\n').join([' ' * 28 + line for line in title.split('\n')][:-2])
-    #    printlog(title_shifted)
-    #    day_now = datetime.datetime.now().strftime("%B %d, %Y")
-    #    time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
-    #    printlog(F"{day_now + ' | ' + time_now:^{width}}")
-    #    printlog("")
-
-    # brainsss.print_datetime(logfile, WIDTH)
+    # Print useful info to log file
     printlog(f"Dataset path{parent_path.name:.>{WIDTH - 12}}")
     printlog(f"Brain anatomy{path_brain_anatomy.name:.>{WIDTH - 12}}")
     if len(path_brain_functional) > 0:
@@ -1582,49 +1495,30 @@ def motion_correction(
     printlog(f"output_format{output_format:.>{WIDTH - 13}}")
     printlog(f"flow_sigma{flow_sigma:.>{WIDTH - 10}}")
     printlog(f"total_sigma{total_sigma:.>{WIDTH - 11}}")
-    # printlog(F"meanbrain_n_frames{str(meanbrain_n_frames):.>{WIDTH - 18}}") # Can only run this if meanbrain exists, never create it here!
-    # printlog(F"meanbrain_target{str(meanbrain_path):.>{WIDTH - 12}}")
 
-    ######################
-    ### PARSE SCANTYPE ###
-    ######################
-    """
-    #try:
-    #    scantype = args['scantype']
-    #    if scantype == 'func':
-    #        stepsize = 100  # if this is too high if may crash from memory error. If too low it will be slow.
-    #    if scantype == 'anat':
-    #        stepsize = 5
-    #except:
-    # try to extract from file name
-    #if 'func' in brain_master:
-    #    scantype = 'func'
-    #    stepsize = 100
-    #elif 'anat' in brain_master:
-    #    scantype = 'anat'
-    #    stepsize = 5
-    #else:
-    #    scantype = 'func'
-    #    stepsize = 100
-    #    printlog(F"{'   Could not determine scantype. Using default stepsize of 100   ':*^{width}}")"""
 
-    """
-    ###
-    note on stepsize I used 1000, 50 and 1000 which led to:
-    State: OUT_OF_MEMORY (exit code 0)
-    Nodes: 1
-    Cores per node: 6
-    CPU Utilized: 05:14:21
-    CPU Efficiency: 59.12% of 08:51:42 core-walltime
-    Job Wall-clock time: 01:28:37
-    Memory Utilized: 8.22 GB
-    Memory Efficiency: 64.77% of 12.69 GB
-    """
+    # This can't really happen with snakemake as it won't even start the job without
+    # the input files present!
+
+    ########################################
+    ### Read Channel 1 imaging data ###
+    ########################################
+    ### Get Brain Shape ###
+    img_anatomy = nib.load(path_brain_anatomy)  # this loads a proxy
+    anatomy_shape = img_anatomy.header.get_data_shape()
+    brain_dims = anatomy_shape
+    printlog(f"Master brain shape{str(brain_dims):.>{WIDTH - 18}}")
+
+    ################################
+    ### DEFINE STEPSIZE/CHUNKING ###
+    ################################
+    # Ideally, we define the number of slices on the (x,y) size of the images!
+
     path_brain_anatomy
     if "func" in path_brain_anatomy.parts:
         scantype = "func"
         stepsize = 100  # Bella had this at 100
-    elif "anat" in path_brain_anatomy.name:
+    elif "anat" in path_brain_anatomy.parts:
         scantype = "anat"
         stepsize = 5  # Bella had this at 5
     else:
@@ -1636,59 +1530,10 @@ def motion_correction(
     printlog(f"Scantype{scantype:.>{WIDTH - 8}}")
     printlog(f"Stepsize{stepsize:.>{WIDTH - 8}}")
 
-    # This can't really happen with snakemake as it won't even start the job without
-    # the input files present!
-    ##############################
-    ### Check that files exist ###
-    ##############################
-
-    # filepath_brain_master = os.path.join(dataset_path, brain_master)
-
-    ### Quit if no master brain
-    # if not brain_master.endswith('.nii'):
-    #    printlog("Brain master does not end with .nii")
-    #    printlog(F"{'   Aborting Moco   ':*^{width}}")
-    #    return
-    # if not os.path.exists(filepath_brain_master):
-    #    printlog("Could not find {}".format(filepath_brain_master))
-    #    printlog(F"{'   Aborting Moco   ':*^{width}}")
-    #    return
-
-    ### Brain mirror is optional
-    # if brain_mirror is not None:
-    #    filepath_brain_mirror = os.path.join(dataset_path, brain_mirror)
-    #    if not brain_mirror.endswith('.nii'):
-    #        printlog("Brain mirror does not end with .nii. Continuing without a mirror brain.")
-    #        # filepath_brain_mirror = None
-    #        brain_mirror = None
-    #    if not os.path.exists(filepath_brain_mirror):
-    #        printlog(F"Could not find{filepath_brain_mirror:.>{width - 8}}")
-    #        printlog("Will continue without a mirror brain.")
-    #        # filepath_brain_mirror = None
-    #        brain_mirror = None
-
-    ########################################
-    ### Read Channel 1 imaging data ###
-    ########################################
-    ### Get Brain Shape ###
-    img_anatomy = nib.load(path_brain_anatomy)  # this loads a proxy
-    anatomy_shape = img_anatomy.header.get_data_shape()
-    brain_dims = anatomy_shape
-    printlog(f"Master brain shape{str(brain_dims):.>{WIDTH - 18}}")
 
     ########################################
     ### Read Meanbrain of Channel 1 ###
     ########################################
-    # if meanbrain_target is not None:
-    #    existing_meanbrain_file = meanbrain_target
-    # else:
-    #    existing_meanbrain_file = brain_master[:-4] + '_mean.nii'
-
-    # existing_meanbrain_path = os.path.join(dataset_path, existing_meanbrain_file)
-    # if os.path.exists(existing_meanbrain_path):
-    #    meanbrain = np.asarray(nib.load(existing_meanbrain_path).get_fdata(), dtype='uint16')
-    #    fixed = ants.from_numpy(np.asarray(meanbrain, dtype='float32'))
-    #    printlog(F"Loaded meanbrain{existing_meanbrain_file:.>{width - 16}}")
 
     meanbrain_proxy = nib.load(path_meanbrain_anatomy)
     # TODO change this to np.float32 (from np.uint16) to minimze precision loss
@@ -1700,40 +1545,9 @@ def motion_correction(
     fixed = ants.from_numpy(np.asarray(meanbrain, dtype="float32"))
     printlog(f"Loaded meanbrain{path_meanbrain_anatomy.name:.>{WIDTH - 16}}")
 
-    # Shouldn't be necessary as snakemake will make sure the meanbrain rule is executed before
-    # calling the moco rule!
-    ### Create if can't load
-    # else:
-    #    printlog(F"Could not find{existing_meanbrain_file:.>{width - 14}}")
-    #    printlog(F"Creating meanbrain{'':.>{width - 18}}")
-    #
-    #    ### Make meanbrain ###
-    #    t0 = time.time()
-    #    if meanbrain_n_frames is None:
-    #        meanbrain_n_frames = brain_dims[-1]  # All frames
-    #    else:
-    #        meanbrain_n_frames = int(meanbrain_n_frames)
-    #
-    #    meanbrain = np.zeros(brain_dims[:3])  # create empty meanbrain from the first 3 axes, x/y/z
-    #    for i in range(meanbrain_n_frames):
-    #        if i % 1000 == 0:
-    #            printlog(brainsss.progress_bar(i, meanbrain_n_frames, width))
-    #        meanbrain += img_ch1.dataobj[..., i]
-    #    meanbrain = meanbrain / meanbrain_n_frames  # divide by number of volumes
-    #    fixed = ants.from_numpy(np.asarray(meanbrain, dtype='float32'))
-    #    printlog(F"Meanbrain created. Duration{str(int(time.time() - t0)) + 's':.>{width - 27}}")
-
     #########################
     ### Load Mirror Brain ###
     #########################
-    """
-    if brain_mirror is not None:
-        img_ch2 = nib.load(filepath_brain_mirror)  # this loads a proxy
-        # make sure channel 1 and 2 have same shape
-        ch2_shape = img_ch2.header.get_data_shape()
-        if ch1_shape != ch2_shape:
-            printlog(F"{'   WARNING Channel 1 and 2 do not have the same shape!   ':*^{width}}")
-            printlog("{} and {}".format(ch1_shape, ch2_shape))"""
 
     if len(path_brain_functional) > 0:  # is not None:
         img_functional_one = nib.load(path_brain_functional[0])  # this loads a proxy
@@ -1785,13 +1599,6 @@ def motion_correction(
                 f"Created empty hdf5 file{path_h5_functional[1].name:.>{WIDTH - 23}}"
             )
 
-    # if path_brain_mirror is not None:
-    # h5_file_name = f"{path_brain_mirror.split('.')[0]}_moco.h5"
-    # _, savefile_mirror = brainsss.make_empty_h5(h5_path_scratch, h5_file_name, brain_dims)#, save_type)
-    # with h5py.File(path_h5_mirror, 'w') as file:
-    #    _ = file.create_dataset('data', brain_dims, dtype='float32', chunks=True)
-    # printlog(F"Created empty hdf5 file{path_h5_mirror.name:.>{WIDTH - 23}}")
-
     #################################
     ### Perform Motion Correction ###
     #################################
@@ -1810,37 +1617,30 @@ def motion_correction(
     start_time = time.time()
     print_timer = time.time()
 
+    # We should have enough RAM to keep everything in memory -
+    # It seems to be slow to write to h5py unless it's optimized - not sure if that's one reason why moco is so slow:
+    # https://docs.h5py.org/en/stable/high/dataset.html#chunked-storage
+
     # For timepoints / stepsize. e.g. if have 300 timepoints and stepsize 100 I get len(steps)=3
     for j in range(len(steps) - 1):
         # printlog(F"j: {j}")
 
         ### LOAD A SINGLE BRAIN VOL ###
-        # moco_ch1_chunk = []
-        # moco_ch2_chunk = []
         moco_anatomy_chunk = []
         moco_functional_one_chunk = []
         moco_functional_two_chunk = []
         # for each timePOINT!
         for i in range(stepsize):
-            # t0 = time.time()
             # that's a number
             index = steps[j] + i
             # for the very last j, adding the step size will go over the dim, so need to stop here
             if index == brain_dims[-1]:
                 break
             # that's a single slice in time
-            vol = img_anatomy.dataobj[..., index]
+            vol = img_anatomy.dataobj[..., index] #
             moving = ants.from_numpy(np.asarray(vol, dtype="float32"))
 
             ### MOTION CORRECT ###
-            # Control print
-            # print('fixed.shape' + repr(fixed.shape))
-            # print('moving.shape' + repr(moving.shape))
-            # print('type_of_transform' + repr(type_of_transform))
-            # print('flow_sigma' + repr(flow_sigma))
-            # print('total_sigma' + repr(total_sigma))
-            # print('aff_metric' + repr(aff_metric))
-            # by comparing a given frame in time against the meanbrain (fixed)
             moco = ants.registration(
                 fixed,
                 moving,
