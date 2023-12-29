@@ -1,6 +1,6 @@
 STITCH_NII_FILES = True
-data_to_stitch = ['20231212']  # Data deposited by Brukerbridge on oak
-
+data_to_stitch = ['20231219']  # Data deposited by Brukerbridge on oak
+print('will do ' + repr(data_to_stitch))
 fly_folder_to_process = ''  # if already copied to 'fly_00X' folder and only
 # do follow up analysis, enter the fly folder to be analyzed here.
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
