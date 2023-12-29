@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
+fly_folder_to_process = 'SS31864_LAL013_x_UAS-CD8-GFP/fly_001' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -436,17 +436,16 @@ rule all:
         ###
         # Fictrac QC
         ###
-        #expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed), # This is just empty if no fictrac
-        #>expand(str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png", fictrac_paths=FICTRAC_PATHS),
+        expand(str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png", fictrac_paths=FICTRAC_PATHS),
         # data in fly_dirs.json!
         ###
         # Bleaching QC
         ###,
-        #>expand(str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png", bleaching_imaging_paths=imaging_paths_bleaching),
+        expand(str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png", bleaching_imaging_paths=imaging_paths_bleaching),
         ###
         # Meanbrain
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
+        expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
         ###
         # Motion correction output
         ###
