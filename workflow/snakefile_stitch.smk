@@ -37,7 +37,7 @@ width = 120 # can go into a config file as well.
 
 rule stitch_split_nii_rule:
     threads: 2
-    resources: mem_mb=128000, disk_mem=40000
+    resources: mem_mb=20000, disk_mem=20000
     run:
         try:
             stitch_split_nii.find_split_files(logfile=logfile_stitcher,

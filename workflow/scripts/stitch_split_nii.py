@@ -44,25 +44,31 @@ def nii_stitcher(
         # For most instances, the split function made nii files with 500 frames per file
         if counter < len(sorted_channel_list):
             if buggy_brukerbridge:
-                full_brain[:, :, :, current_start_index : current_start_index + 499] = (
-                    nib.load(Path(current_folder, current_file))
-                    .get_fdata()
-                    .astype(np.uint16)
-                )
+                proxy_brain = nib.load(Path(current_folder, current_file))
+                full_brain[:, :, :, current_start_index : current_start_index + 499] = np.asarray(proxy_brain.dataobj,dtype=np.uint16)
+                #full_brain[:, :, :, current_start_index : current_start_index + 499] = (
+                #    nib.load(Path(current_folder, current_file))
+                #    .get_fdata()
+                #    .astype(np.uint16)
+                #)
             else:
-                full_brain[:, :, :, current_start_index : current_start_index + 500] = (
-                    nib.load(Path(current_folder, current_file))
-                    .get_fdata()
-                    .astype(np.uint16)
-                )
+                proxy_brain = nib.load(Path(current_folder, current_file))
+                full_brain[:, :, :, current_start_index : current_start_index + 500] = np.asarray(proxy_brain.dataobj, dtype=np.uint16)
+                #full_brain[:, :, :, current_start_index : current_start_index + 500] = (
+                #    nib.load(Path(current_folder, current_file))
+                #    .get_fdata()
+                #    .astype(np.uint16)
+                #)
         # Except in the last one - Since we know how many frames we expect (see above), it's just
         # the rest of the preallocated numpy array.
         else:
-            full_brain[:, :, :, current_start_index::] = (
-                nib.load(Path(current_folder, current_file))
-                .get_fdata()
-                .astype(np.uint16)
-            )
+            proxy_brain = nib.load(Path(current_folder, current_file))
+            full_brain[:, :, :, current_start_index::] = np.asarray(proxy_brain.dataobj, dtype=np.uint16)
+            #full_brain[:, :, :, current_start_index::] = (
+            #    nib.load(Path(current_folder, current_file))
+            #    .get_fdata()
+            #    .astype(np.uint16)
+            #)
         counter += 1
     # save stiched brain
     aff = np.eye(4)  # https://nipy.org/nibabel/coordinate_systems.html
