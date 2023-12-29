@@ -2087,7 +2087,6 @@ def make_mean_brain(
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     utils.print_function_start(logfile, WIDTH, rule_name)
 
-    print("path_to_read before convert" + repr(path_to_read))
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
     #####
@@ -2121,9 +2120,9 @@ def make_mean_brain(
         ###
         if meanbrain_n_frames is not None:
             # average over first meanbrain_n_frames frames
-            meanbrain = np.mean(brain_data[..., : int(meanbrain_n_frames)], axis=-1, dtype=np.float32)
+            meanbrain = np.mean(brain_data[..., : int(meanbrain_n_frames)], axis=-1)#, dtype=np.float32) <- change back!
         else:  # average over all frames
-            meanbrain = np.mean(brain_data, axis=-1, dtype=np.float32)
+            meanbrain = np.mean(brain_data, axis=-1)#, dtype=np.float32) <- change back!
 
         printlog("Datatype of meanbrain: " + repr(meanbrain.dtype))
         ###
