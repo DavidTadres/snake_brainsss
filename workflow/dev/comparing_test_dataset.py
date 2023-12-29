@@ -76,7 +76,7 @@ def compare_two_3D_arrays(original_brain_path, my_brain_path, savepath):
     savepath.parent.mkdir(exist_ok=True, parents=True)
     fig.savefig(savepath)
 
-
+'''
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "func_0/imaging/functional_channel_1_mean.nii"
@@ -108,3 +108,42 @@ compare_two_3D_arrays(
     my_brain_path=pathlib.Path(my_fly_paths, "anat_0/imaging/channel_2_mean.nii"),
     savepath=pathlib.Path(my_savepaths, "meanbrain_anat_0_imaging_ch2.png"),
 )
+'''
+#######
+# MOCO MEAN BRAINS
+#######
+'''
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "anat_0/moco/anatomy_channel_1_moc_mean.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "anat_0/moco/channel_1_moco_mean.nii"),
+    savepath=pathlib.Path(my_savepaths, "meanbrain_anat_0_moco_ch1.png"),
+)
+
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "anat_0/moco/anatomy_channel_2_moc_mean.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "anat_0/moco/channel_2_moco_mean.nii"),
+    savepath=pathlib.Path(my_savepaths, "meanbrain_anat_0_moco_ch2.png"),
+)
+'''
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "func_0/moco/functional_channel_1_moc_mean.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "func_0/moco2/channel_1_moco_mean.nii"),
+    savepath=pathlib.Path(my_savepaths, "meanbrain_func_0_moco_ch1.png"),
+)
+
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "func_0/moco/functional_channel_2_moc_mean.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "func_0/moco2/channel_2_moco_mean.nii"),
+    savepath=pathlib.Path(my_savepaths, "meanbrain_func_0_moco_ch2.png"),
+)
+
+
+
