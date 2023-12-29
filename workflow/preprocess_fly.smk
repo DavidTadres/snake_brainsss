@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'SS84990_DNa03_x_UAS-CD8-GFP/fly_001' # folder to be processed
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -742,6 +742,25 @@ rule make_mean_brain_rule:
 
 rule motion_correction_rule:
     """
+    Yandan file anat file(25GB)
+    Nodes: 1
+    Cores per node: 18
+    CPU Utilized: 2-13:59:13
+    CPU Efficiency: 36.76% of 7-00:36:18 core-walltime
+    Job Wall-clock time: 09:22:01
+    Memory Utilized: 146.73 GB
+    Memory Efficiency: 85.64% of 171.34 GB
+    
+    Yandan func filex
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 18:06:13
+    CPU Efficiency: 52.91% of 1-10:13:06 core-walltime
+    Job Wall-clock time: 05:42:11
+    Memory Utilized: 4.21 GB
+    Memory Efficiency: 5.94% of 70.93 GB
+    
+    
     Had another MMO with a very small file (200Mb)
     State: OUT_OF_MEMORY (exit code 0)
     Nodes: 1
