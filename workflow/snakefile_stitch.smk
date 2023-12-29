@@ -23,11 +23,11 @@ dataset_path = pathlib.Path(settings['dataset_path'])
 imports_path = pathlib.Path(settings['imports_path'])
 
 """
-Note - There really shouldn't be any errors here.
+Note - There really shouldn't be any errors here. <- lol, definitely keep log
 Error log is in a different folder compared to follow-up processing and analysis as 
 fly is not yet defined. 
 """
-logfile_stitcher = './logs/stitching/' + time.strftime("%Y%m%d-%H%M00") + '.txt'
+logfile_stitcher = './logs/stitching/' + time.strftime("%Y%m%d-%H%M00") + repr(data_to_stitch) + '.txt'
 pathlib.Path('./logs/stitching').mkdir(exist_ok=True)
 sys.stderr = utils.LoggerRedirect(logfile_stitcher)
 sys.stdout = utils.LoggerRedirect(logfile_stitcher)
