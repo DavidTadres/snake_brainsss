@@ -1651,6 +1651,7 @@ def motion_correction(
             #moco_anatomy_chunk.append(moco_anatomy) # This really should be a preallocated array!!!
             moco_anatomy[:,:,:,current_frame] = moco["warpedmovout"].numpy()
             # Get transform info, for saving and applying transform to functional channel
+            transformlist = moco["fwdtransforms"]
 
             ### APPLY TRANSFORMS TO FUNCTIONAL CHANNELS ###
             if len(path_brain_functional) > 0:
@@ -1664,7 +1665,7 @@ def motion_correction(
                 # TODO add more channels here!!!
 
 
-            transformlist = moco["fwdtransforms"]
+
             for x in transformlist:
                 print(x)
                 if ".mat" in x:
