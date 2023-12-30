@@ -1314,8 +1314,8 @@ def zscore(fly_directory, dataset_path, zscore_path):
                 # is read from disk
                 with h5py.File(current_zscore_path, "w") as file:
                     dset = file.create_dataset(
-                        "data", data=data, dtype=np.float32
-                    )  # , dims, dtype='float32', chunks=False)
+                        "data", dims, data=data, dtype=np.float32
+                    )  # , dims, chunks=False)
 
                 if len(dataset_path) > 1:
                     del data
