@@ -1665,14 +1665,7 @@ def motion_correction(
                 moco_functional = ants.apply_transforms(
                     fixed_ants, current_functional_frame_ants, transformlist
                 )
-                print('moco_functional ' +repr(moco_functional))
-                print('current_functional_frame_ants' + repr(current_functional_frame_ants))
-
-                #temp = temp.numpy()
                 print("fixed_ants " + repr(fixed_ants))
-                #print('moco_functional_one' + repr(moco_functional_one.shape))
-                #print('temp.dtyp' + repr(temp.dtype))
-                #print("moco_functional_one.dtype" + repr(moco_functional_one.dtype))
                 moco_functional_one[:,:,:,current_frame] = moco_functional.numpy()
                 # TODO add more channels here!!!
 
@@ -1681,8 +1674,6 @@ def motion_correction(
                 print(x)
                 if ".mat" in x:
                     temp = ants.read_transform(x)
-                    print("temp.shape" + repr(temp.shape))
-                    print(temp)
                     transform_matrix[:, current_frame] = temp
                     #temp = ants.read_transform(x)
                     #transform_matrix.append(temp.parameters)
