@@ -1659,13 +1659,14 @@ def motion_correction(
                 functional_one_moving = ants.from_numpy(
                     np.asarray(current_functional_frame, dtype=np.float32)
                 )
-                moco_functional_one[:,:,:,current_frame] = ants.apply_transforms(
+                temp = ants.apply_transforms(
                     fixed, functional_one_moving, transformlist
                 )
+                print(temp.shape)
+                moco_functional_one[:,:,:,current_frame] = temp
                 # TODO add more channels here!!!
 
-
-
+            # Delete transform info - might be worth keeping instead of huge resulting file? TBD
             for x in transformlist:
                 print(x)
                 if ".mat" in x:
