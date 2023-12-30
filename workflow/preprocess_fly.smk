@@ -887,7 +887,7 @@ rule motion_correction_rule:
                 error_stack=error_stack,
                 width=width)
 
-rule zscore_rule:
+'''rule zscore_rule:
     """
     Benchmarking:
     Cores per node: 2
@@ -1167,7 +1167,7 @@ rule correlation_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-'''           
+'''
 rule STA_rule:
     """TODO"""'''
 
@@ -1331,7 +1331,7 @@ rule make_supervoxels_rule:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_supervoxels')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
-                width=width)
+                width=width)'''
 '''
 # Probably Bifrost does it better.
 rule func_to_anat_rule:
