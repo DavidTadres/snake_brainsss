@@ -1307,6 +1307,8 @@ def zscore(fly_directory, dataset_path, zscore_path):
                 data -= meanbrain[:, :, :, np.newaxis]
                 # Then it will be divided by std which leads to zscore
                 data /= final_std[:, :, :, np.newaxis]
+                #
+                data=np.nan_to_num(data) # is this the cause of size difference?
                 # From the docs:
                 # Chunking has performance implications. It’s recommended to keep the total size
                 # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
