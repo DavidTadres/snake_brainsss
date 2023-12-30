@@ -6,7 +6,6 @@
 #SBATCH --cpus-per-task=10
 #SBATCH --output=./logs/mainlog.out
 #SBATCH --open-mode=append
-#SBATCH --mem-per-cpu=60G
 #SBATCH --mail-type=ALL
 
 ml python/3.9.0
