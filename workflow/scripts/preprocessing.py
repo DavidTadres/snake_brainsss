@@ -1666,7 +1666,7 @@ def motion_correction(
                 print('temp ' +repr(temp))
                 print('temp.shape' + repr(temp.shape))
 
-                temp = np.asarray(temp, dtype=np.float32)
+                temp = temp.numpy()
                 print("temp.shape " + repr(temp.shape))
                 print('moco_functional_one' + repr(moco_functional_one.shape))
                 print('temp.dtyp' + repr(temp.dtype))
