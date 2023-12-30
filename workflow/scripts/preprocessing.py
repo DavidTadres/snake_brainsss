@@ -1185,6 +1185,10 @@ def zscore(fly_directory, dataset_path, zscore_path):
     :param args:
     :return:
     """
+    # To reproduce Bella's script
+    RUN_LOOPED = True
+    if RUN_LOOPED:
+        stepsize=100
 
     ##############
     ### ZSCORE ###
@@ -1230,98 +1234,91 @@ def zscore(fly_directory, dataset_path, zscore_path):
 
             printlog("Data shape is {}".format(dims))
 
-            """
-            ####
-            # Bella's code that allows chunking
-            ###
-            #running_sum = np.zeros(dims[:3])
-            #running_sumofsq = np.zeros(dims[:3])
+            if RUN_LOOPED:
+                ####
+                # Bella's code that allows chunking
+                ###
+                running_sum = np.zeros(dims[:3])
+                running_sumofsq = np.zeros(dims[:3])
+                steps = list(range(0, dims[-1], stepsize))
+                steps.append(dims[-1])
 
-            #steps = list(range(0, dims[-1], stepsize))
-            #steps.append(dims[-1])
+                for chunk_num in range(len(steps)):
+                    t0 = time()
+                    if chunk_num + 1 <= len(steps) - 1:
+                        chunkstart = steps[chunk_num]
+                        chunkend = steps[chunk_num + 1]
+                        chunk = data[:, :, :, chunkstart:chunkend]
+                        running_sum += np.sum(chunk, axis=3)
+                        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+                meanbrain = running_sum / dims[-1]
 
-            ### Calculate meanbrain ###
-            # I assume data is actual data.
-            # So we load data in chunks with the first 3 dimensions + a chunk in time
-            # then sum all the data over time
-            # an finally divide it by time.
-            #for chunk_num in range(len(steps)):
-            #    t0 = time()
-            #    if chunk_num + 1 <= len(steps) - 1:
-            #        chunkstart = steps[chunk_num]
-            #        chunkend = steps[chunk_num + 1]
-            #        chunk = data[:, :, :, chunkstart:chunkend]
-            #        running_sum += np.sum(chunk, axis=3)
-            #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-            # meanbrain = running_sum / dims[-1]
+                for chunk_num in range(len(steps)):
+                    t0 = time()
+                    if chunk_num + 1 <= len(steps) - 1:
+                        chunkstart = steps[chunk_num]
+                        chunkend = steps[chunk_num + 1]
+                        chunk = data[:, :, :, chunkstart:chunkend]
+                        running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+                        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+                final_std = np.sqrt(running_sumofsq / dims[-1])
 
-            ### Calculate std ###
+                ### Calculate zscore and save ###
 
-            #for chunk_num in range(len(steps)):
-            #    t0 = time()
-            #    if chunk_num + 1 <= len(steps) - 1:
-            #        chunkstart = steps[chunk_num]
-            #        chunkend = steps[chunk_num + 1]
-            #        chunk = data[:, :, :, chunkstart:chunkend]
-            #        running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-            #        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-            #final_std = np.sqrt(running_sumofsq / dims[-1])
-            
-            #with h5py.File(save_file, 'w') as f:
-            #    dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+                with h5py.File(current_zscore_path, 'w') as f:
+                    dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
 
-            #    for chunk_num in range(len(steps)):
-            #        t0 = time()
-            #        if chunk_num + 1 <= len(steps) - 1:
-            #            chunkstart = steps[chunk_num]
-            #            chunkend = steps[chunk_num + 1]
-            #            chunk = data[:, :, :, chunkstart:chunkend]
-            #            running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-            #            zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
-            #            f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
-            #                zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
-            #            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-            ####
-            """
+                    for chunk_num in range(len(steps)):
+                        t0 = time()
+                        if chunk_num + 1 <= len(steps) - 1:
+                            chunkstart = steps[chunk_num]
+                            chunkend = steps[chunk_num + 1]
+                            chunk = data[:, :, :, chunkstart:chunkend]
+                            running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+                            zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
+                            f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
+                                zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
+                            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+            else:
 
-            # I think we don't have to worry about memory too much - since we only work
-            # with one h5 file at a time and 30 minutes at float32 is ~20Gb
-            # Expect a 4D array, xyz and the fourth dimension is time!
-            meanbrain = np.nanmean(data, axis=3)
-            # Might get out of memory error, test!
-            final_std = np.std(data, axis=3)
+                # I think we don't have to worry about memory too much - since we only work
+                # with one h5 file at a time and 30 minutes at float32 is ~20Gb
+                # Expect a 4D array, xyz and the fourth dimension is time!
+                meanbrain = np.nanmean(data, axis=3)
+                # Might get out of memory error, test!
+                final_std = np.std(data, axis=3)
 
-            ### Calculate zscore and save ###
+                ### Calculate zscore and save ###
 
-            # Calculate z-score
-            # z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
-            # The above works, is easy to read but makes a copy in memory. Since brain data is
-            # huge (easily 20Gb) we'll avoid making a copy by doing in place operations to save
-            # memory! See docstring for more information
+                # Calculate z-score
+                # z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
+                # The above works, is easy to read but makes a copy in memory. Since brain data is
+                # huge (easily 20Gb) we'll avoid making a copy by doing in place operations to save
+                # memory! See docstring for more information
 
-            # data will be data-meanbrain after this operation
-            data -= meanbrain[:, :, :, np.newaxis]
-            # Then it will be divided by std which leads to zscore
-            data /= final_std[:, :, :, np.newaxis]
-            # From the docs:
-            # Chunking has performance implications. It’s recommended to keep the total size
-            # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
-            # keep in mind that when any element in a chunk is accessed, the entire chunk
-            # is read from disk
-            with h5py.File(current_zscore_path, "w") as file:
-                dset = file.create_dataset(
-                    "data", data=data
-                )  # , dims, dtype='float32', chunks=False)
+                # data will be data-meanbrain after this operation
+                data -= meanbrain[:, :, :, np.newaxis]
+                # Then it will be divided by std which leads to zscore
+                data /= final_std[:, :, :, np.newaxis]
+                # From the docs:
+                # Chunking has performance implications. It’s recommended to keep the total size
+                # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
+                # keep in mind that when any element in a chunk is accessed, the entire chunk
+                # is read from disk
+                with h5py.File(current_zscore_path, "w") as file:
+                    dset = file.create_dataset(
+                        "data", data=data
+                    )  # , dims, dtype='float32', chunks=False)
 
-            if len(dataset_path) > 1:
-                del data
-                printlog(
-                    "Sleeping for 10 seconds before loading the next functional channel"
-                )
-                time.sleep(
-                    10
-                )  # allow garbage collector to start cleaning up memory before potentially loading
-                # the other functional channel!
+                if len(dataset_path) > 1:
+                    del data
+                    printlog(
+                        "Sleeping for 10 seconds before loading the next functional channel"
+                    )
+                    time.sleep(
+                        10
+                    )  # allow garbage collector to start cleaning up memory before potentially loading
+                    # the other functional channel!
 
     printlog("zscore done")
 
