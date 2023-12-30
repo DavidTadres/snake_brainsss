@@ -6,8 +6,11 @@ Needs to be a function
 
 ONLY ONE RULE PER RUN - COMMENT WHAT YOU DONT NEED
 """
-from dev import compare_h5_large_data
+
+
 import pathlib
+scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
+from dev import compare_h5_large_data
 
 
 path_original = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/func_0')
