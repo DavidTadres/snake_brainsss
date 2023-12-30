@@ -15,7 +15,8 @@ def run_comparison():
     path_loop = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore.h5loop.h5')
     path_vec = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore.h5')
     #path_vec_original = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore_VECT.h5')
-
+    #path_original = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/func_0/functional_channel_2_moco_zscore.h5')
+    #path_my = pathlib.Path('oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/channel_2_moco_zscore.h5')
     with h5py.File(path_loop, 'r') as hf:
         loop_proxy = hf['data']
         #print(loop_proxy.shape)
@@ -34,17 +35,19 @@ def run_comparison():
         print(vec_orig_proxy.shape)
         vec_orig_one_slice = vec_orig_proxy[:, :, 3, 50]
     print('third loaded')"""
+    z_slice = 25
+    t_slice = 100
 
     fig = plt.figure()
     ax1 = fig.add_subplot(221)
-    ax1.imshow(loop_data[:,:,int(loop_data.shape[2]/2), int(loop_data.shape[3]/2)].T)
-    ax1.set_title(path_loop.name + ', z=' + repr(int(loop_data.shape[2]/2)) + ', t=' + repr(int(loop_data.shape[3]/2)))
+    ax1.imshow(loop_data[:,:,z_slice, t_slice].T)
+    ax1.set_title(path_loop.name + ', z=' + repr(z_slice) + ', t=' + repr(t_slice))
 
     ax2 = fig.add_subplot(222)
     ax2.imshow(vec_proxy[:,:,int(vec_proxy.shape[2]/2), int(vec_proxy.shape[3]/2)])
-    ax2.set_title(path_loop.name + ', z=' + repr(int(vec_proxy.shape[2]/2)) + ', t=' + repr(int(vec_proxy.shape[3]/2)).T)
+    ax2.set_title(path_loop.name + ', z=' + repr(z_slice) + ', t=' + repr(t_slice).T)
 
-    delta = loop_data[:,:,int(loop_data.shape[2]/2), int(loop_data.shape[3]/2)] - vec_proxy[:,:,int(vec_proxy.shape[2]/2), int(vec_proxy.shape[3]/2)]
+    delta = loop_data[:,:,z_slice, t_slice] - vec_proxy[:,:,z_slice, t_slice]
     ax3 = fig.add_subplot(223)
     ax3.imshow(delta.T)
     ax3.set_title('Max delta in this slice' + repr(np.max(delta)))
