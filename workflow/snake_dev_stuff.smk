@@ -6,8 +6,9 @@ Needs to be a function
 
 ONLY ONE RULE PER RUN - COMMENT WHAT YOU DONT NEED
 """
-import pathlib
 from dev import compare_h5_large_data
+import pathlib
+
 
 path_original = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/func_0')
 path_my = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0')
