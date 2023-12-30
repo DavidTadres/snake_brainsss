@@ -12,58 +12,58 @@ import numpy as np
 mpl.use("agg") # As this should be run on sherlock, use non-interactive backend!
 
 def run_comparison():
-    path_loop = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore.h5loop.h5')
-    path_vec = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore.h5')
+    path_original = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore.h5loop.h5')
+    path_my = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore.h5')
     #path_vec_original = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore_VECT.h5')
     #path_original = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/func_0/functional_channel_2_moco_zscore.h5')
     #path_my = pathlib.Path('oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/channel_2_moco_zscore.h5')
-    with h5py.File(path_loop, 'r') as hf:
-        loop_proxy = hf['data']
+    with h5py.File(path_original, 'r') as hf:
+        original_proxy = hf['data']
         #print(loop_proxy.shape)
         #loop_one_slice = loop_proxy[:, :, 3, 50]
-        loop_data = loop_proxy[:]
-    print('first loaded')
+        original_data = original_proxy[:]
+        print('first loaded')
 
-    with h5py.File(path_vec, 'r') as hf:
-        vec_proxy = hf['data']
-        #vec_one_slice = vec_proxy[:, :, 3, 50]
-        vec_data = vec_proxy
-    print('second loaded')
+        with h5py.File(path_my, 'r') as hf:
+            my_proxy = hf['data']
+            #vec_one_slice = vec_proxy[:, :, 3, 50]
+            my_data = my_proxy
+            print('second loaded')
 
-    """with h5py.File(path_vec_original, 'r') as hf:
-        vec_orig_proxy = hf['data']
-        print(vec_orig_proxy.shape)
-        vec_orig_one_slice = vec_orig_proxy[:, :, 3, 50]
-    print('third loaded')"""
-    z_slice = 25
-    t_slice = 100
+            """with h5py.File(path_vec_original, 'r') as hf:
+                vec_orig_proxy = hf['data']
+                print(vec_orig_proxy.shape)
+                vec_orig_one_slice = vec_orig_proxy[:, :, 3, 50]
+            print('third loaded')"""
+            z_slice = 25
+            t_slice = 100
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(221)
-    ax1.imshow(loop_data[:,:,z_slice, t_slice].T)
-    ax1.set_title(path_loop.name + ', z=' + repr(z_slice) + ', t=' + repr(t_slice))
+            fig = plt.figure()
+            ax1 = fig.add_subplot(221)
+            ax1.imshow(original_data[:,:,z_slice, t_slice].T)
+            ax1.set_title(path_original.name + ', z=' + repr(z_slice) + ', t=' + repr(t_slice))
 
-    ax2 = fig.add_subplot(222)
-    ax2.imshow(vec_proxy[:,:,int(vec_proxy.shape[2]/2), int(vec_proxy.shape[3]/2)])
-    ax2.set_title(path_loop.name + ', z=' + repr(z_slice) + ', t=' + repr(t_slice).T)
+            ax2 = fig.add_subplot(222)
+            ax2.imshow(my_data[:,:,z_slice, t_slice])
+            ax2.set_title(path_my.name + ', z=' + repr(z_slice) + ', t=' + repr(t_slice).T)
 
-    delta = loop_data[:,:,z_slice, t_slice] - vec_proxy[:,:,z_slice, t_slice]
-    ax3 = fig.add_subplot(223)
-    ax3.imshow(delta.T)
-    ax3.set_title('Max delta in this slice' + repr(np.max(delta)))
+            delta = original_data[:,:,z_slice, t_slice] - my_data[:,:,z_slice, t_slice]
+            ax3 = fig.add_subplot(223)
+            ax3.imshow(delta.T)
+            ax3.set_title('Max delta in this slice' + repr(np.max(delta)))
 
-    # Next, plot histogram of both brains using ALL data (not just a single slice
-    counts_original, edges_original = np.histogram(loop_data, bins=1000)
-    counts_my, edges_my = np.histogram(vec_proxy, bins=1000)
-    ax4 = fig.add_subplot(224)
-    ax4.stairs(counts_original, edges_original, fill=True, alpha=1, color="k")
-    ax4.stairs(counts_my, edges_my, fill=True, alpha=0.5, color="r")
-    ax4.set_yscale("log")
-    delta = (
-            loop_data - vec_proxy
-    )  # what's the difference in value between the two arrays?
-    ax4.set_title(
-        "Max abs delta between arrays\n" + repr(round(np.max(np.abs(delta)), 10))
-    )
+            # Next, plot histogram of both brains using ALL data (not just a single slice
+            counts_original, edges_original = np.histogram(original_data, bins=1000)
+            counts_my, edges_my = np.histogram(my_data, bins=1000)
+            ax4 = fig.add_subplot(224)
+            ax4.stairs(counts_original, edges_original, fill=True, alpha=1, color="k")
+            ax4.stairs(counts_my, edges_my, fill=True, alpha=0.5, color="r")
+            ax4.set_yscale("log")
+            delta = (
+                    original_data - my_data
+            )  # what's the difference in value between the two arrays?
+            ax4.set_title(
+                "Max abs delta between arrays\n" + repr(round(np.max(np.abs(delta)), 10))
+            )
 
-    fig.savefig(pathlib.Path(path_vec.parent, path_vec.name + '_delta.png'))
+            fig.savefig(pathlib.Path(path_my.parent, path_my.name + '_delta.png'))
