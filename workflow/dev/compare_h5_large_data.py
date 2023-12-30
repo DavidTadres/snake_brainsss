@@ -11,12 +11,12 @@ import numpy as np
 
 mpl.use("agg") # As this should be run on sherlock, use non-interactive backend!
 
-def run_comparison():
-    #path_original = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore.h5loop.h5')
-    #path_my = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore.h5')
-    #path_vec_original = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/channel_2_moco_zscore_VECT.h5')
-    path_original = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/func_0/functional_channel_2_moco_zscore.h5')
-    path_my = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/channel_2_moco_zscore.h5')
+def run_comparison(path_original, path_my):
+    print(path_my)
+    path_original = pathlib.Path(path_original)
+    path_my = pathlib.Path(path_my)
+    print(path_my)
+
     with h5py.File(path_original, 'r') as hf:
         original_proxy = hf['data']
         #print(loop_proxy.shape)
