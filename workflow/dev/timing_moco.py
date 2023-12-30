@@ -13,35 +13,115 @@ import ants
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import multiprocessing
+import concurrent.futures
+
+
 
 type_of_transform = "SyN"
 flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
 
-imaging_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/SS84990_DNa03_x_UAS-CD8-GFP/fly_002/anat_low_res/imaging/')
-fixed_path = pathlib.Path(imaging_path, 'channel_2_mean.nii')
-moving_path = pathlib.Path(imaging_path, 'channel_2.nii')
+imaging_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
+fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
+moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
+functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
 
 fixed_proxy = nib.load(fixed_path)
 fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
 
 moving_proxy = nib.load(moving_path)
-moving_current = np.asarray(moving_proxy.dataobj, np.uint16)
+#moving_data = np.asarray(moving_proxy.dataobj, np.uint16)
 
-current_moving = moving_current[:,:,:,0]
-t0 = time.time()
-# Need to have ants images
-fixed_ants = ants.from_numpy(np.asarray(fixed, dtype=np.float32))
-moving_ants = ants.from_numpy(np.asarray(current_moving, dtype=np.float32))
-print('ants conversion took ' + repr(time.time() - t0) + 's')
+functional_proxy = nib.load(functional_path)
+#functional_data = np.asarray(functional_proxy.dataobj, np.uint16)
 
-t0 = time.time()
-moco = ants.registration(fixed_ants, moving_ants,
-                         type_of_transform=type_of_transform,
-                         flow_sigma=flow_sigma,
-                         total_sigma=total_sigma,
-                         aff_metric=aff_metric)
-print('Registration took ' + repr(time.time() - t0) + 's')
+brain_shape = functional_proxy.header.get_data_shape()
 
-moco["warpedmovout"].numpy().shape # > volume of input file!
+moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brain_shape[3]),dtype=np.float32)
+moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brain_shape[3]),dtype=np.float32)
+
+loop_duration = []
+#total_frames_to_process = 10
+transform_matrix = np.zeros((12,brain_shape[-1]))
+#current_moving = moving_data[:,:,:,current_frame]
+experiment_total_frames = 50 # So that I don't wait forever during testing, of course it should just be brain_shape[3]
+
+# Before multiprocessing I need to split the timepoints that we'll use. In the original for loop we would have something
+# like range(brain.shape[3]) which would spit out a list going from 0 to brain.shape[3]. Instead we can prepare
+# one list per parallel processing.
+cores = 4
+
+def split_input(index, cores):
+    """
+    :param total_frames_to_process: a list starting at 0, i.e. [0,1,2,...,n]
+    :param cores: an integer number
+    :return:
+    """
+    even_split, remainder = divmod(len(index), cores)
+    return list((index[i * even_split + min(i, remainder):(i + 1) * even_split + min(i + 1, remainder)] for i in range(cores)))
+def for_loop_moco(index):
+    for current_frame in index:
+
+        """
+        I usually get less than 10 seconds per loop. Mean is 5.9seconds
+        For 600frames that should be ~ 6,000 seconds or 100 minutes
+        """
+        print(current_frame)
+
+        t_loop_start = time.time()
+        current_moving = moving_proxy.dataobj[:,:,:,current_frame]
+        #t0 = time.time()
+        # Need to have ants images
+        fixed_ants = ants.from_numpy(np.asarray(fixed, dtype=np.float32))
+        moving_ants = ants.from_numpy(np.asarray(current_moving, dtype=np.float32))
+        #print('\nants conversion took ' + repr(time.time() - t0) + 's')
+
+        #t0 = time.time()
+        moco = ants.registration(fixed_ants, moving_ants,
+                                 type_of_transform=type_of_transform,
+                                 flow_sigma=flow_sigma,
+                                 total_sigma=total_sigma,
+                                 aff_metric=aff_metric)
+        #print('Registration took ' + repr(time.time() - t0) + 's')
+
+        moco_anatomy[:,:,:,current_frame] = moco["warpedmovout"].numpy()
+
+        #t0 = time.time()
+        # Next, use the transform info fofr the functional image
+        transformlist = moco["fwdtransforms"]
+        #moving_frame=functional_data[:,:,:,current_frame]
+
+        current_functional = functional_proxy.dataobj[:,:,:,current_frame]
+        moving_frame_ants = ants.from_numpy(np.asarray(current_functional, dtype=np.float32))
+        moco_ch2 = ants.apply_transforms(fixed_ants, moving_frame_ants, transformlist)
+        moco_functional[:,:,:,current_frame] = moco_ch2.numpy()
+        #print('apply transforms took ' + repr(time.time() - t0) + 's')
+
+        #t0=time.time()
+        # delete writen files:
+        # Delete transform info - might be worth keeping instead of huge resulting file? TBD
+        for x in transformlist:
+            if ".mat" in x:
+                temp = ants.read_transform(x)
+                transform_matrix[:, current_frame] = temp.parameters
+                # temp = ants.read_transform(x)
+                # transform_matrix.append(temp.parameters)
+            # lets' delete all files created by ants - else we quickly create thousands of files!
+            pathlib.Path(x).unlink()
+        #print('Delete took: ' + repr(time.time()-t0))
+        loop_duration.append(time.time()-t_loop_start)
+        print('Loop duration: ' + repr(loop_duration[-1]))
+
+
+split_index = split_input(list(np.arange(experiment_total_frames)),4)
+# The code below parallelizes the transform part of moco
+# Without parallelization I get ~6 seconds per loop. With 4 cores I get ~12 seconds
+# It therefore should take half the time to run motion correction.
+# On the server we could get a 8x increase in speed, so instead of ~8 hours it might only
+# take 1 hour
+if __name__ == '__main__':
+    with multiprocessing.Pool(cores) as p:
+        p.map(for_loop_moco, split_index)
+

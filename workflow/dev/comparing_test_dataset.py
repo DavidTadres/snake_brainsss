@@ -146,7 +146,7 @@ compare_two_3D_arrays(
 )
 
 '''
-
+'''
 ###
 # BEHAVIOR-Z SCORE CORRELATED BRAINS
 ###
@@ -173,3 +173,4 @@ compare_two_3D_arrays(
     my_brain_path=pathlib.Path(my_fly_paths, "func_0/corr/channel_2_corr_dRotLabZpos.nii"),
     savepath=pathlib.Path(my_savepaths, "corr_dRotLabZpos_func_0_ch2.png"),
 )
+'''

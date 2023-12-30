@@ -1649,9 +1649,6 @@ def motion_correction(
                     aff_metric=aff_metric,
                     #outputprefix='' # MAYBE writing on scratch will make this faster?
             )
-            #moco_anatomy = moco["warpedmovout"].numpy()
-            # moco_ch1_chunk.append(moco_ch1)
-            #moco_anatomy_chunk.append(moco_anatomy) # This really should be a preallocated array!!!
             moco_anatomy[:,:,:,current_frame] = moco["warpedmovout"].numpy()
             # Get transform info, for saving and applying transform to functional channel
             transformlist = moco["fwdtransforms"]
@@ -1671,12 +1668,9 @@ def motion_correction(
 
             # Delete transform info - might be worth keeping instead of huge resulting file? TBD
             for x in transformlist:
-                print(x)
                 if ".mat" in x:
                     temp = ants.read_transform(x)
                     transform_matrix[:, current_frame] = temp.parameters
-                    #temp = ants.read_transform(x)
-                    #transform_matrix.append(temp.parameters)
                 # lets' delete all files created by ants - else we quickly create thousands of files!
                 pathlib.Path(x).unlink()
 
@@ -1702,7 +1696,7 @@ def motion_correction(
                     width=WIDTH,
                 )
 
-        aff = np.eye()
+        aff = np.eye(4)
         anatomy_save_object = nib.Nifti1Image(moco_anatomy, aff)
         anatomy_save_object.to_filename(path_h5_anatomy)
         if len(path_brain_functional) > 0:
