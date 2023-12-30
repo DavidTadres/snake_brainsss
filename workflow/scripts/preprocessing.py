@@ -1663,8 +1663,11 @@ def motion_correction(
                 temp = ants.apply_transforms(
                     fixed, functional_one_moving, transformlist
                 )
+                temp = np.asarray(temp, dtype=np.float32)
                 print("temp.shape " + repr(temp.shape))
                 print('moco_functional_one' + repr(moco_functional_one.shape))
+                print('temp.dtyp' + repr(temp.dtype))
+                print("moco_functional_one.dtype" + repr(moco_functional_one.dtype))
                 moco_functional_one[:,:,:,current_frame] = np.asarray(temp, dtype=np.float32)
                 # TODO add more channels here!!!
 
