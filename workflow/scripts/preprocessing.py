@@ -1637,6 +1637,7 @@ def motion_correction(
         for current_frame in range(brain_dims[-1]): # that's t, so it would return something like 0, 1, 2 etc.
             current_moving_frame = img_anatomy.dataobj[:,:,:,current_frame]
             current_moving_frame_ants = ants.from_numpy(np.asarray(current_moving_frame, dtype=np.float32)) # cast np.uint16 as float32 because ants requires it
+
             moco = ants.registration(
                     fixed,
                     current_moving_frame_ants,
@@ -1663,7 +1664,7 @@ def motion_correction(
                     fixed, functional_one_moving, transformlist
                 )
                 print("temp.shape " + repr(temp.shape))
-                print('moco_functional_one' + repr(moco_functional_one))
+                print('moco_functional_one' + repr(moco_functional_one.shape))
                 moco_functional_one[:,:,:,current_frame] = np.asarray(temp, dtype=np.float32)
                 # TODO add more channels here!!!
 
