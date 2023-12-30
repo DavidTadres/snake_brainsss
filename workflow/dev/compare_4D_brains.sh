@@ -6,6 +6,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --output=./logs/mainlog.out
 #SBATCH --open-mode=append
+#SBATCH --mem-per-cpu=60G
 
 ml python/3.9.0
 source .env_snakemake/bin/activate
