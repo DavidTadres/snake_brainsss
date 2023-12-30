@@ -7,7 +7,7 @@ snake-brainsss pipeline.
 
 import pathlib
 import numpy as np
-#import nibabel as nib
+import nibabel as nib
 import h5py
 import matplotlib.pyplot as plt
 
