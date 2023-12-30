@@ -1678,7 +1678,10 @@ def motion_correction(
             for x in transformlist:
                 print(x)
                 if ".mat" in x:
-                    transform_matrix[:, current_frame] = ants.read_transform(x)
+                    temp = ants.read_transform(x)
+                    print("temp.shape" + repr(temp.shape))
+                    print(temp)
+                    transform_matrix[:, current_frame] = temp
                     #temp = ants.read_transform(x)
                     #transform_matrix.append(temp.parameters)
                 # lets' delete all files created by ants - else we quickly create thousands of files!
