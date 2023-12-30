@@ -863,9 +863,6 @@ rule motion_correction_rule:
         h5_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else [],
         h5_path_ch2 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else [],
         h5_path_ch3 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
-        #h5_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[],
-        #h5_path_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[],
-        #h5_path_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],
         par_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
     run:
         try:
