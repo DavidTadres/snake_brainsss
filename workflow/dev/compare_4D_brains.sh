@@ -9,5 +9,6 @@
 #SBATCH --mail-type=ALL
 
 ml python/3.9.0
+ml py-h5py/3.7.0_py39
 source .env_snakemake/bin/activate
-python3 compare_4D_brains.py
+python3 sherlock_test.py
