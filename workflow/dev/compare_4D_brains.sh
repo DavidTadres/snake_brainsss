@@ -10,4 +10,4 @@
 
 ml python/3.9.0
 source .env_snakemake/bin/activate
-python3 comparing_4D_brains.py
+python3 compare_4D_brains.py
