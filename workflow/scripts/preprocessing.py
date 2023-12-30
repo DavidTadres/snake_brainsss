@@ -1574,30 +1574,31 @@ def motion_correction(
     ############################################################
     ### Make Empty MOCO files that will be filled vol by vol ###
     ############################################################
-
-    # This should most likely live on scratch as it is accessed several times.
-    # h5_file_name = f"{path_brain_master.name.split('.')[0]}_moco.h5"
-    # moco_dir, savefile_master = brainsss.make_empty_h5(h5_path_scratch, h5_file_name, brain_dims)#, save_type)
-    # Make 'moco' dir in imaging path
-    path_h5_anatomy.parent.mkdir(parents=True, exist_ok=True)
-    # Create empty h5 file
-    with h5py.File(path_h5_anatomy, "w") as file:
-        _ = file.create_dataset("data", brain_dims, dtype="float32", chunks=True)
-    printlog(f"Created empty hdf5 file{path_h5_anatomy.name:.>{WIDTH - 23}}")
-
-    if len(path_h5_functional) > 0:
-        with h5py.File(path_h5_functional[0], "w") as file:
+    MEMORY_ONLY = True
+    if not MEMORY_ONLY:
+        # This should most likely live on scratch as it is accessed several times.
+        # h5_file_name = f"{path_brain_master.name.split('.')[0]}_moco.h5"
+        # moco_dir, savefile_master = brainsss.make_empty_h5(h5_path_scratch, h5_file_name, brain_dims)#, save_type)
+        # Make 'moco' dir in imaging path
+        path_h5_anatomy.parent.mkdir(parents=True, exist_ok=True)
+        # Create empty h5 file
+        with h5py.File(path_h5_anatomy, "w") as file:
             _ = file.create_dataset("data", brain_dims, dtype="float32", chunks=True)
-        printlog(f"Created empty hdf5 file{path_h5_functional[0].name:.>{WIDTH - 23}}")
+        printlog(f"Created empty hdf5 file{path_h5_anatomy.name:.>{WIDTH - 23}}")
 
-        if len(path_h5_functional) > 1:
-            with h5py.File(path_h5_functional[1], "w") as file:
-                _ = file.create_dataset(
-                    "data", brain_dims, dtype="float32", chunks=True
+        if len(path_h5_functional) > 0:
+            with h5py.File(path_h5_functional[0], "w") as file:
+                _ = file.create_dataset("data", brain_dims, dtype="float32", chunks=True)
+            printlog(f"Created empty hdf5 file{path_h5_functional[0].name:.>{WIDTH - 23}}")
+
+            if len(path_h5_functional) > 1:
+                with h5py.File(path_h5_functional[1], "w") as file:
+                    _ = file.create_dataset(
+                        "data", brain_dims, dtype="float32", chunks=True
+                    )
+                printlog(
+                    f"Created empty hdf5 file{path_h5_functional[1].name:.>{WIDTH - 23}}"
                 )
-            printlog(
-                f"Created empty hdf5 file{path_h5_functional[1].name:.>{WIDTH - 23}}"
-            )
 
     #################################
     ### Perform Motion Correction ###
@@ -1621,97 +1622,55 @@ def motion_correction(
     # It seems to be slow to write to h5py unless it's optimized - not sure if that's one reason why moco is so slow:
     # https://docs.h5py.org/en/stable/high/dataset.html#chunked-storage
 
-    # For timepoints / stepsize. e.g. if have 300 timepoints and stepsize 100 I get len(steps)=3
-    for j in range(len(steps) - 1):
-        # printlog(F"j: {j}")
+    if MEMORY_ONLY:
+        # Must be 4D array! Else fails here
+        moco_anatomy = np.zeros((brain_dims[0], brain_dims[1], brain_dims[2], brain_dims[3]), dtype=np.float32)
+        moco_anatomy.fill(np.nan) # avoid that missing values end up as 0!
+        #
+        transform_matrix = np.zeros((12, brain_dims[3])) # Lets see if that's correct
 
-        ### LOAD A SINGLE BRAIN VOL ###
-        moco_anatomy_chunk = []
-        moco_functional_one_chunk = []
-        moco_functional_two_chunk = []
-        # for each timePOINT!
-        for i in range(stepsize):
-            # that's a number
-            index = steps[j] + i
-            # for the very last j, adding the step size will go over the dim, so need to stop here
-            if index == brain_dims[-1]:
-                break
-            # that's a single slice in time
-            vol = img_anatomy.dataobj[..., index] #
-            moving = ants.from_numpy(np.asarray(vol, dtype="float32"))
-
-            ### MOTION CORRECT ###
+        if len(path_brain_functional) > 0:
+            moco_functional_one = np.zeros((brain_dims[0], brain_dims[1], brain_dims[2], brain_dims[3]), dtype=np.float32)
+            moco_functional_one.fill(np.nan)
+        for current_frame in brain_dims[-1]: # that's t, so it would return something like 0, 1, 2 etc.
+            current_moving_frame = img_anatomy.anatomy.dataobj[:,:,:,current_frame]
+            current_moving_frame_ants = ants.from_numpy(np.asarray(current_moving_frame, dtype=np.float32)) # cast np.uint16 as float32 because ants requires it
             moco = ants.registration(
-                fixed,
-                moving,
-                type_of_transform=type_of_transform,
-                flow_sigma=flow_sigma,
-                total_sigma=total_sigma,
-                aff_metric=aff_metric,
+                    fixed,
+                    current_moving_frame_ants,
+                    type_of_transform=type_of_transform,
+                    flow_sigma=flow_sigma,
+                    total_sigma=total_sigma,
+                    aff_metric=aff_metric,
+                    #outputprefix='' # MAYBE writing on scratch will make this faster?
             )
-            # moco_ch1 = moco['warpedmovout'].numpy()
-            moco_anatomy = moco["warpedmovout"].numpy()
+            #moco_anatomy = moco["warpedmovout"].numpy()
             # moco_ch1_chunk.append(moco_ch1)
-            moco_anatomy_chunk.append(moco_anatomy)
-            transformlist = moco["fwdtransforms"]
-            # printlog(F'vol, ch1 moco: {index}, time: {time.time()-t0}')
+            #moco_anatomy_chunk.append(moco_anatomy) # This really should be a preallocated array!!!
+            moco_anatomy[:,:,:,current_frame] = moco["warpedmovout"].numpy()
+            # Get transform info, for saving and applying transform to functional channel
 
             ### APPLY TRANSFORMS TO FUNCTIONAL CHANNELS ###
             if len(path_brain_functional) > 0:
-                vol = img_functional_one.dataobj[..., index]
+                current_functional_frame = img_functional_one.dataobj[:,:,:, current_frame]
                 functional_one_moving = ants.from_numpy(
-                    np.asarray(vol, dtype="float32")
+                    np.asarray(current_functional_frame, dtype=np.float32)
                 )
-                moco_functional_one = ants.apply_transforms(
+                moco_functional_one[:,:,:,current_frame] = ants.apply_transforms(
                     fixed, functional_one_moving, transformlist
                 )
-                moco_functional_one = moco_functional_one.numpy()
-                moco_functional_one_chunk.append(moco_functional_one)
-                # If a second functional channel exists, also apply to this one
-                if len(path_brain_functional) > 1:
-                    vol = img_functional_two.dataobj[..., index]
-                    functional_two_moving = ants.from_numpy(
-                        np.asarray(vol, dtype="float32")
-                    )
-                    moco_functional_two = ants.apply_transforms(
-                        fixed, functional_two_moving, transformlist
-                    )
-                    moco_functional_two = moco_functional_two.numpy()
-                    moco_functional_two_chunk.append(moco_functional_two)
-            ### APPLY TRANSFORMS TO CHANNEL 2 ###
-            # t0 = time.time()
-            # if path_brain_mirror is not None:
-            #    vol = img_ch2.dataobj[..., index]
-            #    ch2_moving = ants.from_numpy(np.asarray(vol, dtype='float32'))
-            #    moco_ch2 = ants.apply_transforms(fixed, ch2_moving, transformlist)
-            #    moco_ch2 = moco_ch2.numpy()
-            #    moco_ch2_chunk.append(moco_ch2)
-            # printlog(F'moco vol done: {index}, time: {time.time()-t0}')
+                # TODO add more channels here!!!
 
-            ### SAVE AFFINE TRANSFORM PARAMETERS FOR PLOTTING MOTION ###
+
             transformlist = moco["fwdtransforms"]
             for x in transformlist:
+                print(x)
                 if ".mat" in x:
-                    temp = ants.read_transform(x)
-                    transform_matrix.append(temp.parameters)
-
-            ### DELETE FORWARD TRANSFORMS ###
-            transformlist = moco["fwdtransforms"]
-            for x in transformlist:
-                if ".mat" not in x:
-                    # print('Deleting fwdtransforms ' + x) # Yes, these are files
-                    pathlib.Path(x).unlink()
-                    # os.remove(x) # todo Save memory? #
-
-            ### DELETE INVERSE TRANSFORMS ###
-            transformlist = moco[
-                "invtransforms"
-            ]  # I'm surprised this doesn't lead to an error because it doesn't seem taht moco['invtransforms'] is defined anywhere
-            for x in transformlist:
-                if ".mat" not in x:
-                    # print('Deleting invtransforms ' + x)
-                    pathlib.Path(x).unlink()
-                    # os.remove(x) # todo Save memory?
+                    transform_matrix[:, current_frame] = ants.read_transform(x)
+                    #temp = ants.read_transform(x)
+                    #transform_matrix.append(temp.parameters)
+                # lets' delete all files created by ants - else we quickly create thousands of files!
+                pathlib.Path(x).unlink()
 
             ### Print progress ###
             elapsed_time = time.time() - start_time
@@ -1729,46 +1688,175 @@ def motion_correction(
                 print_timer = time.time()
                 moco_utils.print_progress_table_moco(
                     total_vol=brain_dims[-1],
-                    complete_vol=index,
+                    complete_vol=current_frame,
                     printlog=printlog,
                     start_time=start_time,
                     width=WIDTH,
                 )
 
-        moco_anatomy_chunk = np.moveaxis(np.asarray(moco_anatomy_chunk), 0, -1)
+        aff = np.eye()
+        anatomy_save_object = nib.Nifti1Image(moco_anatomy, aff)
+        anatomy_save_object.to_filename(path_h5_anatomy)
         if len(path_brain_functional) > 0:
-            moco_functional_one_chunk = np.moveaxis(
-                np.asarray(moco_functional_one_chunk), 0, -1
-            )
-            if len(path_brain_functional) > 1:
-                moco_functional_two_chunk = np.moveaxis(
-                    np.asarray(moco_functional_two_chunk), 0, -1
+            functional_one_save_object = nib.Nifti1Image(moco_functional_one)
+            functional_one_save_object.to_filename(path_h5_functional[0])
+
+    if not MEMORY_ONLY:
+        # For timepoints / stepsize. e.g. if have 300 timepoints and stepsize 100 I get len(steps)=3
+        for j in range(len(steps) - 1):
+            # printlog(F"j: {j}")
+
+            ### LOAD A SINGLE BRAIN VOL ###
+            moco_anatomy_chunk = [] # This really should be a preallocated array!!!
+            moco_functional_one_chunk = [] # This really should be a preallocated array!!!
+            moco_functional_two_chunk = [] # This really should be a preallocated array!!!
+            # for each timePOINT!
+            for i in range(stepsize):
+                # that's a number
+                index = steps[j] + i
+                # for the very last j, adding the step size will go over the dim, so need to stop here
+                if index == brain_dims[-1]:
+                    break
+                # that's a single slice in time
+                vol = img_anatomy.dataobj[..., index] #
+                moving = ants.from_numpy(np.asarray(vol, dtype="float32"))
+
+                ### MOTION CORRECT ###
+                # This step doesn't seem to take very long - ~2 seconds on a 256,128,49 volume
+                moco = ants.registration(
+                    fixed,
+                    moving,
+                    type_of_transform=type_of_transform,
+                    flow_sigma=flow_sigma,
+                    total_sigma=total_sigma,
+                    aff_metric=aff_metric,
                 )
-        # moco_ch1_chunk = np.moveaxis(np.asarray(moco_ch1_chunk), 0, -1)
-        # if path_brain_mirror is not None:
-        #    moco_ch2_chunk = np.moveaxis(np.asarray(moco_ch2_chunk), 0, -1)
-        # printlog("chunk shape: {}. Time: {}".format(moco_ch1_chunk.shape, time.time()-t0))
+                # moco_ch1 = moco['warpedmovout'].numpy()
+                moco_anatomy = moco["warpedmovout"].numpy()
+                # moco_ch1_chunk.append(moco_ch1)
+                moco_anatomy_chunk.append(moco_anatomy) # This really should be a preallocated array!!!
+                transformlist = moco["fwdtransforms"]
+                # printlog(F'vol, ch1 moco: {index}, time: {time.time()-t0}')
 
-        ### APPEND WARPED VOL TO HD5F FILE - CHANNEL 1 ###
-        with h5py.File(path_h5_anatomy, "a") as f:
-            f["data"][..., steps[j] : steps[j + 1]] = moco_anatomy_chunk
-        # t0 = time.time()
-        # with h5py.File(path_h5_master, 'a') as f:
-        #    f['data'][..., steps[j]:steps[j + 1]] = moco_ch1_chunk
-        # printlog(F'Ch_1 append time: {time.time-t0}')
+                ### APPLY TRANSFORMS TO FUNCTIONAL CHANNELS ###
+                if len(path_brain_functional) > 0:
+                    vol = img_functional_one.dataobj[..., index]
+                    functional_one_moving = ants.from_numpy(
+                        np.asarray(vol, dtype="float32")
+                    )
+                    moco_functional_one = ants.apply_transforms(
+                        fixed, functional_one_moving, transformlist
+                    )
+                    moco_functional_one = moco_functional_one.numpy()
+                    moco_functional_one_chunk.append(moco_functional_one)
+                    # If a second functional channel exists, also apply to this one
+                    if len(path_brain_functional) > 1:
+                        vol = img_functional_two.dataobj[..., index]
+                        functional_two_moving = ants.from_numpy(
+                            np.asarray(vol, dtype="float32")
+                        )
+                        moco_functional_two = ants.apply_transforms(
+                            fixed, functional_two_moving, transformlist
+                        )
+                        moco_functional_two = moco_functional_two.numpy()
+                        moco_functional_two_chunk.append(moco_functional_two)
+                ### APPLY TRANSFORMS TO CHANNEL 2 ###
+                # t0 = time.time()
+                # if path_brain_mirror is not None:
+                #    vol = img_ch2.dataobj[..., index]
+                #    ch2_moving = ants.from_numpy(np.asarray(vol, dtype='float32'))
+                #    moco_ch2 = ants.apply_transforms(fixed, ch2_moving, transformlist)
+                #    moco_ch2 = moco_ch2.numpy()
+                #    moco_ch2_chunk.append(moco_ch2)
+                # printlog(F'moco vol done: {index}, time: {time.time()-t0}')
 
-        ### APPEND WARPED VOL TO HD5F FILE - CHANNEL 2 ###
-        if len(path_brain_functional) > 0:
-            with h5py.File(path_h5_functional[0], "a") as f:
-                f["data"][..., steps[j] : steps[j + 1]] = moco_functional_one_chunk
-            if len(path_brain_functional) > 1:
-                with h5py.File(path_h5_functional[1], "a") as f:
-                    f["data"][..., steps[j] : steps[j + 1]] = moco_functional_two_chunk
-        # t0 = time.time()
-        # if path_brain_mirror is not None:
-        #    with h5py.File(path_h5_mirror, 'a') as f:
-        #        f['data'][..., steps[j]:steps[j + 1]] = moco_ch2_chunk
-        # printlog(F'Ch_2 append time: {time.time()-t0}')
+                ### SAVE AFFINE TRANSFORM PARAMETERS FOR PLOTTING MOTION ###
+                transformlist = moco["fwdtransforms"]
+                for x in transformlist:
+                    if ".mat" in x:
+                        temp = ants.read_transform(x)
+                        transform_matrix.append(temp.parameters)
+
+                ### DELETE FORWARD TRANSFORMS ###
+                transformlist = moco["fwdtransforms"]
+                for x in transformlist:
+                    if ".mat" not in x:
+                        # print('Deleting fwdtransforms ' + x) # Yes, these are files
+                        pathlib.Path(x).unlink()
+                        # os.remove(x) # todo Save memory? # I think that because otherwise we'll
+                        # quickly have tons of files in the temp folder which will make it hard to
+                        # know which one we are looking for.
+
+                ### DELETE INVERSE TRANSFORMS ###
+                transformlist = moco[
+                    "invtransforms"
+                ]  # I'm surprised this doesn't lead to an error because it doesn't seem taht moco['invtransforms'] is defined anywhere
+                for x in transformlist:
+                    if ".mat" not in x:
+                        # print('Deleting invtransforms ' + x)
+                        pathlib.Path(x).unlink()
+                        # os.remove(x) # todo Save memory? # I think that because otherwise we'll
+                        # quickly have tons of files in the temp folder which will make it hard to
+                        # know which one we are looking for.
+                        # No it seems mainly a memory/filenumber issue: for each registration call (so several
+                        # 1000 times per call of this function) a >10Mb file is created. That adds of course
+
+                ### Print progress ###
+                elapsed_time = time.time() - start_time
+                if elapsed_time < 1 * 60:  # if less than 1 min has elapsed
+                    print_frequency = (
+                        1  # print every sec if possible, but will be every vol
+                    )
+                elif elapsed_time < 5 * 60:
+                    print_frequency = 1 * 60
+                elif elapsed_time < 30 * 60:
+                    print_frequency = 5 * 60
+                else:
+                    print_frequency = 60 * 60
+                if time.time() - print_timer > print_frequency:
+                    print_timer = time.time()
+                    moco_utils.print_progress_table_moco(
+                        total_vol=brain_dims[-1],
+                        complete_vol=index,
+                        printlog=printlog,
+                        start_time=start_time,
+                        width=WIDTH,
+                    )
+
+            moco_anatomy_chunk = np.moveaxis(np.asarray(moco_anatomy_chunk), 0, -1)
+            if len(path_brain_functional) > 0:
+                moco_functional_one_chunk = np.moveaxis(
+                    np.asarray(moco_functional_one_chunk), 0, -1
+                )
+                if len(path_brain_functional) > 1:
+                    moco_functional_two_chunk = np.moveaxis(
+                        np.asarray(moco_functional_two_chunk), 0, -1
+                    )
+            # moco_ch1_chunk = np.moveaxis(np.asarray(moco_ch1_chunk), 0, -1)
+            # if path_brain_mirror is not None:
+            #    moco_ch2_chunk = np.moveaxis(np.asarray(moco_ch2_chunk), 0, -1)
+            # printlog("chunk shape: {}. Time: {}".format(moco_ch1_chunk.shape, time.time()-t0))
+
+            ### APPEND WARPED VOL TO HD5F FILE - CHANNEL 1 ###
+            with h5py.File(path_h5_anatomy, "a") as f:
+                f["data"][..., steps[j] : steps[j + 1]] = moco_anatomy_chunk
+            # t0 = time.time()
+            # with h5py.File(path_h5_master, 'a') as f:
+            #    f['data'][..., steps[j]:steps[j + 1]] = moco_ch1_chunk
+            # printlog(F'Ch_1 append time: {time.time-t0}')
+
+            ### APPEND WARPED VOL TO HD5F FILE - CHANNEL 2 ###
+            if len(path_brain_functional) > 0:
+                with h5py.File(path_h5_functional[0], "a") as f:
+                    f["data"][..., steps[j] : steps[j + 1]] = moco_functional_one_chunk
+                if len(path_brain_functional) > 1:
+                    with h5py.File(path_h5_functional[1], "a") as f:
+                        f["data"][..., steps[j] : steps[j + 1]] = moco_functional_two_chunk
+            # t0 = time.time()
+            # if path_brain_mirror is not None:
+            #    with h5py.File(path_h5_mirror, 'a') as f:
+            #        f['data'][..., steps[j]:steps[j + 1]] = moco_ch2_chunk
+            # printlog(F'Ch_2 append time: {time.time()-t0}')
 
     ### SAVE TRANSFORMS ###
     printlog("saving transforms")
