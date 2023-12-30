@@ -1542,7 +1542,7 @@ def motion_correction(
     )  # <<<<!!! This is quite strange - meanbrain is float64!!
     # meanbrain = np.asarray(nib.load(path_meanbrain_anatomy).get_fdata(), dtype='uint16')
     # get_fdata() loads data into memory and sometimes doesn't release it.
-    fixed = ants.from_numpy(np.asarray(meanbrain, dtype="float32"))
+    fixed_ants = ants.from_numpy(np.asarray(meanbrain, dtype="float32"))
     printlog(f"Loaded meanbrain{path_meanbrain_anatomy.name:.>{WIDTH - 16}}")
 
     #########################
@@ -1550,9 +1550,9 @@ def motion_correction(
     #########################
 
     if len(path_brain_functional) > 0:  # is not None:
-        img_functional_one = nib.load(path_brain_functional[0])  # this loads a proxy
+        img_functional_one_proxy = nib.load(path_brain_functional[0])  # this loads a proxy
         # make sure channel anatomy and functional have same shape
-        functional_one_shape = img_functional_one.header.get_data_shape()
+        functional_one_shape = img_functional_one_proxy.header.get_data_shape()
         if anatomy_shape != functional_one_shape:
             printlog(
                 f"{'   WARNING Channel anatomy and functional do not have the same shape!   ':*^{WIDTH}}"
@@ -1623,23 +1623,25 @@ def motion_correction(
     # https://docs.h5py.org/en/stable/high/dataset.html#chunked-storage
 
     if MEMORY_ONLY:
-        # Must be 4D array! Else fails here
+        # Input be 4D array! Else fails here. This is preallocation of memory for the resulting motion-corrected
+        # anatomy channel
         moco_anatomy = np.zeros((brain_dims[0], brain_dims[1], brain_dims[2], brain_dims[3]), dtype=np.float32)
         moco_anatomy.fill(np.nan) # avoid that missing values end up as 0!
         #
         transform_matrix = np.zeros((12, brain_dims[3])) # Lets see if that's correct
 
         if len(path_brain_functional) > 0:
+            # This is preallocation of memory for the resulting motion-corrected functional channel
             moco_functional_one = np.zeros((brain_dims[0], brain_dims[1], brain_dims[2], brain_dims[3]), dtype=np.float32)
             moco_functional_one.fill(np.nan)
 
         # Register one frame after another
-        for current_frame in range(brain_dims[-1]): # that's t, so it would return something like 0, 1, 2 etc.
-            current_moving_frame = img_anatomy.dataobj[:,:,:,current_frame]
+        for current_frame in range(brain_dims[-1]): # that's the t-dimension
+            current_moving_frame = img_anatomy.dataobj[:,:,:,current_frame] # load a single frame into memory (memory-cheap, but i/o heavy)
             current_moving_frame_ants = ants.from_numpy(np.asarray(current_moving_frame, dtype=np.float32)) # cast np.uint16 as float32 because ants requires it
 
             moco = ants.registration(
-                    fixed,
+                    fixed_ants,
                     current_moving_frame_ants,
                     type_of_transform=type_of_transform,
                     flow_sigma=flow_sigma,
@@ -1656,22 +1658,22 @@ def motion_correction(
 
             ### APPLY TRANSFORMS TO FUNCTIONAL CHANNELS ###
             if len(path_brain_functional) > 0:
-                current_functional_frame = img_functional_one.dataobj[:,:,:, current_frame]
-                functional_one_moving = ants.from_numpy(
+                current_functional_frame = img_functional_one_proxy.dataobj[:,:,:, current_frame]
+                current_functional_frame_ants = ants.from_numpy(
                     np.asarray(current_functional_frame, dtype=np.float32)
                 )
-                temp = ants.apply_transforms(
-                    fixed, functional_one_moving, transformlist
+                moco_functional = ants.apply_transforms(
+                    fixed_ants, current_functional_frame_ants, transformlist
                 )
-                print('temp ' +repr(temp))
-                print('temp.shape' + repr(temp.shape))
+                print('moco_functional ' +repr(moco_functional))
+                print('current_functional_frame_ants' + repr(current_functional_frame_ants))
 
-                temp = temp.numpy()
-                print("temp.shape " + repr(temp.shape))
-                print('moco_functional_one' + repr(moco_functional_one.shape))
-                print('temp.dtyp' + repr(temp.dtype))
-                print("moco_functional_one.dtype" + repr(moco_functional_one.dtype))
-                moco_functional_one[:,:,:,current_frame] = np.asarray(temp, dtype=np.float32)
+                #temp = temp.numpy()
+                print("fixed_ants " + repr(fixed_ants))
+                #print('moco_functional_one' + repr(moco_functional_one.shape))
+                #print('temp.dtyp' + repr(temp.dtype))
+                #print("moco_functional_one.dtype" + repr(moco_functional_one.dtype))
+                moco_functional_one[:,:,:,current_frame] = moco_functional.numpy()
                 # TODO add more channels here!!!
 
             # Delete transform info - might be worth keeping instead of huge resulting file? TBD
@@ -1739,7 +1741,7 @@ def motion_correction(
                 ### MOTION CORRECT ###
                 # This step doesn't seem to take very long - ~2 seconds on a 256,128,49 volume
                 moco = ants.registration(
-                    fixed,
+                    fixed_ants,
                     moving,
                     type_of_transform=type_of_transform,
                     flow_sigma=flow_sigma,
@@ -1755,12 +1757,12 @@ def motion_correction(
 
                 ### APPLY TRANSFORMS TO FUNCTIONAL CHANNELS ###
                 if len(path_brain_functional) > 0:
-                    vol = img_functional_one.dataobj[..., index]
+                    vol = img_functional_one_proxy.dataobj[..., index]
                     functional_one_moving = ants.from_numpy(
                         np.asarray(vol, dtype="float32")
                     )
                     moco_functional_one = ants.apply_transforms(
-                        fixed, functional_one_moving, transformlist
+                        fixed_ants, functional_one_moving, transformlist
                     )
                     moco_functional_one = moco_functional_one.numpy()
                     moco_functional_one_chunk.append(moco_functional_one)
@@ -1771,7 +1773,7 @@ def motion_correction(
                             np.asarray(vol, dtype="float32")
                         )
                         moco_functional_two = ants.apply_transforms(
-                            fixed, functional_two_moving, transformlist
+                            fixed_ants, functional_two_moving, transformlist
                         )
                         moco_functional_two = moco_functional_two.numpy()
                         moco_functional_two_chunk.append(moco_functional_two)
