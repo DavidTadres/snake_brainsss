@@ -1662,8 +1662,9 @@ def motion_correction(
                 temp = ants.apply_transforms(
                     fixed, functional_one_moving, transformlist
                 )
-                print(temp.shape)
-                moco_functional_one[:,:,:,current_frame] = temp
+                print("temp.shape " + repr(temp.shape))
+                print('moco_functional_one' + repr(moco_functional_one))
+                moco_functional_one[:,:,:,current_frame] = np.asarray(temp, dtype=np.float32)
                 # TODO add more channels here!!!
 
             # Delete transform info - might be worth keeping instead of huge resulting file? TBD
