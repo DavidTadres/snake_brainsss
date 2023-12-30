@@ -1,12 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=prepro
+#SBATCH --job-name=4D_array_comparison
 #SBATCH --partition=trc
 #SBATCH --time=4-00:00:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=10
 #SBATCH --output=./logs/mainlog.out
 #SBATCH --open-mode=append
 #SBATCH --mem-per-cpu=60G
+#SBATCH --mail-type=ALL
 
 ml python/3.9.0
 source .env_snakemake/bin/activate
