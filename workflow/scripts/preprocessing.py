@@ -1632,7 +1632,7 @@ def motion_correction(
         if len(path_brain_functional) > 0:
             moco_functional_one = np.zeros((brain_dims[0], brain_dims[1], brain_dims[2], brain_dims[3]), dtype=np.float32)
             moco_functional_one.fill(np.nan)
-        for current_frame in brain_dims[-1]: # that's t, so it would return something like 0, 1, 2 etc.
+        for current_frame in range(brain_dims[-1]): # that's t, so it would return something like 0, 1, 2 etc.
             current_moving_frame = img_anatomy.anatomy.dataobj[:,:,:,current_frame]
             current_moving_frame_ants = ants.from_numpy(np.asarray(current_moving_frame, dtype=np.float32)) # cast np.uint16 as float32 because ants requires it
             moco = ants.registration(
