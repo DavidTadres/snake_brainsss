@@ -1244,7 +1244,6 @@ def zscore(fly_directory, dataset_path, zscore_path):
                 steps.append(dims[-1])
 
                 for chunk_num in range(len(steps)):
-                    t0 = time()
                     if chunk_num + 1 <= len(steps) - 1:
                         chunkstart = steps[chunk_num]
                         chunkend = steps[chunk_num + 1]
@@ -1254,7 +1253,6 @@ def zscore(fly_directory, dataset_path, zscore_path):
                 meanbrain = running_sum / dims[-1]
 
                 for chunk_num in range(len(steps)):
-                    t0 = time()
                     if chunk_num + 1 <= len(steps) - 1:
                         chunkstart = steps[chunk_num]
                         chunkend = steps[chunk_num + 1]
@@ -1269,7 +1267,6 @@ def zscore(fly_directory, dataset_path, zscore_path):
                     dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
 
                     for chunk_num in range(len(steps)):
-                        t0 = time()
                         if chunk_num + 1 <= len(steps) - 1:
                             chunkstart = steps[chunk_num]
                             chunkend = steps[chunk_num + 1]
