@@ -1186,7 +1186,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
     :return:
     """
     # To reproduce Bella's script
-    RUN_LOOPED = True
+    RUN_LOOPED = False
     if RUN_LOOPED:
         stepsize=100
 
@@ -1282,7 +1282,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
                             f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
                                 zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
                             # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-
+            else:
                 # Then do vectorized version
                 # I think we don't have to worry about memory too much - since we only work
                 # with one h5 file at a time and 30 minutes at float32 is ~20Gb
@@ -1291,7 +1291,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
                 np.save('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/vect_meanbrain.npy',
                         meanbrain)
                 # Might get out of memory error, test!
-                final_std = np.std(data, axis=3, dtype=np.float64)
+                final_std = np.std(data, axis=3, dtype=np.float64) # With float64 get memory error!
                 np.save('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/vect_final_std.npy',
                         final_std)
 
