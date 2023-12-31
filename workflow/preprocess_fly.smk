@@ -320,17 +320,18 @@ elif 'channel_3' in ANATOMY_CHANNEL:
 imaging_paths_anat2atlas =[]
 for current_path in imaging_file_paths:
     if 'anat' in current_path:
+        # here it's ok to have more than one anatomy folder! However, script will break before...
+        # but at least this part doesn't have to break!
         imaging_paths_anat2atlas.append(current_path.split('/imaging')[0])
-# here it's ok to have more than one anatomy folder! However, script will break before...
-# but at least this part doesn't have to break!
+
 # the anatomical channel for func2anat
 file_path_anat2atlas_moving = []
 if 'channel_1' in ANATOMY_CHANNEL:
-    file_path_anat2atlas_moving.append('channel_1_moco_mean_clean')
+    file_path_anat2atlas_moving.append('channel_1')
 elif 'channel_2' in ANATOMY_CHANNEL:
-    file_path_anat2atlas_moving.append('channel_2_moco_mean_clean')
+    file_path_anat2atlas_moving.append('channel_2')
 elif 'channel_3' in ANATOMY_CHANNEL:
-    file_path_anat2atlas_moving.append('channel_3_moco_mean_clean')
+    file_path_anat2atlas_moving.append('channel_3')
 
 '''
 #######
@@ -454,7 +455,10 @@ rule all:
         ##
         # anat2atlas
         ##
-        #>>expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii", anat2atlas_paths=imaging_paths_anat2atlas, anat2atlas_moving=file_path_anat2atlas_moving),
+        expand(str(fly_folder_to_process_oak)
+               + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii",
+            anat2atlas_paths=imaging_paths_anat2atlas,
+            anat2atlas_moving=file_path_anat2atlas_moving),
 '''
 rule fictrac_qc_rule:
     """
@@ -1367,9 +1371,11 @@ rule anat_to_atlas:
     resources: mem_mb=snake_utils.mem_mb_more_times_input
     input:
         path_to_read_fixed=atlas_path,
-        path_to_read_moving=str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/moco/{anat2atlas_moving}.nii"
+        path_to_read_moving=str(fly_folder_to_process_oak)
+                            + "/{anat2atlas_paths}/moco/{anat2atlas_moving}_moco_mean_clean.nii"
     output:
-        str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii"
+        str(fly_folder_to_process_oak)
+        + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii"
 
     run:
         try:
