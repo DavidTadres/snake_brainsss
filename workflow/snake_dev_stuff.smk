@@ -23,7 +23,7 @@ file_path_my = pathlib.Path(path_my, 'channel_2_moco_zscore_highpass.h5')
 rule test_moco_timing_rule:
     threads: 16
     resources: mem_mb='20G'
-    shell: "python3 dev/moco_timing"
+    shell: "python3 dev/moco_timing.py"
 
 '''
 rule compare_large_arrays_rule:
