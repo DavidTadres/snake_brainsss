@@ -402,7 +402,8 @@ def align_anat(
 
     fixed_brain = ants.from_numpy(fixed_brain)
     fixed_brain.set_spacing(resolution_of_fixed)
-    fixed_brain = ants.resample_image(fixed_brain, (2, 2, 2), use_voxels=False)
+    if iso_2um_fixed:
+        fixed_brain = ants.resample_image(fixed_brain, (2, 2, 2), use_voxels=False)
 
     # It's possible to have to channels for the 'moving' brain. Do this in a loop
     for current_path_to_read_moving, current_path_to_save in zip(
@@ -426,7 +427,8 @@ def align_anat(
             moving_brain = moving_brain[:, :, ::-1]
         moving_brain = ants.from_numpy(moving_brain)
         moving_brain.set_spacing(resolution_of_moving)
-        moving_brain = ants.resample_image(moving_brain, (2, 2, 2), use_voxels=False)
+        if iso_2um_moving: # there are also low_res and very_low_res option in brainsss!
+            moving_brain = ants.resample_image(moving_brain, (2, 2, 2), use_voxels=False)
 
         # Give a bit more info about the fixed and moving fly by adding channel information!
         moving_fly = 'channel_' + current_path_to_read_moving.name.split('channel_')[-1].split('_')[0] + '_' + moving_fly
