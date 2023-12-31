@@ -456,7 +456,7 @@ rule all:
         # anat2atlas
         ##
         expand(str(fly_folder_to_process_oak)
-               + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
+            + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
             anat2atlas_paths=imaging_paths_anat2atlas,
             anat2atlas_moving=file_path_anat2atlas_moving),
 '''
@@ -1388,6 +1388,9 @@ rule anat_to_atlas:
                 resolution_of_moving=(
                 0.653, 0.653, 1),# Copy-paste from brainsss, probably can be read from metadate.xml!
                 rule_name='anat_to_atlas',
+                fixed_fly='meanbrain',# this is important for where transform params are saved
+                moving_fly='anat',# this is important for where transform params are saved # TODO change this to
+                # something dynamic, otherwise more than 1 channel won't work as expected!!!
                 iso_2um_fixed=False,
                 iso_2um_moving=True,
                 grad_step=0.2,
