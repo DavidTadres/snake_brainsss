@@ -21,7 +21,7 @@ file_path_original = pathlib.Path(path_original, 'functional_channel_2_moco_zsco
 file_path_my = pathlib.Path(path_my, 'channel_2_moco_zscore_highpass.h5')
 
 rule test_moco_timing_rule:
-    threads: 16
+    threads: 32
     resources: mem_mb='60G'
     shell: "python3 dev/moco_timing.py"
 

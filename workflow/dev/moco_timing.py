@@ -29,7 +29,7 @@ if RUN_LOCAL:
     cores = 4
 else:
     imaging_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
-    cores = 16
+    cores = 30
 fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
 moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
 functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
@@ -134,7 +134,7 @@ def for_loop_moco(index):
             moco_functional[:,:,:,index[0]:index[-1]])
 
 
-split_index = split_input(list(np.arange(experiment_total_frames)),4)
+split_index = split_input(list(np.arange(experiment_total_frames)),cores)
 # The code below parallelizes the transform part of moco
 # Without parallelization I get ~6 seconds per loop. With 4 cores I get ~12 seconds
 # It therefore should take half the time to run motion correction.
