@@ -467,6 +467,7 @@ def align_anat(
 
         if save_warp_params:
             fwdtransformlist = moco["fwdtransforms"]
+            print("fwdtransformlist" + repr(fwdtransformlist))
             fwdtransforms_save_folder = pathlib.Path(
                 current_path_to_save.parent,
                 "{}-to-{}_fwdtransforms".format(moving_fly, fixed_fly),
@@ -477,6 +478,7 @@ def align_anat(
                 )
             fwdtransforms_save_folder.mkdir(exist_ok=True, parents=True)
             for source_path in fwdtransformlist:
+                print('fwdtransformlist' + repr(source_path))
                 source_file = pathlib.Path(source_path).name
                 target_path = pathlib.Path(fwdtransforms_save_folder, source_file)
                 shutil.copyfile(source_path, target_path)
