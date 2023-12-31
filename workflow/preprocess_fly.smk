@@ -308,11 +308,11 @@ for current_path in imaging_file_paths:
             print('!!!! func to anat function will likely give unexpected results! ')
 # the anatomical channel for func2anat
 if 'channel_1' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed = ['channel_1_moco_mean']
+    file_path_func2anat_fixed = ['channel_1']
 elif 'channel_2' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed = ['channel_2_moco_mean']
+    file_path_func2anat_fixed = ['channel_2']
 elif 'channel_3' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed = ['channel_3_moco_mean']
+    file_path_func2anat_fixed = ['channel_3']
 
 ##
 # list of paths for anat2atlas
@@ -446,7 +446,7 @@ rule all:
         ###
         # func2anat
         ###
-        expand(str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii", func2anat_paths=imaging_paths_func2anat, func2anat_moving=file_path_func2anat_fixed, func2anat_fixed=file_path_func2anat_fixed),
+        expand(str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_func_-to-{func2anat_fixed}_anat.nii", func2anat_paths=imaging_paths_func2anat, func2anat_moving=file_path_func2anat_fixed, func2anat_fixed=file_path_func2anat_fixed),
         ##
         # anat2atlas
         ##
@@ -1314,9 +1314,9 @@ rule func_to_anat_rule:
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_more_times_input
     input:
-        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}.nii',
-        path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}.nii"
-    output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii"
+        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}_moco_mean.nii',
+        path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}_moco_mean.nii"
+    output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_func_-to-{func2anat_fixed}_anat.nii"
 
     run:
         try:

@@ -383,6 +383,8 @@ def align_anat(
     fixed_path = path_to_read_fixed  # args['fixed_path']
     # fixed_fly = 'anat' #args['fixed_fly']
     #fixed_fly = path_to_read_fixed.name # incorrect! needs to be for example 'anat'
+    fixed_fly = fixed_fly + 'channel_' + path_to_read_fixed.name.split('channel_')[-1].split('_')[0]
+
     fixed_resolution = resolution_of_fixed  # args['fixed_resolution']
 
     # low_res = False # args['low_res']
@@ -480,6 +482,10 @@ def align_anat(
         #    mimic.set_spacing(mimic_resolution)
         #    printlog('Starting {} to {}, with mimic {}'.format(moving_fly, fixed_fly, mimic_fly))
         # else:
+
+        # Give a bit more info about the fixed and moving fly by adding channel information!
+        moving_fly = moving_fly + 'channel_' + current_path_to_read_moving.name.split('channel_')[-1].split('_')[0]
+
         printlog("Starting registration of {} to {}".format(moving_fly, fixed_fly))
 
         #############
@@ -589,11 +595,6 @@ def align_anat(
             current_path_to_save
         )
 
-        # if flip_X:
-        #     save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly + '.nii')
-        # else:
-        #     save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly + '.nii')
-        # nib.Nifti1Image(moco['warpedmovout'].numpy(), np.eye(4)).to_filename(save_file)
 
 
 def clean_anatomy(fly_directory, path_to_read, save_path):
