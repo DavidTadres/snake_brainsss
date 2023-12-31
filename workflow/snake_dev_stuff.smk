@@ -11,6 +11,7 @@ ONLY ONE RULE PER RUN - COMMENT WHAT YOU DONT NEED
 import pathlib
 scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
 from dev import compare_h5_large_data
+from dev import moco_timing
 
 
 path_original = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/func_0')
@@ -19,6 +20,12 @@ path_my = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/
 file_path_original = pathlib.Path(path_original, 'functional_channel_2_moco_zscore_highpass.h5')
 file_path_my = pathlib.Path(path_my, 'channel_2_moco_zscore_highpass.h5')
 
+rule test_moco_timing_rule:
+    threads: 16
+    resources: mem_mb='20G'
+    shell: "python3 dev/moco_timing"
+
+'''
 rule compare_large_arrays_rule:
     #shell:
     #    'python3 hello_world.py $args'
@@ -31,4 +38,4 @@ rule compare_large_arrays_rule:
         compare_h5_large_data.run_comparison(
             path_original=input.file_path_original,
             path_my=input.file_path_my
-        )
+        )'''

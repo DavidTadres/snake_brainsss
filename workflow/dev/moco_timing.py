@@ -16,17 +16,25 @@ import time
 import multiprocessing
 import concurrent.futures
 
+RUN_LOCAL = False # if not run on sherlock
 
 
 type_of_transform = "SyN"
 flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
-
-imaging_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
+if RUN_LOCAL:
+    imaging_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
+    experiment_total_frames = 100  # So that I don't wait forever during testing, of course it should just be brain_shape[3]
+    cores = 4
+else:
+    imaging_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
+    cores = 16
 fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
 moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
 functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
+#save_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/moco_parallel')
+save_path = pathlib.Path('/Users/dtadres/Documents/test_moco')
 
 fixed_proxy = nib.load(fixed_path)
 fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
@@ -38,6 +46,8 @@ functional_proxy = nib.load(functional_path)
 #functional_data = np.asarray(functional_proxy.dataobj, np.uint16)
 
 brain_shape = functional_proxy.header.get_data_shape()
+if not RUN_LOCAL:
+    experiment_total_frames = brain_shape[-1] # run full experiment
 
 moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brain_shape[3]),dtype=np.float32)
 moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brain_shape[3]),dtype=np.float32)
@@ -45,13 +55,11 @@ moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brai
 loop_duration = []
 #total_frames_to_process = 10
 transform_matrix = np.zeros((12,brain_shape[-1]))
-#current_moving = moving_data[:,:,:,current_frame]
-experiment_total_frames = 50 # So that I don't wait forever during testing, of course it should just be brain_shape[3]
-
+#> FOR LOCAL
 # Before multiprocessing I need to split the timepoints that we'll use. In the original for loop we would have something
 # like range(brain.shape[3]) which would spit out a list going from 0 to brain.shape[3]. Instead we can prepare
 # one list per parallel processing.
-cores = 4
+
 
 def split_input(index, cores):
     """
@@ -113,6 +121,17 @@ def for_loop_moco(index):
         #print('Delete took: ' + repr(time.time()-t0))
         loop_duration.append(time.time()-t_loop_start)
         print('Loop duration: ' + repr(loop_duration[-1]))
+    print(pathlib.Path(save_path, fixed_path.name + 'chunks_'
+                         + repr(index[0]) + '-' + repr(index[-1])))
+
+    # Save each chunk as a temporary npy file
+    np.save(pathlib.Path(save_path, moving_path.name + 'chunks_'
+                         + repr(index[0]) + '-' + repr(index[-1])),
+            moco_anatomy[:,:,:,index[0]:index[-1]])
+
+    np.save(pathlib.Path(save_path, functional_path.name + 'chunks_'
+                         + repr(index[0]) + '-' + repr(index[-1])),
+            moco_functional[:,:,:,index[0]:index[-1]])
 
 
 split_index = split_input(list(np.arange(experiment_total_frames)),4)
@@ -124,4 +143,12 @@ split_index = split_input(list(np.arange(experiment_total_frames)),4)
 if __name__ == '__main__':
     with multiprocessing.Pool(cores) as p:
         p.map(for_loop_moco, split_index)
+    print('calc done, saving now')
+    # Try to save the file and see if it gives the expected result.
+    #np.save(pathlib.Path(save_path, 'channel_1_moco_par.npy'),
+    #        moco_anatomy)
+    #print('saved first file')
+    #np.save(pathlib.Path(save_path, 'channel_2_moco_par.npy'),
+    #        moco_functional)
 
+# Then put them together to compare
