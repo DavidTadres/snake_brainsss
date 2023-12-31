@@ -377,8 +377,8 @@ def align_anat(
 
     fixed_fly = 'channel_' + path_to_read_fixed.name.split('channel_')[-1].split('_')[0] + '_' + fixed_fly
 
-    iso_2um_fixed = iso_2um_fixed  # True for func2anat, False for anat2atlas
-    iso_2um_moving = iso_2um_moving  # False for func2anat, True for anat2atlas
+    #iso_2um_fixed = iso_2um_fixed  # True for func2anat, False for anat2atlas
+    #iso_2um_moving = iso_2um_moving  # False for func2anat, True for anat2atlas
 
     grad_step = grad_step  # args['grad_step']
     flow_sigma = flow_sigma  # args['flow_sigma']
@@ -473,7 +473,7 @@ def align_anat(
             )
             if True in [iso_2um_moving, iso_2um_fixed]:
                 fwdtransforms_save_folder = pathlib.Path(
-                    fwdtransforms_save_folder, "_2umiso"
+                    fwdtransforms_save_folder + "_2umiso"
                 )
             fwdtransforms_save_folder.mkdir(exist_ok=True, parents=True)
             for source_path in fwdtransformlist:
@@ -489,7 +489,7 @@ def align_anat(
             )
             if True in [iso_2um_moving, iso_2um_fixed]:
                 invtransforms_save_folder = pathlib.Path(
-                    invtransforms_save_folder, "_2umiso"
+                    invtransforms_save_folder + "_2umiso"
                 )
             invtransforms_save_folder.mkdir(exist_ok=True, parents=True)
             # !!!!! NOTE this all sounds like invtransforms but the files that are actually transfered
