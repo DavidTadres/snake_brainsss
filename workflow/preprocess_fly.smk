@@ -456,7 +456,7 @@ rule all:
         # anat2atlas
         ##
         expand(str(fly_folder_to_process_oak)
-               + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii",
+               + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
             anat2atlas_paths=imaging_paths_anat2atlas,
             anat2atlas_moving=file_path_anat2atlas_moving),
 '''
