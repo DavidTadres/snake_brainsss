@@ -34,7 +34,7 @@ if RUN_LOCAL:
     cores = 4
 else:
     imaging_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
-    cores = 7
+    cores = 14
 fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
 moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
 functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
