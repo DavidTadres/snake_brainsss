@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'fly_002' # folder to be processed
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -196,28 +196,12 @@ def create_file_paths(path_to_fly_folder, imaging_file_paths, filename, func_onl
             if CH3_EXISTS:
                 list_of_filepaths.append(pathlib.Path(path_to_fly_folder,current_path,'channel_3' + filename))
     return(list_of_filepaths)'''
-'''
-# Not used anymore
-# This will create path to the imaging files that exists so we'll get a list like this:
-# ['/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_001/anat1/imaging/channel_1.nii',
-#  '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_001/anat1/imaging/channel_2.nii', ...]
-all_imaging_oak_paths = create_file_paths(path_to_fly_folder=fly_folder_to_process_oak,
-                                        imaging_file_paths=imaging_file_paths,
-                                         filename='.nii')
-'''
+
 # >>>> This will hopefully change
 # Fictrac files are named non-deterministically (could be changed of course) but for now
 # the full filename is in the fly_dirs_dict
 full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process_oak, fictrac_file_paths)
 # <<<<
-
-'''
-# Not used anymore
-# Path for make_mean_brain_rule
-# will look like this: [PosixPath('../data/../imaging/channel_1'),PosixPath('../data/../imaging/channel_2')]
-paths_for_make_mean_brain_oak = create_file_paths(path_to_fly_folder=fly_folder_to_process_oak,
-                                                imaging_file_paths=imaging_file_paths,
-                                                filename='')'''
 
 FICTRAC_PATHS = []
 for current_path in fictrac_file_paths:
@@ -378,39 +362,6 @@ def convert_oak_path_to_scratch(oak_path):
 
 #fly_folder_to_process_scratch = convert_oak_path_to_scratch(fly_folder_to_process_oak) # Must be provided as a list
 '''
-'''
-####
-# Path per folder
-# This is a bit different to path above as function (in this case bleaching) requires 2 or three input files
-####
-# Some scripts require to have path organized in lists per experiment. See docstring in
-# :create_paths_each_experiment: function for example
-def create_paths_each_experiment(imaging_file_paths):
-    """
-    get paths to imaging data as list of lists, i.e.
-    [[func0/channel1.nii, func0/channel2.nii], [func1/channel1.nii, func1/channel2.nii]]
-    :param imaging_file_paths: a list with all func and anat path as defined in 'fly_00X_dirs.json'
-    """
-    imaging_path_by_folder_oak = []
-    #imaging_path_by_folder_scratch = []
-    for current_path in imaging_file_paths:
-        #if 'func' in current_path:
-        temp = []
-        if CH1_EXISTS:
-            temp.append(pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_1.nii'))
-        if CH2_EXISTS:
-            temp.append(pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_2.nii'))
-        if CH3_EXISTS:
-            temp.append(pathlib.Path(fly_folder_to_process_oak, current_path, 'channel_3.nii'))
-        imaging_path_by_folder_oak.append(temp)
-        #imaging_path_by_folder_scratch.append([
-        #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][0].as_posix().split('data')[-1]),
-        #    pathlib.Path(SCRATCH_DIR, 'data' + imaging_path_by_folder_oak[-1][1].as_posix().split('data')[-1])])
-    #return(imaging_path_by_folder_oak, imaging_path_by_folder_scratch)
-    return (imaging_path_by_folder_oak)
-
-#imaging_paths_by_folder_oak, imaging_paths_by_folder_scratch = create_paths_each_experiment(imaging_file_paths)
-imaging_paths_by_folder_oak = create_paths_each_experiment(imaging_file_paths)'''
 
 #####
 # Output data path
@@ -419,8 +370,6 @@ imaging_paths_by_folder_oak = create_paths_each_experiment(imaging_file_paths)''
 print("full_fictrac_file_oak_paths" + repr(full_fictrac_file_oak_paths))
 fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_oak_paths,
                                                              filename='fictrac_2d_hist_fixed.png')
-'''bleaching_qc_output_files = create_output_path_func(list_of_paths=imaging_paths_by_folder_oak,
-                                                           filename='bleaching.png')'''
 
 rule all:
     """
@@ -481,8 +430,7 @@ rule all:
         #>expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels),
         ###
         # Clean anatomy
-        ### directory = os.path.join(anat, 'moco')
-        #>expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels),
+        expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels),
         ##
         # make supervoxels
         ###

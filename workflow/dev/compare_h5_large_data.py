@@ -44,7 +44,7 @@ def run_comparison(path_original, path_my):
             ax1.set_title(path_original.name + ', z=' + repr(z_slice) + ', t=' + repr(t_slice))
 
             ax2 = fig.add_subplot(222)
-            ax2.imshow(my_data[:,:,z_slice, t_slice])
+            ax2.imshow(my_data[:,:,z_slice, t_slice].T)
             ax2.set_title(path_my.name + ', z=' + repr(z_slice) + ', t=' + repr(t_slice))
 
             delta = original_data[:,:,z_slice, t_slice] - my_data[:,:,z_slice, t_slice]

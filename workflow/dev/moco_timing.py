@@ -9,7 +9,7 @@ original: ~30 minutes
 4 cores:  00:17:29
 16 (14) cores: 00:11:43
 32 (30) cores: 00:06:18 (91% CPU usage)
-64 (63) cores:
+64 (63) cores: Maybe not possible on sherlock. Get job submission error!
 """
 
 import h5py
@@ -35,7 +35,7 @@ if RUN_LOCAL:
     cores = 4
 else:
     imaging_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
-    cores = 63
+    cores = 31
 fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
 moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
 functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
