@@ -473,7 +473,7 @@ def align_anat(
             )
             if True in [iso_2um_moving, iso_2um_fixed]:
                 fwdtransforms_save_folder = pathlib.Path(
-                    fwdtransforms_save_folder + "_2umiso"
+                    fwdtransforms_save_folder.parent, fwdtransforms_save_folder.name + "_2umiso"
                 )
             fwdtransforms_save_folder.mkdir(exist_ok=True, parents=True)
             for source_path in fwdtransformlist:
@@ -489,7 +489,7 @@ def align_anat(
             )
             if True in [iso_2um_moving, iso_2um_fixed]:
                 invtransforms_save_folder = pathlib.Path(
-                    invtransforms_save_folder + "_2umiso"
+                    invtransforms_save_folder.parent, invtransforms_save_folder.name + "_2umiso"
                 )
             invtransforms_save_folder.mkdir(exist_ok=True, parents=True)
             # !!!!! NOTE this all sounds like invtransforms but the files that are actually transfered
