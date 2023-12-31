@@ -8,7 +8,7 @@ I want to know how fast one call to ants.registration is.
 original: ~30 minutes
 4 cores:  00:17:29
 16 (14) cores: 00:11:43
-32 cores:
+32 (30) cores:
 """
 
 import h5py
@@ -81,14 +81,16 @@ def split_input(index, cores):
 
 
 def for_loop_moco(index):
-    moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], index[-1]), dtype=np.float32)
-    moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], index[-1]), dtype=np.float32)
+    moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], int(index[-1]-index[0])), dtype=np.float32)
+    moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], int(index[-1]-index[0])), dtype=np.float32)
 
     for counter, current_frame in enumerate(index):
 
         """
         I usually get less than 10 seconds per loop. Mean is 5.9seconds
         For 600frames that should be ~ 6,000 seconds or 100 minutes
+        Interestingly I got about 30 minutes with the original code indicating that there
+        is some sort of parallelization going on somehwere. (or the cluster just calculates faster than my mac)
         """
         print(current_frame)
 
@@ -138,8 +140,7 @@ def for_loop_moco(index):
         #print('Delete took: ' + repr(time.time()-t0))
         loop_duration.append(time.time()-t_loop_start)
         print('Loop duration: ' + repr(loop_duration[-1]))
-    print(pathlib.Path(save_path, fixed_path.name + 'chunks_'
-                         + repr(index[0]) + '-' + repr(index[-1])))
+        # LOOP END
 
     np.save(pathlib.Path(save_path, moving_path.name + 'chunks_'
                          + repr(index[0]) + '-' + repr(index[-1])),
