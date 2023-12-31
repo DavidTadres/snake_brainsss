@@ -34,7 +34,7 @@ fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
 moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
 functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
 #save_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/moco_parallel')
-save_path = pathlib.Path('/Users/dtadres/Documents/test_moco')
+save_path = pathlib.Path('/scratch/users/dtadres/test_moco')
 
 fixed_proxy = nib.load(fixed_path)
 fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
