@@ -449,6 +449,7 @@ def align_anat(
             total_sigma=total_sigma,
             syn_sampling=syn_sampling,
         )
+        print("moco " + repr(moco))
 
         printlog(
             "Fixed: {}, {} | Moving: {}, {} | {} | {}".format(
