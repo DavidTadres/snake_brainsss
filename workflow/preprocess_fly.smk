@@ -446,7 +446,11 @@ rule all:
         ###
         # func2anat
         ###
-        expand(str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii", func2anat_paths=imaging_paths_func2anat, func2anat_moving=file_path_func2anat_fixed, func2anat_fixed=file_path_func2anat_fixed),
+        expand(str(fly_folder_to_process_oak)
+               + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
+            func2anat_paths=imaging_paths_func2anat,
+            func2anat_moving=file_path_func2anat_fixed, # This is the channel which is designated as ANATOMY_CHANNEL
+            func2anat_fixed=file_path_func2anat_fixed),
         ##
         # anat2atlas
         ##
@@ -1311,8 +1315,10 @@ rule func_to_anat_rule:
     Memory Utilized: 0.00 MB (estimated maximum)
     Memory Efficiency: 0.00% of 3.91 GB (3.91 GB/node)
     """
-    threads: 2
-    resources: mem_mb=snake_utils.mem_mb_more_times_input
+    threads: 1
+    resources:
+        mem_mb=snake_utils.mem_mb_more_times_input,
+        runtime='10m' # should be enough, is super quick already
     input:
         path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}_moco_mean.nii',
         path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}_moco_mean.nii"

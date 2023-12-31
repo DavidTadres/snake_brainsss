@@ -297,8 +297,8 @@ def align_anat(
     syn_sampling=32
 ):
     """
-    IMPORTANT: TODO: fixed fly needs to be removed and must be something dynamic depending on input else
-    more than one functional channel can't be analyzed as expected!
+    Diff to Bella's function - instead of calling output something like 'func-to-anat.nii' it defines
+    the channel and yields something like 'channel_1_func-to-channel_1_anat.nii'
     :param args:
     :return:
     """
@@ -368,46 +368,22 @@ def align_anat(
 
     # logfile = args['logfile']
     # save_directory = args['save_directory']
-    flip_X = (
-        False  # args['flip_X'] # Todo - what does this do? Was set to false in brainsss
-    )
-    flip_Z = (
-        False  # args['flip_Z'] # Todo - what does this do? Was set to false in brainsss
-    )
-    # type_of_transform = transform_type # args['type_of_transform']  # SyN or Affine,
+    flip_X = False # Todo - what does this do? Was set to false in brainsss
+    flip_Z = False # Todo - what does this do? Was set to false in brainsss
     save_warp_params = True  # copy-paste from brainsss. args['save_warp_params']
 
     # There can only be one fixed brain, of course
     path_to_read_fixed = path_to_read_fixed[0]
 
-    fixed_path = path_to_read_fixed  # args['fixed_path']
-    # fixed_fly = 'anat' #args['fixed_fly']
-    #fixed_fly = path_to_read_fixed.name # incorrect! needs to be for example 'anat'
     fixed_fly = 'channel_' + path_to_read_fixed.name.split('channel_')[-1].split('_')[0] + '_' + fixed_fly
 
-    fixed_resolution = resolution_of_fixed  # args['fixed_resolution']
-
-    # low_res = False # args['low_res']
-    # very_low_res = False # args['very_low_res']
-
-    iso_2um_fixed = (
-        iso_2um_fixed  # args['iso_2um_fixed'] True for func2anat, False for anat2atlas
-    )
-    iso_2um_moving = iso_2um_moving  # args['iso_2um_moving'] False for func2anat, True for anat2atlas
+    iso_2um_fixed = iso_2um_fixed  # True for func2anat, False for anat2atlas
+    iso_2um_moving = iso_2um_moving  # False for func2anat, True for anat2atlas
 
     grad_step = grad_step  # args['grad_step']
     flow_sigma = flow_sigma  # args['flow_sigma']
     total_sigma = total_sigma  # args['total_sigma']
     syn_sampling = syn_sampling  # args['syn_sampling']
-
-    # try:
-    #    mimic_path = args['mimic_path']
-    #    mimic_fly = args['mimic_fly']
-    #    mimic_resolution = args['mimic_resolution']
-    # except:
-    mimic_path = None
-    mimic_fly = None
-    mimic_resolution = None
 
     ###################
     ### Load Brains ###
@@ -418,40 +394,26 @@ def align_anat(
     # Doesn't load to memory
     fixed_brain_proxy = nib.load(path_to_read_fixed)
     # Load to memory
-    fixed_brain = np.asarray(
+    fixed_brain = np.squeeze(np.asarray(
         fixed_brain_proxy.dataobj, dtype=np.float32
-    )  # I'm not using squeeze here! Might introduce
-    # a bug so important to keep if statement below!
+    )) # Not sure if squeeze is necessary - Bella used the nib.squeeze that should have same (?)
+    # functionality as np.squeeze (remove last dimension if length=1)
     utils.check_for_nan_and_inf_func(fixed_brain)
 
-    if len(fixed_brain.shape) > 3:
-        printlog(
-            "WARNING: Here we should only have 3 dimensions not "
-            + repr(fixed_brain.shape)
-        )
-
     fixed_brain = ants.from_numpy(fixed_brain)
-    fixed_brain.set_spacing(fixed_resolution)
-    # if low_res:
-    #    fixed = ants.resample_image(fixed, (256, 128, 49), 1, 0)
-    # elif very_low_res:
-    #    fixed = ants.resample_image(fixed, (128, 64, 49), 1, 0)
-    # elif iso_2um_fixed:
+    fixed_brain.set_spacing(resolution_of_fixed)
     fixed_brain = ants.resample_image(fixed_brain, (2, 2, 2), use_voxels=False)
 
     # It's possible to have to channels for the 'moving' brain. Do this in a loop
     for current_path_to_read_moving, current_path_to_save in zip(
         path_to_read_moving, path_to_save
     ):
-        # moving_path = current_path_to_read_moving  # args['moving_path']
-        # moving_fly = 'func' #args['moving_fly'] # something like 'func'
-        #moving_fly = current_path_to_read_moving.name
-        moving_resolution = resolution_of_moving  # args['moving_resolution']
 
         ### Moving
-        # moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')\
         moving_brain_proxy = nib.load(current_path_to_read_moving)
-        moving_brain = np.asarray(moving_brain_proxy.dataobj, dtype=np.float32)
+        moving_brain = np.squeeze(np.asarray(moving_brain_proxy.dataobj, dtype=np.float32))
+        # Not sure if squeeze is necessary - Bella used the nib.squeeze that should have same (?)
+        # functionality as np.squeeze (remove last dimension if length=1)
         utils.check_for_nan_and_inf_func(fixed_brain)
         if len(moving_brain.shape) > 3:
             printlog(
@@ -463,25 +425,8 @@ def align_anat(
         if flip_Z:
             moving_brain = moving_brain[:, :, ::-1]
         moving_brain = ants.from_numpy(moving_brain)
-        moving_brain.set_spacing(moving_resolution)
-        # if low_res:
-        #    moving = ants.resample_image(moving, (256, 128, 49), 1, 0)
-        # elif very_low_res:
-        #    moving = ants.resample_image(moving, (128, 64, 49), 1, 0)
-        # elif iso_2um_moving:
+        moving_brain.set_spacing(resolution_of_moving)
         moving_brain = ants.resample_image(moving_brain, (2, 2, 2), use_voxels=False)
-
-        ### Mimic
-        # if mimic_path is not None:
-        #    mimic = np.asarray(nib.load(mimic_path).get_data().squeeze(), dtype='float32')
-        #    if flip_X:
-        #        mimic = mimic[::-1, :, :]
-        #    if flip_Z:
-        #        mimic = mimic[:, :, ::-1]
-        #    mimic = ants.from_numpy(mimic)
-        #    mimic.set_spacing(mimic_resolution)
-        #    printlog('Starting {} to {}, with mimic {}'.format(moving_fly, fixed_fly, mimic_fly))
-        # else:
 
         # Give a bit more info about the fixed and moving fly by adding channel information!
         moving_fly = 'channel_' + current_path_to_read_moving.name.split('channel_')[-1].split('_')[0] + '_' + moving_fly
@@ -493,8 +438,8 @@ def align_anat(
         #############
 
         t0 = time.time()
-        # with stderr_redirected():  # to prevent dumb itk gaussian error bullshit infinite printing > Ohoh, hopefully doesn't
-        # fill my log up
+        # with stderr_redirected():  # to prevent dumb itk gaussian error bullshit infinite printing
+        # > Ohoh, hopefully doesn't fill my log up
         moco = ants.registration(
             fixed_brain,
             moving_brain,
@@ -508,7 +453,7 @@ def align_anat(
         printlog(
             "Fixed: {}, {} | Moving: {}, {} | {} | {}".format(
                 fixed_fly,
-                fixed_path.name.split("/")[-1],
+                path_to_read_fixed.name.split("/")[-1],
                 moving_fly,
                 current_path_to_read_moving.name.split("/")[-1],
                 type_of_transform,
@@ -522,75 +467,42 @@ def align_anat(
 
         if save_warp_params:
             fwdtransformlist = moco["fwdtransforms"]
-            # fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_fwdtransforms'.format(moving_fly, fixed_fly))
             fwdtransforms_save_folder = pathlib.Path(
                 current_path_to_save.parent,
                 "{}-to-{}_fwdtransforms".format(moving_fly, fixed_fly),
             )
-            # if low_res:
-            #    fwdtransforms_save_dir += '_lowres'
             if True in [iso_2um_moving, iso_2um_fixed]:
                 fwdtransforms_save_path = pathlib.Path(
                     fwdtransforms_save_folder, "_2umiso"
                 )
-                # fwdtransforms_save_dir += '_2umiso'
-            # if not os.path.exists(fwdtransforms_save_dir):
-            #    os.mkdir(fwdtransforms_save_dir)
             fwdtransforms_save_folder.mkdir(exist_ok=True, parents=True)
             for source_path in fwdtransformlist:
-                # source_file = source_path.split('/')[-1] # This should be correct - this comes from moco from ants
                 source_file = pathlib.Path(source_path).name
-                # target_path = os.path.join(fwdtransforms_save_dir, source_file)
                 target_path = pathlib.Path(fwdtransforms_save_folder, source_file)
                 shutil.copyfile(source_path, target_path)
 
-        # Added this saving of inv transforms 2020 Dec 19
-        if save_warp_params:
-            invransformlist = moco["invtransforms"]
-            # fwdtransforms_save_dir = os.path.join(save_directory, '{}-to-{}_invtransforms'.format(moving_fly, fixed_fly))
+            # Added this saving of inv transforms 2020 Dec 19
+            invransformlist = moco["invtransforms"] # <- This is never used!!!!
             invtransforms_save_folder = pathlib.Path(
                 current_path_to_save.parent,
                 "{}-to-{}_invtransforms".format(moving_fly, fixed_fly),
             )
-            # if low_res:
-            #    fwdtransforms_save_dir += '_lowres'
             if True in [iso_2um_moving, iso_2um_fixed]:
                 invtransforms_save_folder = pathlib.Path(
                     invtransforms_save_folder, "_2umiso"
                 )
-                # fwdtransforms_save_dir += '_2umiso'
-            # if not os.path.exists(fwdtransforms_save_dir):
-            #    os.mkdir(fwdtransforms_save_dir)
             invtransforms_save_folder.mkdir(exist_ok=True, parents=True)
+            # !!!!! NOTE this all sounds like invtransforms but the files that are actually transfered
+            # are fwdtransform!!!!!!
             for source_path in fwdtransformlist:
-                # source_file = source_path.split('/')[-1]
                 source_file = pathlib.Path(source_path).name
-                # target_path = os.path.join(fwdtransforms_save_dir, source_file)
                 target_path = pathlib.Path(invtransforms_save_folder, source_file)
                 shutil.copyfile(source_path, target_path)
-
-        ##################################
-        ### Apply warp params to mimic ###
-        ##################################
-
-        # if mimic_path is not None:
-        #    mimic_moco = ants.apply_transforms(fixed, mimic, moco['fwdtransforms'])
 
         ############
         ### Save ###
         ############
 
-        # NOT SAVING MIMIC <------ MAY NEED TO CHANGE
-        # if flip_X:
-        #    save_file = os.path.join(save_directory, moving_fly + '_m' + '-to-' + fixed_fly)
-        #    # save_file = os.path.join(save_directory, mimic_fly + '_m' + '-to-' + fixed_fly + '.nii')
-        # else:
-        #    save_file = os.path.join(save_directory, moving_fly + '-to-' + fixed_fly)
-        #    # save_file = os.path.join(save_directory, mimic_fly + '-to-' + fixed_fly + '.nii')
-        # nib.Nifti1Image(mimic_moco.numpy(), np.eye(4)).to_filename(save_file)
-        # if low_res:
-        #    save_file += '_lowres'
-        # save_file += '.nii'
         nib.Nifti1Image(moco["warpedmovout"].numpy(), np.eye(4)).to_filename(
             current_path_to_save
         )
