@@ -346,9 +346,9 @@ def align_anat(
 
     """
 
-    ###
+    ####
     # Logging
-    ###
+    ####
     logfile = utils.create_logfile(fly_directory, function_name=rule_name)
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     utils.print_function_start(logfile, WIDTH, rule_name)
@@ -357,23 +357,20 @@ def align_anat(
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
     #####
     path_to_read_fixed = utils.convert_list_of_string_to_posix_path(path_to_read_fixed)
-    path_to_read_moving = utils.convert_list_of_string_to_posix_path(
-        path_to_read_moving
-    )
+    path_to_read_moving = utils.convert_list_of_string_to_posix_path(path_to_read_moving)
     path_to_save = utils.convert_list_of_string_to_posix_path(path_to_save)
+
+    # There can only be one fixed brain, of course
+    path_to_read_fixed = path_to_read_fixed[0]
 
     print("path_to_read_fixed" + repr(path_to_read_fixed))
     print("path_to_read_moving" + repr(path_to_read_moving))
     print("path_to_save" + repr(path_to_save))
 
-    # logfile = args['logfile']
-    # save_directory = args['save_directory']
     flip_X = False # Todo - what does this do? Was set to false in brainsss
     flip_Z = False # Todo - what does this do? Was set to false in brainsss
     save_warp_params = True  # copy-paste from brainsss. args['save_warp_params']
 
-    # There can only be one fixed brain, of course
-    path_to_read_fixed = path_to_read_fixed[0]
 
     fixed_fly = 'channel_' + path_to_read_fixed.name.split('channel_')[-1].split('_')[0] + '_' + fixed_fly
 
@@ -402,7 +399,8 @@ def align_anat(
 
     fixed_brain = ants.from_numpy(fixed_brain)
     fixed_brain.set_spacing(resolution_of_fixed)
-    if iso_2um_fixed:
+    # This is only called during func2anat call
+    if iso_2um_fixed: # Only resample IF iso_2um_fixed is set (
         fixed_brain = ants.resample_image(fixed_brain, (2, 2, 2), use_voxels=False)
 
     # It's possible to have to channels for the 'moving' brain. Do this in a loop
@@ -427,6 +425,7 @@ def align_anat(
             moving_brain = moving_brain[:, :, ::-1]
         moving_brain = ants.from_numpy(moving_brain)
         moving_brain.set_spacing(resolution_of_moving)
+        # This is only applied during anat2atlas rule
         if iso_2um_moving: # there are also low_res and very_low_res option in brainsss!
             moving_brain = ants.resample_image(moving_brain, (2, 2, 2), use_voxels=False)
 
