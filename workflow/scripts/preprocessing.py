@@ -287,15 +287,18 @@ def align_anat(
     resolution_of_fixed,
     resolution_of_moving,
     rule_name,
+    fixed_fly,
+    moving_fly,
     iso_2um_fixed=True,
     iso_2um_moving=False,
     grad_step=0.2,
     flow_sigma=3,
     total_sigma=0,
-    syn_sampling=32,
+    syn_sampling=32
 ):
     """
-
+    IMPORTANT: TODO: fixed fly needs to be removed and must be something dynamic depending on input else
+    more than one functional channel can't be analyzed as expected!
     :param args:
     :return:
     """
@@ -379,7 +382,7 @@ def align_anat(
 
     fixed_path = path_to_read_fixed  # args['fixed_path']
     # fixed_fly = 'anat' #args['fixed_fly']
-    fixed_fly = path_to_read_fixed.name
+    #fixed_fly = path_to_read_fixed.name # incorrect! needs to be for example 'anat'
     fixed_resolution = resolution_of_fixed  # args['fixed_resolution']
 
     # low_res = False # args['low_res']
@@ -439,8 +442,8 @@ def align_anat(
         path_to_read_moving, path_to_save
     ):
         # moving_path = current_path_to_read_moving  # args['moving_path']
-        # moving_fly = 'func' #args['moving_fly']
-        moving_fly = current_path_to_read_moving.name
+        # moving_fly = 'func' #args['moving_fly'] # something like 'func'
+        #moving_fly = current_path_to_read_moving.name
         moving_resolution = resolution_of_moving  # args['moving_resolution']
 
         ### Moving

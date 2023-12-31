@@ -295,12 +295,17 @@ if 'channel_3' in FUNCTIONAL_CHANNELS:
 ##
 # list of paths for func2anat
 imaging_paths_func2anat = []
+anat_path_func2anat = None
 for current_path in imaging_file_paths:
     if 'func' in current_path:
         imaging_paths_func2anat.append(current_path.split('/imaging')[0])
     # the folder name of the anatomical channel
     elif 'anat' in current_path:
-        anat_path_func2anat = current_path.split('/imaging')[0]
+        if anat_path_func2anat is None:
+            anat_path_func2anat = current_path.split('/imaging')[0]
+        else:
+            print('!!!! WARNING: More than one folder with "anat"-string in fly to analyze. ')
+            print('!!!! func to anat function will likely give unexpected results! ')
 # the anatomical channel for func2anat
 if 'channel_1' in ANATOMY_CHANNEL:
     file_path_func2anat_fixed = ['channel_1_moco_mean']
@@ -441,11 +446,11 @@ rule all:
         ###
         # func2anat
         ###
-        ##>>expand(str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii", func2anat_paths=imaging_paths_func2anat, func2anat_moving=file_path_func2anat_fixed, func2anat_fixed=file_path_func2anat_fixed),
+        expand(str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_-to-{func2anat_fixed}.nii", func2anat_paths=imaging_paths_func2anat, func2anat_moving=file_path_func2anat_fixed, func2anat_fixed=file_path_func2anat_fixed),
         ##
         # anat2atlas
         ##
-        expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii", anat2atlas_paths=imaging_paths_anat2atlas, anat2atlas_moving=file_path_anat2atlas_moving),
+        #>>expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii", anat2atlas_paths=imaging_paths_anat2atlas, anat2atlas_moving=file_path_anat2atlas_moving),
 '''
 rule fictrac_qc_rule:
     """
@@ -1325,6 +1330,9 @@ rule func_to_anat_rule:
                 resolution_of_moving=(
                 2.611, 2.611, 5),# Copy-paste from brainsss, probably can be read from metadate.xml!
                 rule_name='func_to_anat',
+                fixed_fly='anat', # this is important for where transform params are saved
+                moving_fly='func', # this is important for where transform params are saved # TODO change this to
+                # something dynamic, otherwise more than 1 channel won't work as expected!!!
                 iso_2um_fixed=True,
                 iso_2um_moving=False,
                 grad_step=0.2,
@@ -1340,10 +1348,16 @@ rule func_to_anat_rule:
 
 rule anat_to_atlas:
     """
-    Benchmark
+    Benchmark - Yandan data
+    Cores per node: 2 # one should be enough
+    CPU Utilized: 00:01:58
+    CPU Efficiency: 62.11% of 00:03:10 core-walltime
+    Job Wall-clock time: 00:01:35
+    Memory Utilized: 1.21 GB
+    Memory Efficiency: 30.91% of 3.91 GB
 
     """
-    threads: 2
+    threads: 1
     resources: mem_mb=snake_utils.mem_mb_more_times_input
     input:
         path_to_read_fixed=atlas_path,
