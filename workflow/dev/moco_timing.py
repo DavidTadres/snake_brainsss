@@ -7,7 +7,7 @@ I want to know how fast one call to ants.registration is.
 
 original: ~30 minutes
 4 cores:  00:17:29
-14 cores:
+16 (14) cores: 00:11:43
 32 cores:
 """
 
@@ -34,7 +34,7 @@ if RUN_LOCAL:
     cores = 4
 else:
     imaging_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
-    cores = 14
+    cores = 30
 fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
 moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
 functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
@@ -54,8 +54,8 @@ brain_shape = functional_proxy.header.get_data_shape()
 if not RUN_LOCAL:
     experiment_total_frames = brain_shape[-1] # run full experiment
 
-moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brain_shape[3]),dtype=np.float32)
-moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brain_shape[3]),dtype=np.float32)
+#moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brain_shape[3]),dtype=np.float32)
+#moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brain_shape[3]),dtype=np.float32)
 
 loop_duration = []
 #total_frames_to_process = 10
@@ -74,12 +74,17 @@ def split_input(index, cores):
     """
     even_split, remainder = divmod(len(index), cores)
     return list((index[i * even_split + min(i, remainder):(i + 1) * even_split + min(i + 1, remainder)] for i in range(cores)))
-def split_array(array, cores):
-    even_split, remainder = divmod(array.shape[-1], cores)
+
+
+#def split_array(array, cores):
+#    even_split, remainder = divmod(array.shape[-1], cores)
 
 
 def for_loop_moco(index):
-    for current_frame in index:
+    moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], index[-1]), dtype=np.float32)
+    moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], index[-1]), dtype=np.float32)
+
+    for counter, current_frame in enumerate(index):
 
         """
         I usually get less than 10 seconds per loop. Mean is 5.9seconds
@@ -103,7 +108,9 @@ def for_loop_moco(index):
                                  aff_metric=aff_metric)
         #print('Registration took ' + repr(time.time() - t0) + 's')
 
-        moco_anatomy[:,:,:,current_frame] = moco["warpedmovout"].numpy()
+        #moco_anatomy[:,:,:,current_frame] = moco["warpedmovout"].numpy()
+        moco_anatomy[:,:,:,counter] = moco["warpedmovout"].numpy()
+
 
         #t0 = time.time()
         # Next, use the transform info fofr the functional image
@@ -113,7 +120,8 @@ def for_loop_moco(index):
         current_functional = functional_proxy.dataobj[:,:,:,current_frame]
         moving_frame_ants = ants.from_numpy(np.asarray(current_functional, dtype=np.float32))
         moco_ch2 = ants.apply_transforms(fixed_ants, moving_frame_ants, transformlist)
-        moco_functional[:,:,:,current_frame] = moco_ch2.numpy()
+        #moco_functional[:,:,:,current_frame] = moco_ch2.numpy()
+        moco_functional[:, :, :, counter] = moco_ch2.numpy()
         #print('apply transforms took ' + repr(time.time() - t0) + 's')
 
         #t0=time.time()
@@ -133,15 +141,24 @@ def for_loop_moco(index):
     print(pathlib.Path(save_path, fixed_path.name + 'chunks_'
                          + repr(index[0]) + '-' + repr(index[-1])))
 
-    # Save each chunk as a temporary npy file
     np.save(pathlib.Path(save_path, moving_path.name + 'chunks_'
                          + repr(index[0]) + '-' + repr(index[-1])),
-            moco_anatomy[:,:,:,index[0]:index[-1]])
-
+            moco_anatomy)
     np.save(pathlib.Path(save_path, functional_path.name + 'chunks_'
                          + repr(index[0]) + '-' + repr(index[-1])),
-            moco_functional[:,:,:,index[0]:index[-1]])
+            moco_functional)
 
+    # The below was useful before when using a 'master' numpy file outside the function
+    # It seemed as if this used an inordiate amount of memory, so now we create small
+    # numpy arrays in the chunk size necessary for a given subprocess.
+    # Save each chunk as a temporary npy file
+    #np.save(pathlib.Path(save_path, moving_path.name + 'chunks_'
+    #                     + repr(index[0]) + '-' + repr(index[-1])),
+    #        moco_anatomy[:,:,:,index[0]:index[-1]])
+
+    #np.save(pathlib.Path(save_path, functional_path.name + 'chunks_'
+    #                     + repr(index[0]) + '-' + repr(index[-1])),
+    #        moco_functional[:,:,:,index[0]:index[-1]])
 
 split_index = split_input(list(np.arange(experiment_total_frames)),cores)
 # The code below parallelizes the transform part of moco
