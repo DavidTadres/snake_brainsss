@@ -291,7 +291,7 @@ if 'channel_3' in FUNCTIONAL_CHANNELS:
     func_channels.append('3')
 
 ####
-'''# probably not relevant - I think this is what bifrost does (better)
+# probably not relevant - I think this is what bifrost does (better)
 ##
 # list of paths for func2anat
 imaging_paths_func2anat = []
@@ -325,7 +325,7 @@ if 'channel_1' in ANATOMY_CHANNEL:
 elif 'channel_2' in ANATOMY_CHANNEL:
     file_path_anat2atlas_moving.append('channel_2_moco_mean_clean')
 elif 'channel_3' in ANATOMY_CHANNEL:
-    file_path_anat2atlas_moving.append('channel_3_moco_mean_clean')'''
+    file_path_anat2atlas_moving.append('channel_3_moco_mean_clean')
 
 '''
 #######
@@ -445,7 +445,7 @@ rule all:
         ##
         # anat2atlas
         ##
-        ##>>expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii", anat2atlas_paths=imaging_paths_anat2atlas, anat2atlas_moving=file_path_anat2atlas_moving),
+        expand(str(fly_folder_to_process_oak) + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-" + str(atlas_path.name) + ".nii", anat2atlas_paths=imaging_paths_anat2atlas, anat2atlas_moving=file_path_anat2atlas_moving),
 '''
 rule fictrac_qc_rule:
     """
@@ -1273,7 +1273,7 @@ rule make_supervoxels_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-'''
+
 # Probably Bifrost does it better.
 rule func_to_anat_rule:
     """
@@ -1408,7 +1408,7 @@ rule apply_transforms_rule:
                 error_stack=error_stack,
                 width=width)
 
-'''
+
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.

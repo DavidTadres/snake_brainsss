@@ -174,3 +174,13 @@ compare_two_3D_arrays(
     savepath=pathlib.Path(my_savepaths, "corr_dRotLabZpos_func_0_ch2.png"),
 )
 '''
+####
+# Clean anatomy
+#####
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "anat_0/moco/anatomy_channel_1_moc_mean_clean.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "anat_0/moco/channel_1_moco_mean_clean.nii"),
+    savepath=pathlib.Path(my_savepaths, "channel_1_moco_mean_clean.png"),
+)
