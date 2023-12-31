@@ -81,8 +81,8 @@ def split_input(index, cores):
 
 
 def for_loop_moco(index):
-    moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], int(index[-1]-index[0])), dtype=np.float32)
-    moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], int(index[-1]-index[0])), dtype=np.float32)
+    moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], int(index[-1]-index[0]+1)), dtype=np.float32)
+    moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], int(index[-1]-index[0]+1)), dtype=np.float32)
 
     for counter, current_frame in enumerate(index):
 
