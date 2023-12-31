@@ -4,6 +4,11 @@ It's originally in 2 for loops, an outer one that splits the volume into 'chunks
 single frames to the ants.registration function.
 
 I want to know how fast one call to ants.registration is.
+
+original: ~30 minutes
+4 cores:  00:17:29
+14 cores:
+32 cores:
 """
 
 import h5py
@@ -29,12 +34,12 @@ if RUN_LOCAL:
     cores = 4
 else:
     imaging_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
-    cores = 30
+    cores = 14
 fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
 moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
 functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
 #save_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/moco_parallel')
-save_path = pathlib.Path('/scratch/users/dtadres/test_moco')
+save_path = pathlib.Path('/scratch/users/dtadres/test_moco2')
 
 fixed_proxy = nib.load(fixed_path)
 fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
@@ -69,6 +74,10 @@ def split_input(index, cores):
     """
     even_split, remainder = divmod(len(index), cores)
     return list((index[i * even_split + min(i, remainder):(i + 1) * even_split + min(i + 1, remainder)] for i in range(cores)))
+def split_array(array, cores):
+    even_split, remainder = divmod(array.shape[-1], cores)
+
+
 def for_loop_moco(index):
     for current_frame in index:
 
