@@ -472,7 +472,7 @@ def align_anat(
                 "{}-to-{}_fwdtransforms".format(moving_fly, fixed_fly),
             )
             if True in [iso_2um_moving, iso_2um_fixed]:
-                fwdtransforms_save_path = pathlib.Path(
+                fwdtransforms_save_folder = pathlib.Path(
                     fwdtransforms_save_folder, "_2umiso"
                 )
             fwdtransforms_save_folder.mkdir(exist_ok=True, parents=True)
