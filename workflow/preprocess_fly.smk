@@ -1316,7 +1316,7 @@ rule func_to_anat_rule:
     input:
         path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}_moco_mean.nii',
         path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}_moco_mean.nii"
-    output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_func_-to-{func2anat_fixed}_anat.nii"
+    output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii"
 
     run:
         try:

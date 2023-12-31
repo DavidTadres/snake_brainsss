@@ -383,7 +383,7 @@ def align_anat(
     fixed_path = path_to_read_fixed  # args['fixed_path']
     # fixed_fly = 'anat' #args['fixed_fly']
     #fixed_fly = path_to_read_fixed.name # incorrect! needs to be for example 'anat'
-    fixed_fly = 'channel_' + path_to_read_fixed.name.split('channel_')[-1].split('_')[0] + fixed_fly
+    fixed_fly = 'channel_' + path_to_read_fixed.name.split('channel_')[-1].split('_')[0] + '_' + fixed_fly
 
     fixed_resolution = resolution_of_fixed  # args['fixed_resolution']
 
@@ -484,7 +484,7 @@ def align_anat(
         # else:
 
         # Give a bit more info about the fixed and moving fly by adding channel information!
-        moving_fly = 'channel_' + current_path_to_read_moving.name.split('channel_')[-1].split('_')[0] + moving_fly
+        moving_fly = 'channel_' + current_path_to_read_moving.name.split('channel_')[-1].split('_')[0] + '_' + moving_fly
 
         printlog("Starting registration of {} to {}".format(moving_fly, fixed_fly))
 
