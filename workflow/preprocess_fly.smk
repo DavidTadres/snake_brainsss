@@ -476,15 +476,12 @@ rule fictrac_qc_rule:
     resources: mem_mb=snake_utils.mem_mb_times_threads
     input:
         str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_behavior_data.dat"
-        #full_fictrac_file_oak_paths
-        #fictrac_file_paths = expand("{fictrac}", fictrac=full_fictrac_file_scratch_paths)
     output:
         str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png"
-        #expand("{fictrac_output}", fictrac_output=fictrac_output_files_2d_hist_fixed)
     run:
         try:
             preprocessing.fictrac_qc(fly_folder_to_process_oak,
-                                    fictrac_file_paths= full_fictrac_file_oak_paths,
+                                    fictrac_file_path= full_fictrac_file_oak_paths,
                                     fictrac_fps=fictrac_fps # AUTOMATE THIS!!!! ELSE BUG PRONE!!!!
                                     )
         except Exception as error_stack:

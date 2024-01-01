@@ -121,6 +121,14 @@ source .env_snake_brainsss/bin/activate
 1) Dangerous: in fictrac_utils.smooth_and_interp_fictrac the scipy.signal.savgol filter has a fixed smoothing
    length that does NOT depend on the framerate. This will yield different smoothing results depending on the 
    recording framerate!
-2) Check line 146/147 in motion_correction.py in brainsss. Data is loaded as uint16 and then cnoverted to float32
+2) Check line 146/147 in motion_correction.py in brainsss. Data is loaded as uint16 and then converted to float32
    Meanbrain is made by calling np.mean which returns a float64 array. I think this might lead to a loss of precision
    Better to avoid using uint16 in line 146 and use directly float32.  
+
+###
+# Todo:
+###
+1) Try parallelization of motion correction. This is by far the slowest step and would profit greatly from 
+   parallelization.
+2) Test what happens if we make supervoxels per volume (instead of z-slice).
+3) Keep track of dtypes more consistenly.

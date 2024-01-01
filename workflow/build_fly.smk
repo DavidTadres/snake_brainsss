@@ -2,18 +2,18 @@
 # ml python/3.9.0
 # source .env_snakemake/bin/activate
 # cd snake_brainsss/workflow
-# snakemake -s build_flies.smk --profile simple_slurm
+# snakemake -s build_fly.smk --profile simple_slurm
 
 # config file from: https://github.com/jdblischak/smk-simple-slurm/tree/main
 
 ''' this one worked"
-snakemake -s build_flies.smk --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
+snakemake -s build_fly.smk --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
 # This one with config
-snakemake -s build_flies.smk --profile
+snakemake -s build_fly.smk --profile
 '''
 '''
 Can also only run a given rule:
-snakemake -s build_flies.smk stitch_split_nii --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
+snakemake -s build_fly.smk stitch_split_nii --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
 '''
 # To be modified by the user
 imports_to_process = ['20231212',] # Data deposited by Brukerbridge on oak
@@ -30,7 +30,7 @@ current_user = 'dtadres'
 #fictrac_fps = 50
 
 import pathlib
-from scripts import preprocessing
+from scripts import build_fly
 import shutil
 import json
 from brainsss import utils
@@ -119,7 +119,7 @@ rule fly_builder_rule:
                 runtime='10m' # should generally be sufficient
 
     run:
-        preprocessing.fly_builder(user=current_user,
+        build_fly.fly_builder(user=current_user,
                                   import_dirs= all_imports_paths,
                                   dataset_dirs = all_fly_dataset_paths
                                                  )

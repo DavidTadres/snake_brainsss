@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 import multiprocessing
-import concurrent.futures
+import natsort
 
 RUN_LOCAL = False # if not run on sherlock
 
@@ -40,7 +40,7 @@ fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
 moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
 functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
 #save_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/moco_parallel')
-save_path = pathlib.Path('/scratch/users/dtadres/test_moco2')
+temp_save_path = pathlib.Path('/scratch/users/dtadres/test_moco2')
 
 fixed_proxy = nib.load(fixed_path)
 fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
@@ -143,24 +143,13 @@ def for_loop_moco(index):
         print('Loop duration: ' + repr(loop_duration[-1]))
         # LOOP END
 
-    np.save(pathlib.Path(save_path, moving_path.name + 'chunks_'
+    np.save(pathlib.Path(temp_save_path, moving_path.name + 'chunks_'
                          + repr(index[0]) + '-' + repr(index[-1])),
             moco_anatomy)
-    np.save(pathlib.Path(save_path, functional_path.name + 'chunks_'
+    np.save(pathlib.Path(temp_save_path, functional_path.name + 'chunks_'
                          + repr(index[0]) + '-' + repr(index[-1])),
             moco_functional)
 
-    # The below was useful before when using a 'master' numpy file outside the function
-    # It seemed as if this used an inordiate amount of memory, so now we create small
-    # numpy arrays in the chunk size necessary for a given subprocess.
-    # Save each chunk as a temporary npy file
-    #np.save(pathlib.Path(save_path, moving_path.name + 'chunks_'
-    #                     + repr(index[0]) + '-' + repr(index[-1])),
-    #        moco_anatomy[:,:,:,index[0]:index[-1]])
-
-    #np.save(pathlib.Path(save_path, functional_path.name + 'chunks_'
-    #                     + repr(index[0]) + '-' + repr(index[-1])),
-    #        moco_functional[:,:,:,index[0]:index[-1]])
 
 split_index = split_input(list(np.arange(experiment_total_frames)),cores)
 # The code below parallelizes the transform part of moco
@@ -168,15 +157,23 @@ split_index = split_input(list(np.arange(experiment_total_frames)),cores)
 # It therefore should take half the time to run motion correction.
 # On the server we could get a 8x increase in speed, so instead of ~8 hours it might only
 # take 1 hour
+
+def combine_files():
+    stitched_anatomy_brain = np.zeros((256, 128, 49, 609), dtype=np.float32)
+    for current_file in natsort.natsorted(temp_save_path.iterdir()):
+        if 'npy' in current_file.name and 'channel_1.nii' in current_file.name:
+            index_start = int(current_file.name.split('chunks_')[-1].split('-')[0])
+            index_end = int(current_file.name.split('.npy')[0].split('-')[-1])
+            stitched_anatomy_brain[:,:,:,index_start:index_end] = np.load(current_file)
+    savepath = pathlib.Path(imaging_path.parent() + '/moco')
+    savepath.mkdir(exist_ok=True, parents=True)
+
+
+
 if __name__ == '__main__':
     with multiprocessing.Pool(cores) as p:
         p.map(for_loop_moco, split_index)
-    print('calc done, saving now')
-    # Try to save the file and see if it gives the expected result.
-    #np.save(pathlib.Path(save_path, 'channel_1_moco_par.npy'),
-    #        moco_anatomy)
-    #print('saved first file')
-    #np.save(pathlib.Path(save_path, 'channel_2_moco_par.npy'),
-    #        moco_functional)
-
+    print('Motion correction done, combining files now.')
+    combine_files()
+    print('files combined')
 # Then put them together to compare

@@ -19,19 +19,19 @@ from dev import visualize_brain_original
 
 #file_path_original = pathlib.Path(path_original, 'functional_channel_2_moco_zscore_highpass.h5')
 #file_path_my = pathlib.Path(path_my, 'channel_2_moco_zscore_highpass.h5')
-
+'''
 rule compare_correlation_results_rule:
     threads: 2
     resources: mem_mb='10G'
     run:
         visualize_brain_original.compare()
+'''
 
-"""
 rule test_moco_timing_rule:
     threads: 32
-    resources: mem_mb='300G'
+    resources: mem_mb='100G'
     shell: "python3 dev/moco_timing.py"
-"""
+
 '''
 rule compare_large_arrays_rule:
     #shell:
