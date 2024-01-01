@@ -1,3 +1,4 @@
+# This really should be in another file. Code start line 500
 import pathlib
 import numpy as np
 import nibabel as nib
@@ -9,7 +10,6 @@ import ants
 import matplotlib
 import pickle
 import cv2
-
 
 
 def load_fictrac(fictrac_file_path):
@@ -245,12 +245,11 @@ def load_fda_meanbrain():
 def warp_STA_brain(STA_brain, fly, fixed, anat_to_mean_type,
                    WARP_DIRECTORY,
                    WARP_SUB_DIR_FUNC_TO_ANAT,
-                   WARP_SUB_DIR_ANAT_TO_ATLAS):
+                   WARP_SUB_DIR_ANAT_TO_ATLAS,
+                   DATASET_PATH):
     import os
     n_tp = STA_brain.shape[1]
-    dataset_path = (
-        "/Volumes/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset"
-    )
+    dataset_path = DATASET_PATH
     moving_resolution = (2.611, 2.611, 5)
     ###########################
     ### Organize Transforms ###
@@ -493,3 +492,73 @@ def place_roi_groups_on_canvas(
             xs = np.where(contour[:, :, 0] > 0)[1] + dims["left"] + x_shift
             input_canvas[ys, xs] = 0  # 1
     return input_canvas
+##
+def prepare_brain_original(label_path, signal_path, fictrac_path, timestamps_path,
+                           WARP_DIRECTORY,
+                           WARP_SUB_DIR_FUNC_TO_ANAT,
+                           WARP_SUB_DIR_ANAT_TO_ATLAS,
+                           STA_WARP_DATASET_PATH,
+                           FLY,
+                           fixed,
+                           explosion_rois,
+                           roi_masks,
+                           roi_contours,
+                           input_canvas):
+    labels = np.load(label_path)
+    signal = np.load(signal_path)
+
+    # Organize fictrac data
+    fictrac_raw_original = load_fictrac(fictrac_path)
+    timestamps_original = load_timestamps(timestamps_path)
+
+    fps = 100
+    resolution = 10  # desired resolution in ms
+    behaviors = ['dRotLabY']
+
+    ###
+    # BRAINSSSS
+
+    expt_len = fictrac_raw_original.shape[0] / fps * 1000
+    corrs = []
+    for current_behavior in behaviors:
+        for z in range(49):
+            fictrac_trace = smooth_and_interp_fictrac(fictrac_raw_original, fps, resolution, expt_len, current_behavior,
+                                                      timestamps_original[:, z])
+            fictrac_trace_L = np.clip(fictrac_trace.flatten(), None, 0) * -1  # Check what this does
+            for voxel in range(2000):
+                corrs.append(scipy.stats.pearsonr(signal[z, voxel, :], fictrac_trace.flatten())[0])
+
+    n_clusters = signal.shape[1]  # should be 2000
+    # Corr brain is the correlation between signals from clustering and behavior!
+    whole_corr_original = np.reshape(np.asarray(corrs), (49, 2000))
+    reformed_brain_original = []
+    for z in range(49):
+        colored_by_betas = np.zeros((256 * 128))
+        # for each cluster number (0, 1...1999)
+        for cluster_num in range(n_clusters):
+            # Where in the labels is a given
+            cluster_indeces = np.where(labels[z, :] == cluster_num)[0]
+            colored_by_betas[cluster_indeces] = whole_corr_original[z, cluster_num]
+        colored_by_betas = colored_by_betas.reshape(256, 128)
+        reformed_brain_original.append(colored_by_betas)
+    STA_brain_original = np.swapaxes(np.asarray(reformed_brain_original)[np.newaxis, :, :, :], 0, 1)
+    warps_ZPOS_original = warp_STA_brain(STA_brain=STA_brain_original, fly=FLY, fixed=fixed,
+                                         anat_to_mean_type='myr',
+                                         WARP_DIRECTORY=WARP_DIRECTORY,
+                                         WARP_SUB_DIR_FUNC_TO_ANAT=WARP_SUB_DIR_FUNC_TO_ANAT,
+                                         WARP_SUB_DIR_ANAT_TO_ATLAS=WARP_SUB_DIR_ANAT_TO_ATLAS,
+                                         DATASET_PATH=STA_WARP_DATASET_PATH
+                                         )
+
+    data_to_plot = warps_ZPOS_original[0][:, :, ::-1]
+    vmax = .2
+    explosion_map = place_roi_groups_on_canvas(explosion_rois,
+                                               roi_masks,
+                                               roi_contours,
+                                               data_to_plot,
+                                               input_canvas,
+                                               vmax=vmax,
+                                               cmap='hot',
+                                               diverging=False)  # 'hot')
+
+    return (explosion_map)
