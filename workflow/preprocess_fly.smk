@@ -277,7 +277,8 @@ for current_path in imaging_file_paths:
 ##
 # list of paths for supervoxel
 # identical to zscore imaging paths but for ease of readibility, explicitly create a new one
-atlas_path = pathlib.Path("brain_atlases/jfrc_atlas_from_brainsss.nii") #luke.nii"
+#atlas_path = pathlib.Path("brain_atlases/jfrc_atlas_from_brainsss.nii") #luke.nii"
+atlas_path =pathlib.Path('"/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/anat_templates/20220301_luke_2_jfrc_affine_zflip_2umiso.nii"')
 imaging_paths_supervoxels = []
 for current_path in imaging_file_paths:
     if 'func' in current_path:
