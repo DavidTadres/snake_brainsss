@@ -1492,7 +1492,7 @@ def motion_correction(
     ############################################################
     ### Make Empty MOCO files that will be filled vol by vol ###
     ############################################################
-    MEMORY_ONLY = True
+    MEMORY_ONLY = False # IF False, will chunk, if true will currently
     if not MEMORY_ONLY:
         # This should most likely live on scratch as it is accessed several times.
         # h5_file_name = f"{path_brain_master.name.split('.')[0]}_moco.h5"
