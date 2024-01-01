@@ -165,8 +165,15 @@ def combine_files():
             index_start = int(current_file.name.split('chunks_')[-1].split('-')[0])
             index_end = int(current_file.name.split('.npy')[0].split('-')[-1])
             stitched_anatomy_brain[:,:,:,index_start:index_end] = np.load(current_file)[:,:,:,0:int(index_end-index_start)]
+    # Saving
     savepath = pathlib.Path(imaging_path.parent() + '/moco')
     savepath.mkdir(exist_ok=True, parents=True)
+    aff = np.eye(4)
+    stitched_anatomy_brain_nifty = nib.Nifti1Image(
+        stitched_anatomy_brain, aff
+    )
+    stitched_anatomy_brain.to_filename(pathlib.Path(savepath, 'stitched_ch1.nii'))
+
 
 
 
