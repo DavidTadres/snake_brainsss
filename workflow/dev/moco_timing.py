@@ -3,7 +3,7 @@ Moco is by far the slowest step in the preprocessing pipeline.
 It's originally in 2 for loops, an outer one that splits the volume into 'chunks' and an inner loop that feeds
 single frames to the ants.registration function.
 
-I want to know how fast one call to ants.registration is.
+I want to know how fast one call to ants.registration is: ~6 seconds on my mac
 
 original: ~30 minutes
 4 cores:  00:17:29
@@ -22,8 +22,7 @@ import time
 import multiprocessing
 import natsort
 
-RUN_LOCAL = False # if not run on sherlock
-
+RUN_LOCAL = False # True if run on my Mac, False if run on sherlock
 
 type_of_transform = "SyN"
 flow_sigma = 3
@@ -114,7 +113,6 @@ def for_loop_moco(index):
         #moco_anatomy[:,:,:,current_frame] = moco["warpedmovout"].numpy()
         moco_anatomy[:,:,:,counter] = moco["warpedmovout"].numpy()
 
-
         #t0 = time.time()
         # Next, use the transform info fofr the functional image
         transformlist = moco["fwdtransforms"]
@@ -172,9 +170,7 @@ def combine_files():
     stitched_anatomy_brain_nifty = nib.Nifti1Image(
         stitched_anatomy_brain, aff
     )
-    stitched_anatomy_brain.to_filename(pathlib.Path(savepath, 'stitched_ch1.nii'))
-
-
+    stitched_anatomy_brain_nifty.to_filename(pathlib.Path(savepath, 'stitched_ch1.nii'))
 
 
 if __name__ == '__main__':
