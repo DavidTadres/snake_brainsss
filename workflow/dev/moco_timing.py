@@ -23,6 +23,7 @@ import multiprocessing
 import natsort
 
 RUN_LOCAL = False # True if run on my Mac, False if run on sherlock
+PRELOAD_DATA = True
 
 type_of_transform = "SyN"
 flow_sigma = 3
@@ -46,10 +47,12 @@ fixed_proxy = nib.load(fixed_path)
 fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
 
 moving_proxy = nib.load(moving_path)
-#moving_data = np.asarray(moving_proxy.dataobj, np.uint16)
+if PRELOAD_DATA:
+    moving_data = np.asarray(moving_proxy.dataobj, np.uint16)
 
 functional_proxy = nib.load(functional_path)
-#functional_data = np.asarray(functional_proxy.dataobj, np.uint16)
+if PRELOAD_DATA:
+    functional_data = np.asarray(functional_proxy.dataobj, np.uint16)
 
 brain_shape = functional_proxy.header.get_data_shape()
 if not RUN_LOCAL:
@@ -96,7 +99,10 @@ def for_loop_moco(index):
         print(current_frame)
 
         t_loop_start = time.time()
-        current_moving = moving_proxy.dataobj[:,:,:,current_frame]
+        if PRELOAD_DATA:
+            current_moving = moving_data[:,:,:,current_frame]
+        else:
+            current_moving = moving_proxy.dataobj[:,:,:,current_frame]
         #t0 = time.time()
         # Need to have ants images
         fixed_ants = ants.from_numpy(np.asarray(fixed, dtype=np.float32))
@@ -119,7 +125,10 @@ def for_loop_moco(index):
         transformlist = moco["fwdtransforms"]
         #moving_frame=functional_data[:,:,:,current_frame]
 
-        current_functional = functional_proxy.dataobj[:,:,:,current_frame]
+        if PRELOAD_DATA:
+            current_functional = functional_data[:,:,:,current_frame]
+        else:
+            current_functional = functional_proxy.dataobj[:,:,:,current_frame]
         moving_frame_ants = ants.from_numpy(np.asarray(current_functional, dtype=np.float32))
         moco_ch2 = ants.apply_transforms(fixed_ants, moving_frame_ants, transformlist)
         #moco_functional[:,:,:,current_frame] = moco_ch2.numpy()
