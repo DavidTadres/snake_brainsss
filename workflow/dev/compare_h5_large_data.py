@@ -6,9 +6,8 @@ is not: https://stackoverflow.com/questions/61028349/why-are-two-h5py-files-diff
 import h5py
 import pathlib
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import numpy as np
-
+import matplotlib as mpl
 mpl.use("agg") # As this should be run on sherlock, use non-interactive backend!
 
 def run_comparison(path_original, path_my):

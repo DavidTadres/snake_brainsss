@@ -339,21 +339,23 @@ def warp_STA_brain(STA_brain, fly, fixed, anat_to_mean_type):
     ###########################
     ### Organize Transforms ###
     ###########################
-    warp_directory = os.path.join(dataset_path, fly, "warp")
-    warp_sub_dir = "func-to-anat_fwdtransforms_2umiso"
+    warp_directory = os.path.join(dataset_path, fly, "anat_0/warp")
+    #warp_sub_dir = "func-to-anat_fwdtransforms_2umiso"
+    warp_sub_dir = "channel_1_anat-to-channel_jfrc_meanbrain_fwdtransforms_2umiso"
     affine_file = os.listdir(os.path.join(warp_directory, warp_sub_dir))[0]
     affine_path = os.path.join(warp_directory, warp_sub_dir, affine_file)
-    if anat_to_mean_type == "myr":
-        warp_sub_dir = "anat-to-meanbrain_fwdtransforms_2umiso"
-    elif anat_to_mean_type == "non_myr":
-        warp_sub_dir = "anat-to-non_myr_mean_fwdtransforms_2umiso"
-    else:
-        print("invalid anat_to_mean_type")
-        return
+    #if anat_to_mean_type == "myr":
+    #    warp_sub_dir = "anat-to-meanbrain_fwdtransforms_2umiso"
+    #elif anat_to_mean_type == "non_myr":
+    #    warp_sub_dir = "anat-to-non_myr_mean_fwdtransforms_2umiso"
+    #else:
+    #    print("invalid anat_to_mean_type")
+    #    return
     syn_files = os.listdir(os.path.join(warp_directory, warp_sub_dir))
     syn_linear_path = os.path.join(
         warp_directory, warp_sub_dir, [x for x in syn_files if ".mat" in x][0]
     )
+
     syn_nonlinear_path = os.path.join(
         warp_directory, warp_sub_dir, [x for x in syn_files if ".nii.gz" in x][0]
     )
@@ -368,6 +370,7 @@ def warp_STA_brain(STA_brain, fly, fixed, anat_to_mean_type):
     ### Warp timeponts
     warps = []
     for tp in range(n_tp):
+        print(tp)
         to_warp = np.rollaxis(STA_brain[:, tp, :, :], 0, 3)
         moving = ants.from_numpy(to_warp)
         moving.set_spacing(moving_resolution)

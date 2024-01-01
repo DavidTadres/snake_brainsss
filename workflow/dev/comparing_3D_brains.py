@@ -8,6 +8,7 @@ import pathlib
 import matplotlib.pyplot as plt
 
 import numpy as np
+import traceback
 
 original_fly_path = pathlib.Path(
     "/Volumes/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308"
@@ -44,17 +45,20 @@ def compare_two_3D_arrays(original_brain_path, my_brain_path, savepath):
         + ", mean brain, z="
         + repr(int(round(my_mean_brain.shape[2] / 2)))
     )
+    try:
+        # Next plot delta of the two brain
+        ax3 = fig.add_subplot(223, sharex=ax1, sharey=ax1)
+        subtracted_brain = (
+            my_mean_brain[:, :, int(round(my_mean_brain.shape[2] / 2))].T
+            - original_mean_brain[:, :, int(round(original_mean_brain.shape[2] / 2))].T
+        )
+        ax3.imshow(subtracted_brain)
+        ax3.set_title(
+            "subtracted brain slice #" + repr(int(round(my_mean_brain.shape[2] / 2)))
+        )
+    except Exception:
+        traceback.print_exc()
 
-    # Next plot delta of the two brain
-    ax3 = fig.add_subplot(223, sharex=ax1, sharey=ax1)
-    subtracted_brain = (
-        my_mean_brain[:, :, int(round(my_mean_brain.shape[2] / 2))].T
-        - original_mean_brain[:, :, int(round(original_mean_brain.shape[2] / 2))].T
-    )
-    ax3.imshow(subtracted_brain)
-    ax3.set_title(
-        "subtracted brain slice #" + repr(int(round(my_mean_brain.shape[2] / 2)))
-    )
 
     # Next, plot histogram of both brains using ALL data (not just a single slice
     counts_original, edges_original = np.histogram(original_mean_brain, bins=1000)
@@ -63,12 +67,17 @@ def compare_two_3D_arrays(original_brain_path, my_brain_path, savepath):
     ax4.stairs(counts_original, edges_original, fill=True, alpha=1, color="k")
     ax4.stairs(counts_my, edges_my, fill=True, alpha=0.5, color="r")
     ax4.set_yscale("log")
-    delta = (
-        original_mean_brain - my_mean_brain
-    )  # what's the difference in value between the two arrays?
-    ax4.set_title(
-        "Max abs delta between arrays\n" + repr(round(np.max(np.abs(delta)), 10))
-    )
+    current_ylim = ax4.get_ylim()
+    ax4.set_ylim(10**1, current_ylim[-1])
+    try:
+        delta = (
+            original_mean_brain - my_mean_brain
+        )  # what's the difference in value between the two arrays?
+        ax4.set_title(
+            "Max abs delta between arrays\n" + repr(round(np.max(np.abs(delta)), 10))
+        )
+    except Exception:
+        traceback.print_exc()
 
     # Set title from savename for identification
     fig.suptitle(savepath.name)
@@ -127,8 +136,8 @@ compare_two_3D_arrays(
     ),
     my_brain_path=pathlib.Path(my_fly_paths, "anat_0/moco/channel_2_moco_mean.nii"),
     savepath=pathlib.Path(my_savepaths, "meanbrain_anat_0_moco_ch2.png"),
-)
-
+)'''
+'''
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "func_0/moco/functional_channel_1_moc_mean.nii"
@@ -177,10 +186,61 @@ compare_two_3D_arrays(
 ####
 # Clean anatomy
 #####
+'''
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "anat_0/moco/anatomy_channel_1_moc_mean_clean.nii"
     ),
     my_brain_path=pathlib.Path(my_fly_paths, "anat_0/moco/channel_1_moco_mean_clean.nii"),
     savepath=pathlib.Path(my_savepaths, "channel_1_moco_mean_clean.png"),
+)
+'''
+"""
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "anat_0/moco/anatomy_channel_1_moc_mean_clean.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "anat_0/moco/channel_1_moco_mean_clean.nii"),
+    savepath=pathlib.Path(my_savepaths, "channel_1_moco_mean_clean.png"),
+)"""
+
+###
+# WARP FUNC2ANAT
+####
+"""
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "warp/func-to-anat.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "func_0/warp/channel_1_func-to-channel_1_anat.nii"),
+    savepath=pathlib.Path(my_savepaths, "warp_func2anat.png"),
+)
+
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "warp/func-to-anat.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "func_0/warp1/channel_1_func-to-channel_1_anat.nii"),
+    savepath=pathlib.Path(my_savepaths, "warp_func2anat_first_run.png"),
+)
+
+# Compare 2 runs I did consecutively with same settings
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        my_fly_paths, "func_0/warp/channel_1_func-to-channel_1_anat.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "func_0/warp1/channel_1_func-to-channel_1_anat.nii"),
+    savepath=pathlib.Path(my_savepaths, "warp_func2anat_delta.png"),
+)
+"""
+###
+# WARP ANAT2FUNC
+####
+
+compare_two_3D_arrays(
+    original_brain_path=pathlib.Path(
+        original_fly_path, "warp/anat-to-meanbrain.nii"
+    ),
+    my_brain_path=pathlib.Path(my_fly_paths, "anat_0/warp/channel_1_-to-atlas.nii"),
+    savepath=pathlib.Path(my_savepaths, "warp_anat2atlas.png"),
 )
