@@ -15,7 +15,7 @@ scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/
 
 rule test_moco_timing_rule:
     threads: 32
-    resources: mem_mb='20G'
+    resources: mem_mb='40G'
     shell: "python3 dev/moco_timing.py"
 
 #path_original = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/func_0')
