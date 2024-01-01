@@ -235,7 +235,7 @@ def smooth_and_interp_fictrac(
 
     return fictrac_interp
 def load_fda_meanbrain():
-    fixed_path = "/Volumes/groups/trc/data/Brezovec/2P_Imaging/anat_templates/20220301_luke_2_jfrc_affine_zflip_2umiso.nii"  # luke.nii"
+    fixed_path = "/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/anat_templates/20220301_luke_2_jfrc_affine_zflip_2umiso.nii"  # luke.nii"
     fixed_resolution = (2, 2, 2)
     fixed = np.asarray(nib.load(fixed_path).get_fdata().squeeze(), dtype="float32")
     fixed = ants.from_numpy(fixed)
@@ -250,7 +250,7 @@ def warp_STA_brain(STA_brain, fly, fixed, anat_to_mean_type,
     import os
     n_tp = STA_brain.shape[1]
     dataset_path = (
-        "/Volumes/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset"
+        "/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset"
     )
     moving_resolution = (2.611, 2.611, 5)
     ###########################
@@ -300,7 +300,7 @@ def warp_STA_brain(STA_brain, fly, fixed, anat_to_mean_type,
 
     return warps
 def load_roi_atlas():
-    atlas_path = "/Volumes/groups/trc/data/Brezovec/2P_Imaging/anat_templates/jfrc_2018_rois_improve_reorient_transformed.nii"
+    atlas_path = "/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/anat_templates/jfrc_2018_rois_improve_reorient_transformed.nii"
     atlas = np.asarray(nib.load(atlas_path).get_fdata().squeeze(), dtype="float32")
     atlas = ants.from_numpy(atlas)
     atlas.set_spacing((0.76, 0.76, 0.76))
@@ -315,7 +315,7 @@ def load_roi_atlas():
 
 def load_explosion_groups():
 
-    explosion_rois_file = "/Volumes/groups/trc/data/Brezovec/2P_Imaging/anat_templates/20220425_explosion_plot_rois.pickle"
+    explosion_rois_file = "/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/anat_templates/20220425_explosion_plot_rois.pickle"
     explosion_rois = pickle.load(open(explosion_rois_file, "rb"))
     return explosion_rois
 def unnest_roi_groups(explosion_rois):
@@ -507,7 +507,7 @@ mpl.use("agg") # As this should be run on sherlock, use non-interactive backend!
 #import helper_functions_visualize_brain as hfvb
 
 warped_brainsss = False # If false, take warped-brain from snake-brainsss!
-savepath = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/clustered_warped_brainsss_' + repr(warped_brainsss) + '.png')
+savepath = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/clustered_warped_brainsss_' + repr(warped_brainsss) + '.png')
 
 if warped_brainsss:
     WARP_DIRECTORY = "warp" # YANDAN
@@ -525,7 +525,7 @@ resolution = 10 #desired resolution in ms
 behaviors = ['dRotLabY']
 ###
 # BRAINSSSS
-path = pathlib.Path('/Volumes/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/') # YANDAN
+path = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/') # YANDAN
 
 labels = np.load(pathlib.Path(path, 'func_0/clustering/cluster_labels.npy'))
 signal = np.load(pathlib.Path(path, 'func_0/clustering/cluster_signals.npy'))
@@ -590,7 +590,8 @@ explosion_map_original = explosion_map.copy()
 ####
 # SNAKE-BRAINS
 
-path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002')
+path = pathlib.Path('/oak/stanford'
+                    '/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002')
 
 labels = np.load(pathlib.Path(path, 'func_0/clustering/channel_2_cluster_labels.npy'))
 signal = np.load(pathlib.Path(path, 'func_0/clustering/channel_2_cluster_signals.npy'))
