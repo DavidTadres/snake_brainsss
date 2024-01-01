@@ -159,12 +159,12 @@ split_index = split_input(list(np.arange(experiment_total_frames)),cores)
 # take 1 hour
 
 def combine_files():
-    stitched_anatomy_brain = np.zeros((256, 128, 49, 609), dtype=np.float32)
+    stitched_anatomy_brain = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], brain_shape[3]), dtype=np.float32)
     for current_file in natsort.natsorted(temp_save_path.iterdir()):
         if 'npy' in current_file.name and 'channel_1.nii' in current_file.name:
             index_start = int(current_file.name.split('chunks_')[-1].split('-')[0])
             index_end = int(current_file.name.split('.npy')[0].split('-')[-1])
-            stitched_anatomy_brain[:,:,:,index_start:index_end] = np.load(current_file)
+            stitched_anatomy_brain[:,:,:,index_start:index_end] = np.load(current_file)[:,:,:,0:int(index_end-index_start)]
     savepath = pathlib.Path(imaging_path.parent() + '/moco')
     savepath.mkdir(exist_ok=True, parents=True)
 
