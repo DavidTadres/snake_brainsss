@@ -24,8 +24,9 @@ file_path_my = pathlib.Path(path_my, 'channel_2_moco_zscore_highpass.h5')
 rule compare_correlation_results_rule:
     threads: 2
     resources: mem_mb='10G'
-    run:
-        visualize_brain_original.compare_clustering()
+    shell: "python3 dev/visualize_brain_original.py"
+    #run:
+    #    visualize_brain_original.compare_clustering()
 
 """
 rule test_moco_timing_rule:
