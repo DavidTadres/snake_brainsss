@@ -802,7 +802,7 @@ rule motion_correction_rule:
     """
     threads: 6
     resources:
-        mem_mb=snake_utils.mem_mb_much_more_times_input(),
+        mem_mb=snake_utils.mem_mb_much_more_times_input,
         runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
     input:
         # Only use the Channels that exists
