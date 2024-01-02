@@ -3,7 +3,9 @@ from scripts import hello_world
 # Can't put a rule into a loop!!!
 
 rule class_test_rule:
-    input: '/Users/dtadres/Documents/test.txt'
+    input:
+        path_1 = '/Users/dtadres/Documents/test.txt',
+        path_2 = '/Users/dtadres/Documents/test2.txt'
     shell: "python3 scripts/hello_world.py {input}"
 
 """for i in range(3):
