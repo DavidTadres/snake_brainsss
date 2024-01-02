@@ -17,11 +17,11 @@ import matplotlib.pyplot as plt
 
 def compare_moco_results():
     path_original = pathlib.Path(
-        '/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/moco/channel_1_moco.h5')
+        '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/moco/channel_1_moco.h5')
     path_new = pathlib.Path(
-        '/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/temp_moco/stitched_ch1.nii')
+        '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/temp_moco/stitched_ch1.nii')
     savepath = pathlib.Path(
-        '/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/testing/time_series_moco_mean.png')
+        '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/testing/time_series_moco_mean.png')
 
     with h5py.File(path_original, 'r') as hf:
         original_proxy = hf['data']
