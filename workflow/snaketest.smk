@@ -2,7 +2,11 @@ from scripts import hello_world
 
 # Can't put a rule into a loop!!!
 
-for i in range(3):
+rule class_test_rule:
+    input: '/Users/dtadres/Documents/test.txt'
+    shell: "python3 scripts/hello_world.py {input}"
+
+"""for i in range(3):
 
     rule HelloSnake:
         #shell:
@@ -15,4 +19,4 @@ for i in range(3):
             hello_world.print_hi(logfile='foo',
                 args='world',
                 arg2='i'
-            )
+            )"""

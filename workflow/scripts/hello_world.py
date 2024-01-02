@@ -1,3 +1,5 @@
+import sys
+
 def print_hi(
     logfile,
     args,
@@ -19,9 +21,19 @@ def print_hi(
 def print_bye(logfile, args):
     print(args)
 
+class ShellTest():
+    def __init__(self, args):
+        print("args: " + repr(args))
+        self.shell_test()
+    def shell_test(self):
+        print('shell test')
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
-    print_hi("Pycharm")
+    args = sys.argv[1]
+    print(sys.argv[-1])
+    ShellTest(args)
+    #print_hi("Pycharm")
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
