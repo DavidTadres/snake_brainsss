@@ -59,11 +59,11 @@ rule compare_large_arrays_rule:
 
 
 path_original = pathlib.Path(
-    '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco2/channel_1_moco.h5')
+    '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco2/channel_1_moco.h5')
 path_new = pathlib.Path(
-    '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco1/channel_1_moco.h5')
+    '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco1/channel_1_moco.h5')
 savepath = pathlib.Path(
-    '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/time_series_moco_run_twice.png')
+    '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/time_series_moco_run_twice.png')
 rule compare_registration_rule:
     threads: 2
     resources: mem_mb='40G'
