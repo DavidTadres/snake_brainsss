@@ -22,10 +22,11 @@ path_original = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/
 path_my = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0')
 
 #file_path_original = pathlib.Path(path_original, 'functional_channel_2_moco_zscore_highpass.h5')
-file_path_original = pathlib.Path(path_original, 'moco/functional_channel_1_moco.h5')
+#file_path_original = pathlib.Path(path_original, 'moco/functional_channel_1_moco.h5')
 
 #file_path_my = pathlib.Path(path_my, 'channel_2_moco_zscore_highpass.h5')
 file_path_my = pathlib.Path(path_my, 'moco1/channel_1_moco.h5')
+file_path_original = pathlib.Path(path_my, 'moco2/channel_1_moco.h5')
 '''
 rule compare_correlation_results_rule:
     threads: 2

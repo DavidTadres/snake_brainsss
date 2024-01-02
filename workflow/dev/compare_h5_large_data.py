@@ -65,4 +65,4 @@ def run_comparison(path_original, path_my):
                 "Max abs delta between arrays\n" + repr(round(np.max(np.abs(delta)), 10))
             )
             fig.tight_layout()
-            fig.savefig(pathlib.Path(path_my.parent, path_my.name + '_delta.png'))
+            fig.savefig(pathlib.Path(path_my.parent, path_my.name + '_delta_between_runs.png'))
