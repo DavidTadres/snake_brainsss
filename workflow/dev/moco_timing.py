@@ -25,6 +25,7 @@ import natsort
 RUN_LOCAL = False # True if run on my Mac, False if run on sherlock
 # Interesting: When I set this to True, it took LONGER:00:07:10
 # instead of 00:06:41 - not a huge difference but definitely not better..
+# With preload false, got  00:07:06 - seems to just make no difference!
 PRELOAD_DATA = False
 
 type_of_transform = "SyN"
@@ -47,6 +48,7 @@ temp_save_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/prepro
 
 fixed_proxy = nib.load(fixed_path)
 fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
+fixed_ants = ants.from_numpy(np.asarray(fixed, dtype=np.float32))
 
 moving_proxy = nib.load(moving_path)
 if PRELOAD_DATA:
@@ -109,7 +111,6 @@ def for_loop_moco(index):
             current_moving = moving_proxy.dataobj[:,:,:,current_frame]
         #t0 = time.time()
         # Need to have ants images
-        fixed_ants = ants.from_numpy(np.asarray(fixed, dtype=np.float32))
         moving_ants = ants.from_numpy(np.asarray(current_moving, dtype=np.float32))
         #print('\nants conversion took ' + repr(time.time() - t0) + 's')
 
