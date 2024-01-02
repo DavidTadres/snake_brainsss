@@ -23,7 +23,9 @@ import multiprocessing
 import natsort
 
 RUN_LOCAL = False # True if run on my Mac, False if run on sherlock
-PRELOAD_DATA = True
+# Interesting: When I set this to True, it took LONGER:00:07:10
+# instead of 00:06:41 - not a huge difference but definitely not better..
+PRELOAD_DATA = False
 
 type_of_transform = "SyN"
 flow_sigma = 3
@@ -85,8 +87,10 @@ def split_input(index, cores):
 
 
 def for_loop_moco(index):
-    moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], int(index[-1]-index[0]+1)), dtype=np.float32)
-    moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], int(index[-1]-index[0]+1)), dtype=np.float32)
+    # Unclear why I have to do len(index)+1
+    frames_to_process = len(index)
+    moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], frames_to_process), dtype=np.float32)
+    moco_functional = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], frames_to_process), dtype=np.float32)
 
     for counter, current_frame in enumerate(index):
 
@@ -171,7 +175,8 @@ def combine_files():
         if 'npy' in current_file.name and 'channel_1.nii' in current_file.name:
             index_start = int(current_file.name.split('chunks_')[-1].split('-')[0])
             index_end = int(current_file.name.split('.npy')[0].split('-')[-1])
-            stitched_anatomy_brain[:,:,:,index_start:index_end] = np.load(current_file)[:,:,:,0:int(index_end-index_start)]
+            total_frames_this_array = index_end-index_start+1
+            stitched_anatomy_brain[:,:,:,index_start:index_start+total_frames_this_array] = np.load(current_file)
     # Saving
     #savepath = pathlib.Path(imaging_path.parent, '/moco')
     #savepath.mkdir(exist_ok=True, parents=True)

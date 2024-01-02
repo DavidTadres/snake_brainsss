@@ -4,8 +4,8 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 import numpy as np
 
-parallel_moco_path = pathlib.Path('/Users/dtadres/Documents/stitched_ch1.nii')
-loop_moco_path = pathlib.Path('/Users/dtadres/Documents/channel_1_moco.h5')
+parallel_moco_path = pathlib.Path('/Users/dtadres/Documents/test_moco/stitched_ch1.nii')
+loop_moco_path = pathlib.Path('/Users/dtadres/Documents/test_moco/channel_1_moco.h5')
 
 # Compare mean brain results
 
