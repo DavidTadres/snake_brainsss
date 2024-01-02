@@ -19,6 +19,16 @@ rule test_moco_timing_rule:
     resources: mem_mb='40G'
     shell: "python3 dev/moco_timing.py"'''
 
+'''
+rule compare_correlation_results_rule:
+    threads: 2
+    resources: mem_mb='10G'
+    run:
+        visualize_brain_original.compare()
+'''
+
+'''
+
 path_original = pathlib.Path('/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/func_0')
 path_my = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0')
 
@@ -29,20 +39,7 @@ path_my = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/
 file_path_my = pathlib.Path(path_my, 'moco1/channel_1_moco.h5')
 file_path_original = pathlib.Path(path_my, 'moco2/channel_1_moco.h5')
 
-rule compare_registration_rule:
-    threads: 2
-    resources: mem_mb='10G'
-    run: compare_registration_results.compare_moco_results()
-
-'''
-rule compare_correlation_results_rule:
-    threads: 2
-    resources: mem_mb='10G'
-    run:
-        visualize_brain_original.compare()
-'''
-
-'''rule compare_large_arrays_rule:
+rule compare_large_arrays_rule:
     #shell:
     #    'python3 hello_world.py $args'
     threads: 8
@@ -56,3 +53,18 @@ rule compare_correlation_results_rule:
             path_my=input.file_path_my
         )
 '''
+
+####
+#
+
+
+path_original = pathlib.Path(
+    '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco2/channel_1_moco.h5')
+path_new = pathlib.Path(
+    '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco1/channel_1_moco.h5')
+savepath = pathlib.Path(
+    '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/time_series_moco_run_twice.png')
+rule compare_registration_rule:
+    threads: 2
+    resources: mem_mb='40G'
+    run: compare_registration_results.compare_moco_results(path_original, path_new, savepath)

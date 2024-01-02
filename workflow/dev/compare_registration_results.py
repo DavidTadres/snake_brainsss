@@ -15,32 +15,33 @@ import h5py
 import matplotlib.pyplot as plt
 
 
-def compare_moco_results():
-    path_original = pathlib.Path(
-        '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/moco/channel_1_moco.h5')
-    path_new = pathlib.Path(
-        '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/temp_moco/stitched_ch1.nii')
-    savepath = pathlib.Path(
-        '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/testing/time_series_moco_mean.png')
+def compare_moco_results(path_original, path_new, savepath):
 
     with h5py.File(path_original, 'r') as hf:
         original_proxy = hf['data']
-        # print(loop_proxy.shape)
-        # loop_one_slice = loop_proxy[:, :, 3, 50]
         original_data = original_proxy[:]
         print('first loaded')
 
-        new_proxy = nib.load(path_new)
-        new_data = np.asarray(new_proxy.dataobj, dtype=np.float32)
-        print('second loaded ')
+        #new_proxy = nib.load(path_new)
+        #new_data = np.asarray(new_proxy.dataobj, dtype=np.float32)
+        with h5py.File(path_new, 'r') as hf:
+            new_data = hf['data']
+            new_data = original_proxy[:]
+            print('second loaded ')
 
-        diff = new_data - original_data #
+            diff = []
+            for i in range(new_data.shape[-1]):
+                print(i)
+                diff.append(new_data[:,:,:,i] - original_data[:,:,:,i]) #
+            diff = np.asarray(diff)
 
-        mean_over_time = np.nanmean(diff, axis=(0,1,2))
+            mean_over_time = np.nanmean(diff, axis=(1,2,3))
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.plot(mean_over_time)
-        fig.savefig(savepath)
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.plot(mean_over_time)
+            ax.set_xlabel('frames')
+            ax.set_ylabel('difference\nmean pixel intensity')
+            fig.savefig(savepath)
 
 
