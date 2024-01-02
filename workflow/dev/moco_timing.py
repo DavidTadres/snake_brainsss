@@ -12,21 +12,21 @@ original: ~30 minutes
 64 (63) cores: Maybe not possible on sherlock. Get job submission error!
 """
 
-import h5py
 import nibabel as nib
 import pathlib
 import ants
-import matplotlib.pyplot as plt
 import numpy as np
 import time
 import multiprocessing
 import natsort
+cores = multiprocessing.cpu_count() - 1
 
-RUN_LOCAL = False # True if run on my Mac, False if run on sherlock
+RUN_LOCAL = True # True if run on my Mac, False if run on sherlock
 # Interesting: When I set this to True, it took LONGER:00:07:10
 # instead of 00:06:41 - not a huge difference but definitely not better..
 # With preload false, got  00:07:06 - seems to just make no difference!
 PRELOAD_DATA = False
+
 
 type_of_transform = "SyN"
 flow_sigma = 3
@@ -34,17 +34,19 @@ total_sigma = 0
 aff_metric = 'mattes'
 if RUN_LOCAL:
     imaging_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
-    experiment_total_frames = 100  # So that I don't wait forever during testing, of course it should just be brain_shape[3]
+    temp_save_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/temp_moco2')
+    experiment_total_frames = 15  # So that I don't wait forever during testing, of course it should just be brain_shape[3]
     cores = 4
 else:
     imaging_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging')
+    temp_save_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/temp_moco2')
     cores = 31
 fixed_path = pathlib.Path(imaging_path, 'channel_1_mean.nii')
 moving_path = pathlib.Path(imaging_path, 'channel_1.nii')
 functional_path = pathlib.Path(imaging_path, 'channel_2.nii')
 #save_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/moco_parallel')
 #temp_save_path = pathlib.Path('/scratch/users/dtadres/test_moco2')
-temp_save_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/temp_moco2')
+
 
 fixed_proxy = nib.load(fixed_path)
 fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
@@ -178,20 +180,31 @@ def combine_files():
             index_end = int(current_file.name.split('.npy')[0].split('-')[-1])
             total_frames_this_array = index_end-index_start+1
             stitched_anatomy_brain[:,:,:,index_start:index_start+total_frames_this_array] = np.load(current_file)
-    # Saving
-    #savepath = pathlib.Path(imaging_path.parent, '/moco')
-    #savepath.mkdir(exist_ok=True, parents=True)
-    aff = np.eye(4)
-    stitched_anatomy_brain_nifty = nib.Nifti1Image(
-        stitched_anatomy_brain, aff
-    )
-    stitched_anatomy_brain_nifty.to_filename(pathlib.Path(temp_save_path, 'stitched_ch1.nii'))
+        # Saving
+        #savepath = pathlib.Path(imaging_path.parent, '/moco')
+        #savepath.mkdir(exist_ok=True, parents=True)
+        aff = np.eye(4)
+        stitched_anatomy_brain_nifty = nib.Nifti1Image(
+            stitched_anatomy_brain, aff
+        )
+        stitched_anatomy_brain_nifty.to_filename(pathlib.Path(temp_save_path, 'stitched_ch1.nii'))
 
 
-if __name__ == '__main__':
+from multiprocessing.dummy import Pool as PoolThread
+
+#pool = PoolThread(cores)
+pool = multiprocessing.Pool(cores)
+pool.map(for_loop_moco, split_index)
+pool.close()
+pool.join()
+
+print('Motion correction done, combining files now.')
+combine_files()
+print('files combined')
+'''if __name__ == '__main__':
     with multiprocessing.Pool(cores) as p:
         p.map(for_loop_moco, split_index)
     print('Motion correction done, combining files now.')
     combine_files()
-    print('files combined')
+    print('files combined')'''
 # Then put them together to compare
