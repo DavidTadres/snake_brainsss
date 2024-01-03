@@ -31,7 +31,7 @@ flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
 
-#TESTING = True
+TESTING = True
 
 def prepare_split_index(moving_path, cores):
     """
@@ -45,8 +45,8 @@ def prepare_split_index(moving_path, cores):
     brain_shape = moving_proxy.header.get_data_shape()
     # last dimension is time, indicating the amount of volumes in the dataset
     experiment_total_frames = brain_shape[-1]
-    #if TESTING:
-    #    experiment_total_frames = 25
+    if TESTING:
+        experiment_total_frames = 25
     # Make a list with the amount of volumes. For example, if the dataset has
     # 600 volumes (so .shape is something like [256,128,49,600]
     # we want a list like this: [0, 1, 2, ...599]
@@ -267,19 +267,23 @@ if __name__ == '__main__':
         functional_path_two = None #
         pass
 
-
     # Path were the intermediate npy files are saved.
     # It is important that it's different for each run.
     # We can just put in on scratch
     # This will only work if we have a folder called trc and data is in /data, of course
     relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
-    # DONT REMOVE /SCRATCH/... - WILL DELETE YOUR DATA!!!!
     temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
-    #if TESTING:
-    #   temp_save_path = pathlib.Path('/Users/dtadres/Documents/test_folder')
+    if TESTING:
+       temp_save_path = pathlib.Path('/Users/dtadres/Documents/test_folder')
     if temp_save_path.is_dir():
-        # Remove dir with all files if it exists!!!
-        shutil.rmtree(temp_save_path)
+        # Check if temp_save is on scratch - Only delete folder if yes to avoid deleting source data (for now at least)
+        if temp_save_path.parents[-2].as_posix()  == '/scratch':
+            # Remove dir with all files if it exists!!!
+            shutil.rmtree(temp_save_path)
+        else:
+            print('WARNING: Did not remove files in ' + str(temp_save_path))
+            print('Only remove folders that are on scratch to avoid accidentally deleting source data')
+
     # create dir
     # No need for exist_ok=True because the dir should have been deleted just now
     temp_save_path.mkdir(parents=True)
@@ -287,8 +291,8 @@ if __name__ == '__main__':
     # always use one core less than max to make sure nothing gets clogged
     cores = 31 # Sherlock should always use 32 cores so we can use 31 for parallelization
     #cores = multiprocessing.cpu_count() - 1
-    #if TESTING:
-    #    cores = 4
+    if TESTING:
+        cores = 4
     
     # create split index
     split_index = prepare_split_index(moving_path, cores)

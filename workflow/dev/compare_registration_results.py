@@ -35,7 +35,7 @@ def compare_moco_results(path_original, path_new, savepath):
                 diff.append(new_data[:,:,:,i] - original_data[:,:,:,i]) #
             diff = np.asarray(diff)
 
-            mean_over_time = np.nanmean(diff, axis=(1,2,3))
+            mean_over_time = np.nanmean(np.abs(diff), axis=(1,2,3))
 
             fig = plt.figure()
             ax = fig.add_subplot(111)

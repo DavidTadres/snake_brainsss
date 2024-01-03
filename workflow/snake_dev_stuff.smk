@@ -69,7 +69,7 @@ path_original = pathlib.Path(
 path_new = pathlib.Path(
     '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco1/channel_1_moco.h5')
 savepath = pathlib.Path(
-    '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/time_series_moco_yandan_vs_my.png')
+    '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/time_series_moco_yandan_vs_my_abs_diff.png')
 rule compare_registration_rule:
     threads: 2
     resources: mem_mb='100G'

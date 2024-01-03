@@ -404,14 +404,10 @@ rule all:
         ###
         # Motion correction output
         ###
-        # While we don't really need this file afterwards, it's a good idea to have it here because the empty h5 file
-        # we actually want is created very early during the rule call and will be present even if the program
-        # crashed.
         expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy", moco_imaging_paths=list_of_imaging_paths_moco),
-        # depending on which channels are present,
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
         ####
         # Z-score
         ####
@@ -459,6 +455,17 @@ rule all:
             + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
             anat2atlas_paths=imaging_paths_anat2atlas,
             anat2atlas_moving=file_path_anat2atlas_moving),
+
+        '''
+        # OLD!!!
+        # While we don't really need this file afterwards, it's a good idea to have it here because the empty h5 file
+        # we actually want is created very early during the rule call and will be present even if the program
+        # crashed.
+        #>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy", moco_imaging_paths=list_of_imaging_paths_moco),
+        # depending on which channels are present,
+        #>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
+        #>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
+        #>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],moco_imaging_paths=list_of_imaging_paths_moco),'''
 
 rule fictrac_qc_rule:
     """
@@ -698,6 +705,34 @@ rule make_mean_brain_rule:
                 error_stack=error_stack,
                 width=width)
 
+rule motion_correction_parallel_rule:
+    """
+    """
+    threads: 32 # the max that we can do - check with sh_part
+    resources:
+        mem_mb=snake_utils.mem_mb_much_more_times_input,
+        runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
+    input:
+        anatomy_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if 'channel_1' in ANATOMY_CHANNEL else[],
+        anatomy_path_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if 'channel_2' in ANATOMY_CHANNEL else[],
+        anatomy_path_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if 'channel_3' in ANATOMY_CHANNEL else[],
+        # Only use the Channels that exists
+        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
+        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
+        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
+
+        mean_brain_paths_ch1= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
+        mean_brain_paths_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
+        mean_brain_paths_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else [],
+    output:
+        moco_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
+        moco_path_ch2 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[],
+        moco_path_ch3 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
+        par_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
+
+    shell: "python3 scripts/motion_correction_parallel.py {input}"
+
+'''    
 rule motion_correction_rule:
     """
     Yandan file anat file(25GB)
@@ -837,6 +872,8 @@ rule motion_correction_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
+
+'''
 
 rule zscore_rule:
     """
