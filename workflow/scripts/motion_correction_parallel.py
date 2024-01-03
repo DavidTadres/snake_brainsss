@@ -131,7 +131,7 @@ def motion_correction(index,
 
     for counter, current_frame in enumerate(index):
         # Remove after development
-        print(current_frame)
+        print("current_frame " + repr(current_frame) +'\n')
         t_loop_start = time.time()
 
         # Load data in a given process
@@ -434,7 +434,7 @@ if __name__ == '__main__':
     temp_save_path.mkdir(parents=True)
 
     # always use one core less than max to make sure nothing gets clogged
-    cores = 20#31 # Sherlock should always use 32 cores so we can use 31 for parallelization
+    cores = 31 # Sherlock should always use 32 cores so we can use 31 for parallelization
     #cores = multiprocessing.cpu_count() - 1
     if TESTING:
         cores = 4
