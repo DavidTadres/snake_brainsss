@@ -739,9 +739,9 @@ rule motion_correction_parallel_rule:
             "--mean_brain_paths_ch3 {input.mean_brain_paths_ch3} "
             "--ANATOMY_CHANNEL {ANATOMY_CHANNEL} "
             "--FUNCTIONAL_CHANNELS {FUNCTIONAL_CHANNELS} "
-            "--brain_paths_ch1 {output.moco_path_ch1} "
-            "--brain_paths_ch2 {output.moco_path_ch2} "
-            "--brain_paths_ch3 {output.moco_path_ch3} "
+            "--moco_path_ch1 {output.moco_path_ch1} "
+            "--moco_path_ch2 {output.moco_path_ch2} "
+            "--moco_path_ch3 {output.moco_path_ch3} "
             "--par_output {output.par_output} "
 '''    
 rule motion_correction_rule:

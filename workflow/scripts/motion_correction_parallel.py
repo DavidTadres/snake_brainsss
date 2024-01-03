@@ -32,7 +32,7 @@ import sys
 #sys.path.insert(0, pathlib.Path(scripts_path, "workflow").as_posix())
 parent_path = str(pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent.absolute())
 sys.path.insert(0, parent_path)
-print(sys.path)
+#print(sys.path)
 # This just imports '*.py' files from the folder 'brainsss'.
 from brainsss import moco_utils
 from brainsss import utils
@@ -85,12 +85,16 @@ def motion_correction(index,
     :return:
     """
 
+    frames_to_process = len(index)
+    # To keep track of parameters, used for plotting 'motion_correction.png'
+    transform_matrix = np.zeros((12, frames_to_process))
+
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
     # Read the header to get dimensions
     brain_shape = moving_proxy.header.get_data_shape()
+
     # Preallocate empty array with necessary size
-    frames_to_process = len(index)
     moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], frames_to_process), dtype=np.float32)
 
     # Load the meanbrain during a given process. Will cost more memory but should avoid having to shuttle memory
@@ -112,7 +116,7 @@ def motion_correction(index,
     elif len(functional_channel_paths) == 2:
         functional_path_one = functional_channel_paths[0]
         functional_path_two = functional_channel_paths[1]
-
+    print(functional_path_one)
     if functional_path_one is not None:
         # Load functional one proxy in this process
         functional_one_proxy = nib.load(functional_path_one)
@@ -123,9 +127,6 @@ def motion_correction(index,
             moco_functional_two = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], frames_to_process),
                                            dtype=np.float32)
 
-
-    # To keep track of parameters, used for plotting 'motion_correction.png'
-    transform_matrix = np.zeros((12, brain_shape[-1]))
 
 
     for counter, current_frame in enumerate(index):
@@ -179,7 +180,7 @@ def motion_correction(index,
                 # Keep transform_matrix, I think this is used to make the plot
                 # called 'motion_correction.png'
                 temp = ants.read_transform(x)
-                transform_matrix[:, current_frame] = temp.parameters
+                transform_matrix[:, counter] = temp.parameters
             # lets' delete all files created by ants - else we quickly create thousands of files!
             pathlib.Path(x).unlink()
         print('Loop duration: ' + repr(time.time() - t_loop_start))
@@ -209,8 +210,6 @@ def index_from_filename(filename):
 
 def combine_temp_files(moving_path,
                        functional_channel_paths,
-                       #functional_path_one,
-                       #functional_path_two,
                        temp_save_path,
                        moving_output_path,
                        functional_channel_output_paths,
@@ -337,7 +336,8 @@ if __name__ == '__main__':
     ### SETUP LOGGING ###
     #####################
     WIDTH = 120  # This is used in all logging files
-    logfile = utils.create_logfile(args.fly_directory, function_name="motion_correction_parallel")
+    fly_directory = pathlib.Path(args.fly_directory)
+    logfile = utils.create_logfile(fly_directory, function_name="motion_correction_parallel")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     utils.print_function_start(logfile, WIDTH, "motion_correction_parallel")
 
@@ -358,20 +358,48 @@ if __name__ == '__main__':
         moving_output_path = pathlib.Path(args.moco_path_ch2)
 
     if args.FUNCTIONAL_CHANNELS is not None:
+        # Convert the string represenation of a list to a list - it's either ['channel_1',] or ['channel_1','channel_2']
+        #FUNCTIONAL_CHANNELS = args.FUNCTIONAL_CHANNELS.strip('][').split(',')
+        #print("len(FUNCTIONAL_CHANNELS)" + repr(len(FUNCTIONAL_CHANNELS)))
+
+
+        # As opposed to other functions, here we don't pass a list of functional channels
+        # Instead, assign a variable to a given channel
         functional_channel_paths = []
         functional_channel_output_paths = []
-        for current_channel in args.FUNCTIONAL_CHANNELS:
-            if 'channel_1' in args.FUNCTIONAL_CHANNELS:
-                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
-                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
-            if 'channel_2' in args.FUNCTIONAL_CHANNELS:
-                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
-                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
-            if 'channel_3' in args.FUNCTIONAL_CHANNELS:
-                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
-                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
+        #for current_channel in FUNCTIONAL_CHANNELS:
+        #print("current_channel"  + repr(current_channel))
+        #print("functional_channel_paths" + repr(functional_channel_paths))
+        if 'channel_1' in args.FUNCTIONAL_CHANNELS:
+            functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
+            functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
+        if 'channel_2' in args.FUNCTIONAL_CHANNELS:
+            functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
+            functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
+        if 'channel_3' in args.FUNCTIONAL_CHANNELS:
+            functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
+            functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
+        '''# As opposed to other functions, here we don't pass a list of functional channels
+        # Instead, assign a variable to a given channel. Otherwise funny stuff seems to
+        # happen with multiprocessing!
+        print(functional_channel_paths)
+        print(len(functional_channel_paths))
+        if len(functional_channel_paths) == 1:
+            functional_channel_one_path = functional_channel_paths[0]
+            #functional_channel_one_output_path = functional_channel_output_paths[0]
+            functional_channel_two_path = None
+            #functional_channel_two_output_path = None
+        elif len(functional_channel_paths) == 2:
+            functional_channel_one_path = functional_channel_paths[0]
+            #functional_channel_one_output_path = functional_channel_output_paths[0]
+            functional_channel_two_path = functional_channel_paths[1]
+            #functional_channel_two_output_path = functional_channel_output_paths[1]'''
     else:
         functional_channel_paths = None
+        #functional_channel_one_path = None
+        #functional_channel_two_path = None
+
+    print(functional_channel_paths)
 
     param_output_path = args.par_output
 
@@ -382,7 +410,9 @@ if __name__ == '__main__':
     relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
     temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
     if TESTING:
-       temp_save_path = pathlib.Path('/Users/dtadres/Documents/test_folder')
+        temp_save_path = pathlib.Path('/Users/dtadres/Documents/test_folder')
+        if temp_save_path.is_dir():
+            shutil.rmtree(temp_save_path)
     if temp_save_path.is_dir():
         # Check if temp_save is on scratch - Only delete folder if yes to avoid deleting source data (for now at least)
         if temp_save_path.parents[-2].as_posix()  == '/scratch':
@@ -411,13 +441,13 @@ if __name__ == '__main__':
     # create a Pool process
     with multiprocessing.Pool(cores) as p:
         # and call motion_correction function with each of the items in zip
-        p.starmap(motion_correction, zip(split_index,
-                                         itertools.repeat(fixed_path),
-                                         itertools.repeat(moving_path),
-                                         itertools.repeat(functional_channel_paths),
-                                         #itertools.repeat(functional_path_one),
-                                         #itertools.repeat(functional_path_two),
-                                         itertools.repeat(temp_save_path)
+        p.starmap(motion_correction, zip(split_index, # index
+                                         itertools.repeat(fixed_path), #fixed_path
+                                         itertools.repeat(moving_path), #moving_path
+                                         itertools.repeat(functional_channel_paths), #functional_channel_paths
+                                         #itertools.repeat(functional_channel_one_path),
+                                         #itertools.repeat(functional_channel_two_path),
+                                         itertools.repeat(temp_save_path) #temp_save_path
                                          ))
     print('Motion correction done, combining files now.')
     combine_temp_files(moving_path, functional_channel_paths, temp_save_path,
