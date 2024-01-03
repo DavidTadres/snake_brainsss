@@ -72,8 +72,6 @@ def motion_correction(index,
                       fixed_path,
                       moving_path,
                       functional_channel_paths,
-                      #functional_path_one,
-                      #functional_path_two,
                       temp_save_path,
                       ):
     """
@@ -87,7 +85,7 @@ def motion_correction(index,
 
     frames_to_process = len(index)
     # To keep track of parameters, used for plotting 'motion_correction.png'
-    transform_matrix = np.zeros((12, frames_to_process))
+    transform_matrix = np.zeros((frames_to_process, 12))
 
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
@@ -180,7 +178,7 @@ def motion_correction(index,
                 # Keep transform_matrix, I think this is used to make the plot
                 # called 'motion_correction.png'
                 temp = ants.read_transform(x)
-                transform_matrix[:, counter] = temp.parameters
+                transform_matrix[counter, :] = temp.parameters
             # lets' delete all files created by ants - else we quickly create thousands of files!
             pathlib.Path(x).unlink()
         print('Loop duration: ' + repr(time.time() - t_loop_start))
@@ -244,7 +242,7 @@ def combine_temp_files(moving_path,
                                       dtype=np.float32)
 
     # Get transform matrix
-    transform_matrix = np.zeros((12, brain_shape[3]))
+    transform_matrix = np.zeros((brain_shape[3],12))
 
     for current_file in natsort.natsorted(temp_save_path.iterdir()):
         if '.npy' in current_file.name and moving_path.name in current_file.name:
@@ -255,7 +253,7 @@ def combine_temp_files(moving_path,
             stitched_anatomy_brain[:,:,:,index_start:index_start+total_frames_this_array] = np.load(current_file)
         elif 'motcorr_params' in current_file.name:
             index_start, index_end, total_frames_this_array = index_from_filename(current_file)
-            transform_matrix[:,index_start:index_start+total_frames_this_array] = np.load(current_file)
+            transform_matrix[index_start:index_start+total_frames_this_array,:] = np.load(current_file)
         elif functional_path_one is not None:
             if '.npy' in current_file.name and functional_path_one.name in current_file.name:
                 index_start, index_end, total_frames_this_array = index_from_filename(current_file)
@@ -365,18 +363,11 @@ if __name__ == '__main__':
         moving_output_path = pathlib.Path(args.moco_path_ch2)
 
     if args.FUNCTIONAL_CHANNELS is not None:
-        # Convert the string represenation of a list to a list - it's either ['channel_1',] or ['channel_1','channel_2']
-        #FUNCTIONAL_CHANNELS = args.FUNCTIONAL_CHANNELS.strip('][').split(',')
-        #print("len(FUNCTIONAL_CHANNELS)" + repr(len(FUNCTIONAL_CHANNELS)))
-
-
-        # As opposed to other functions, here we don't pass a list of functional channels
-        # Instead, assign a variable to a given channel
+        # Convert the string represenation of a list to a list - it's either
+        # ['channel_1',] or ['channel_1','channel_2'] or similar
+        # if
         functional_channel_paths = []
         functional_channel_output_paths = []
-        #for current_channel in FUNCTIONAL_CHANNELS:
-        #print("current_channel"  + repr(current_channel))
-        #print("functional_channel_paths" + repr(functional_channel_paths))
         if 'channel_1' in args.FUNCTIONAL_CHANNELS:
             functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
             functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
@@ -386,27 +377,12 @@ if __name__ == '__main__':
         if 'channel_3' in args.FUNCTIONAL_CHANNELS:
             functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
             functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
-        '''# As opposed to other functions, here we don't pass a list of functional channels
-        # Instead, assign a variable to a given channel. Otherwise funny stuff seems to
-        # happen with multiprocessing!
-        print(functional_channel_paths)
-        print(len(functional_channel_paths))
-        if len(functional_channel_paths) == 1:
-            functional_channel_one_path = functional_channel_paths[0]
-            #functional_channel_one_output_path = functional_channel_output_paths[0]
-            functional_channel_two_path = None
-            #functional_channel_two_output_path = None
-        elif len(functional_channel_paths) == 2:
-            functional_channel_one_path = functional_channel_paths[0]
-            #functional_channel_one_output_path = functional_channel_output_paths[0]
-            functional_channel_two_path = functional_channel_paths[1]
-            #functional_channel_two_output_path = functional_channel_output_paths[1]'''
+
+        #if ('channel_1' not in args.FUNCTIONAL_CHANNELS
+        #        and 'channel_2' not in args.FUNCTIONAL_CHANNELS
+        #        and 'channel_3' not in args.FUNCTIONAL_CHANNELS):
     else:
         functional_channel_paths = None
-        #functional_channel_one_path = None
-        #functional_channel_two_path = None
-
-    print(functional_channel_paths)
 
     param_output_path = args.par_output
 
@@ -435,6 +411,7 @@ if __name__ == '__main__':
 
     # always use one core less than max to make sure nothing gets clogged
     cores = 31 # Sherlock should always use 32 cores so we can use 31 for parallelization
+    print("multiprocessing.cpu_count() " + repr(multiprocessing.cpu_count() ))
     #cores = multiprocessing.cpu_count() - 1
     if TESTING:
         cores = 4
