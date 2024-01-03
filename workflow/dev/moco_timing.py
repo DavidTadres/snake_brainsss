@@ -442,6 +442,7 @@ if __name__ == '__main__':
     # We can just put in on scratch
     # This will only work if we have a folder called trc and data is in /data, of course
     relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
+    # DONT REMOVE /SCRATCH/... - WILL DELETE YOUR DATA!!!!
     temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
     if temp_save_path.is_dir():
         # Remove dir with all files if it exists!!!

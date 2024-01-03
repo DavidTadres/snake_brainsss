@@ -17,9 +17,9 @@ from dev import compare_registration_results
 rule test_moco_timing_rule:
     threads: 32
     input:
-        fixed_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1_mean.nii'),
-        moving_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1.nii'),
-        functional_paths = [pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_2.nii')]
+        fixed_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1_mean.nii'),
+        moving_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1.nii'),
+        functional_paths = [pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_2.nii')]
 
     resources: mem_mb='40G'
     shell: "python3 dev/moco_timing.py {input}"
