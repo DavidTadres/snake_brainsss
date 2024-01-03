@@ -22,16 +22,20 @@ import natsort
 import shutil
 import itertools
 import argparse
-import sys# To import files (or 'modules') from the brainsss folder, define path to scripts!
+import sys
+
+# To import files (or 'modules') from the brainsss folder, define path to scripts!
 # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
-scripts_path = pathlib.Path(
-    __file__
-).parent.resolve()
-sys.path.insert(0, pathlib.Path(scripts_path, "workflow"))
+#scripts_path = pathlib.Path(#
+#    __file__
+#).parent.resolve()
+#sys.path.insert(0, pathlib.Path(scripts_path, "workflow").as_posix())
+parent_path = str(pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent.absolute())
+sys.path.insert(0, parent_path)
+print(sys.path)
 # This just imports '*.py' files from the folder 'brainsss'.
 from brainsss import moco_utils
 from brainsss import utils
-
 ###
 # Global variable
 ###
@@ -40,7 +44,7 @@ flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
 
-TESTING = False
+TESTING = True
 
 def prepare_split_index(moving_path, cores):
     """
@@ -333,9 +337,9 @@ if __name__ == '__main__':
     ### SETUP LOGGING ###
     #####################
     WIDTH = 120  # This is used in all logging files
-    logfile = utils.create_logfile(args.fly_directory, function_name="make_supervoxels")
+    logfile = utils.create_logfile(args.fly_directory, function_name="motion_correction_parallel")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "make_supervoxels")
+    utils.print_function_start(logfile, WIDTH, "motion_correction_parallel")
 
     ####################################
     ### Identify the anatomy channel ###

@@ -22,10 +22,12 @@ import sklearn.cluster
 
 # To import files (or 'modules') from the brainsss folder, define path to scripts!
 # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
-scripts_path = pathlib.Path(
-    __file__
-).parent.resolve()
-sys.path.insert(0, pathlib.Path(scripts_path, "workflow"))
+#scripts_path = pathlib.Path(
+#    __file__
+#).parent.resolve()
+#sys.path.insert(0, pathlib.Path(scripts_path, "workflow"))
+parent_path = str(pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent.absolute())
+sys.path.insert(0, parent_path)
 # This just imports '*.py' files from the folder 'brainsss'.
 from brainsss import moco_utils
 from brainsss import utils
