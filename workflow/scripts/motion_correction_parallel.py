@@ -297,7 +297,7 @@ def combine_temp_files(moving_path,
     #param_savename = savepath_root, 'motcorr_params.npy'
     np.save(param_output_path, transform_matrix)
 
-    print('Took: ' + repr(time.tim() - t0) + 's to combine files')
+    print('Took: ' + repr(time.time() - t0) + 's to combine files')
 
     t0 = time.time()
     print('transform_matrix.shape'  + repr(transform_matrix.shape))
