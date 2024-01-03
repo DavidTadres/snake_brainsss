@@ -13,7 +13,7 @@ from dev import compare_h5_large_data
 from dev import compare_registration_results
 #from dev import moco_timing
 #from dev import visualize_brain_original
-
+'''
 rule test_moco_timing_rule:
     threads: 32
     input:
@@ -24,7 +24,7 @@ rule test_moco_timing_rule:
     resources: mem_mb='60G'
     shell: "python3 scripts/motion_correction_parallel.py {input}"
 
-
+'''
 '''
 rule compare_correlation_results_rule:
     threads: 2
@@ -59,7 +59,7 @@ rule compare_large_arrays_rule:
             path_my=input.file_path_my
         )
 '''
-'''
+
 ####
 #
 
@@ -74,4 +74,3 @@ rule compare_registration_rule:
     threads: 2
     resources: mem_mb='100G'
     run: compare_registration_results.compare_moco_results(path_original, path_new, savepath)
-'''

@@ -26,7 +26,7 @@ def compare_moco_results(path_original, path_new, savepath):
         #new_data = np.asarray(new_proxy.dataobj, dtype=np.float32)
         with h5py.File(path_new, 'r') as hf:
             new_data = hf['data']
-            new_data = original_proxy[:]
+            new_data = new_data[:]
             print('second loaded ')
 
             diff = []
