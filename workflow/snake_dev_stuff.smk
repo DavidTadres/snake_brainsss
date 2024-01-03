@@ -72,5 +72,5 @@ savepath = pathlib.Path(
     '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/time_series_moco_yandan_vs_my_abs_diff.png')
 rule compare_registration_rule:
     threads: 2
-    resources: mem_mb='100G'
+    resources: mem_mb='150G'
     run: compare_registration_results.compare_moco_results(path_original, path_new, savepath)
