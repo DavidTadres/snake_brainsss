@@ -39,7 +39,11 @@ def mem_mb_more_times_input(wildcards, input):
     :param input:
     :return:
     """
-    return max(input.size_mb * 3.5, 4000)
+    calculated_memory = max(input.size_mb * 3.5, 4000)
+    if calculated_memory < 256000:
+        return(calculated_memory)
+    else:
+        return(256000)
 
 
 def mem_mb_much_more_times_input(wildcards, input):
