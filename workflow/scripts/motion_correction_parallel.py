@@ -214,7 +214,7 @@ def combine_temp_files(moving_path,
                        moving_output_path,
                        functional_channel_output_paths,
                        param_output_path):
-
+    t0=time.time()
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
     # Read the header to get dimensions
@@ -297,6 +297,11 @@ def combine_temp_files(moving_path,
     #param_savename = savepath_root, 'motcorr_params.npy'
     np.save(param_output_path, transform_matrix)
 
+    print('Took: ' + repr(time.tim() - t0) + 's to combine files')
+
+    t0 = time.time()
+    print('transform_matrix.shape'  + repr(transform_matrix.shape))
+    print('transform_matrix' + repr(transform_matrix))
     ### MAKE MOCO PLOT ###
     moco_utils.save_moco_figure(
         transform_matrix=transform_matrix,
@@ -304,6 +309,8 @@ def combine_temp_files(moving_path,
         moco_dir=moving_output_path.parent,
         printlog=printlog,
     )
+
+    print('took: ' + repr(time.time() - t0) + ' s to plot moco')
 
 
 if __name__ == '__main__':
