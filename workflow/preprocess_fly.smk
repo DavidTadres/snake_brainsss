@@ -69,7 +69,8 @@ fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
 print('Analyze data in ' + repr(fly_folder_to_process_oak.as_posix()))
 
 # Read channel information from fly.json file
-with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file: # If fails here, means the folder specified doesn't exist. Check name
+# If fails here, means the folder specified doesn't exist. Check name. Note: Good place to let user know to check folder and exit!
+with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
     fly_json = json.load(file)
 
 ANATOMY_CHANNEL = fly_json['anatomy_channel'] # < This needs to come from some sort of json file the experimenter
@@ -456,16 +457,16 @@ rule all:
         #    anat2atlas_paths=imaging_paths_anat2atlas,
         #    anat2atlas_moving=file_path_anat2atlas_moving),
 
-        '''
-        # OLD!!!
-        # While we don't really need this file afterwards, it's a good idea to have it here because the empty h5 file
-        # we actually want is created very early during the rule call and will be present even if the program
-        # crashed.
-        #>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy", moco_imaging_paths=list_of_imaging_paths_moco),
-        # depending on which channels are present,
-        #>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-        #>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-        #>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],moco_imaging_paths=list_of_imaging_paths_moco),'''
+'''
+# OLD!!!
+# While we don't really need this file afterwards, it's a good idea to have it here because the empty h5 file
+# we actually want is created very early during the rule call and will be present even if the program
+# crashed.
+#>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy", moco_imaging_paths=list_of_imaging_paths_moco),
+# depending on which channels are present,
+#>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
+#>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
+#>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],moco_imaging_paths=list_of_imaging_paths_moco),'''
 
 rule fictrac_qc_rule:
     """
