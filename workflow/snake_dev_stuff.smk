@@ -13,11 +13,17 @@ from dev import compare_h5_large_data
 from dev import compare_registration_results
 #from dev import moco_timing
 #from dev import visualize_brain_original
-'''
+
 rule test_moco_timing_rule:
     threads: 32
+    input:
+        fixed_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1_mean.nii'),
+        moving_path = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1.nii'),
+        functional_paths = [pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_2.nii')]
+
     resources: mem_mb='40G'
-    shell: "python3 dev/moco_timing.py"'''
+    shell: "python3 dev/moco_timing.py {input}"
+
 
 '''
 rule compare_correlation_results_rule:
@@ -53,7 +59,7 @@ rule compare_large_arrays_rule:
             path_my=input.file_path_my
         )
 '''
-
+'''
 ####
 #
 
@@ -68,3 +74,4 @@ rule compare_registration_rule:
     threads: 2
     resources: mem_mb='100G'
     run: compare_registration_results.compare_moco_results(path_original, path_new, savepath)
+'''
