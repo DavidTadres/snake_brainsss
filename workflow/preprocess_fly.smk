@@ -713,10 +713,8 @@ rule motion_correction_parallel_rule:
         mem_mb=snake_utils.mem_mb_much_more_times_input,
         runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
     input:
-        anatomy_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if 'channel_1' in ANATOMY_CHANNEL else[],
-        anatomy_path_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if 'channel_2' in ANATOMY_CHANNEL else[],
-        anatomy_path_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if 'channel_3' in ANATOMY_CHANNEL else[],
-        # Only use the Channels that exists
+        # Only use the Channels that exists - this organizes the anatomy and functional paths inside the motion correction
+        # module.
         brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
         brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
         brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
@@ -730,8 +728,20 @@ rule motion_correction_parallel_rule:
         moco_path_ch3 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
         par_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
 
-    shell: "python3 scripts/motion_correction_parallel.py {input}"
-
+    shell: "python3 scripts/motion_correction_parallel.py "
+            "--fly_directory {fly_folder_to_process_oak} "
+            "--brain_paths_ch1 {input.brain_paths_ch1} "
+            "--brain_paths_ch2 {input.brain_paths_ch2} "
+            "--brain_paths_ch3 {input.brain_paths_ch3} "
+            "--mean_brain_paths_ch1 {input.mean_brain_paths_ch1} "
+            "--mean_brain_paths_ch2 {input.mean_brain_paths_ch2} "
+            "--mean_brain_paths_ch3 {input.mean_brain_paths_ch3} "
+            "--ANATOMY_CHANNEL {ANATOMY_CHANNEL} "
+            "--FUNCTIONAL_CHANNELS {FUNCTIONAL_CHANNELS} "
+            "--brain_paths_ch1 {output.moco_path_ch1} "
+            "--brain_paths_ch2 {output.moco_path_ch2} "
+            "--brain_paths_ch3 {output.moco_path_ch3} "
+            "--par_output {output.par_output} "
 '''    
 rule motion_correction_rule:
     """

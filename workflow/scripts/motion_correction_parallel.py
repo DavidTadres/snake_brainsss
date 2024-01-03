@@ -19,9 +19,18 @@ import numpy as np
 import time
 import multiprocessing
 import natsort
-import sys
 import shutil
 import itertools
+import argparse
+import sys# To import files (or 'modules') from the brainsss folder, define path to scripts!
+# path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
+scripts_path = pathlib.Path(
+    __file__
+).parent.resolve()
+sys.path.insert(0, pathlib.Path(scripts_path, "workflow"))
+# This just imports '*.py' files from the folder 'brainsss'.
+from brainsss import moco_utils
+from brainsss import utils
 
 ###
 # Global variable
@@ -31,7 +40,7 @@ flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
 
-TESTING = True
+TESTING = False
 
 def prepare_split_index(moving_path, cores):
     """
@@ -58,8 +67,9 @@ def prepare_split_index(moving_path, cores):
 def motion_correction(index,
                       fixed_path,
                       moving_path,
-                      functional_path_one,
-                      functional_path_two,
+                      functional_channel_paths,
+                      #functional_path_one,
+                      #functional_path_two,
                       temp_save_path,
                       ):
     """
@@ -70,7 +80,7 @@ def motion_correction(index,
     :param index:
     :return:
     """
-    print("moving_path" + repr(moving_path))
+
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
     # Read the header to get dimensions
@@ -87,6 +97,17 @@ def motion_correction(index,
 
     # Load moving proxy in this process
     moving_proxy = nib.load(moving_path)
+
+    # Unpack functional paths
+    if functional_channel_paths is None:
+        functional_path_one = None
+        functional_path_two = None
+    elif len(functional_channel_paths) == 1:
+        functional_path_one = functional_channel_paths[0]
+        functional_path_two = None
+    elif len(functional_channel_paths) == 2:
+        functional_path_one = functional_channel_paths[0]
+        functional_path_two = functional_channel_paths[1]
 
     if functional_path_one is not None:
         # Load functional one proxy in this process
@@ -155,8 +176,6 @@ def motion_correction(index,
                 # called 'motion_correction.png'
                 temp = ants.read_transform(x)
                 transform_matrix[:, current_frame] = temp.parameters
-                # temp = ants.read_transform(x)
-                # transform_matrix.append(temp.parameters)
             # lets' delete all files created by ants - else we quickly create thousands of files!
             pathlib.Path(x).unlink()
         print('Loop duration: ' + repr(time.time() - t_loop_start))
@@ -173,7 +192,10 @@ def motion_correction(index,
             np.save(pathlib.Path(temp_save_path, functional_path_two.name + 'chunks_'
                                  +repr(index[0] + '_' + repr(index[-1]))))
 
-    # SAVE TRANSFORM MATRIX AND PUT BACK TOGETHER!!!!
+    param_savename = pathlib.Path(temp_save_path, "motcorr_params" + 'chunks_'
+                                  + repr(index[0]) + '-' + repr(index[-1]))
+    np.save(param_savename, transform_matrix)
+
 def index_from_filename(filename):
     index_start = int(filename.name.split('chunks_')[-1].split('-')[0])
     index_end = int(filename.name.split('.npy')[0].split('-')[-1])
@@ -182,14 +204,29 @@ def index_from_filename(filename):
     return(index_start, index_end, total_frames_this_array)
 
 def combine_temp_files(moving_path,
-                       functional_path_one,
-                       functional_path_two,
-                       temp_save_path):
+                       functional_channel_paths,
+                       #functional_path_one,
+                       #functional_path_two,
+                       temp_save_path,
+                       moving_output_path,
+                       functional_channel_output_paths,
+                       param_output_path):
 
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
     # Read the header to get dimensions
     brain_shape = moving_proxy.header.get_data_shape()
+
+    # Unpack functional paths
+    if functional_channel_paths is None:
+        functional_path_one = None
+        functional_path_two = None
+    elif len(functional_channel_paths) == 1:
+        functional_path_one = functional_channel_paths[0]
+        functional_path_two = None
+    elif len(functional_channel_paths) == 2:
+        functional_path_one = functional_channel_paths[0]
+        functional_path_two = functional_channel_paths[1]
 
     stitched_anatomy_brain = np.zeros((brain_shape[0],brain_shape[1],
                                        brain_shape[2], brain_shape[3]),
@@ -203,6 +240,9 @@ def combine_temp_files(moving_path,
                                        brain_shape[2], brain_shape[3]),
                                       dtype=np.float32)
 
+    # Get transform matrix
+    transform_matrix = np.zeros((12, brain_shape[3]))
+
     for current_file in natsort.natsorted(temp_save_path.iterdir()):
         if '.npy' in current_file.name and moving_path.name in current_file.name:
             #index_start = int(current_file.name.split('chunks_')[-1].split('-')[0])
@@ -210,6 +250,9 @@ def combine_temp_files(moving_path,
             #total_frames_this_array = index_end-index_start+1
             index_start, index_end, total_frames_this_array = index_from_filename(current_file)
             stitched_anatomy_brain[:,:,:,index_start:index_start+total_frames_this_array] = np.load(current_file)
+        elif 'motcorr_params' in current_file.name:
+            index_start, index_end, total_frames_this_array = index_from_filename(current_file)
+            transform_matrix[:,index_start:index_start+total_frames_this_array] = np.load(current_file)
         elif functional_path_one is not None:
             if '.npy' in current_file.name and functional_path_one.name in current_file.name:
                 index_start, index_end, total_frames_this_array = index_from_filename(current_file)
@@ -219,7 +262,9 @@ def combine_temp_files(moving_path,
                 if '.npy' in current_file.name and functional_path_two.name in current_file.name:
                     index_start, index_end, total_frames_this_array = index_from_filename(current_file)
                 stitched_functional_two[:,:,:,index_start:index_start+total_frames_this_array] = np.load(current_file)
+    ########
     # Saving
+    #######
     # we create a new subfolder called 'moco' where the file is saved
     # Not a great solution - the definition of the output file should happen in the snakefile, not hidden
     # in here!
@@ -228,44 +273,103 @@ def combine_temp_files(moving_path,
     # Prepare nifti file
     aff = np.eye(4)
     # Save anatomy channel:
-    savepath_anatomy = pathlib.Path(savepath_root, moving_path.stem + '_moco.nii')
+    #savepath_anatomy = pathlib.Path(savepath_root, moving_path.stem + '_moco.nii')
     stitched_anatomy_brain_nifty = nib.Nifti1Image(stitched_anatomy_brain, aff)
-    stitched_anatomy_brain_nifty.to_filename(savepath_anatomy)
+    stitched_anatomy_brain_nifty.to_filename(moving_output_path)
 
     if functional_path_one is not None:
-        savepath_func_one = pathlib.Path(savepath_root, functional_path_one.stem + '_moco.nii')
+        #savepath_func_one = pathlib.Path(savepath_root, functional_path_one.stem + '_moco.nii')
         stitched_functional_one_nifty = nib.Nifti1Image(stitched_functional_one, aff)
-        stitched_functional_one_nifty.to_filename(savepath_func_one)
+        stitched_functional_one_nifty.to_filename(functional_channel_output_paths[0])
 
         if functional_path_two is not None:
-            savepath_func_two = pathlib.Path(savepath_root, functional_path_two.stem + '_moco.nii')
+            #savepath_func_two = pathlib.Path(savepath_root, functional_path_two.stem + '_moco.nii')
             stitched_functional_two_nifty = nib.Nifti1Image(stitched_functional_two, aff)
-            stitched_functional_two_nifty.to_filename(savepath_func_two)
+            stitched_functional_two_nifty.to_filename(functional_channel_output_paths[1])
 
     # After saving the stitched file, delete the temporary files
     shutil.rmtree(temp_save_path)
 
+    # Save transform matrix:
+    #param_savename = savepath_root, 'motcorr_params.npy'
+    np.save(param_output_path, transform_matrix)
+
+    ### MAKE MOCO PLOT ###
+    moco_utils.save_moco_figure(
+        transform_matrix=transform_matrix,
+        parent_path=moving_path.parent,
+        moco_dir=moving_output_path.parent,
+        printlog=printlog,
+    )
+
+
 if __name__ == '__main__':
-    # Organize input
-    # sys.argv[0] is the name of the script
-    #type_of_transform = sys.argv[1]
-    #flow_sigma = sys.argv[2]
-    #total_sigma = sys.argv[3]
-    #aff_metric = sys.argv[4]
+    ############################
+    ### Organize shell input ###
+    ############################
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--fly_directory", help="Folder of fly to save log")
 
-    # Convert str paths to pathlib.Path objects as everywhere else in snake-brainsss
-    fixed_path = pathlib.Path(sys.argv[1])
-    moving_path = pathlib.Path(sys.argv[2])
-    try:
-        functional_path_one = pathlib.Path(sys.argv[3])
-    except IndexError:
-        functional_path_one = None
+    parser.add_argument("--brain_paths_ch1", nargs="?", help="Path to ch1 file, if it exists")
+    parser.add_argument("--brain_paths_ch2", nargs="?", help="Path to ch2 file, if it exists")
+    parser.add_argument("--brain_paths_ch3", nargs="?", help="Path to ch3 file, if it exists")
 
-    try:
-        functional_path_two = pathlib.Path(sys.argv[4])
-    except IndexError:
-        functional_path_two = None #
-        pass
+    parser.add_argument("--mean_brain_paths_ch1", nargs="?", help="Path to ch1 meanbrain file, if it exists")
+    parser.add_argument("--mean_brain_paths_ch2", nargs="?", help="Path to ch2 meanbrain file, if it exists")
+    parser.add_argument("--mean_brain_paths_ch3", nargs="?", help="Path to ch3 meanbrain file, if it exists")
+
+    parser.add_argument("--ANATOMY_CHANNEL", help="variable with string containing the anatomy channel")
+    parser.add_argument("--FUNCTIONAL_CHANNELS", nargs="?", help="list with strings containing the anatomy channel")
+
+    parser.add_argument("--moco_path_ch1", nargs="?", help="Path to ch1 moco corrected file, if Ch1 exists")
+    parser.add_argument("--moco_path_ch2", nargs="?", help="Path to ch2 moco corrected file, if Ch2 exists")
+    parser.add_argument("--moco_path_ch3", nargs="?", help="Path to ch3 moco corrected file, if Ch3 exists")
+
+    parser.add_argument("--par_output", nargs="?", help="Path to parameter output")
+
+    args = parser.parse_args()
+
+    #####################
+    ### SETUP LOGGING ###
+    #####################
+    WIDTH = 120  # This is used in all logging files
+    logfile = utils.create_logfile(args.fly_directory, function_name="make_supervoxels")
+    printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
+    utils.print_function_start(logfile, WIDTH, "make_supervoxels")
+
+    ####################################
+    ### Identify the anatomy channel ###
+    ####################################
+    if 'channel_1' == args.ANATOMY_CHANNEL:
+        moving_path = pathlib.Path(args.brain_paths_ch1)
+        fixed_path = pathlib.Path(args.mean_brain_paths_ch1)
+        moving_output_path = pathlib.Path(args.moco_path_ch1)
+    elif 'channel_2' ==  args.ANATOMY_CHANNEL:
+        moving_path = pathlib.Path(args.brain_paths_ch2)
+        fixed_path = pathlib.Path(args.mean_brain_paths_ch2)
+        moving_output_path = pathlib.Path(args.moco_path_ch2)
+    elif 'channel_3' ==  args.ANATOMY_CHANNEL:
+        moving_path = pathlib.Path(args.brain_paths_ch3)
+        fixed_path = pathlib.Path(args.mean_brain_paths_ch3)
+        moving_output_path = pathlib.Path(args.moco_path_ch2)
+
+    if args.FUNCTIONAL_CHANNELS is not None:
+        functional_channel_paths = []
+        functional_channel_output_paths = []
+        for current_channel in args.FUNCTIONAL_CHANNELS:
+            if 'channel_1' in args.FUNCTIONAL_CHANNELS:
+                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
+                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
+            if 'channel_2' in args.FUNCTIONAL_CHANNELS:
+                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
+                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
+            if 'channel_3' in args.FUNCTIONAL_CHANNELS:
+                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
+                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
+    else:
+        functional_channel_paths = None
+
+    param_output_path = args.par_output
 
     # Path were the intermediate npy files are saved.
     # It is important that it's different for each run.
@@ -293,19 +397,25 @@ if __name__ == '__main__':
     #cores = multiprocessing.cpu_count() - 1
     if TESTING:
         cores = 4
-    
-    # create split index
-    split_index = prepare_split_index(moving_path, cores)
 
+    # Multiprocessing code starts here
+
+    # create split index. If for example we have 10 cores and our index goes from 0..99 we will get 10 list
+    # as a list of list like this:
+    # [[0...9],[10..19],[20..21],...[90..99]]
+    split_index = prepare_split_index(moving_path, cores)
+    # create a Pool process
     with multiprocessing.Pool(cores) as p:
+        # and call motion_correction function with each of the items in zip
         p.starmap(motion_correction, zip(split_index,
                                          itertools.repeat(fixed_path),
                                          itertools.repeat(moving_path),
-                                         itertools.repeat(functional_path_one),
-                                         itertools.repeat(functional_path_two),
+                                         itertools.repeat(functional_channel_paths),
+                                         #itertools.repeat(functional_path_one),
+                                         #itertools.repeat(functional_path_two),
                                          itertools.repeat(temp_save_path)
                                          ))
     print('Motion correction done, combining files now.')
-    combine_temp_files(moving_path, functional_path_one, functional_path_two, temp_save_path)
+    combine_temp_files(moving_path, functional_channel_paths, temp_save_path,
+                       moving_output_path, functional_channel_output_paths, param_output_path)
     print('files combined')
-# Then put them together to compare

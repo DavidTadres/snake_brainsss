@@ -1,5 +1,5 @@
 import sys
-
+import argparse
 def print_hi(
     logfile,
     args,
@@ -31,10 +31,16 @@ class ShellTest():
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
-    print(sys.argv)
-    args = sys.argv[1]
-    print(sys.argv[-1])
-    ShellTest(args)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", help="use this as input")
+    parser.add_argument("--ouput", help="use this as output")
+    args = parser.parse_args()
+
+    print(f"Args: {args}\nCommand Line: {sys.argv}\ninput: {args.input}")
+    #print(sys.argv)
+    #args = sys.argv[1]
+    #print(sys.argv[-1])
+    #ShellTest(args)
     #print_hi("Pycharm")
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

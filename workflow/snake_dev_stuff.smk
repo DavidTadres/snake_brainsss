@@ -13,18 +13,38 @@ from dev import compare_h5_large_data
 from dev import compare_registration_results
 #from dev import moco_timing
 #from dev import visualize_brain_original
-'''
+
+CH1_EXISTS = True
+CH2_EXISTS = True
+CH3_EXISTS = False
+
+ANATOMY_CHANNEL = 'channel_1'
+FUNCTIONAL_CHANNELS = []
+
 rule test_moco_timing_rule:
     threads: 32
     input:
-        fixed_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1_mean.nii'),
-        moving_path = pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1.nii'),
-        functional_paths = [pathlib.Path('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_2.nii')]
+        brain_paths_ch1 = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1.nii') if CH1_EXISTS else [],
+        brain_paths_ch2 = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_2.nii') if CH2_EXISTS else [],
+        brain_paths_ch3 = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_3.nii') if CH3_EXISTS else [],
+
+        mean_brain_paths_ch1= pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_1_mean.nii') if CH1_EXISTS else [],
+        mean_brain_paths_ch2= pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_2_mean.nii') if CH2_EXISTS else [],
+        mean_brain_paths_ch3= pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/fly_002/func0/imaging/channel_3_mean.nii') if CH3_EXISTS else []
+    output:
 
     resources: mem_mb='60G'
-    shell: "python3 scripts/motion_correction_parallel.py {input}"
+    shell: "python3 scripts/motion_correction_parallel.py "
+            "--brain_paths_ch1 {input.brain_paths_ch1} "
+            "--brain_paths_ch2 {input.brain_paths_ch2} "
+            "--brain_paths_ch3 {input.brain_paths_ch3} "
+            "--mean_brain_paths_ch1 {input.mean_brain_paths_ch1} "
+            "--mean_brain_paths_ch2 {input.mean_brain_paths_ch2} "
+            "--mean_brain_paths_ch3 {input.mean_brain_paths_ch3} "
+            "--ANATOMY_CHANNEL {ANATOMY_CHANNEL} "
+            "--FUNCTIONAL_CHANNELS {FUNCTIONAL_CHANNELS}"
 
-'''
+
 '''
 rule compare_correlation_results_rule:
     threads: 2
@@ -63,14 +83,15 @@ rule compare_large_arrays_rule:
 ####
 #
 
-
+'''
 path_original = pathlib.Path(
-    '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco/channel_1_moco.h5')
+    '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco2/channel_1_moco.h5')
 path_new = pathlib.Path(
     '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/func_0/moco1/channel_1_moco.h5')
 savepath = pathlib.Path(
-    '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/time_series_moco_yandan_vs_my_abs_diff.png')
+    '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/time_series_moco_twice_abs_diff.png')
 rule compare_registration_rule:
     threads: 2
     resources: mem_mb='150G'
     run: compare_registration_results.compare_moco_results(path_original, path_new, savepath)
+'''
