@@ -6,6 +6,9 @@ as [0,1,..n] and feeds them to the motion correction function.
 There's much more overhead but because each process takes several minutes that
 should be managable.
 
+
+Benchmark:
+32 cores, 8 cores:  00:09:51
 """
 
 import nibabel as nib
