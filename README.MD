@@ -114,6 +114,7 @@ source .env_snake_brainsss/bin/activate
    uint16 (happens for example when writing the h5 file back to a nii file).  
 2) Why use nibabel at all? e.g. motion correction ants.registration takes a numpy array it seems. > Probably because
    it can be opened natively in fiji?
+3) align_anat calls: Why do we provide a resolution (e.g. res_ant = (0.653, 0.653, 1)) and then resample with (2,2,2)? 
 
 ###
 # Other notes:
@@ -124,6 +125,10 @@ source .env_snake_brainsss/bin/activate
 2) Check line 146/147 in motion_correction.py in brainsss. Data is loaded as uint16 and then converted to float32
    Meanbrain is made by calling np.mean which returns a float64 array. I think this might lead to a loss of precision
    Better to avoid using uint16 in line 146 and use directly float32.  
+3) Dangerous: line 61 in 'temporal_high_pass_filter.py' in brainsss - sigma is defined as 200 and not dependent on the speed
+   at which data was collected! I think this will yield different filtering results depending on the aquisition speed!
+4) Unclear what's happening/what the consequence is: in align_anat.py starting line 135: the variable is called 
+   fwdtranforms_save_dirs but it contains moco['invtransforms']. I think it does copy invtransforms but not 100% sure.
 
 ###
 # Todo:

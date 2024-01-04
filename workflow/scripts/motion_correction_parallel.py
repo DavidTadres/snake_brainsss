@@ -410,7 +410,9 @@ if __name__ == '__main__':
     temp_save_path.mkdir(parents=True)
 
     # always use one core less than max to make sure nothing gets clogged
-    cores = 31 # Sherlock should always use 32 cores so we can use 31 for parallelization
+    #cores = 31 # Sherlock should always use 32 cores so we can use 31 for parallelization
+    # it's possible that ants profits from having more than one thread available
+    cores = 15
     print("multiprocessing.cpu_count() " + repr(multiprocessing.cpu_count() ))
     #cores = multiprocessing.cpu_count() - 1
     if TESTING:

@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
+fly_folder_to_process = 'fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -1160,7 +1160,9 @@ rule correlation_rule:
                                 #behavior=input.fictrac_path,
                                 fictrac_fps=fictrac_fps,
                                 metadata_path=input.metadata_path,
-                                fictrac_path=input.fictrac_path)
+                                fictrac_path=input.fictrac_path,
+                                fictrac_resolution=10 # copy paste from brainsss! seems to be ms
+            )
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_correlation')
             utils.write_error(logfile=logfile,
@@ -1376,20 +1378,21 @@ rule func_to_anat_rule:
     run:
         try:
             preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
+                rule_name='func_to_anat',
+                fixed_fly='anat',# this is important for where transform params are saved
+                moving_fly='func',# this is important for where transform params are saved # TODO change this to
+                # something dynamic, otherwise more than 1 channel won't work as expected!!!
                 path_to_read_fixed=[input.path_to_read_fixed],
                 path_to_read_moving=[input.path_to_read_moving],
                 path_to_save=output,
+                resolution_of_fixed=None,#(
+                #0.653, 0.653, 1),# Copy-paste from brainsss, probably can be read from metadate.xml!
+                resolution_of_moving=None,#(
+                #2.611, 2.611, 5),# Copy-paste from brainsss, probably can be read from metadate.xml!
+                iso_2um_resample = 'fixed',
+                #iso_2um_fixed=True,
+                #iso_2um_moving=False,
                 type_of_transform='Affine',# copy-paste from brainsss
-                resolution_of_fixed=(
-                0.653, 0.653, 1),# Copy-paste from brainsss, probably can be read from metadate.xml!
-                resolution_of_moving=(
-                2.611, 2.611, 5),# Copy-paste from brainsss, probably can be read from metadate.xml!
-                rule_name='func_to_anat',
-                fixed_fly='anat', # this is important for where transform params are saved
-                moving_fly='func', # this is important for where transform params are saved # TODO change this to
-                # something dynamic, otherwise more than 1 channel won't work as expected!!!
-                iso_2um_fixed=True,
-                iso_2um_moving=False,
                 grad_step=0.2,
                 flow_sigma=3,
                 total_sigma=0,
@@ -1425,19 +1428,20 @@ rule anat_to_atlas:
     run:
         try:
             preprocessing.align_anat(fly_directory=fly_folder_to_process_oak,
-                path_to_read_fixed=[input.path_to_read_fixed],
-                path_to_read_moving=[input.path_to_read_moving],
-                path_to_save=output,
-                type_of_transform='SyN',# copy-paste from brainsss
-                resolution_of_fixed=(2, 2, 2),# Copy-paste from brainsss, probably can be read from metadate.xml!
-                resolution_of_moving=(
-                0.653, 0.653, 1),# Copy-paste from brainsss, probably can be read from metadate.xml!
                 rule_name='anat_to_atlas',
                 fixed_fly='meanbrain',# this is important for where transform params are saved
                 moving_fly='anat',# this is important for where transform params are saved # TODO change this to
                 # something dynamic, otherwise more than 1 channel won't work as expected!!!
-                iso_2um_fixed=False,
-                iso_2um_moving=True,
+                path_to_read_fixed=[input.path_to_read_fixed],
+                path_to_read_moving=[input.path_to_read_moving],
+                path_to_save=output,
+                resolution_of_fixed=(2, 2, 2),# Copy-paste from brainsss, probably can be read from metadate.xml!
+                resolution_of_moving=None,#(
+                #0.653, 0.653, 1),# Copy-paste from brainsss, probably can be read from metadate.xml!
+                iso_2um_resample='moving',
+                #iso_2um_fixed=False,
+                #iso_2um_moving=True,
+                type_of_transform='SyN',# copy-paste from brainsss
                 grad_step=0.2,
                 flow_sigma=3,
                 total_sigma=0,

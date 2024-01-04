@@ -1,6 +1,4 @@
-
 import numpy as np
-
 import pathlib
 import sys
 import time
@@ -33,6 +31,7 @@ from brainsss import moco_utils
 from brainsss import utils
 from brainsss import fictrac_utils
 from brainsss import corr_utils
+from brainsss import align_utils
 
 
 ####################
@@ -59,12 +58,13 @@ def make_supervoxels(
     n_clusters,
 ):
     """
-
+    Todo 3D correlation to create supervoxels!
     :param fly_directory:
     :param path_to_read:
     :param save_path:
     :return:
     """
+    CLUSTER_3D = True
     #####################
     ### SETUP LOGGING ###
     #####################
@@ -72,10 +72,6 @@ def make_supervoxels(
     logfile = utils.create_logfile(fly_directory, function_name="make_supervoxels")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     utils.print_function_start(logfile, WIDTH, "make_supervoxels")
-
-    # func_path = args['func_path']
-    # logfile = args['logfile']
-    # printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
 
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
@@ -92,7 +88,7 @@ def make_supervoxels(
     )
     print("save_path_cluster_signals " + repr(save_path_cluster_signals))
 
-    # Can have more than one functional channel!
+    # Can have more than one functional channel, hence loop!
     for (
         current_path_to_read,
         current_path_to_save_labels,
@@ -115,9 +111,6 @@ def make_supervoxels(
 
         ### MAKE CLUSTER DIRECTORY ###
 
-        # cluster_dir = os.path.join(func_path, 'clustering')
-        # if not os.path.exists(cluster_dir):
-        #    os.mkdir(cluster_dir)
         current_path_to_save_labels.parent.mkdir(exist_ok=True, parents=True)
 
         ### FIT CLUSTERS ###
@@ -154,6 +147,18 @@ def make_supervoxels(
         np.save(current_path_to_save_labels, cluster_labels)
         printlog("cluster fit duration: {} sec".format(time.time() - t0))
 
+        if CLUSTER_3D:
+            cluster_model_3D = sklearn.cluster.AgglomerativeClustering(
+                n_clusters=n_clusters,  # ????
+                memory=str(current_path_to_save_labels.parent),
+                linkage="ward",
+                connectivity=connectivity
+            )
+            cluster_model_3D.fit(brain.reshape(-1, brain.shape[3]))
+            cluster_labels_3D = cluster_model_3D.labels_
+
+            np.save(pathlib.Path(current_path_to_save_labels.parent, '3Dlabels.npy'), cluster_labels_3D)
+
         ### GET CLUSTER AVERAGE SIGNAL ###
 
         printlog("getting cluster averages")
@@ -175,6 +180,15 @@ def make_supervoxels(
         np.save(current_path_to_save_signals, all_signals)
         printlog("cluster average duration: {} sec".format(time.time() - t0))
 
+        if CLUSTER_3D:
+            neural_activity_3D = brain.reshape(-1, brain.shape[3])
+            signals_3D = []
+            for cluster_num in range(n_clusters):
+                cluster_indeces = np.where(cluster_labels_3D == cluster_num)[0]
+                mean_signal = np.mean(neural_activity[cluster_indeces, :], axis=0)
+                signals_3D.append(mean_signal)
+            signals_3D = np.asarray(signals_3D)
+            np.save(pathlib.Path(current_path_to_save_signals.parent, '3D_signals.npy'), signals_3D)
 
 def apply_transforms(
     fly_directory,
@@ -289,70 +303,54 @@ def apply_transforms(
 
 def align_anat(
     fly_directory,
-    path_to_read_fixed,
-    path_to_read_moving,
-    path_to_save,
-    type_of_transform,
-    resolution_of_fixed,
-    resolution_of_moving,
     rule_name,
     fixed_fly,
     moving_fly,
-    iso_2um_fixed=True,
-    iso_2um_moving=False,
-    grad_step=0.2,
-    flow_sigma=3,
-    total_sigma=0,
-    syn_sampling=32
+    path_to_read_fixed,
+    path_to_read_moving,
+    path_to_save,
+    resolution_of_fixed,
+    resolution_of_moving,
+    iso_2um_resample,
+    #iso_2um_fixed,
+    #iso_2um_moving,
+    type_of_transform,
+    grad_step,
+    flow_sigma,
+    total_sigma,
+    syn_sampling
 ):
     """
+    This function aligns the moving brain to the fixed brain.
+    In the preprocessing pipeline this function is called twice:
+        1) The low resolution anatomical scan (e.g. func0/channel_1.nii) is registered with the
+           high resolution anatomical scan (e.g. anat0/channel_1.nii).
+        2) In the other call, the high resolution anatomical scan (e.g. anat0/channel_1.nii) is
+           registered with an anatomy template, which can be found in the '/brain_atlases' folder.
+
+
     Diff to Bella's function - instead of calling output something like 'func-to-anat.nii' it defines
     the channel and yields something like 'channel_1_func-to-channel_1_anat.nii'
-    :param args:
+
+
+    :param fly_directory:a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :param rule_name: string, name of the log file
+    :param fixed_fly: string, used for logging
+    :param moving_fly: string, used for logging
+    :param path_to_read_fixed: Full path as a list of pathlib.Path objects to the nii to be read as the fixed image
+    :param path_to_read_moving: Full path as a list of pathlib.Path objects to the nii to be read as the moving image
+    :param path_to_save: Full path as a list of pathlib.Path objects to the nii to be saved
+    :param resolution_of_fixed: Resolution as a tuple of the fixed image. If None, will extract from metadata (best!)
+    :param resolution_of_moving: Resolution of the moving image. If None, will extract from metadata (best!)
+    :param iso_2um_resample: either 'fixed' or 'moving'. indicates which of the brains needs to be resamples at 2um.
+    #:param iso_2um_fixed:
+    #:param iso_2um_moving:
+    :param type_of_transform: See https://antspy.readthedocs.io/en/latest/registration.html
+    :param grad_step: See https://antspy.readthedocs.io/en/latest/registration.html
+    :param flow_sigma: See https://antspy.readthedocs.io/en/latest/registration.html
+    :param total_sigma: See https://antspy.readthedocs.io/en/latest/registration.html
+    :param syn_sampling: See https://antspy.readthedocs.io/en/latest/registration.html
     :return:
-    """
-    """
-    Hardcoded stuff from preprocessing of brainsss
-    res_anat = (0.653, 0.653, 1)
-    res_func = (2.611, 2.611, 5)
-
-    for fly in fly_dirs:
-        fly_directory = os.path.join(dataset_path, fly)
-
-        if loco_dataset:
-            moving_path = os.path.join(fly_directory, 'func_0', 'imaging', 'functional_channel_1_mean.nii')
-        else:
-            moving_path = os.path.join(fly_directory, 'func_0', 'moco', 'functional_channel_1_moc_mean.nii')
-        moving_fly = 'func'
-        moving_resolution = res_func
-
-        if loco_dataset:
-            fixed_path = os.path.join(fly_directory, 'anat_0', 'moco', 'stitched_brain_red_mean.nii')
-        else:
-            fixed_path = os.path.join(fly_directory, 'anat_0', 'moco', 'anatomy_channel_1_moc_mean.nii')
-        fixed_fly = 'anat'
-        fixed_resolution = res_anat
-
-        save_directory = os.path.join(fly_directory, 'warp')
-        if not os.path.exists(save_directory):
-            os.mkdir(save_directory)
-
-        type_of_transform = 'Affine'
-        save_warp_params = True
-        flip_X = False
-        flip_Z = False
-
-        low_res = False
-        very_low_res = False
-
-        iso_2um_fixed = True
-        iso_2um_moving = False
-
-        grad_step = 0.2
-        flow_sigma = 3
-        total_sigma = 0
-        syn_sampling = 32
-
     """
 
     ####
@@ -372,44 +370,38 @@ def align_anat(
     # There can only be one fixed brain, of course
     path_to_read_fixed = path_to_read_fixed[0]
 
-    print("path_to_read_fixed" + repr(path_to_read_fixed))
-    print("path_to_read_moving" + repr(path_to_read_moving))
-    print("path_to_save" + repr(path_to_save))
+    ####
+    # DEFINE RESOLUTION
+    ####
+    # Should not be defined in snakefile but read automatically by xml file!
+    if resolution_of_fixed is None:
+        metadata_path = pathlib.Path(path_to_read_fixed.parent, 'recording_metadata.xml')
+        resolution_of_fixed = align_utils.extract_resolution(metadata_path)
 
     flip_X = False # Todo - what does this do? Was set to false in brainsss
     flip_Z = False # Todo - what does this do? Was set to false in brainsss
     save_warp_params = True  # copy-paste from brainsss. args['save_warp_params']
 
-
-    fixed_fly = 'channel_' + path_to_read_fixed.name.split('channel_')[-1].split('_')[0] + '_' + fixed_fly
-
-    #iso_2um_fixed = iso_2um_fixed  # True for func2anat, False for anat2atlas
-    #iso_2um_moving = iso_2um_moving  # False for func2anat, True for anat2atlas
-
-    grad_step = grad_step  # args['grad_step']
-    flow_sigma = flow_sigma  # args['flow_sigma']
-    total_sigma = total_sigma  # args['total_sigma']
-    syn_sampling = syn_sampling  # args['syn_sampling']
+    fixed_fly = ('channel_'
+                 + path_to_read_fixed.name.split('channel_')[-1].split('_')[0]
+                 + '_' + fixed_fly)
 
     ###################
     ### Load Brains ###
     ###################
 
     ### Fixed
-    # fixed = np.asarray(nib.load(fixed_path).get_data().squeeze(), dtype='float32')
     # Doesn't load to memory
     fixed_brain_proxy = nib.load(path_to_read_fixed)
     # Load to memory
-    fixed_brain = np.squeeze(np.asarray(
-        fixed_brain_proxy.dataobj, dtype=np.float32
-    )) # Not sure if squeeze is necessary - Bella used the nib.squeeze that should have same (?)
-    # functionality as np.squeeze (remove last dimension if length=1)
+    fixed_brain = np.squeeze(np.asarray(fixed_brain_proxy.dataobj, dtype=DTYPE))
     utils.check_for_nan_and_inf_func(fixed_brain)
 
     fixed_brain = ants.from_numpy(fixed_brain)
     fixed_brain.set_spacing(resolution_of_fixed)
     # This is only called during func2anat call
-    if iso_2um_fixed: # Only resample IF iso_2um_fixed is set (
+    #if iso_2um_fixed: # Only resample IF iso_2um_fixed is set (
+    if 'fixed' in iso_2um_resample:
         fixed_brain = ants.resample_image(fixed_brain, (2, 2, 2), use_voxels=False)
 
     # It's possible to have to channels for the 'moving' brain. Do this in a loop
@@ -418,8 +410,13 @@ def align_anat(
     ):
 
         ### Moving
+        # Find resolution if None
+        if resolution_of_moving is None:
+            metadata_path = pathlib.Path(current_path_to_read_moving.parent, 'recording_metadata.xml')
+            resolution_of_moving = align_utils.extract_resolution(metadata_path)
+        # Load brain data
         moving_brain_proxy = nib.load(current_path_to_read_moving)
-        moving_brain = np.squeeze(np.asarray(moving_brain_proxy.dataobj, dtype=np.float32))
+        moving_brain = np.squeeze(np.asarray(moving_brain_proxy.dataobj, dtype=DTYPE))
         # Not sure if squeeze is necessary - Bella used the nib.squeeze that should have same (?)
         # functionality as np.squeeze (remove last dimension if length=1)
         utils.check_for_nan_and_inf_func(fixed_brain)
@@ -435,7 +432,8 @@ def align_anat(
         moving_brain = ants.from_numpy(moving_brain)
         moving_brain.set_spacing(resolution_of_moving)
         # This is only applied during anat2atlas rule
-        if iso_2um_moving: # there are also low_res and very_low_res option in brainsss!
+        #if iso_2um_moving: # there are also low_res and very_low_res option in brainsss!
+        if iso_2um_resample == 'moving':
             moving_brain = ants.resample_image(moving_brain, (2, 2, 2), use_voxels=False)
 
         # Give a bit more info about the fixed and moving fly by adding channel information!
@@ -446,10 +444,8 @@ def align_anat(
         #############
         ### Align ###
         #############
-
+        # Since we only align meanbrains, it's quite fast!
         t0 = time.time()
-        # with stderr_redirected():  # to prevent dumb itk gaussian error bullshit infinite printing
-        # > Ohoh, hopefully doesn't fill my log up
         moco = ants.registration(
             fixed_brain,
             moving_brain,
@@ -459,7 +455,6 @@ def align_anat(
             total_sigma=total_sigma,
             syn_sampling=syn_sampling,
         )
-        print("moco " + repr(moco))
 
         printlog(
             "Fixed: {}, {} | Moving: {}, {} | {} | {}".format(
@@ -505,9 +500,7 @@ def align_anat(
                     invtransforms_save_folder.parent, invtransforms_save_folder.name + "_2umiso"
                 )
             invtransforms_save_folder.mkdir(exist_ok=True, parents=True)
-            # !!!!! NOTE this all sounds like invtransforms but the files that are actually transfered
-            # are fwdtransform!!!!!!
-            for source_path in fwdtransformlist:
+            for source_path in invransformlist:
                 source_file = pathlib.Path(source_path).name
                 target_path = pathlib.Path(invtransforms_save_folder, source_file)
                 shutil.copyfile(source_path, target_path)
@@ -553,7 +546,7 @@ def clean_anatomy(fly_directory, path_to_read, save_path):
     ##########
     # Since we only have a >>>single anatomy channel<<< no need to loop!
     brain_proxy = nib.load(path_to_read[0])
-    brain = np.asarray(brain_proxy.dataobj, dtype=np.float32)
+    brain = np.asarray(brain_proxy.dataobj, dtype=DTYPE)
 
     ### Blur brain and mask small values ###
     brain_copy = brain.copy()  # Make a copy in memory of the brain data, doubles memory
@@ -691,10 +684,10 @@ def correlation(
     fly_directory,
     dataset_path,
     save_path,
-    # behavior,
     fictrac_fps,
     metadata_path,
     fictrac_path,
+    fictrac_resolution
 ):
     """
     Correlate z-scored brain activity with behavioral activity.
@@ -712,7 +705,12 @@ def correlation(
     See script 'pearson_correlation.py' - the vectorized version should take 0.03% of the time the
     scipy version does.
 
-    :param args:
+    :param fly_directory,
+    :param dataset_path,
+    :param save_path,
+    :param fictrac_fps,
+    :param metadata_path,
+    :param fictrac_path
     :return:
     """
     #####################
@@ -765,16 +763,13 @@ def correlation(
     ####################
     ### Load fictrac ###
     ####################
-    # Always define path in snakefile as it makes sure the file exists before even submitting a job
-    # uses the same function as in fictrac_qc...
     fictrac_raw = fictrac_utils.load_fictrac(fictrac_path)
-    resolution = 10  # desired resolution in ms
     expt_len = (fictrac_raw.shape[0] / fictrac_fps) * 1000
     # how many datapoints divide by how many times per seconds,in ms
 
     ### interpolate fictrac to match the timestamps from the microscope!
     fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(
-        fictrac_raw, fictrac_fps, resolution, expt_len, behavior, timestamps=timestamps
+        fictrac_raw, fictrac_fps, fictrac_resolution, expt_len, behavior, timestamps=timestamps
     )
     # Originally, there was a z parameter which was used as timestamps[:,z] to return the fictrac
     # data for a given z slice. We're not using it in the vectorized verison
@@ -783,11 +778,8 @@ def correlation(
     # Since we are memory limited, do correlation for both channels consecutively!
     for current_dataset_path, current_save_path in zip(dataset_path, save_path):
         if "nii" in current_dataset_path.name:
-            # Avoid using get_fdata in loop. Something about cache is filling up memory quite fast!
-            brain = np.asarray(
-                nib.load(current_dataset_path).get_fdata().sqeeeze(), dtype="float32"
-            )  # Never tested this
-            # Also not sure it makes sense to define it as float32 because the h5>nii converter seems to save as int16.
+            brain_proxy = nib.load(current_dataset_path)
+            brain = np.asarray(brain_proxy.dataobj, dtype=DTYPE)
             printlog(
                 "Loaded nii file - BEWARE, I have not tested this. Better to use h5 files!"
             )
@@ -844,48 +836,45 @@ def correlation(
                 brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
             )
 
-        printlog(
-            "Finished calculating correlation on {}; behavior: {}".format(
-                current_dataset_path.name, behavior
-            )
-        )
-
         ### SAVE ###
-        # if not os.path.exists(save_directory):
-        #    os.mkdir(save_directory)
         current_save_path.parent.mkdir(exist_ok=True, parents=True)
-
-        # if 'warp' in full_load_path:
+        '''# if 'warp' in full_load_path:
         if "warp" in current_dataset_path.parts:
             warp_str = "_warp"
         else:
             warp_str = ""
-        printlog("grey_only not implemented yet")
-        # if grey_only:
-        #    grey_str = '_grey'
-        # else:
-        #    grey_str = ''
-        if "zscore" not in current_dataset_path.parts:
+        printlog("grey_only not implemented yet")'''
+        '''if grey_only:
+            grey_str = '_grey'
+        else:
+            grey_str = '''''
+        '''if "zscore" not in current_dataset_path.parts:
             no_zscore_highpass_str = "_mocoonly"
         else:
-            no_zscore_highpass_str = ""
+            no_zscore_highpass_str = ""'''
 
-        save_file = pathlib.Path(current_save_path)  # ,
-        #                        '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
-        # Commented longer filename because we must define the output filename already in the snakefile.
-        # save_file = os.path.join(save_directory,
-        #                         '{}_corr_{}{}{}{}.nii'.format(date, behavior, warp_str, grey_str, no_zscore_highpass_str))
+        # Prepare Nifti file for saving
         aff = np.eye(4)
         object_to_save = nib.Nifti1Image(corr_brain, aff)
         # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
-        object_to_save.to_filename(save_file)
+        object_to_save.to_filename(current_save_path)
 
-        printlog("Saved {}".format(save_file))
-        corr_utils.save_maxproj_img(image_to_max_project=corr_brain, path=save_file)
+        # Save easy-to-view png image of correlation
+        printlog("Saved {}".format(current_save_path))
+        corr_utils.save_maxproj_img(image_to_max_project=corr_brain, path=current_save_path)
         printlog("Saved png plot")
 
-        TESTING = False
-        if TESTING:
+        ###
+        # LOG SUCCESS
+        ###
+        printlog(
+            "Successfully finished calculating correlation on {}; behavior: {}".format(
+                current_dataset_path.name, behavior
+            )
+        )
+
+        '''ORIGINAL = False
+        if ORIGINAL:
             del brain  # remove brain from memory
             del corr_brain
             time.sleep(2)
@@ -914,7 +903,7 @@ def correlation(
                 fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(
                     fictrac_raw,
                     fictrac_fps,
-                    resolution,
+                    fictrac_resolution,
                     expt_len,
                     behavior,
                     timestamps=timestamps,
@@ -948,13 +937,44 @@ def correlation(
             object_to_save = nib.Nifti1Image(corr_brain, aff)
             # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
             object_to_save.to_filename(save_file)
-
-
+'''
 def temporal_high_pass_filter(
-    fly_directory, dataset_path, temporal_high_pass_filtered_path
+        fly_directory,
+        dataset_path,
+        temporal_high_pass_filtered_path
 ):
     """
-    Filters z-scored brain with scipt.ndimage.gaussian_filter1d in chunks due to memory demand of the large files
+    Filters z-scored brain with scipt.ndimage.gaussian_filter1d in time dimension.
+
+    Todo: Currently sigma is set to 200. It should be dependent on the recording frequency (per volume)!
+
+    Undertanding what the filter does:
+    import scipy.ndimage
+    box = np.zeros((10,10,10)) # pretend this is x,y and t
+    box[0:5,0:5,:] = 10
+    box[5:10,5:10,:] = 10
+    smooth = scipy.ndimage.gaussian_filter1d(box, sigma=3, axis=-1)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+    ax1.imshow(box[0,:,:], vmin=0, vmax=10)
+    ax2.imshow(smooth[0,:,:], vmin=0, vmax=10) # plot e.g. [:,0,:] and [:,:,0]
+    # There is no smoothing across x or y indicating that gaussian_filter1d
+    # does what it says on the tin: It only filters across the last dimension,
+    # or only as a temporal filter as Bella called it.
+    box = np.zeros((10,10,10),dtype=np.float32) # pretend this is x,y and t
+    box[:,:,0:10] = np.arange(0,10)
+    smooth = scipy.ndimage.gaussian_filter1d(box, sigma=3, axis=-1)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+    ax1.imshow(box[0,:,:], vmin=0, vmax=10)
+    ax2.imshow(smooth[0,:,:], vmin=0, vmax=10)
+
+    # Play with test data
+    data_proxy = nib.load('/Users/dtadres/Documents/func1/imaging/channel_1.nii')
+    data = np.asarray(data_proxy.dataobj, dtype=np.float32)
+    smooth = scipy.ndimage.gaussian_filter1d(data,sigma=200,axis=-1,truncate=1)
     :param args:
     :return:
     """
@@ -968,30 +988,6 @@ def temporal_high_pass_filter(
     )
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     utils.print_function_start(logfile, WIDTH, "temporal_high_pass_filter")
-    # args = {'logfile': logfile,
-    # 'load_directory': load_directory,
-    # 'save_directory': save_directory,
-    # 'brain_file': brain_file}
-    #
-    # load_directory = args['load_directory']
-    # save_directory = args['save_directory']
-    # brain_file = args['brain_file']
-    # stepsize = 2
-
-    # full_load_path = os.path.join(load_directory, brain_file)
-    # save_file = os.path.join(save_directory, brain_file.split('.')[0] + '_highpass.h5')
-
-    #####################
-    ### SETUP LOGGING ###
-    #####################
-
-    # width = 120
-    # logfile = args['logfile']
-    # printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
-
-    #################
-    ### HIGH PASS ###
-    #################
 
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
@@ -1001,17 +997,41 @@ def temporal_high_pass_filter(
         temporal_high_pass_filtered_path
     )
 
-    # From Bella, why so low???
-    # stepsize = 2
-    # stepsize = 500 # Doesn't seem to work - probably because loop is set up to work only with stepsize=2
-
     printlog("Beginning high pass")
     # dataset_path might be a list of 2 channels (or a list with one channel only)
     for current_dataset_path, current_temporal_high_pass_filtered_path in zip(
         dataset_path, temporal_high_pass_filtered_path
     ):
         printlog("Working on " + repr(current_dataset_path.name))
-        with h5py.File(current_dataset_path, "r") as hf:
+
+        if '.nii' in current_dataset_path:
+            # this doesn't actually LOAD the data - it is just a proxy
+            current_dataset_proxy = nib.load(current_dataset_path)
+            # Now load into RAM
+            data = np.asarray(current_dataset_proxy.dataobj, dtype=DTYPE)
+            printlog("Data shape is {}".format(data.shape))
+
+            # Calculate mean
+            data_mean = np.mean(data, axis=-1)
+            # Using filter to smoothen data. This gets rid of
+            # high frequency noise.
+            # Note: sigma: standard deviation for Gaussian kernel
+            # This needs to be made dynamic else we'll filter differently
+            # at different
+            smoothed_data = ndimage.gaussian_filter1d(
+                data, sigma=200, axis=-1, truncate=1
+            )  # This for sure makes a copy of
+            # the array, doubling memory requirements
+
+            # To save memory, do in-place operations where possible
+            # data_high_pass = data - smoothed_data + data_mean[:,:,:,None]
+            data -= smoothed_data
+            # to save memory: data-= ndimage.gaussian_filter1d(...output=data) to do everything in-place?
+            data += data_mean[:, :, :, None]
+
+
+        else:
+           with h5py.File(current_dataset_path, "r") as hf:
             data = hf[
                 "data"
             ]  # this doesn't actually LOAD the data - it is just a proxy
@@ -1068,10 +1088,20 @@ def temporal_high_pass_filter(
 
 def zscore(fly_directory, dataset_path, zscore_path):
     """
-    Remember, only the functional channel is z scored of course!!!!
+    z-scoring of a brain.
+    z-score = (x-mu)/sigma with:
+        x=observed value
+        mu=mean of sample
+        sigma=standard deviation of the sample.
 
-    Expected memory needs:
-    2x Filesize + 2~10 MB for the meanbrain and std
+    Z-scoring helps normalize our recording and make is comparable across samples where
+    different animals will have different baseline fluorescence, different amounts of response
+    etc.
+
+    We only z-score the functional channels (defined in snakefile)
+
+    Expected memory requirement for mostly in place operations
+    2x Filesize + 2~10 MB for the meanbrain and std (and more for larger images)
 
     Reason:
     https://ipython-books.github.io/45-understanding-the-internals-of-numpy-to-avoid-unnecessary-array-copying/
@@ -1107,13 +1137,15 @@ def zscore(fly_directory, dataset_path, zscore_path):
     data/=stdbrain[:,:,:,np.newaxis]
     aid(data)
     >10737418240
-    :param args:
-    :return:
+
+    :param fly_directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :param dataset_path: Full path as a list of pathlib.Path objects to the nii to be read
+    :param zscore_path: Full path as a list of pathlib.Path objects to the nii to be saved
     """
     # To reproduce Bella's script
-    RUN_LOOPED = False
-    if RUN_LOOPED:
-        stepsize=100
+    #RUN_LOOPED = False
+    #if RUN_LOOPED:
+    #    stepsize=100
 
     ##############
     ### ZSCORE ###
@@ -1132,125 +1164,141 @@ def zscore(fly_directory, dataset_path, zscore_path):
 
     # we might get a second functional channel in the future!
     for current_dataset_path, current_zscore_path in zip(dataset_path, zscore_path):
-        ####
-        # testing!!!
-        #####
-
-        # load_directory = args['load_directory']
-        # save_directory = args['save_directory']
-        # brain_file = args['brain_file']
-        # stepsize = 100
-
-        # full_load_path = os.path.join(load_directory, brain_file)
-        # save_file = os.path.join(save_directory, brain_file.split('.')[0] + '_zscore.h5')
-
-        #####################
-        ### SETUP LOGGING ###
-        #####################
-
-        # Open file - Must keep file open while accessing it.
-        # I'm pretty sure we don't overwrite it because we open it as r.
-        # This should mean that we are reading stuff into memory, of course
-        with h5py.File(current_dataset_path, "r") as hf:
-            data = hf[
-                "data"
-            ]  # this doesn't actually LOAD the data - it is just a proxy
-            dims = np.shape(data)
+        if 'nii' in current_dataset_path:
+            dataset_proxy = nib.load(current_dataset_path)
+            data = np.asarray(dataset_proxy.dataobj, dtype=DTYPE)
 
             printlog("Data shape is {}".format(dims))
 
-            '''if RUN_LOOPED:
-                save_loop = pathlib.Path(current_zscore_path.parent, current_zscore_path.name + 'loop.h5')
-                ####
-                # Bella's code that allows chunking
-                ###
-                running_sum = np.zeros(dims[:3])
-                running_sumofsq = np.zeros(dims[:3])
-                steps = list(range(0, dims[-1], stepsize))
-                steps.append(dims[-1])
+            # Expect a 4D array, xyz and the fourth dimension is time!
+            mean_brain = np.nanmean(data, axis=3, dtype=DTYPE_CACLULATIONS)
+            printlog('Calculated mean of data')
+            std_brain = np.std(data, axis=3, dtype=DTYPE_CACLULATIONS)  # With float64 need much more memory
+            printlog('Calculated standard deviation')
 
-                for chunk_num in range(len(steps)):
-                    if chunk_num + 1 <= len(steps) - 1:
-                        chunkstart = steps[chunk_num]
-                        chunkend = steps[chunk_num + 1]
-                        chunk = data[:, :, :, chunkstart:chunkend]
-                        running_sum += np.sum(chunk, axis=3)
-                        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-                meanbrain = running_sum / dims[-1]
+            ### Calculate zscore and save ###
+            # Calculate z-score
+            # z_scored = (data - mean_brain[:,:,:,np.newaxis])/std_brain[:,:,:,np.newaxis]
+            # The above works, is easy to read but makes a copy in memory. Since brain data is
+            # huge (easily 20Gb) we'll avoid making a copy by doing in place operations to save
+            # memory! See docstring for more information
 
-                np.save('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/loop_meanbrain.npy',
-                        meanbrain)
+            # data will be data-meanbrain after this operation
+            data -= mean_brain[:, :, :, np.newaxis]
+            # Then it will be divided by std which leads to zscore
+            data /= std_brain[:, :, :, np.newaxis]
+            # convert nan to zeros - from brainsss
+            data = np.nan_to_num(data)
+            printlog('Calculated z-score')
 
-                for chunk_num in range(len(steps)):
-                    if chunk_num + 1 <= len(steps) - 1:
-                        chunkstart = steps[chunk_num]
-                        chunkend = steps[chunk_num + 1]
-                        chunk = data[:, :, :, chunkstart:chunkend]
-                        running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-                        # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-                final_std = np.sqrt(running_sumofsq / dims[-1])
-                np.save('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/loopfinal_std.npy',
-                        final_std)
+            # Prepare nifti file
+            aff = np.eye(4)
+            zscore_nifty = nib.Nifti1Image(data, aff)
+            zscore_nifty.to_filename(current_zscore_path)
 
-                ### Calculate zscore and save ###
+            printlog('Saved z-score image as ' + current_zscore_path.as_posix())
 
-                with h5py.File(save_loop, 'w') as f:
-                    dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+        else:
+            # OLD H5 VERSION
+            # Open file - Must keep file open while accessing it.
+            # I'm pretty sure we don't overwrite it because we open it as r.
+            # This should mean that we are reading stuff into memory, of course
+            with h5py.File(current_dataset_path, "r") as hf:
+                data = hf[
+                    "data"
+                ]  # this doesn't actually LOAD the data - it is just a proxy
+                dims = np.shape(data)
 
+                printlog("Data shape is {}".format(dims))
+
+                '''if RUN_LOOPED:
+                    save_loop = pathlib.Path(current_zscore_path.parent, current_zscore_path.name + 'loop.h5')
+                    ####
+                    # Bella's code that allows chunking
+                    ###
+                    running_sum = np.zeros(dims[:3])
+                    running_sumofsq = np.zeros(dims[:3])
+                    steps = list(range(0, dims[-1], stepsize))
+                    steps.append(dims[-1])
+    
+                    for chunk_num in range(len(steps)):
+                        if chunk_num + 1 <= len(steps) - 1:
+                            chunkstart = steps[chunk_num]
+                            chunkend = steps[chunk_num + 1]
+                            chunk = data[:, :, :, chunkstart:chunkend]
+                            running_sum += np.sum(chunk, axis=3)
+                            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+                    meanbrain = running_sum / dims[-1]
+    
+                    np.save('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/loop_meanbrain.npy',
+                            meanbrain)
+    
                     for chunk_num in range(len(steps)):
                         if chunk_num + 1 <= len(steps) - 1:
                             chunkstart = steps[chunk_num]
                             chunkend = steps[chunk_num + 1]
                             chunk = data[:, :, :, chunkstart:chunkend]
                             running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-                            zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
-                            f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
-                                zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
-                            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")'''
-            #else:
-            # Then do vectorized version
-            # I think we don't have to worry about memory too much - since we only work
-            # with one h5 file at a time and 30 minutes at float32 is ~20Gb
-            # Expect a 4D array, xyz and the fourth dimension is time!
-            meanbrain = np.nanmean(data, axis=3, dtype=np.float64)
+                            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
+                    final_std = np.sqrt(running_sumofsq / dims[-1])
+                    np.save('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/loopfinal_std.npy',
+                            final_std)
+    
+                    ### Calculate zscore and save ###
+    
+                    with h5py.File(save_loop, 'w') as f:
+                        dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
+    
+                        for chunk_num in range(len(steps)):
+                            if chunk_num + 1 <= len(steps) - 1:
+                                chunkstart = steps[chunk_num]
+                                chunkend = steps[chunk_num + 1]
+                                chunk = data[:, :, :, chunkstart:chunkend]
+                                running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
+                                zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
+                                f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
+                                    zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
+                                # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")'''
+                #else:
+                # Then do vectorized version
+                # I think we don't have to worry about memory too much - since we only work
+                # with one h5 file at a time and 30 minutes at float32 is ~20Gb
+                # Expect a 4D array, xyz and the fourth dimension is time!
+                meanbrain = np.nanmean(data, axis=3, dtype=DTYPE_CACLULATIONS)
 
-            # Might get out of memory error, test!
-            final_std = np.std(data, axis=3, dtype=np.float64) # With float64 need much more memory
+                # Might get out of memory error, test!
+                final_std = np.std(data, axis=3, dtype=DTYPE_CACLULATIONS) # With float64 need much more memory
 
-            ### Calculate zscore and save ###
+                ### Calculate zscore and save ###
 
-            # Calculate z-score
-            # z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
-            # The above works, is easy to read but makes a copy in memory. Since brain data is
-            # huge (easily 20Gb) we'll avoid making a copy by doing in place operations to save
-            # memory! See docstring for more information
+                # Calculate z-score
+                # z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
+                # The above works, is easy to read but makes a copy in memory. Since brain data is
+                # huge (easily 20Gb) we'll avoid making a copy by doing in place operations to save
+                # memory! See docstring for more information
 
-            # data will be data-meanbrain after this operation
-            data -= meanbrain[:, :, :, np.newaxis]
-            # Then it will be divided by std which leads to zscore
-            data /= final_std[:, :, :, np.newaxis]
-            #
-            data=np.nan_to_num(data) # is this the cause of size difference?
-            # From the docs:
-            # Chunking has performance implications. It’s recommended to keep the total size
-            # of your chunks between 10 KiB and 1 MiB, larger for larger datasets. Also
-            # keep in mind that when any element in a chunk is accessed, the entire chunk
-            # is read from disk
-            with h5py.File(current_zscore_path, "w") as file:
-                dset = file.create_dataset("data", dims, data=data, dtype=np.float32
-                )  # , dims, chunks=False)
+                # data will be data-meanbrain after this operation
+                data -= meanbrain[:, :, :, np.newaxis]
+                # Then it will be divided by std which leads to zscore
+                data /= final_std[:, :, :, np.newaxis]
+                # convert nan to zeros - from brainsss
+                data=np.nan_to_num(data)
+                # Save file as h5 file
+                with h5py.File(current_zscore_path, "w") as file:
+                    dset = file.create_dataset("data", dims, data=data, dtype=np.float32
+                    )  # , dims, chunks=False)
 
-            if len(dataset_path) > 1:
-                del data
-                printlog(
-                    "Sleeping for 10 seconds before loading the next functional channel"
-                )
-                time.sleep(
-                    10
-                )  # allow garbage collector to start cleaning up memory before potentially loading
-                # the other functional channel!
+                if len(dataset_path) > 1:
+                    del data
+                    printlog(
+                        "Sleeping for 10 seconds before loading the next functional channel"
+                    )
+                    time.sleep(
+                        10
+                    )  # allow garbage collector to start cleaning up memory before potentially loading
+                    # the other functional channel!
 
-    printlog("zscore done")
+    printlog("z-scoring done")
 
 
 def motion_correction(
@@ -1974,7 +2022,7 @@ def bleaching_qc(
     Input are all nii files per folder (e.g. channel_1.nii and channel_2.nii) and output is single 'bleaching.png' file.
     Bleaching is defined as overall decrease of fluorescence in a given nii file.
 
-    :param logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
+    :param fly_directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
     :param path_to_read: list of paths to images to read, can be more than one
     :param path_to_save: list of paths to the 'bleaching.png' file
     :param functional_channel_list: list with channels marked as functional channels by experimenter
