@@ -12,9 +12,17 @@ threads: 32, 8 cores:  00:09:51
 
 Using Yandan's data (Previously: 05:42:11, Memory Efficiency: 5.94% of 70.93 GB)
 threads: 32, 8 cores: 00:55:36 Memory Efficiency: 37.53% of 111.46 GB (before optimizing with del!)
+threads: 32, 16 cores:  00:54:51, Memory Efficiency: Memory Efficiency: 19.38% of 111.46 GB (after optimizing)
 
 Large Yandan's data (previously 09:22:01, Memory Efficiency: 85.64% of 171.34 GB)
 threads: 32, 8 cores 02:48:45, Memory Efficiency: 51.83% of 250.00 GB
+threads: 32, 16 cores -> failed SILENTLY with memory error
+--> I need to add a control mechanism, for loop checking if index is missing and call moco_func
+before combining
+
+-> It seems that ant.registration is taking advantage of multiple available cores! No decrease
+when going from 8 to 16 parallel processes! But this is still much faster and memory requirements much
+lower than before!
 """
 
 import nibabel as nib
@@ -49,7 +57,7 @@ flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
 
-TESTING = False
+TESTING = True
 
 def motion_correction(index,
                       fixed_path,
@@ -65,31 +73,40 @@ def motion_correction(index,
     :param index:
     :return:
     """
+    # Keeping track of time
     t_function_start = time.time()
-    #frames_to_process = len(index)
-    # To keep track of parameters, used for plotting 'motion_correction.png'
-    #transform_matrix = np.zeros((frames_to_process, 12))
-
-    # Put moving anatomy image into a proxy for nibabel
-    moving_proxy = nib.load(moving_path)
-    # Read the header to get dimensions
-    brain_shape = moving_proxy.header.get_data_shape()
-
-    # Preallocate empty array with necessary size
-    #moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2]
-                             #, frames_to_process
-    #                         ), dtype=np.float32)
-
-    # Load the meanbrain during a given process. Will cost more memory but should avoid having to shuttle memory
-    # around between processes.
-    # This is one reason why we'll have a lot of overhead and using this function only makes sense
-    # if we spend a lot of time on each registration
+    # Load meanbrain (fixed) and put into ants format
     fixed_proxy = nib.load(fixed_path)
-    fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
-    fixed_ants = ants.from_numpy(np.asarray(fixed, dtype=np.float32))
+    # Load data to memory. Dtypes is a bit confusing here: Meanbrain comes as uint16...
+    fixed_data = fixed_proxy.dataobj
+    # However, ants seems to require float32 (I think)
+    fixed_ants = ants.from_numpy(np.asarray(fixed_data, dtype=np.float32))
 
     # Load moving proxy in this process
     moving_proxy = nib.load(moving_path)
+
+    # Load data in a given process
+    current_moving = moving_proxy.dataobj[:,:,:,index]
+    # Convert to ants images
+    moving_ants = ants.from_numpy(np.asarray(current_moving, dtype=np.float32))
+
+    #t0 = time.time()
+    # Perform the registration
+    moco = ants.registration(fixed_ants, moving_ants,
+                             type_of_transform=type_of_transform,
+                             flow_sigma=flow_sigma,
+                             total_sigma=total_sigma,
+                             aff_metric=aff_metric)
+    #print('Registration took ' + repr(time.time() - t0) + 's')
+
+    # Save warped image in temp_save_path with index in filename.
+    np.save(pathlib.Path(temp_save_path, moving_path.name + 'index_'
+                         + repr(index)),
+            moco["warpedmovout"].numpy())
+
+    #t0 = time.time()
+    # Next, use the transform info for the functional image
+    transformlist = moco["fwdtransforms"]
 
     # Unpack functional paths
     if functional_channel_paths is None:
@@ -101,51 +118,11 @@ def motion_correction(index,
     elif len(functional_channel_paths) == 2:
         functional_path_one = functional_channel_paths[0]
         functional_path_two = functional_channel_paths[1]
-    print(functional_path_one)
     if functional_path_one is not None:
         # Load functional one proxy in this process
         functional_one_proxy = nib.load(functional_path_one)
-        #moco_functional_one = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2]
-                                        #, frames_to_process
-        #                                ),
-        #                           dtype=np.float32)
         if functional_path_two is not None:
             functional_two_proxy = nib.load(functional_path_two)
-            #moco_functional_two = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2]
-                                            #, frames_to_process
-            #                                ),
-            #                               dtype=np.float32)
-
-
-
-    #for counter, current_frame in enumerate(index):
-        # Remove after development
-    #    print("current_frame " + repr(current_frame) +'\n')
-
-    # Load data in a given process
-    current_moving = moving_proxy.dataobj[:,:,:,index]
-    # Convert to ants images
-    moving_ants = ants.from_numpy(np.asarray(current_moving, dtype=np.float32))
-    #print('\nants conversion took ' + repr(time.time() - t0) + 's')
-
-    #t0 = time.time()
-    # Perform the registration
-    moco = ants.registration(fixed_ants, moving_ants,
-                             type_of_transform=type_of_transform,
-                             flow_sigma=flow_sigma,
-                             total_sigma=total_sigma,
-                             aff_metric=aff_metric)
-    #print('Registration took ' + repr(time.time() - t0) + 's')
-
-    # put registered anatomy image in correct position in preallocated array
-    #moco_anatomy[:,:,:,counter] = moco["warpedmovout"].numpy()
-    np.save(pathlib.Path(temp_save_path, moving_path.name + 'index_'
-                         + repr(index)),
-            moco["warpedmovout"].numpy())
-
-    #t0 = time.time()
-    # Next, use the transform info for the functional image
-    transformlist = moco["fwdtransforms"]
 
     if functional_path_one is not None:
         current_functional_one = functional_one_proxy.dataobj[:,:,:,index]
@@ -183,19 +160,90 @@ def motion_correction(index,
 
         # lets' delete all files created by ants - else we quickly create thousands of files!
         pathlib.Path(x).unlink()
-    print('functiona call duration: ' + repr(time.time() - t_function_start))
-        # LOOP END
-    #np.save(pathlib.Path(temp_save_path, moving_path.name + 'chunks_'
-    #                     + repr(index[0]) + '-' + repr(index[-1])),
-    #        moco_anatomy)
+    print('Motion correction for ' + repr(moving_path)
+          + ' at index ' + repr(index) + ' took : '
+          + repr(round(time.time() - t_function_start, 1))
+          + 's')
 
-def index_from_filename(filename):
-    #index_start = int(filename.name.split('chunks_')[-1].split('-')[0])
-    #index_end = int(filename.name.split('.npy')[0].split('-')[-1])
-    index = int(filename.name.split('index_')[-1].split('.npy')[0])
-    #total_frames_this_array = index_end - index_start + 1
+def find_missing_temp_files(fixed_path,
+                            moving_path,
+                            functional_channel_paths,
+                            temp_save_path
+                            ):
+    """
+    It can happen that registration of one or a few images fails.
+    This function takes the temp folder and runs through it and
+    tries to identify missing files (e.g. if 'index_0', 'index_1' and 'index_3'
+    exist and 'index_2' is missing.
+    If it find a missing frame, call the motion_correction function on that
+    index, wait and try again.
+    :param temp_save_path:
+    :return:
+    """
+    start_time = time.time()
+    # A list to keep track of missing files!
+    index_of_missing_files = []
 
-    return(index)
+    index_tracker = 0
+    for current_file in natsort.natsorted(temp_save_path.iterdir()):
+        # Check if moving_path.name, for example channel_1.nii is in filename
+        if '.npy' in current_file.name and moving_path.name in current_file.name:
+            # Extract index number
+            index = moco_utils.index_from_filename(current_file)
+            if index == index_tracker:
+                index_tracker+=1
+            else:
+                while index > index_tracker:
+                    index_of_missing_files.append(index_tracker)
+                    index_tracker+=1
+    # it's possible that we are missing only functional files but not anatomical files.
+    # Also collect those
+    if functional_channel_paths is None:
+        functional_path_one = None
+        functional_path_two = None
+    elif len(functional_channel_paths) == 1:
+        functional_path_one = functional_channel_paths[0]
+        functional_path_two = None
+    elif len(functional_channel_paths) == 2:
+        functional_path_one = functional_channel_paths[0]
+        functional_path_two = functional_channel_paths[1]
+    if functional_path_one is not None:
+        index_tracker = 0
+        for current_file in natsort.natsorted(temp_save_path.iterdir()):
+            if '.npy' in current_file.name and functional_path_one.name in current_file.name:
+                index = moco_utils.index_from_filename(current_file)
+                if index == index_tracker:
+                    index_tracker += 1
+                else:
+                    while index > index_tracker:
+                        index_of_missing_files.append(index_tracker)
+                        index_tracker += 1
+    if functional_path_two is not None:
+        index_tracker = 0
+        for current_file in natsort.natsorted(temp_save_path.iterdir()):
+            if '.npy' in current_file.name and functional_path_two.name in current_file.name:
+                index = moco_utils.index_from_filename(current_file)
+                if index == index_tracker:
+                    index_tracker += 1
+                else:
+                    while index > index_tracker:
+                        index_of_missing_files.append(index_tracker)
+                        index_tracker += 1
+    # remove duplicate entries
+    index_of_missing_files = np.unique(np.asarray(index_of_missing_files))
+
+    # loop through index_of_missing_files. If it's an empty list, don't loop and skip
+    for current_index in index_of_missing_files:
+        # Call motion_correction function on index of missing files
+        # THIS IS SLOW AS IT'S NOT PARALLELIIZED. Hopefully this only is used
+        # in very rare circumistances
+        print('Missing index currently working on :' + repr(current_index))
+        motion_correction(current_index,
+                          fixed_path,
+                          moving_path,
+                          functional_channel_paths,
+                          temp_save_path)
+    print('Checking for missing files took: ' + repr(time.time() - start_time))
 
 def combine_temp_files(moving_path,
                        functional_channel_paths,
@@ -238,18 +286,19 @@ def combine_temp_files(moving_path,
         # Check if moving_path.name, for example channel_1.nii is in filename
         if '.npy' in current_file.name and moving_path.name in current_file.name:
             # Extract index number
-            index = index_from_filename(current_file)
+            index = moco_utils.index_from_filename(current_file)
             stitched_anatomy_brain[:,:,:,index] = np.load(current_file)
-            # Just a sanity check!
-            index_tracker += 1
+            # Just a sanity check! E.g. for first image we expect '0'
             if index_tracker != index:
                 print('There seems to be a problem with the temp files for: ' + repr(current_file))
                 print('Previous index was ' + repr(index_tracker - 1))
                 print('Next index (based on filename) was ' + repr(index))
 
+            index_tracker += 1
+
         # and collect motcorr_params, this is tiny so no worries about space here
         elif 'motcorr_params' in current_file.name:
-            index = index_from_filename(current_file)
+            index = moco_utils.index_from_filename(current_file)
             transform_matrix[index,:] = np.load(current_file)
     # SAVE
     # we create a new subfolder called 'moco' where the file is saved
@@ -294,15 +343,14 @@ def combine_temp_files(moving_path,
         index_tracker = 0
         for current_file in natsort.natsorted(temp_save_path.iterdir()):
                 if '.npy' in current_file.name and functional_path_one.name in current_file.name:
-                    index = index_from_filename(current_file)
+                    index = moco_utils.index_from_filename(current_file)
                     stitched_functional_one[:,:,:,index] = np.load(current_file)
-                    # Just a sanity check!
-                    index_tracker += 1
+                    # Just a sanity check! E.g. for first image we expect '0'
                     if index_tracker != index:
                         print('There seems to be a problem with the temp files for: ' + repr(current_file))
                         print('Previous index was ' + repr(index_tracker - 1))
                         print('Next index (based on filename) was ' + repr(index))
-
+                    index_tracker += 1
 
         #savepath_func_one = pathlib.Path(savepath_root, functional_path_one.stem + '_moco.nii')
         stitched_functional_one_nifty = nib.Nifti1Image(stitched_functional_one, aff)
@@ -322,14 +370,14 @@ def combine_temp_files(moving_path,
             index_tracker = 0
             for current_file in natsort.natsorted(temp_save_path.iterdir()):
                 if '.npy' in current_file.name and functional_path_two.name in current_file.name:
-                    index = index_from_filename(current_file)
+                    index = moco_utils.index_from_filename(current_file)
                     stitched_functional_two[:, :, :, index] = np.load(current_file)
-                    # Just a sanity check!
-                    index_tracker += 1
+                    # Just a sanity check! E.g. for first image we expect '0'
                     if index_tracker != index:
                         print('There seems to be a problem with the temp files for: ' + repr(current_file))
                         print('Previous index was ' + repr(index_tracker - 1))
                         print('Next index (based on filename) was ' + repr(index))
+                    index_tracker += 1
             # Save the nifty file
             stitched_functional_two_nifty = nib.Nifti1Image(stitched_functional_two, aff)
             stitched_functional_two_nifty.to_filename(functional_channel_output_paths[1])
@@ -347,8 +395,6 @@ def combine_temp_files(moving_path,
     print('Took: ' + repr(time.time() - time_start) + 's to combine files')
 
     t0 = time.time()
-    print('transform_matrix.shape'  + repr(transform_matrix.shape))
-    print('transform_matrix' + repr(transform_matrix))
     ### MAKE MOCO PLOT ###
     moco_utils.save_moco_figure(
         transform_matrix=transform_matrix,
@@ -358,19 +404,6 @@ def combine_temp_files(moving_path,
     )
 
     print('took: ' + repr(time.time() - t0) + ' s to plot moco')
-
-def prepare_time_index(moving_path):
-    # Put moving anatomy image into a proxy for nibabel
-    moving_proxy = nib.load(moving_path)
-    # Read the header to get dimensions
-    brain_shape = moving_proxy.header.get_data_shape()
-    # last dimension is time, indicating the amount of volumes in the dataset
-    experiment_total_frames = brain_shape[-1]
-    # make a list that represents the index of the total_frames
-    time_index = list(np.arange(experiment_total_frames))
-
-    return(time_index)
-
 
 
 if __name__ == '__main__':
@@ -439,15 +472,14 @@ if __name__ == '__main__':
         if 'channel_3' in args.FUNCTIONAL_CHANNELS:
             functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
             functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
-
-        #if ('channel_1' not in args.FUNCTIONAL_CHANNELS
-        #        and 'channel_2' not in args.FUNCTIONAL_CHANNELS
-        #        and 'channel_3' not in args.FUNCTIONAL_CHANNELS):
     else:
         functional_channel_paths = None
 
     param_output_path = args.par_output
 
+    ##########################
+    ### ORGANIZE TEMP PATH ###
+    ##########################
     # Path were the intermediate npy files are saved.
     # It is important that it's different for each run.
     # We can just put in on scratch
@@ -471,38 +503,25 @@ if __name__ == '__main__':
     # No need for exist_ok=True because the dir should have been deleted just now
     temp_save_path.mkdir(parents=True)
 
-    # always use one core less than max to make sure nothing gets clogged
-    #cores = 31 # Sherlock should always use 32 cores so we can use 31 for parallelization
-    # it's possible that ants profits from having more than one thread available
-    cores = 16
-    print("multiprocessing.cpu_count() " + repr(multiprocessing.cpu_count() ))
-    #cores = multiprocessing.cpu_count() - 1
+    ########################################
+    ### Multiprocessing code starts here ###
+    ########################################
+    # Note on cores: I benchmarked using a 30 minute functional dataset (256,128,49,~3300)
+    # with each channel about 10Gb and a large anatomical dataset (1024, 512, 100, 100)
+    # with each channel about 25Gb. I didn't find a difference using 8 vs 16 cores and
+    # the 16 cores try with anatomical actually threw a memory error (with 256Gb of RAM).
+    # There seems to be some multiprocessing going on in ants.registration which might explain
+    # why we don't see improved times during benchmarking.
+    # Hence, I fixed the core count at 8.
+    cores = 8
     if TESTING:
         cores = 4
 
-    # Multiprocessing code starts here
-
-    # create split index. If for example we have 10 cores and our index goes from 0..99 we will get 10 list
-    # as a list of list like this:
-    # [[0...9],[10..19],[20..21],...[90..99]]
-    #split_index = prepare_split_index(moving_path, cores)
-
     # create an index going from [0,1,...,n]
-    time_index = prepare_time_index(moving_path)
+    time_index = moco_utils.prepare_time_index(moving_path)
     if TESTING:
         time_index = [0,1,2,3,4,5,6,7,8]
 
-    # create a Pool process
-    '''with multiprocessing.Pool(cores) as p:
-        # and call motion_correction function with each of the items in zip
-        p.starmap(motion_correction, zip(split_index, # index
-                                         itertools.repeat(fixed_path), #fixed_path
-                                         itertools.repeat(moving_path), #moving_path
-                                         itertools.repeat(functional_channel_paths), #functional_channel_paths
-                                         #itertools.repeat(functional_channel_one_path),
-                                         #itertools.repeat(functional_channel_two_path),
-                                         itertools.repeat(temp_save_path) #temp_save_path
-                                         ))'''
     # Manual multiprocessing, essentially copy-paste from answer here:
     # https://stackoverflow.com/questions/23119382/how-can-i-multithread-a-function-that-reads-a-list-of-objects-in-python-astroph/23436094#23436094
     pool = multiprocessing.Pool(cores)
@@ -575,7 +594,15 @@ if __name__ == '__main__':
                 break  # need to break out of the for-loop,
                 # because the child_list index is changed by pop
 
-    print('Motion correction done, combining files now.')
+    print('Motion correction done. Checking for missing files now')
+
+    find_missing_temp_files(fixed_path,
+                            moving_path,
+                            functional_channel_paths,
+                            temp_save_path
+                            )
+
+    print('Checked for missing files. See above if something was missing. Combining files now')
     combine_temp_files(moving_path, functional_channel_paths, temp_save_path,
                        moving_output_path, functional_channel_output_paths, param_output_path)
     print('files combined')

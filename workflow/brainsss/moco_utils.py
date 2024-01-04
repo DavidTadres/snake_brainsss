@@ -19,33 +19,47 @@ sys.path.insert(0, pathlib.Path(scripts_path, "workflow"))
 
 from brainsss import utils
 
+def prepare_time_index(moving_path):
+    """
+    Returns a list with length (time dimension) of dataset. List starts at 0 and
+    goes to data.shape[-1] like this: [0,1,..n]
+    :param moving_path: path to data used to extract time
+    :return:
+    """
+    # Put moving anatomy image into a proxy for nibabel
+    moving_proxy = nib.load(moving_path)
+    # Read the header to get dimensions
+    brain_shape = moving_proxy.header.get_data_shape()
+    # last dimension is time, indicating the amount of volumes in the dataset
+    experiment_total_frames = brain_shape[-1]
+    # make a list that represents the index of the total_frames
+    time_index = list(np.arange(experiment_total_frames))
 
-def make_empty_h5(directory, file, brain_dims):  # , save_type):
-    # if save_type == 'curr_dir':
-    # moco_dir = os.path.join(directory,'moco')
+    return(time_index)
+
+def index_from_filename(filename):
+    """
+    Temporary files are saved with a characteristic file name indicating their index
+    in the original array such as: 'channel_1.niiindex_0.npy'
+    This function just extracts the index (in this case 0) from the filename.
+    :param filename:
+    :return:
+    """
+    index = int(filename.name.split('index_')[-1].split('.npy')[0])
+
+    return(index)
+
+
+'''
+def make_empty_h5(directory, file, brain_dims): 
     moco_dir = pathlib.Path(directory, "moco")
-    # if not os.path.exists(moco_dir):
-    # 	os.mkdir(moco_dir)
     moco_dir.mkdir(exist_ok=True, parents=True)
-    # elif save_type == 'parent_dir':
-    # 		directory = os.path.dirname(directory) # go back one directory
-    # 	moco_dir = os.path.join(directory,'moco')
-    # 		if not os.path.exists(moco_dir):
-    # 		os.mkdir(moco_dir)
 
     # savefile = os.path.join(moco_dir, file)
     savefile = pathlib.Path(moco_dir, file)
     with h5py.File(savefile, "w") as f:
         dset = f.create_dataset("data", brain_dims, dtype="float32", chunks=True)
-    return moco_dir, savefile
-
-
-# def check_for_file(file, directory):
-# 	filepath = os.path.join(directory, file)
-# 	if os.path.exists(filepath):
-# 		return filepath
-# 	else:
-# 		return None
+    return moco_dir, savefile'''
 
 
 def save_moco_figure(transform_matrix, parent_path, moco_dir, printlog):
@@ -149,23 +163,3 @@ def sec_to_hms(t):
     mins = f"{np.floor((t/60)%60):02.0f}"
     hrs = f"{np.floor((t/3600)%60):02.0f}"
     return ":".join([hrs, mins, secs])
-
-
-def h5_to_nii(h5_path):
-    """
-    Here we go from float 32 back to uint16 (original files from Bruker seem to be uint16).
-    Probably saves a ton of space but what effect does it have on data analysis due to lost precision?
-    :param h5_path:
-    :return:
-    """
-    nii_savefile = h5_path.name.split(".")[0] + ".nii"
-    with h5py.File(h5_path, "r+") as h5_file:
-        image_array = h5_file.get("data")[:].astype("uint16")
-
-    nifti1_limit = 2**16 / 2
-    if np.any(np.array(image_array.shape) >= nifti1_limit):  # Need to save as nifti2
-        nib.save(nib.Nifti2Image(image_array, np.eye(4)), nii_savefile)
-    else:  # Nifti1 is OK
-        nib.save(nib.Nifti1Image(image_array, np.eye(4)), nii_savefile)
-
-    return nii_savefile
