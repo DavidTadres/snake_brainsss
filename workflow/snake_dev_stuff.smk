@@ -34,7 +34,7 @@ rule test_moco_timing_rule:
     output:
 
     resources: mem_mb='60G'
-    shell: "python3 scripts/motion_correction_parallel.py "
+    shell: "python3 scripts/motion_correction_parallel_chunks.py "
             "--brain_paths_ch1 {input.brain_paths_ch1} "
             "--brain_paths_ch2 {input.brain_paths_ch2} "
             "--brain_paths_ch3 {input.brain_paths_ch3} "

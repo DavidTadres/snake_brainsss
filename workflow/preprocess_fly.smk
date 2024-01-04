@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
+fly_folder_to_process = 'fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -727,7 +727,7 @@ rule motion_correction_large_files_rule:
         moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
         par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
 
-    shell: "python3 scripts/moco_parallel_large_images.py "
+    shell: "python3 scripts/moco_parallel.py "
         "--fly_directory {fly_folder_to_process_oak} "
         "--brain_paths_ch1 {input.brain_paths_ch1} "
         "--brain_paths_ch2 {input.brain_paths_ch2} "
@@ -766,7 +766,7 @@ rule motion_correction_large_files_rule:
         moco_path_ch3 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
         par_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
 
-    shell: "python3 scripts/motion_correction_parallel.py "
+    shell: "python3 scripts/motion_correction_parallel_chunks.py "
             "--fly_directory {fly_folder_to_process_oak} "
             "--brain_paths_ch1 {input.brain_paths_ch1} "
             "--brain_paths_ch2 {input.brain_paths_ch2} "

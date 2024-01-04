@@ -57,7 +57,7 @@ flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
 
-TESTING = True
+TESTING = False
 
 def motion_correction(index,
                       fixed_path,
@@ -160,7 +160,7 @@ def motion_correction(index,
 
         # lets' delete all files created by ants - else we quickly create thousands of files!
         pathlib.Path(x).unlink()
-    print('Motion correction for ' + repr(moving_path)
+    print('Motion correction for ' + moving_path.as_posix()
           + ' at index ' + repr(index) + ' took : '
           + repr(round(time.time() - t_function_start, 1))
           + 's')
@@ -235,8 +235,8 @@ def find_missing_temp_files(fixed_path,
     # loop through index_of_missing_files. If it's an empty list, don't loop and skip
     for current_index in index_of_missing_files:
         # Call motion_correction function on index of missing files
-        # THIS IS SLOW AS IT'S NOT PARALLELIIZED. Hopefully this only is used
-        # in very rare circumistances
+        # THIS IS SLOW AS IT'S NOT PARALLELIZED. Hopefully this only is used
+        # in very rare circumstances.
         print('Missing index currently working on :' + repr(current_index))
         motion_correction(current_index,
                           fixed_path,
@@ -520,7 +520,7 @@ if __name__ == '__main__':
     # create an index going from [0,1,...,n]
     time_index = moco_utils.prepare_time_index(moving_path)
     if TESTING:
-        time_index = [0,1,2,3,4,5,6,7,8]
+        time_index = [0,1,2,3,4,5,6,7]
 
     # Manual multiprocessing, essentially copy-paste from answer here:
     # https://stackoverflow.com/questions/23119382/how-can-i-multithread-a-function-that-reads-a-list-of-objects-in-python-astroph/23436094#23436094
@@ -581,7 +581,7 @@ if __name__ == '__main__':
                         break
                         # Else stay in this while loop and check again for processes
                         # that are finished.
-
+    print('Submitted all indeces. Waiting for remaining processes to complete')
     # wait for remaining processes to complete --> this is the same code as the
     # processor wait loop above
     while len(child_processes) > 0:
