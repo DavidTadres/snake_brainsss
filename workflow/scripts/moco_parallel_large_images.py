@@ -8,7 +8,13 @@ should be managable.
 
 
 Benchmark:
-32 cores, 8 cores:  00:09:51
+threads: 32, 8 cores:  00:09:51
+
+Using Yandan's data (Previously: 05:42:11, Memory Efficiency: 5.94% of 70.93 GB)
+threads: 32, 8 cores: 00:55:36 Memory Efficiency: 37.53% of 111.46 GB (before optimizing with del!)
+
+Large Yandan's data (previously 09:22:01, Memory Efficiency: 85.64% of 171.34 GB)
+threads: 32, 8 cores 02:48:45, Memory Efficiency: 51.83% of 250.00 GB
 """
 
 import nibabel as nib
@@ -59,7 +65,7 @@ def motion_correction(index,
     :param index:
     :return:
     """
-
+    t_function_start = time.time()
     #frames_to_process = len(index)
     # To keep track of parameters, used for plotting 'motion_correction.png'
     #transform_matrix = np.zeros((frames_to_process, 12))
@@ -115,7 +121,6 @@ def motion_correction(index,
     #for counter, current_frame in enumerate(index):
         # Remove after development
     #    print("current_frame " + repr(current_frame) +'\n')
-    t_loop_start = time.time()
 
     # Load data in a given process
     current_moving = moving_proxy.dataobj[:,:,:,index]
@@ -178,7 +183,7 @@ def motion_correction(index,
 
         # lets' delete all files created by ants - else we quickly create thousands of files!
         pathlib.Path(x).unlink()
-    print('Loop duration: ' + repr(time.time() - t_loop_start))
+    print('functiona call duration: ' + repr(time.time() - t_function_start))
         # LOOP END
     #np.save(pathlib.Path(temp_save_path, moving_path.name + 'chunks_'
     #                     + repr(index[0]) + '-' + repr(index[-1])),
@@ -198,57 +203,55 @@ def combine_temp_files(moving_path,
                        moving_output_path,
                        functional_channel_output_paths,
                        param_output_path):
-    t0=time.time()
+    """
+    This function crawls through the temp_save_path and stitched the individual frames
+    together.
+
+    In order to save RAM, it does one imaging file after the other.
+
+    :param moving_path:
+    :param functional_channel_paths:
+    :param temp_save_path:
+    :param moving_output_path:
+    :param functional_channel_output_paths:
+    :param param_output_path:
+    :return:
+    """
+    time_start = time.time()
+    ####
+    # STITCH ANATOMY
+    ####
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
     # Read the header to get dimensions
     brain_shape = moving_proxy.header.get_data_shape()
-
-    # Unpack functional paths
-    if functional_channel_paths is None:
-        functional_path_one = None
-        functional_path_two = None
-    elif len(functional_channel_paths) == 1:
-        functional_path_one = functional_channel_paths[0]
-        functional_path_two = None
-    elif len(functional_channel_paths) == 2:
-        functional_path_one = functional_channel_paths[0]
-        functional_path_two = functional_channel_paths[1]
-
+    # Preallocate array for anatomy...
     stitched_anatomy_brain = np.zeros((brain_shape[0],brain_shape[1],
                                        brain_shape[2], brain_shape[3]),
                                       dtype=np.float32)
-    if functional_path_one is not None:
-        stitched_functional_one = np.zeros((brain_shape[0],brain_shape[1],
-                                       brain_shape[2], brain_shape[3]),
-                                      dtype=np.float32)
-    if functional_path_two is not None:
-        stitched_functional_two = np.zeros((brain_shape[0],brain_shape[1],
-                                       brain_shape[2], brain_shape[3]),
-                                      dtype=np.float32)
-
-    # Get transform matrix
+    # ...and transform matrix.
     transform_matrix = np.zeros((brain_shape[3],12))
-
+    # Loop through all files. Because it's sorted we don't have to worry about
+    # the index!
+    index_tracker = 0
     for current_file in natsort.natsorted(temp_save_path.iterdir()):
+        # Check if moving_path.name, for example channel_1.nii is in filename
         if '.npy' in current_file.name and moving_path.name in current_file.name:
+            # Extract index number
             index = index_from_filename(current_file)
             stitched_anatomy_brain[:,:,:,index] = np.load(current_file)
+            # Just a sanity check!
+            index_tracker += 1
+            if index_tracker != index:
+                print('There seems to be a problem with the temp files for: ' + repr(current_file))
+                print('Previous index was ' + repr(index_tracker - 1))
+                print('Next index (based on filename) was ' + repr(index))
+
+        # and collect motcorr_params, this is tiny so no worries about space here
         elif 'motcorr_params' in current_file.name:
             index = index_from_filename(current_file)
             transform_matrix[index,:] = np.load(current_file)
-        elif functional_path_one is not None:
-            if '.npy' in current_file.name and functional_path_one.name in current_file.name:
-                index = index_from_filename(current_file)
-                stitched_functional_one[:,:,:,index] = np.load(current_file)
-
-            elif functional_path_two is not None:
-                if '.npy' in current_file.name and functional_path_two.name in current_file.name:
-                    index = index_from_filename(current_file)
-                stitched_functional_two[:,:,:,index] = np.load(current_file)
-    ########
-    # Saving
-    #######
+    # SAVE
     # we create a new subfolder called 'moco' where the file is saved
     # Not a great solution - the definition of the output file should happen in the snakefile, not hidden
     # in here!
@@ -261,15 +264,78 @@ def combine_temp_files(moving_path,
     stitched_anatomy_brain_nifty = nib.Nifti1Image(stitched_anatomy_brain, aff)
     stitched_anatomy_brain_nifty.to_filename(moving_output_path)
 
+    del stitched_anatomy_brain # Explicitly release the memory (it might not be
+    # immediately released, though. Test this.
+    del stitched_anatomy_brain_nifty
+
+    #####
+    # Work on functional paths
+    #####
+    # Unpack functional paths
+    if functional_channel_paths is None:
+        functional_path_one = None
+        functional_path_two = None
+    elif len(functional_channel_paths) == 1:
+        functional_path_one = functional_channel_paths[0]
+        functional_path_two = None
+    elif len(functional_channel_paths) == 2:
+        functional_path_one = functional_channel_paths[0]
+        functional_path_two = functional_channel_paths[1]
+
+    ####
+    # STITCH FUNCTIONAL 1
+    ####
+
     if functional_path_one is not None:
+        # Essentially identical to the code above
+        stitched_functional_one = np.zeros((brain_shape[0],brain_shape[1],
+                                       brain_shape[2], brain_shape[3]),
+                                      dtype=np.float32)
+        index_tracker = 0
+        for current_file in natsort.natsorted(temp_save_path.iterdir()):
+                if '.npy' in current_file.name and functional_path_one.name in current_file.name:
+                    index = index_from_filename(current_file)
+                    stitched_functional_one[:,:,:,index] = np.load(current_file)
+                    # Just a sanity check!
+                    index_tracker += 1
+                    if index_tracker != index:
+                        print('There seems to be a problem with the temp files for: ' + repr(current_file))
+                        print('Previous index was ' + repr(index_tracker - 1))
+                        print('Next index (based on filename) was ' + repr(index))
+
+
         #savepath_func_one = pathlib.Path(savepath_root, functional_path_one.stem + '_moco.nii')
         stitched_functional_one_nifty = nib.Nifti1Image(stitched_functional_one, aff)
         stitched_functional_one_nifty.to_filename(functional_channel_output_paths[0])
 
+        del stitched_functional_one
+        del stitched_functional_one_nifty
+
+        ####
+        # STITCH FUNCTIONAL 2
+        ####
         if functional_path_two is not None:
-            #savepath_func_two = pathlib.Path(savepath_root, functional_path_two.stem + '_moco.nii')
+            stitched_functional_two = np.zeros((brain_shape[0],brain_shape[1],
+                                           brain_shape[2], brain_shape[3]),
+                                          dtype=np.float32)
+            # Collect data for second functional channel
+            index_tracker = 0
+            for current_file in natsort.natsorted(temp_save_path.iterdir()):
+                if '.npy' in current_file.name and functional_path_two.name in current_file.name:
+                    index = index_from_filename(current_file)
+                    stitched_functional_two[:, :, :, index] = np.load(current_file)
+                    # Just a sanity check!
+                    index_tracker += 1
+                    if index_tracker != index:
+                        print('There seems to be a problem with the temp files for: ' + repr(current_file))
+                        print('Previous index was ' + repr(index_tracker - 1))
+                        print('Next index (based on filename) was ' + repr(index))
+            # Save the nifty file
             stitched_functional_two_nifty = nib.Nifti1Image(stitched_functional_two, aff)
             stitched_functional_two_nifty.to_filename(functional_channel_output_paths[1])
+
+            del stitched_functional_two
+            del stitched_functional_two_nifty
 
     # After saving the stitched file, delete the temporary files
     shutil.rmtree(temp_save_path)
@@ -278,7 +344,7 @@ def combine_temp_files(moving_path,
     #param_savename = savepath_root, 'motcorr_params.npy'
     np.save(param_output_path, transform_matrix)
 
-    print('Took: ' + repr(time.time() - t0) + 's to combine files')
+    print('Took: ' + repr(time.time() - time_start) + 's to combine files')
 
     t0 = time.time()
     print('transform_matrix.shape'  + repr(transform_matrix.shape))
@@ -408,7 +474,7 @@ if __name__ == '__main__':
     # always use one core less than max to make sure nothing gets clogged
     #cores = 31 # Sherlock should always use 32 cores so we can use 31 for parallelization
     # it's possible that ants profits from having more than one thread available
-    cores = 8
+    cores = 16
     print("multiprocessing.cpu_count() " + repr(multiprocessing.cpu_count() ))
     #cores = multiprocessing.cpu_count() - 1
     if TESTING:
