@@ -40,7 +40,7 @@ flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
 
-TESTING = True
+TESTING = False
 
 def motion_correction(index,
                       fixed_path,
