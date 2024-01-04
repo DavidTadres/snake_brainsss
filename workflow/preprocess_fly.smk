@@ -706,7 +706,44 @@ rule make_mean_brain_rule:
                 error_stack=error_stack,
                 width=width)
 
-rule motion_correction_parallel_rule:
+rule motion_correction_large_files_rule:
+    threads: 32 # the max that we can do - check with sh_part
+    resources:
+        mem_mb=snake_utils.mem_mb_much_more_times_input,
+        runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
+    input:
+        # Only use the Channels that exists - this organizes the anatomy and functional paths inside the motion correction
+        # module.
+        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
+        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
+        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
+
+        mean_brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
+        mean_brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
+        mean_brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else []
+    output:
+        moco_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
+        moco_path_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else [],
+        moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
+        par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
+
+    shell: "python3 scripts/moco_parallel_large_images.py "
+        "--fly_directory {fly_folder_to_process_oak} "
+        "--brain_paths_ch1 {input.brain_paths_ch1} "
+        "--brain_paths_ch2 {input.brain_paths_ch2} "
+        "--brain_paths_ch3 {input.brain_paths_ch3} "
+        "--mean_brain_paths_ch1 {input.mean_brain_paths_ch1} "
+        "--mean_brain_paths_ch2 {input.mean_brain_paths_ch2} "
+        "--mean_brain_paths_ch3 {input.mean_brain_paths_ch3} "
+        "--ANATOMY_CHANNEL {ANATOMY_CHANNEL} "
+        "--FUNCTIONAL_CHANNELS {FUNCTIONAL_CHANNELS} "
+        "--moco_path_ch1 {output.moco_path_ch1} "
+        "--moco_path_ch2 {output.moco_path_ch2} "
+        "--moco_path_ch3 {output.moco_path_ch3} "
+        "--par_output {output.par_output} "
+
+
+'''rule motion_correction_parallel_rule:
     """
     """
     threads: 32 # the max that we can do - check with sh_part
@@ -742,7 +779,7 @@ rule motion_correction_parallel_rule:
             "--moco_path_ch1 {output.moco_path_ch1} "
             "--moco_path_ch2 {output.moco_path_ch2} "
             "--moco_path_ch3 {output.moco_path_ch3} "
-            "--par_output {output.par_output} "
+            "--par_output {output.par_output} "'''
 '''    
 rule motion_correction_rule:
     """

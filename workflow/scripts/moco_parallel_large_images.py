@@ -1,22 +1,11 @@
 """
-Moco is by far the slowest step in the preprocessing pipeline.
-It's originally in 2 for loops, an outer one that splits the volume into 'chunks' and an inner loop that feeds
-single frames to the ants.registration function.
+For large images such as a anat images, each step can be super slow with not
+too many timepoints.
+It would be better to have multiprocessing that just creates and index such
+as [0,1,..n] and feeds them to the motion correction function.
+There's much more overhead but because each process takes several minutes that
+should be managable.
 
-I want to know how fast one call to ants.registration is: ~6 seconds on my mac
-
-New benchmark
-32 cores, 31 processes: 00:07:55 Memory Efficiency: 81.54% of 19.94 GB
-32 cores, 15 processes:  00:09:28 Memory Efficiency: 64.45% of 19.94 GB
-# maybe there's some multitasking going on somehwhere after all?
-32 cores, 8 processes: 00:08:48 Memory Efficiency: 56.25% of 19.94 GB
-32 cores, 4 processes: 00:12:09 Memory Efficiency: 50.25% of 19.94 GB
-
-original: ~30 minutes
-4 cores:  00:17:29
-16 (14) cores: 00:11:43
-32 (30) cores: 00:06:18 (91% CPU usage)
-64 (63) cores: Maybe not possible on sherlock. Get job submission error!
 """
 
 import nibabel as nib
@@ -51,29 +40,7 @@ flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
 
-TESTING = False
-
-def prepare_split_index(moving_path, cores):
-    """
-    :param total_frames_to_process: a list starting at 0, i.e. [0,1,2,...,n]
-    :param cores: an integer number
-    :return:
-    """
-    # Put moving anatomy image into a proxy for nibabel
-    moving_proxy = nib.load(moving_path)
-    # Read the header to get dimensions
-    brain_shape = moving_proxy.header.get_data_shape()
-    # last dimension is time, indicating the amount of volumes in the dataset
-    experiment_total_frames = brain_shape[-1]
-    if TESTING:
-        experiment_total_frames = 25
-    # Make a list with the amount of volumes. For example, if the dataset has
-    # 600 volumes (so .shape is something like [256,128,49,600]
-    # we want a list like this: [0, 1, 2, ...599]
-    list_of_timepoints = list(np.arange(experiment_total_frames))
-    # split the index evenly by the number of provided cores.
-    even_split, remainder = divmod(len(list_of_timepoints), cores)
-    return (list((list_of_timepoints[i * even_split + min(i, remainder):(i + 1) * even_split + min(i + 1, remainder)] for i in range(cores))))
+TESTING = True
 
 def motion_correction(index,
                       fixed_path,
@@ -90,9 +57,9 @@ def motion_correction(index,
     :return:
     """
 
-    frames_to_process = len(index)
+    #frames_to_process = len(index)
     # To keep track of parameters, used for plotting 'motion_correction.png'
-    transform_matrix = np.zeros((frames_to_process, 12))
+    #transform_matrix = np.zeros((frames_to_process, 12))
 
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
@@ -100,10 +67,14 @@ def motion_correction(index,
     brain_shape = moving_proxy.header.get_data_shape()
 
     # Preallocate empty array with necessary size
-    moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], frames_to_process), dtype=np.float32)
+    #moco_anatomy = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2]
+                             #, frames_to_process
+    #                         ), dtype=np.float32)
 
     # Load the meanbrain during a given process. Will cost more memory but should avoid having to shuttle memory
     # around between processes.
+    # This is one reason why we'll have a lot of overhead and using this function only makes sense
+    # if we spend a lot of time on each registration
     fixed_proxy = nib.load(fixed_path)
     fixed = np.asarray(fixed_proxy.dataobj, dtype=np.uint16)
     fixed_ants = ants.from_numpy(np.asarray(fixed, dtype=np.float32))
@@ -125,93 +96,98 @@ def motion_correction(index,
     if functional_path_one is not None:
         # Load functional one proxy in this process
         functional_one_proxy = nib.load(functional_path_one)
-        moco_functional_one = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], frames_to_process),
-                                   dtype=np.float32)
+        #moco_functional_one = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2]
+                                        #, frames_to_process
+        #                                ),
+        #                           dtype=np.float32)
         if functional_path_two is not None:
             functional_two_proxy = nib.load(functional_path_two)
-            moco_functional_two = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2], frames_to_process),
-                                           dtype=np.float32)
+            #moco_functional_two = np.zeros((brain_shape[0], brain_shape[1], brain_shape[2]
+                                            #, frames_to_process
+            #                                ),
+            #                               dtype=np.float32)
 
 
 
-    for counter, current_frame in enumerate(index):
+    #for counter, current_frame in enumerate(index):
         # Remove after development
-        print("current_frame " + repr(current_frame) +'\n')
-        t_loop_start = time.time()
+    #    print("current_frame " + repr(current_frame) +'\n')
+    t_loop_start = time.time()
 
-        # Load data in a given process
-        current_moving = moving_proxy.dataobj[:,:,:,current_frame]
-        # Convert to ants images
-        moving_ants = ants.from_numpy(np.asarray(current_moving, dtype=np.float32))
-        #print('\nants conversion took ' + repr(time.time() - t0) + 's')
+    # Load data in a given process
+    current_moving = moving_proxy.dataobj[:,:,:,index]
+    # Convert to ants images
+    moving_ants = ants.from_numpy(np.asarray(current_moving, dtype=np.float32))
+    #print('\nants conversion took ' + repr(time.time() - t0) + 's')
 
-        #t0 = time.time()
-        # Perform the registration
-        moco = ants.registration(fixed_ants, moving_ants,
-                                 type_of_transform=type_of_transform,
-                                 flow_sigma=flow_sigma,
-                                 total_sigma=total_sigma,
-                                 aff_metric=aff_metric)
-        #print('Registration took ' + repr(time.time() - t0) + 's')
+    #t0 = time.time()
+    # Perform the registration
+    moco = ants.registration(fixed_ants, moving_ants,
+                             type_of_transform=type_of_transform,
+                             flow_sigma=flow_sigma,
+                             total_sigma=total_sigma,
+                             aff_metric=aff_metric)
+    #print('Registration took ' + repr(time.time() - t0) + 's')
 
-        # put registered anatomy image in correct position in preallocated array
-        moco_anatomy[:,:,:,counter] = moco["warpedmovout"].numpy()
+    # put registered anatomy image in correct position in preallocated array
+    #moco_anatomy[:,:,:,counter] = moco["warpedmovout"].numpy()
+    np.save(pathlib.Path(temp_save_path, moving_path.name + 'index_'
+                         + repr(index)),
+            moco["warpedmovout"].numpy())
 
-        #t0 = time.time()
-        # Next, use the transform info for the functional image
-        transformlist = moco["fwdtransforms"]
-
-        if functional_path_one is not None:
-            current_functional_one = functional_one_proxy.dataobj[:,:,:,current_frame]
-            moving_frame_one_ants = ants.from_numpy(np.asarray(current_functional_one, dtype=np.float32))
-            # to motion correction for functional image
-            moving_frame_one_ants = ants.apply_transforms(fixed_ants, moving_frame_one_ants, transformlist)
-            # put moco functional image into preallocated array
-            moco_functional_one[:, :, :, counter] = moving_frame_one_ants.numpy()
-            #print('apply transforms took ' + repr(time.time() - t0) + 's')
-
-            if functional_path_two is not None:
-                current_functional_two = functional_two_proxy.dataobj[:,:,:, current_frame]
-                moving_frame_two_ants = ants.from_numpy(np.asarray(current_functional_two, dtype=np.float32))
-                moco_functional_two = ants.apply_transforms(fixed_ants, moving_frame_two_ants, transformlist)
-                moco_functional_two[:,:,:, counter] = moco_functional_two.numpy()
-
-
-        #t0=time.time()
-        # delete writen files:
-        # Delete transform info - might be worth keeping instead of huge resulting file? TBD
-        for x in transformlist:
-            if ".mat" in x:
-                # Keep transform_matrix, I think this is used to make the plot
-                # called 'motion_correction.png'
-                temp = ants.read_transform(x)
-                transform_matrix[counter, :] = temp.parameters
-            # lets' delete all files created by ants - else we quickly create thousands of files!
-            pathlib.Path(x).unlink()
-        print('Loop duration: ' + repr(time.time() - t_loop_start))
-        # LOOP END
-    np.save(pathlib.Path(temp_save_path, moving_path.name + 'chunks_'
-                         + repr(index[0]) + '-' + repr(index[-1])),
-            moco_anatomy)
+    #t0 = time.time()
+    # Next, use the transform info for the functional image
+    transformlist = moco["fwdtransforms"]
 
     if functional_path_one is not None:
-        np.save(pathlib.Path(temp_save_path, functional_path_one.name + 'chunks_'
-                             + repr(index[0]) + '-' + repr(index[-1])),
-                moco_functional_one)
-        if functional_path_two is not None:
-            np.save(pathlib.Path(temp_save_path, functional_path_two.name + 'chunks_'
-                                 +repr(index[0] + '_' + repr(index[-1]))))
+        current_functional_one = functional_one_proxy.dataobj[:,:,:,index]
+        moving_frame_one_ants = ants.from_numpy(np.asarray(current_functional_one, dtype=np.float32))
+        # to motion correction for functional image
+        moving_frame_one_ants = ants.apply_transforms(fixed_ants, moving_frame_one_ants, transformlist)
+        # put moco functional image into preallocated array
+        #moco_functional_one[:, :, :, counter] = moving_frame_one_ants.numpy()
+        #print('apply transforms took ' + repr(time.time() - t0) + 's')
+        np.save(pathlib.Path(temp_save_path, functional_path_one.name + 'index_'
+                             + repr(index)),
+                moving_frame_one_ants.numpy())
 
-    param_savename = pathlib.Path(temp_save_path, "motcorr_params" + 'chunks_'
-                                  + repr(index[0]) + '-' + repr(index[-1]))
-    np.save(param_savename, transform_matrix)
+        if functional_path_two is not None:
+            current_functional_two = functional_two_proxy.dataobj[:,:,:, index]
+            moving_frame_two_ants = ants.from_numpy(np.asarray(current_functional_two, dtype=np.float32))
+            moco_functional_two = ants.apply_transforms(fixed_ants, moving_frame_two_ants, transformlist)
+            #moco_functional_two[:,:,:, counter] = moco_functional_two.numpy()
+            np.save(pathlib.Path(temp_save_path, functional_path_two.name + 'index_'
+                                 + repr(index)),
+                    moco_functional_two.numpy())
+
+    #t0=time.time()
+    # delete writen files:
+    # Delete transform info - might be worth keeping instead of huge resulting file? TBD
+    for x in transformlist:
+        if ".mat" in x:
+            # Keep transform_matrix, I think this is used to make the plot
+            # called 'motion_correction.png'
+            temp = ants.read_transform(x)
+            #transform_matrix[counter, :] = temp.parameters
+            param_savename = pathlib.Path(temp_save_path, "motcorr_params" + 'index_'
+                                          + repr(index))
+            np.save(param_savename, temp.parameters) # that's the transform_matrix in brainsss
+
+        # lets' delete all files created by ants - else we quickly create thousands of files!
+        pathlib.Path(x).unlink()
+    print('Loop duration: ' + repr(time.time() - t_loop_start))
+        # LOOP END
+    #np.save(pathlib.Path(temp_save_path, moving_path.name + 'chunks_'
+    #                     + repr(index[0]) + '-' + repr(index[-1])),
+    #        moco_anatomy)
 
 def index_from_filename(filename):
-    index_start = int(filename.name.split('chunks_')[-1].split('-')[0])
-    index_end = int(filename.name.split('.npy')[0].split('-')[-1])
-    total_frames_this_array = index_end - index_start + 1
+    #index_start = int(filename.name.split('chunks_')[-1].split('-')[0])
+    #index_end = int(filename.name.split('.npy')[0].split('-')[-1])
+    index = int(filename.name.split('index_')[-1].split('.npy')[0])
+    #total_frames_this_array = index_end - index_start + 1
 
-    return(index_start, index_end, total_frames_this_array)
+    return(index)
 
 def combine_temp_files(moving_path,
                        functional_channel_paths,
@@ -253,23 +229,20 @@ def combine_temp_files(moving_path,
 
     for current_file in natsort.natsorted(temp_save_path.iterdir()):
         if '.npy' in current_file.name and moving_path.name in current_file.name:
-            #index_start = int(current_file.name.split('chunks_')[-1].split('-')[0])
-            #index_end = int(current_file.name.split('.npy')[0].split('-')[-1])
-            #total_frames_this_array = index_end-index_start+1
-            index_start, index_end, total_frames_this_array = index_from_filename(current_file)
-            stitched_anatomy_brain[:,:,:,index_start:index_start+total_frames_this_array] = np.load(current_file)
+            index = index_from_filename(current_file)
+            stitched_anatomy_brain[:,:,:,index] = np.load(current_file)
         elif 'motcorr_params' in current_file.name:
-            index_start, index_end, total_frames_this_array = index_from_filename(current_file)
-            transform_matrix[index_start:index_start+total_frames_this_array,:] = np.load(current_file)
+            index = index_from_filename(current_file)
+            transform_matrix[index,:] = np.load(current_file)
         elif functional_path_one is not None:
             if '.npy' in current_file.name and functional_path_one.name in current_file.name:
-                index_start, index_end, total_frames_this_array = index_from_filename(current_file)
-                stitched_functional_one[:,:,:,index_start:index_start+total_frames_this_array] = np.load(current_file)
+                index = index_from_filename(current_file)
+                stitched_functional_one[:,:,:,index] = np.load(current_file)
 
             elif functional_path_two is not None:
                 if '.npy' in current_file.name and functional_path_two.name in current_file.name:
-                    index_start, index_end, total_frames_this_array = index_from_filename(current_file)
-                stitched_functional_two[:,:,:,index_start:index_start+total_frames_this_array] = np.load(current_file)
+                    index = index_from_filename(current_file)
+                stitched_functional_two[:,:,:,index] = np.load(current_file)
     ########
     # Saving
     #######
@@ -317,6 +290,19 @@ def combine_temp_files(moving_path,
 
     print('took: ' + repr(time.time() - t0) + ' s to plot moco')
 
+def prepare_time_index(moving_path):
+    # Put moving anatomy image into a proxy for nibabel
+    moving_proxy = nib.load(moving_path)
+    # Read the header to get dimensions
+    brain_shape = moving_proxy.header.get_data_shape()
+    # last dimension is time, indicating the amount of volumes in the dataset
+    experiment_total_frames = brain_shape[-1]
+    # make a list that represents the index of the total_frames
+    time_index = list(np.arange(experiment_total_frames))
+
+    return(time_index)
+
+
 
 if __name__ == '__main__':
     ############################
@@ -349,9 +335,9 @@ if __name__ == '__main__':
     #####################
     WIDTH = 120  # This is used in all logging files
     fly_directory = pathlib.Path(args.fly_directory)
-    logfile = utils.create_logfile(fly_directory, function_name="motion_correction_parallel")
+    logfile = utils.create_logfile(fly_directory, function_name="moco_parallel_large_images")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "motion_correction_parallel")
+    utils.print_function_start(logfile, WIDTH, "moco_parallel_large_images")
 
     ####################################
     ### Identify the anatomy channel ###
@@ -419,7 +405,7 @@ if __name__ == '__main__':
     # always use one core less than max to make sure nothing gets clogged
     #cores = 31 # Sherlock should always use 32 cores so we can use 31 for parallelization
     # it's possible that ants profits from having more than one thread available
-    cores = 4
+    cores = 8
     print("multiprocessing.cpu_count() " + repr(multiprocessing.cpu_count() ))
     #cores = multiprocessing.cpu_count() - 1
     if TESTING:
@@ -430,9 +416,15 @@ if __name__ == '__main__':
     # create split index. If for example we have 10 cores and our index goes from 0..99 we will get 10 list
     # as a list of list like this:
     # [[0...9],[10..19],[20..21],...[90..99]]
-    split_index = prepare_split_index(moving_path, cores)
+    #split_index = prepare_split_index(moving_path, cores)
+
+    # create an index going from [0,1,...,n]
+    time_index = prepare_time_index(moving_path)
+    if TESTING:
+        time_index = [0,1,2,3,4,5,6,7,8]
+
     # create a Pool process
-    with multiprocessing.Pool(cores) as p:
+    '''with multiprocessing.Pool(cores) as p:
         # and call motion_correction function with each of the items in zip
         p.starmap(motion_correction, zip(split_index, # index
                                          itertools.repeat(fixed_path), #fixed_path
@@ -441,7 +433,79 @@ if __name__ == '__main__':
                                          #itertools.repeat(functional_channel_one_path),
                                          #itertools.repeat(functional_channel_two_path),
                                          itertools.repeat(temp_save_path) #temp_save_path
-                                         ))
+                                         ))'''
+    # Manual multiprocessing, essentially copy-paste from answer here:
+    # https://stackoverflow.com/questions/23119382/how-can-i-multithread-a-function-that-reads-a-list-of-objects-in-python-astroph/23436094#23436094
+    pool = multiprocessing.Pool(cores)
+    # Keep track of number of processes
+    running_processes = 0
+    counter = 0
+    # Make a list to keep track of the spawned child processes
+    child_processes = []
+    # Define what the max number of processes is
+    max_processes = cores
+    # Loop through index, yield 0, 1 etc.
+    for current_index in time_index:
+        # Run until break
+        while True:
+            # Only fork a new process is there are less processes running than max_processes
+            if running_processes < max_processes:
+                # Define process: Target is a function, args are the arguments
+                p = multiprocessing.Process(target=motion_correction,
+                                            args=(current_index,
+                                                  fixed_path,
+                                                  moving_path,
+                                                  functional_channel_paths,
+                                                  temp_save_path))
+                # start process
+                p.start()
+                # To keep track of child processes, add to list
+                child_processes.append(p)
+                # to keep track of running_processes
+                running_processes += 1
+                counter += 1
+                # get out of the current 'while' loop and go back to the for loop
+                break
+            # Processor wait loop if we don't have running_processes < max_processes
+            else:
+                # Stay here until break is called
+                while True:
+                    # loop through the child_processes
+                    for current_child_process in range(len(child_processes)):
+                        # Check if process is still running
+                        if child_processes[current_child_process].is_alive():
+                            # Continue for loop (i.e. check next child_process)
+                            continue
+                        else:
+                            # If it's found that a child process isn't running anymore,
+                            # remove the item at the current index
+                            child_processes.pop(current_child_process)
+                            # Subtract running processes by one
+                            running_processes -= 1
+                            # and break the for loop
+                            break
+                    # We are here either because the for loop finished or becuse
+                    # it was found that a process is not running anymore.
+                    # Check if we have less running processes than max processes
+                    if running_processes < max_processes:
+                        # If yes, break this inner while loop and go back to the
+                        # outer while loop that keeps to start a new child process
+                        break
+                        # Else stay in this while loop and check again for processes
+                        # that are finished.
+
+    # wait for remaining processes to complete --> this is the same code as the
+    # processor wait loop above
+    while len(child_processes) > 0:
+        for next in range(len(child_processes)):
+            if child_processes[next].is_alive():
+                continue
+            else:
+                child_processes.pop(next)
+                running_processes -= 1
+                break  # need to break out of the for-loop,
+                # because the child_list index is changed by pop
+
     print('Motion correction done, combining files now.')
     combine_temp_files(moving_path, functional_channel_paths, temp_save_path,
                        moving_output_path, functional_channel_output_paths, param_output_path)
