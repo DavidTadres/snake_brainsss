@@ -5,6 +5,11 @@ single frames to the ants.registration function.
 
 I want to know how fast one call to ants.registration is: ~6 seconds on my mac
 
+New benchmark
+32 cores, 15 processes:  00:09:28
+32 cores, 31 processes: 00:07:55
+# maybe there's some multitasking going on somehwhere after all?
+
 original: ~30 minutes
 4 cores:  00:17:29
 16 (14) cores: 00:11:43
@@ -412,7 +417,7 @@ if __name__ == '__main__':
     # always use one core less than max to make sure nothing gets clogged
     #cores = 31 # Sherlock should always use 32 cores so we can use 31 for parallelization
     # it's possible that ants profits from having more than one thread available
-    cores = 15
+    cores = 8
     print("multiprocessing.cpu_count() " + repr(multiprocessing.cpu_count() ))
     #cores = multiprocessing.cpu_count() - 1
     if TESTING:
