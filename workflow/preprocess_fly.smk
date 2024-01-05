@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_003' # folder to be processed
+fly_folder_to_process = 'fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -392,16 +392,16 @@ rule all:
         ###
         # Fictrac QC
         ###
-        expand(str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png", fictrac_paths=FICTRAC_PATHS),
+        #>expand(str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png", fictrac_paths=FICTRAC_PATHS),
         # data in fly_dirs.json!
         ###
         # Bleaching QC
         ###,
-        expand(str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png", bleaching_imaging_paths=imaging_paths_bleaching),
+        #>expand(str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png", bleaching_imaging_paths=imaging_paths_bleaching),
         ###
         # Meanbrain
         ###
-        expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
+        #>expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
         ###
         # Motion correction output
         ###
@@ -409,53 +409,53 @@ rule all:
         expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
         expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
         expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-        ####
-        # Z-score
-        ####
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        ###
-        # temporal high-pass filter
-        ###
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        ###
-        # correlation with behavior
-        ###
-        expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
-        expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
-        expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
-        ###
-        # Meanbrain of moco brain
-        ###
-        expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels),
-        ###
-        # Clean anatomy
-        expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels),
-        ##
-        # make supervoxels
-        ###
-        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
-        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
+'''####
+# Z-score
+####
+expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+###
+# temporal high-pass filter
+###
+expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+###
+# correlation with behavior
+###
+expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+###
+# Meanbrain of moco brain
+###
+expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels),
+###
+# Clean anatomy
+expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels),
+##
+# make supervoxels
+###
+expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
+expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
 
-        # Below might be Bifrost territory - ignore for now.
-        ###
-        # func2anat
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
-            func2anat_paths=imaging_paths_func2anat,
-            func2anat_moving=file_path_func2anat_fixed, # This is the channel which is designated as ANATOMY_CHANNEL
-            func2anat_fixed=file_path_func2anat_fixed),
-        ##
-        # anat2atlas
-        ##
-        expand(str(fly_folder_to_process_oak)
-            + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
-            anat2atlas_paths=imaging_paths_anat2atlas,
-            anat2atlas_moving=file_path_anat2atlas_moving),
+# Below might be Bifrost territory - ignore for now.
+###
+# func2anat
+###
+expand(str(fly_folder_to_process_oak)
+       + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
+    func2anat_paths=imaging_paths_func2anat,
+    func2anat_moving=file_path_func2anat_fixed, # This is the channel which is designated as ANATOMY_CHANNEL
+    func2anat_fixed=file_path_func2anat_fixed),
+##
+# anat2atlas
+##
+expand(str(fly_folder_to_process_oak)
+    + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
+    anat2atlas_paths=imaging_paths_anat2atlas,
+    anat2atlas_moving=file_path_anat2atlas_moving),'''
 
 '''
 # OLD!!!
