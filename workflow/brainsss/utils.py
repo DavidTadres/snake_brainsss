@@ -27,6 +27,8 @@ except ImportError:
     pass
 
 
+
+
 def convert_list_of_string_to_posix_path(list_of_strings):
     """
     Unfortunately when input is passed by snakemake, the PosixPaths are converted to strings.

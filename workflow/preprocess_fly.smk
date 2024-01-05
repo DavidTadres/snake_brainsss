@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'fly_002' # folder to be processed
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -706,7 +706,11 @@ rule make_mean_brain_rule:
                 error_stack=error_stack,
                 width=width)
 
-rule motion_correction_large_files_rule:
+rule motion_correction_parallel_processing_rule:
+    """
+    To speed motion correction up, use the multiprocessing module. This requires the target to 
+    be a module (not just a function). Hence we have a 'shell' directive here.
+    """
     threads: 32 # the max that we can do - check with sh_part
     resources:
         mem_mb=snake_utils.mem_mb_much_more_times_input,
@@ -743,185 +747,6 @@ rule motion_correction_large_files_rule:
         "--par_output {output.par_output} "
 
 
-'''rule motion_correction_parallel_rule:
-    """
-    """
-    threads: 32 # the max that we can do - check with sh_part
-    resources:
-        mem_mb=snake_utils.mem_mb_much_more_times_input,
-        runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
-    input:
-        # Only use the Channels that exists - this organizes the anatomy and functional paths inside the motion correction
-        # module.
-        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
-        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
-        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
-
-        mean_brain_paths_ch1= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
-        mean_brain_paths_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
-        mean_brain_paths_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else [],
-    output:
-        moco_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
-        moco_path_ch2 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[],
-        moco_path_ch3 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
-        par_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
-
-    shell: "python3 scripts/motion_correction_parallel_chunks.py "
-            "--fly_directory {fly_folder_to_process_oak} "
-            "--brain_paths_ch1 {input.brain_paths_ch1} "
-            "--brain_paths_ch2 {input.brain_paths_ch2} "
-            "--brain_paths_ch3 {input.brain_paths_ch3} "
-            "--mean_brain_paths_ch1 {input.mean_brain_paths_ch1} "
-            "--mean_brain_paths_ch2 {input.mean_brain_paths_ch2} "
-            "--mean_brain_paths_ch3 {input.mean_brain_paths_ch3} "
-            "--ANATOMY_CHANNEL {ANATOMY_CHANNEL} "
-            "--FUNCTIONAL_CHANNELS {FUNCTIONAL_CHANNELS} "
-            "--moco_path_ch1 {output.moco_path_ch1} "
-            "--moco_path_ch2 {output.moco_path_ch2} "
-            "--moco_path_ch3 {output.moco_path_ch3} "
-            "--par_output {output.par_output} "'''
-'''    
-rule motion_correction_rule:
-    """
-    Yandan file anat file(25GB)
-    Nodes: 1
-    Cores per node: 18
-    CPU Utilized: 2-13:59:13
-    CPU Efficiency: 36.76% of 7-00:36:18 core-walltime
-    Job Wall-clock time: 09:22:01
-    Memory Utilized: 146.73 GB
-    Memory Efficiency: 85.64% of 171.34 GB
-    
-    Yandan func filex
-    Nodes: 1
-    Cores per node: 6
-    CPU Utilized: 18:06:13
-    CPU Efficiency: 52.91% of 1-10:13:06 core-walltime
-    Job Wall-clock time: 05:42:11
-    Memory Utilized: 4.21 GB
-    Memory Efficiency: 5.94% of 70.93 GB
-    
-    
-    Had another MMO with a very small file (200Mb)
-    State: OUT_OF_MEMORY (exit code 0)
-    Nodes: 1
-    Cores per node: 6
-    CPU Utilized: 00:03:38
-    CPU Efficiency: 19.43% of 00:18:42 core-walltime
-    Job Wall-clock time: 00:03:07
-    Memory Utilized: 977.49 MB
-    Memory Efficiency: 97.75% of 1000.00 MB
-    -> Set minimal memory to 4GB? 
-    
-    Current setting 
-    (threads: 6
-     resources:
-       mem_mb=snake_utils.mem_mb_more_times_input,
-       runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!)
-    seems to work for large anatomical files (2x10Gb)
-    State: COMPLETED (exit code 0)
-    Nodes: 1
-    Cores per node: 6
-    CPU Utilized: 22:10:11
-    CPU Efficiency: 61.96% of 1-11:46:48 core-walltime
-    Job Wall-clock time: 05:57:48
-    Memory Utilized: 60.57 GB
-    Memory Efficiency: 83.56% of 72.49 GB
-    
-    Unoptimzed for small slices - this is a 10Gb functional recording:
-    Nodes: 1
-    Cores per node: 6
-    CPU Utilized: 1-05:28:29
-    CPU Efficiency: 58.07% of 2-02:45:18 core-walltime
-    Job Wall-clock time: 08:27:33
-    Memory Utilized: 4.13 GB
-    Memory Efficiency: 5.82% of 70.93 GB
-    
-    with: snake_utils.mem_mb_times_input
-    State: OUT_OF_MEMORY (exit code 0)
-    Nodes: 1
-    Cores per node: 6
-    CPU Utilized: 05:12:42
-    CPU Efficiency: 59.22% of 08:48:00 core-walltime
-    Job Wall-clock time: 01:28:00
-    Memory Utilized: 8.20 GB
-    Memory Efficiency: 90.45% of 9.06 GB
-    
-    Benchmarking: Two 3Gb files required 19Gb (43% of 44Gb at 6 cores). 1 hour
-    Same 3 gb files another run:
-        Cores per node: 6
-        CPU Utilized: 02:56:44
-        CPU Efficiency: 54.95% of 05:21:36 core-walltime
-        Job Wall-clock time: 00:53:36
-        Memory Utilized: 18.47 GB
-        Memory Efficiency: 42.03% of 43.95 GB
-    
-    Tried a bunch of stuff and finally settled on this not super elegant solution.
-    
-    1) Figure out how many channels exist somehwere before rule all
-    2) To have a single wildcard for optimal parallelization, check if a given channel exists and pass nothing if not.
-    3) This should be relatively stable if I sometimes only record e.g. Ch1 or only Ch2 or both. I also added a 3rd 
-       channel as Jacob's upgrade is due soon. 
-    
-    Has two sets of input files:
-   ../imaging/..channel_1.nii & ../imaging/..channel_2.nii 
-    and
-    ../imaging/..channel_1_mean.nii & ../imaging/..channel_2_mean.nii 
-    
-    output is (maybe on scratch?)
-    ../imaging/moco/..channel_1_moco.h5 & ../imaging/moco/..channel_2_moco.h5
-    
-    Because it's a pain to handle filenames that are called differently, I stopped using 
-    'anatomy_channel_x' and 'functional_channel_x' and just call it 'channel_x'.
-    
-    Avoid explicitly calling ch1 and ch2. Will be a pain to adapt code everytime if no ch2 is recorded...
-    
-    Goal: We want the correct number of 'moco/h5' files. We can have either 1 or 2 (or in the future 3)
-    different output files.
-    For a given file we need a defined set of input files.
-    If we find we want moco/ch1.h5 AND moco/ch2.h5 we need /ch1.nii, /ch2.nii, /ch1_mean.nii and /ch2_mean.nii
-    if we only want moco/ch1.h5 we only need /ch1.nii and /ch1_mean.nii
-    
-    """
-    threads: 6
-    resources:
-        mem_mb=snake_utils.mem_mb_much_more_times_input,
-        runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
-    input:
-        # Only use the Channels that exists
-        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
-        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
-        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
-
-        mean_brain_paths_ch1= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
-        mean_brain_paths_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
-        mean_brain_paths_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else [],
-    output:
-        h5_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[],
-        h5_path_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[],
-        h5_path_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],
-        par_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
-    run:
-        try:
-            preprocessing.motion_correction(fly_directory=fly_folder_to_process_oak,
-                                            dataset_path=[input.brain_paths_ch1, input.brain_paths_ch2, input.brain_paths_ch3],
-                                            meanbrain_path=[input.mean_brain_paths_ch1, input.mean_brain_paths_ch2, input.mean_brain_paths_ch3], # NOTE must be input file! # filename of precomputed target meanbrain to register to
-                                            type_of_transform="SyN",# For ants.registration(), see ANTsPy docs | Default 'SyN'
-                                            output_format='h5', #'OPTIONAL PARAM output_format MUST BE ONE OF: "h5", "nii"'
-                                            flow_sigma=3,# For ants.registration(), higher sigma focuses on coarser features | Default 3
-                                            total_sigma=0,  # For ants.registration(), higher values will restrict the amount of deformation allowed | Default 0
-                                            aff_metric='mattes',# For ants.registration(), metric for affine registration | Default 'mattes'. Also allowed: 'GC', 'meansquares'
-                                            h5_path=[output.h5_path_ch1, output.h5_path_ch2, output.h5_path_ch3], # Define as dataset on scratch!
-                                            anatomy_channel=ANATOMY_CHANNEL,
-                                            functional_channels=FUNCTIONAL_CHANNELS
-                                            )
-        except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_motion_correction')
-            utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
-
-'''
 
 rule zscore_rule:
     """
@@ -1608,4 +1433,190 @@ rule name:
          # https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#
          # With expand we can also do:
          # expand("{dataset}/a.{ext}", dataset=DATASETS, ext=FORMATS) 
+         
+
 """
+
+'''rule motion_correction_parallel_CHUNKS_rule:
+    """
+    Old - didn't work as well as the other parallel motion correction rule (took longer and higher memory
+    requirements)
+    """
+    threads: 32 # the max that we can do - check with sh_part
+    resources:
+        mem_mb=snake_utils.mem_mb_much_more_times_input,
+        runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
+    input:
+        # Only use the Channels that exists - this organizes the anatomy and functional paths inside the motion correction
+        # module.
+        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
+        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
+        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
+
+        mean_brain_paths_ch1= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
+        mean_brain_paths_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
+        mean_brain_paths_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else [],
+    output:
+        moco_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
+        moco_path_ch2 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[],
+        moco_path_ch3 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
+        par_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
+
+    shell: "python3 scripts/motion_correction_parallel_chunks.py "
+            "--fly_directory {fly_folder_to_process_oak} "
+            "--brain_paths_ch1 {input.brain_paths_ch1} "
+            "--brain_paths_ch2 {input.brain_paths_ch2} "
+            "--brain_paths_ch3 {input.brain_paths_ch3} "
+            "--mean_brain_paths_ch1 {input.mean_brain_paths_ch1} "
+            "--mean_brain_paths_ch2 {input.mean_brain_paths_ch2} "
+            "--mean_brain_paths_ch3 {input.mean_brain_paths_ch3} "
+            "--ANATOMY_CHANNEL {ANATOMY_CHANNEL} "
+            "--FUNCTIONAL_CHANNELS {FUNCTIONAL_CHANNELS} "
+            "--moco_path_ch1 {output.moco_path_ch1} "
+            "--moco_path_ch2 {output.moco_path_ch2} "
+            "--moco_path_ch3 {output.moco_path_ch3} "
+            "--par_output {output.par_output} "'''
+'''    
+rule motion_correction_rule:
+    """
+    First try: essentially emulates Bella's moco. Takes long as multiprocessing is 'hidden' in ants.registration
+
+    Yandan file anat file(25GB)
+    Nodes: 1
+    Cores per node: 18
+    CPU Utilized: 2-13:59:13
+    CPU Efficiency: 36.76% of 7-00:36:18 core-walltime
+    Job Wall-clock time: 09:22:01
+    Memory Utilized: 146.73 GB
+    Memory Efficiency: 85.64% of 171.34 GB
+
+    Yandan func filex
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 18:06:13
+    CPU Efficiency: 52.91% of 1-10:13:06 core-walltime
+    Job Wall-clock time: 05:42:11
+    Memory Utilized: 4.21 GB
+    Memory Efficiency: 5.94% of 70.93 GB
+
+
+    Had another MMO with a very small file (200Mb)
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 00:03:38
+    CPU Efficiency: 19.43% of 00:18:42 core-walltime
+    Job Wall-clock time: 00:03:07
+    Memory Utilized: 977.49 MB
+    Memory Efficiency: 97.75% of 1000.00 MB
+    -> Set minimal memory to 4GB? 
+
+    Current setting 
+    (threads: 6
+     resources:
+       mem_mb=snake_utils.mem_mb_more_times_input,
+       runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!)
+    seems to work for large anatomical files (2x10Gb)
+    State: COMPLETED (exit code 0)
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 22:10:11
+    CPU Efficiency: 61.96% of 1-11:46:48 core-walltime
+    Job Wall-clock time: 05:57:48
+    Memory Utilized: 60.57 GB
+    Memory Efficiency: 83.56% of 72.49 GB
+
+    Unoptimzed for small slices - this is a 10Gb functional recording:
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 1-05:28:29
+    CPU Efficiency: 58.07% of 2-02:45:18 core-walltime
+    Job Wall-clock time: 08:27:33
+    Memory Utilized: 4.13 GB
+    Memory Efficiency: 5.82% of 70.93 GB
+
+    with: snake_utils.mem_mb_times_input
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 6
+    CPU Utilized: 05:12:42
+    CPU Efficiency: 59.22% of 08:48:00 core-walltime
+    Job Wall-clock time: 01:28:00
+    Memory Utilized: 8.20 GB
+    Memory Efficiency: 90.45% of 9.06 GB
+
+    Benchmarking: Two 3Gb files required 19Gb (43% of 44Gb at 6 cores). 1 hour
+    Same 3 gb files another run:
+        Cores per node: 6
+        CPU Utilized: 02:56:44
+        CPU Efficiency: 54.95% of 05:21:36 core-walltime
+        Job Wall-clock time: 00:53:36
+        Memory Utilized: 18.47 GB
+        Memory Efficiency: 42.03% of 43.95 GB
+
+    Tried a bunch of stuff and finally settled on this not super elegant solution.
+
+    1) Figure out how many channels exist somehwere before rule all
+    2) To have a single wildcard for optimal parallelization, check if a given channel exists and pass nothing if not.
+    3) This should be relatively stable if I sometimes only record e.g. Ch1 or only Ch2 or both. I also added a 3rd 
+       channel as Jacob's upgrade is due soon. 
+
+    Has two sets of input files:
+   ../imaging/..channel_1.nii & ../imaging/..channel_2.nii 
+    and
+    ../imaging/..channel_1_mean.nii & ../imaging/..channel_2_mean.nii 
+
+    output is (maybe on scratch?)
+    ../imaging/moco/..channel_1_moco.h5 & ../imaging/moco/..channel_2_moco.h5
+
+    Because it's a pain to handle filenames that are called differently, I stopped using 
+    'anatomy_channel_x' and 'functional_channel_x' and just call it 'channel_x'.
+
+    Avoid explicitly calling ch1 and ch2. Will be a pain to adapt code everytime if no ch2 is recorded...
+
+    Goal: We want the correct number of 'moco/h5' files. We can have either 1 or 2 (or in the future 3)
+    different output files.
+    For a given file we need a defined set of input files.
+    If we find we want moco/ch1.h5 AND moco/ch2.h5 we need /ch1.nii, /ch2.nii, /ch1_mean.nii and /ch2_mean.nii
+    if we only want moco/ch1.h5 we only need /ch1.nii and /ch1_mean.nii
+
+    """
+    threads: 6
+    resources:
+        mem_mb=snake_utils.mem_mb_much_more_times_input,
+        runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
+    input:
+        # Only use the Channels that exists
+        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
+        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
+        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
+
+        mean_brain_paths_ch1= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
+        mean_brain_paths_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
+        mean_brain_paths_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else [],
+    output:
+        h5_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[],
+        h5_path_ch2= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[],
+        h5_path_ch3= str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],
+        par_output = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
+    run:
+        try:
+            preprocessing.motion_correction(fly_directory=fly_folder_to_process_oak,
+                                            dataset_path=[input.brain_paths_ch1, input.brain_paths_ch2, input.brain_paths_ch3],
+                                            meanbrain_path=[input.mean_brain_paths_ch1, input.mean_brain_paths_ch2, input.mean_brain_paths_ch3], # NOTE must be input file! # filename of precomputed target meanbrain to register to
+                                            type_of_transform="SyN",# For ants.registration(), see ANTsPy docs | Default 'SyN'
+                                            output_format='h5', #'OPTIONAL PARAM output_format MUST BE ONE OF: "h5", "nii"'
+                                            flow_sigma=3,# For ants.registration(), higher sigma focuses on coarser features | Default 3
+                                            total_sigma=0,  # For ants.registration(), higher values will restrict the amount of deformation allowed | Default 0
+                                            aff_metric='mattes',# For ants.registration(), metric for affine registration | Default 'mattes'. Also allowed: 'GC', 'meansquares'
+                                            h5_path=[output.h5_path_ch1, output.h5_path_ch2, output.h5_path_ch3], # Define as dataset on scratch!
+                                            anatomy_channel=ANATOMY_CHANNEL,
+                                            functional_channels=FUNCTIONAL_CHANNELS
+                                            )
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_motion_correction')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
+
+'''
