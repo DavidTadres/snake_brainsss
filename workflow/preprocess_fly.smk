@@ -26,7 +26,7 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
 
 ######
-fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_002' # folder to be processed
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_003' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -392,16 +392,16 @@ rule all:
         ###
         # Fictrac QC
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png", fictrac_paths=FICTRAC_PATHS),
+        expand(str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png", fictrac_paths=FICTRAC_PATHS),
         # data in fly_dirs.json!
         ###
         # Bleaching QC
         ###,
-        #>expand(str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png", bleaching_imaging_paths=imaging_paths_bleaching),
+        expand(str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png", bleaching_imaging_paths=imaging_paths_bleaching),
         ###
         # Meanbrain
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
+        expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
         ###
         # Motion correction output
         ###
@@ -412,50 +412,50 @@ rule all:
         ####
         # Z-score
         ####
-        #>expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        #>expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        #>expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
         ###
         # temporal high-pass filter
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        #>expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        #>expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
         ###
         # correlation with behavior
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
-        #>expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
-        #>expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+        expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+        expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+        expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
         ###
         # Meanbrain of moco brain
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels),
+        expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels),
         ###
         # Clean anatomy
-        #>expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels),
+        expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels),
         ##
         # make supervoxels
         ###
-        #>expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
-        #>expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
+        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
+        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
 
         # Below might be Bifrost territory - ignore for now.
         ###
         # func2anat
         ###
-        #>expand(str(fly_folder_to_process_oak)
-        #       + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
-        #    func2anat_paths=imaging_paths_func2anat,
-        #    func2anat_moving=file_path_func2anat_fixed, # This is the channel which is designated as ANATOMY_CHANNEL
-        #    func2anat_fixed=file_path_func2anat_fixed),
+        expand(str(fly_folder_to_process_oak)
+               + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
+            func2anat_paths=imaging_paths_func2anat,
+            func2anat_moving=file_path_func2anat_fixed, # This is the channel which is designated as ANATOMY_CHANNEL
+            func2anat_fixed=file_path_func2anat_fixed),
         ##
         # anat2atlas
         ##
-        #>expand(str(fly_folder_to_process_oak)
-        #    + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
-        #    anat2atlas_paths=imaging_paths_anat2atlas,
-        #    anat2atlas_moving=file_path_anat2atlas_moving),
+        expand(str(fly_folder_to_process_oak)
+            + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
+            anat2atlas_paths=imaging_paths_anat2atlas,
+            anat2atlas_moving=file_path_anat2atlas_moving),
 
 '''
 # OLD!!!
@@ -804,18 +804,18 @@ rule zscore_rule:
     threads: 1
     resources: mem_mb=snake_utils.mem_mb_much_more_times_input#mem_mb_times_input
     input:
-        h5_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-        h5_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-        h5_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+        path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
 
     output:
-        zscore_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
     run:
         try:
             preprocessing.zscore(fly_directory=fly_folder_to_process_oak,
-                                dataset_path=[input.h5_path_ch1, input.h5_path_ch2, input.h5_path_ch3],
+                                dataset_path=[input.path_ch1, input.path_ch2, input.path_ch3],
                                 zscore_path=[output.zscore_path_ch1, output.zscore_path_ch2, output.zscore_path_ch3])
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_zscore')
@@ -887,13 +887,13 @@ rule temporal_high_pass_filter_rule:
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_more_times_input
     input:
-        zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
     output:
-        temp_HP_filter_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-        temp_HP_filter_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-        temp_HP_filter_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
 
     run:
         try:
@@ -1005,9 +1005,9 @@ rule correlation_rule:
         mem_mb=snake_utils.mem_mb_less_times_input,
         runtime=10 #snake_utils.time_for_correlation
     input:
-        corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.h5" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-        corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.h5" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-        corr_path_ch3=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_3_moco_zscore_highpass.h5" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+        corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        corr_path_ch3=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
         fictrac_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/fictrac/fictrac_behavior_data.dat",
         metadata_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/imaging/recording_metadata.xml"
     output:
@@ -1116,7 +1116,7 @@ rule moco_mean_brain_rule:
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
     input:
-        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco.h5"
+        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco.nii"
     output:
         str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii"
     run:
@@ -1177,7 +1177,7 @@ rule make_supervoxels_rule:
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
-    input: str(fly_folder_to_process_oak) + "/{supervoxel_paths}/channel_{supervoxel_ch}_moco_zscore_highpass.h5"
+    input: str(fly_folder_to_process_oak) + "/{supervoxel_paths}/channel_{supervoxel_ch}_moco_zscore_highpass.nii"
     output:
         cluster_labels = str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy",
         cluster_signals = str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy"

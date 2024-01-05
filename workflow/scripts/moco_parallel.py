@@ -7,7 +7,12 @@ There's much more overhead but because each process takes several minutes that
 should be managable.
 
 
+
 Benchmark:
+
+Newest: Yandan's func data (2x10.87Gb files)
+threads: 32, 8 cores: 00:55:45 Memory Utilized: 21.58 GB
+
 threads: 32, 8 cores:  00:09:51
 
 Using Yandan's data (Previously: 05:42:11, Memory Efficiency: 5.94% of 70.93 GB)
@@ -296,6 +301,7 @@ def combine_temp_files(moving_path,
     # Loop through all files. Because it's sorted we don't have to worry about
     # the index!
     index_tracker = 0
+    printlog('Start combining ' + moving_output_path.name)
     for current_file in natsort.natsorted(temp_save_path.iterdir()):
         # Check if moving_path.name, for example channel_1.nii is in filename
         if '.npy' in current_file.name and moving_path.name in current_file.name:
@@ -331,6 +337,8 @@ def combine_temp_files(moving_path,
     # immediately released, though. Test this.
     del stitched_anatomy_brain_nifty
 
+    printlog('Done combining and saving ' + moving_output_path.name)
+
     #####
     # Work on functional paths
     #####
@@ -350,6 +358,7 @@ def combine_temp_files(moving_path,
     ####
 
     if functional_path_one is not None:
+        printlog('Start combining ' + functional_channel_output_paths[0].name)
         # Essentially identical to the code above
         stitched_functional_one = np.zeros((brain_shape[0],brain_shape[1],
                                        brain_shape[2], brain_shape[3]),
@@ -373,6 +382,7 @@ def combine_temp_files(moving_path,
         del stitched_functional_one
         del stitched_functional_one_nifty
 
+        printlog('Done combining and saving ' + functional_channel_output_paths[0].name)
         ####
         # STITCH FUNCTIONAL 2
         ####
@@ -382,6 +392,7 @@ def combine_temp_files(moving_path,
                                           dtype=np.float32)
             # Collect data for second functional channel
             index_tracker = 0
+            printlog('Start combining ' + functional_channel_output_paths[1].name)
             for current_file in natsort.natsorted(temp_save_path.iterdir()):
                 if '.npy' in current_file.name and functional_path_two.name in current_file.name:
                     index = moco_utils.index_from_filename(current_file)
@@ -398,6 +409,8 @@ def combine_temp_files(moving_path,
 
             del stitched_functional_two
             del stitched_functional_two_nifty
+
+            printlog('Done combining and saving ' + functional_channel_output_paths[1].name)
 
     # After saving the stitched file, delete the temporary files
     shutil.rmtree(temp_save_path)

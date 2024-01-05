@@ -27,7 +27,6 @@ import sklearn.cluster
 parent_path = str(pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent.absolute())
 sys.path.insert(0, parent_path)
 # This just imports '*.py' files from the folder 'brainsss'.
-from brainsss import moco_utils
 from brainsss import utils
 from brainsss import fictrac_utils
 from brainsss import corr_utils
@@ -58,13 +57,15 @@ def make_supervoxels(
     n_clusters,
 ):
     """
-    Todo 3D correlation to create supervoxels!
     :param fly_directory:
     :param path_to_read:
     :param save_path:
     :return:
     """
-    CLUSTER_3D = True
+    CLUSTER_3D = False # No need to try: I learned why clustering was done per plane:
+    # Goal was to have highest possible time resolution and we ahve ~20ms between slices
+    # and up to half a second for a volume. If we clustered by volume we'd smear the time signal
+    # by at least half a second!
     #####################
     ### SETUP LOGGING ###
     #####################
@@ -76,17 +77,13 @@ def make_supervoxels(
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
     ##########
-    print("path_to_read " + repr(path_to_read))
     path_to_read = utils.convert_list_of_string_to_posix_path(path_to_read)
-    print("path_to_read " + repr(path_to_read))
     save_path_cluster_labels = utils.convert_list_of_string_to_posix_path(
         save_path_cluster_labels
     )
-    print("save_path_cluster_labels " + repr(save_path_cluster_labels))
     save_path_cluster_signals = utils.convert_list_of_string_to_posix_path(
         save_path_cluster_signals
     )
-    print("save_path_cluster_signals " + repr(save_path_cluster_signals))
 
     # Can have more than one functional channel, hence loop!
     for (
@@ -100,12 +97,20 @@ def make_supervoxels(
         # brain_path = os.path.join(func_path, 'functional_channel_2_moco_zscore_highpass.h5')
         t0 = time.time()
         # with h5py.File(brain_path, 'r+') as h5_file:
-        with h5py.File(current_path_to_read, "r+") as file:
-            # Load everything into memory, cast as float 32
-            brain = file["data"][:].astype(np.float32)
-            # Convert nan to num, ideally in place to avoid duplication of data
-            brain = np.nan_to_num(brain, copy=False)
-            # brain = np.nan_to_num(h5_file.get("data")[:].astype('float32'))
+        #with h5py.File(current_path_to_read, "r+") as file:
+        #    # Load everything into memory, cast as float 32
+        #    brain = file["data"][:].astype(np.float32)
+        #    # Convert nan to num, ideally in place to avoid duplication of data
+        #    brain = np.nan_to_num(brain, copy=False)
+        #    # brain = np.nan_to_num(h5_file.get("data")[:].astype('float32'))
+
+        # Everything is only nifty in this pipeline! Define proxy
+        brain_data_proxy = nib.load(current_path_to_read)
+        # Load everything into memory, cast DTYPE
+        brain = np.asarray(brain_data_proxy.dataobj, dtype=DTYPE)
+        # Convert nan to num, ideally in place to avoid duplication of data
+        brain = np.nan_to_num(brain, copy=False)
+
         printlog("brain shape: {}".format(brain.shape))
         printlog("load duration: {} sec".format(time.time() - t0))
 
@@ -123,9 +128,6 @@ def make_supervoxels(
         )
         cluster_labels = []
         # for z in range(49):
-        # WHY NOT CLUSTER EVERYTHING? Why z slices?
-        # Won't this limit supervoxel to a given slice? If we did neural activity = brain.reshape(-1,brain.shape[3])
-        # it probably takes much longer (and more memory) but supervoxels would be in 3D?
         for z in range(brain.shape[2]):
             # neural_activity = brain[:,:,z,:].reshape(-1, 3384) # I *THINK* 3384 is frames at 30 minutes
             neural_activity = brain[:, :, z, :].reshape(-1, brain.shape[3])
@@ -147,7 +149,7 @@ def make_supervoxels(
         np.save(current_path_to_save_labels, cluster_labels)
         printlog("cluster fit duration: {} sec".format(time.time() - t0))
 
-        if CLUSTER_3D:
+        '''if CLUSTER_3D:
             cluster_model_3D = sklearn.cluster.AgglomerativeClustering(
                 n_clusters=n_clusters,  # ????
                 memory=str(current_path_to_save_labels.parent),
@@ -157,7 +159,7 @@ def make_supervoxels(
             cluster_model_3D.fit(brain.reshape(-1, brain.shape[3]))
             cluster_labels_3D = cluster_model_3D.labels_
 
-            np.save(pathlib.Path(current_path_to_save_labels.parent, '3Dlabels.npy'), cluster_labels_3D)
+            np.save(pathlib.Path(current_path_to_save_labels.parent, '3Dlabels.npy'), cluster_labels_3D)'''
 
         ### GET CLUSTER AVERAGE SIGNAL ###
 
@@ -178,9 +180,9 @@ def make_supervoxels(
         all_signals = np.asarray(all_signals)
         # save_file = os.path.join(cluster_dir, 'cluster_signals.npy')
         np.save(current_path_to_save_signals, all_signals)
-        printlog("cluster average duration: {} sec".format(time.time() - t0))
+        printlog("cluster creation took: {} sec".format(time.time() - t0))
 
-        if CLUSTER_3D:
+        '''if CLUSTER_3D:
             neural_activity_3D = brain.reshape(-1, brain.shape[3])
             signals_3D = []
             for cluster_num in range(n_clusters):
@@ -188,7 +190,7 @@ def make_supervoxels(
                 mean_signal = np.mean(neural_activity[cluster_indeces, :], axis=0)
                 signals_3D.append(mean_signal)
             signals_3D = np.asarray(signals_3D)
-            np.save(pathlib.Path(current_path_to_save_signals.parent, '3D_signals.npy'), signals_3D)
+            np.save(pathlib.Path(current_path_to_save_signals.parent, '3D_signals.npy'), signals_3D)'''
 
 def apply_transforms(
     fly_directory,
@@ -241,7 +243,7 @@ def apply_transforms(
     # fixed = np.asarray(nib.load(fixed_path).get_data().squeeze(), dtype='float32')
     fixed_brain_proxy = nib.load(path_to_read_fixed)
     fixed_brain = np.asarray(
-        fixed_brain_proxy.dataobj, dtype=np.float32
+        fixed_brain_proxy.dataobj, dtype=DTYPE
     )  # I'm not using squeeze here! Might introduce
     # a bug so important to keep if statement below!
     utils.check_for_nan_and_inf_func(fixed_brain)
@@ -260,7 +262,7 @@ def apply_transforms(
 
         # moving = np.asarray(nib.load(moving_path).get_data().squeeze(), dtype='float32')
         moving_brain_proxy = nib.load(current_path_to_read_moving)
-        moving_brain = np.asarray(moving_brain_proxy.dataobj, dtype=np.float32)
+        moving_brain = np.asarray(moving_brain_proxy.dataobj, dtype=DTYPE)
 
         moving_brain = ants.from_numpy(moving_brain)
         moving_brain.set_spacing(moving_brain)
@@ -478,10 +480,12 @@ def align_anat(
                 current_path_to_save.parent,
                 "{}-to-{}_fwdtransforms".format(moving_fly, fixed_fly),
             )
-            if True in [iso_2um_moving, iso_2um_fixed]:
-                fwdtransforms_save_folder = pathlib.Path(
-                    fwdtransforms_save_folder.parent, fwdtransforms_save_folder.name + "_2umiso"
-                )
+
+            #if True in [iso_2um_moving, iso_2um_fixed]:
+            # Currently always the case but I changed the variable to iso_2um_resample
+            fwdtransforms_save_folder = pathlib.Path(
+                fwdtransforms_save_folder.parent, fwdtransforms_save_folder.name + "_2umiso"
+            )
             fwdtransforms_save_folder.mkdir(exist_ok=True, parents=True)
             for source_path in fwdtransformlist:
                 print('fwdtransformlist' + repr(source_path))
@@ -495,10 +499,11 @@ def align_anat(
                 current_path_to_save.parent,
                 "{}-to-{}_invtransforms".format(moving_fly, fixed_fly),
             )
-            if True in [iso_2um_moving, iso_2um_fixed]:
-                invtransforms_save_folder = pathlib.Path(
-                    invtransforms_save_folder.parent, invtransforms_save_folder.name + "_2umiso"
-                )
+            #if True in [iso_2um_moving, iso_2um_fixed]:
+            # Currently always the case but I changed the variable to iso_2um_resample
+            invtransforms_save_folder = pathlib.Path(
+                invtransforms_save_folder.parent, invtransforms_save_folder.name + "_2umiso"
+            )
             invtransforms_save_folder.mkdir(exist_ok=True, parents=True)
             for source_path in invransformlist:
                 source_file = pathlib.Path(source_path).name
@@ -797,7 +802,7 @@ def correlation(
         )
         # Preallocate an array filled with zeros
         corr_brain = np.zeros(
-            (brain.shape[0], brain.shape[1], brain.shape[2]), dtype=np.float32
+            (brain.shape[0], brain.shape[1], brain.shape[2]), dtype=DTYPE
         )
         # Fill array with NaN to rule out that we interpret a missing value as a real value when it should be NaN
         corr_brain.fill(np.nan)
@@ -813,7 +818,7 @@ def correlation(
             # This is advantagous because we have to do the dot product with the brain. np.dot will
             # default to higher precision leading to making a copy of brain data which costs a lot of memory
             # Unfortunately fictrac_interp comes in [time, z] as opposed to brain that comes in [x,y,z,t]
-            fictrac_mean = fictrac_interp[:, z].mean(dtype=np.float32)
+            fictrac_mean = fictrac_interp[:, z].mean(dtype=DTYPE)
 
             # >> Typical values for z scored brain seem to be between -25 and + 25.
             # It shouldn't be necessary to cast as float64. This then allows us
@@ -822,7 +827,7 @@ def correlation(
             # fictrac data is small, so working with float64 shouldn't cost much memory!
             # Correction - if we cast as float64 and do dot product with brain, we'll copy the
             # brain to float64 array, balloning the memory requirement
-            fictrac_mean_m = fictrac_interp[:, z].astype(np.float32) - fictrac_mean
+            fictrac_mean_m = fictrac_interp[:, z].astype(DTYPE) - fictrac_mean
 
             # Note from scipy pearson docs: This can overflow if brain_mean_m is, for example [-5e210, 5e210, 3e200, -3e200]
             # I doubt we'll ever get close to numbers like this.
@@ -1029,6 +1034,13 @@ def temporal_high_pass_filter(
             # to save memory: data-= ndimage.gaussian_filter1d(...output=data) to do everything in-place?
             data += data_mean[:, :, :, None]
 
+            ##########################
+            ### SAVE DATA AS NIFTY ###
+            ##########################
+            aff = np.eye(4)
+            temp_highpass_nifty = nib.Nifti1Image(data, aff)
+            temp_highpass_nifty.to_filename(current_temporal_high_pass_filtered_path)
+            printlog('Successfully saved ' + current_temporal_high_pass_filtered_path.as_posix())
 
         else:
            with h5py.File(current_dataset_path, "r") as hf:
@@ -1043,7 +1055,7 @@ def temporal_high_pass_filter(
             # Here we create a document we are going to write to in the loop
             with h5py.File(current_temporal_high_pass_filtered_path, "w") as f:
                 # dset = f.create_dataset('data', dims, dtype='float32', chunks=True) # Original
-                _ = f.create_dataset("data", dims, dtype="float32")
+                _ = f.create_dataset("data", dims, dtype=DTYPE)
 
                 data_mean = np.mean(data, axis=-1)
                 smoothed_data = ndimage.gaussian_filter1d(
@@ -1285,7 +1297,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
                 data=np.nan_to_num(data)
                 # Save file as h5 file
                 with h5py.File(current_zscore_path, "w") as file:
-                    dset = file.create_dataset("data", dims, data=data, dtype=np.float32
+                    dset = file.create_dataset("data", dims, data=data, dtype=DTYPE
                     )  # , dims, chunks=False)
 
                 if len(dataset_path) > 1:
@@ -1333,12 +1345,10 @@ def make_mean_brain(
         ###
         printlog("Currently looking at: " + repr(current_path_to_read.name))
         if current_path_to_read.suffix == ".nii":
-            brain_proxy = nib.load(
-                current_path_to_read
-            )  # Doesn't load anything, just points to a given location
-            brain_data = np.asarray(
-                brain_proxy.dataobj, dtype=np.uint16
-            )  # loads data to memory.
+            # Doesn't load anything, just points to a given location
+            brain_proxy = nib.load(current_path_to_read)
+            # Load data, it's np.uint16 at this point, no point changing it.
+            brain_data = np.asarray(brain_proxy.dataobj, dtype=np.uint16)
         elif current_path_to_read.suffix == ".h5":
             # Original: Not great because moco brains are saved as float32
             #with h5py.File(current_path_to_read, "r") as hf:
@@ -1422,7 +1432,7 @@ def bleaching_qc(
         printlog(f"Currently reading: {current_path_to_read.name:.>{WIDTH - 20}}")
         # Doesn't load anything to memory, just a pointer
         brain_proxy = nib.load(current_path_to_read)
-        # Load data into memory
+        # Load data into memory, brain at this point is half of uint14, no point doing float
         brain = np.asarray(brain_proxy.dataobj, dtype=np.uint16)
         utils.check_for_nan_and_inf_func(brain)
         # calculate mean over time
