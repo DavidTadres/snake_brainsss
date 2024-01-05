@@ -77,7 +77,8 @@ def time_for_moco_input(wildcards, input):
     Note that all benchmarks were done with 'threads=32' and 'cores=8'.
     Returns time in minutes based on input. Use this with the multiprocessing motion
     correction code.
-    We needs about 5 minutes for 1 Gb of for two channels.
+    We needs about 5 minutes for 1 Gb of for two channels. Double it to be on the safe
+    side for now
 
     :param wildcards: Snakemake requirement
     :param input: intput from snakefile. Needed to access filesize
@@ -91,17 +92,17 @@ def time_for_moco_input(wildcards, input):
         and input.brain_paths_ch3 != []
     ):
         # if all three channels are used
-        time_in_minutes = (input.size_mb / 1000) * 2  # /1000 to get Gb, then *minutes
+        time_in_minutes = (input.size_mb / 1000) * 2.5  # /1000 to get Gb, then *minutes
     elif (
         (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [])
         or (input.brain_paths_ch1 != [] and input.brain_paths_ch3 != [])
         or (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != [])
     ):
         # if only two channels are in use
-        time_in_minutes = (input.size_mb / 1000) * 3 # /1000 to get Gb, then *minutes
+        time_in_minutes = (input.size_mb / 1000) * 5 # /1000 to get Gb, then *minutes
     else:
         # only one channel is provided:
-        time_in_minutes = (input.size_mb / 1000) * 6  # /1000 to get Gb, then *minutes
+        time_in_minutes = (input.size_mb / 1000) * 10  # /1000 to get Gb, then *minutes
 
     # hours = int(np.floor(time_in_minutes / 60))
     # minutes = int(np.ceil(time_in_minutes % 60))
