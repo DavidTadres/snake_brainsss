@@ -82,7 +82,6 @@ def motion_correction(index,
     """
 
     try:
-        print(error)
         # Keeping track of time
         t_function_start = time.time()
         # Load meanbrain (fixed) and put into ants format
@@ -175,6 +174,9 @@ def motion_correction(index,
               + repr(round(time.time() - t_function_start, 1))
               + 's\n')
     except Exception as error_stack:
+        # Not trivial to pipe errors back into code. Hence, just write another
+        # log because the subprocesses will fail silently (i.e. if there's not
+        # enough memory)
         logfile = utils.create_logfile(fly_directory, function_name='ERROR_MP_MOTION_CORRECTION')
         utils.write_error(logfile=logfile,
                           error_stack=error_stack,
