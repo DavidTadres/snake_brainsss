@@ -499,19 +499,19 @@ if __name__ == '__main__':
     # We can just put in on scratch
     # This will only work if we have a folder called trc and data is in /data, of course
     relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
+    # DON'T CHANGE THIS-if this points to your actual experimental folder, the shutil.rmtree
+    # below will DELETE YOUR DATA. THIS MUST BE A TEMPORARY PATH
     temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
     if TESTING:
         temp_save_path = pathlib.Path('/Users/dtadres/Documents/test_folder')
         if temp_save_path.is_dir():
             shutil.rmtree(temp_save_path)
+
     if temp_save_path.is_dir():
-        # Check if temp_save is on scratch - Only delete folder if yes to avoid deleting source data (for now at least)
-        if temp_save_path.parents[-2].as_posix()  == '/scratch':
-            # Remove dir with all files if it exists!!!
-            shutil.rmtree(temp_save_path)
-        else:
-            print('WARNING: Did not remove files in ' + str(temp_save_path))
-            print('Only remove folders that are on scratch to avoid accidentally deleting source data')
+        shutil.rmtree(temp_save_path)
+    #else:
+    #    print('WARNING: Did not remove files in ' + str(temp_save_path))
+    #    print('Only remove folders that are on scratch to avoid accidentally deleting source data')
 
     # create dir
     # No need for exist_ok=True because the dir should have been deleted just now
