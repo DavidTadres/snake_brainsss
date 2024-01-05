@@ -34,7 +34,8 @@ def mem_mb_times_input(wildcards, input):
 
 def mem_mb_more_times_input(wildcards, input):
     """
-    Returns memory in mb as 3.5*input memory size or 4Gb, whichever is larger
+    Returns memory in mb as 3.5*input memory size or 4Gb, whichever is larger,
+    but not more than 256Gb which is the submission limit for sherlock.
     :param wildcards:
     :param input:
     :return:
@@ -49,13 +50,13 @@ def mem_mb_more_times_input(wildcards, input):
 
 def mem_mb_much_more_times_input(wildcards, input):
     """
-    Returns memory in mb as 5.5*input memory size or 1Gb, whichever is larger
+    Returns memory in mb as 5.5*input memory size or 1Gb, whichever is larger,
+    but not more than 256Gb which is the submission limit for sherlock.
     :param wildcards:
     :param input:
     :return:
     """
     calculated_memory = max(input.size_mb * 5.5, 10000)
-    print(calculated_memory)
 
     if calculated_memory < 256000:
         return(calculated_memory)
@@ -71,6 +72,42 @@ def disk_mb_times_input(wildcards, input):
     :return:
     """
     return max(input.size_mb * 2.5, 1000)
+
+def mb_for_moco_input(wildcards, input):
+    """
+
+    :param wildcards:
+    :param input:
+    :return:
+    """
+    # We need pretty much exactly 4 times the input file size OF ONE CHANNEL.
+    # If we have two channels we only need ~2 times.
+    #
+    if (
+            input.brain_paths_ch1 != []
+            and input.brain_paths_ch2 != []
+            and input.brain_paths_ch3 != []
+    ):
+        # if all three channels are used
+        mem_mb = (input.size_mb*4.5)/3
+    elif (
+        (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [])
+        or (input.brain_paths_ch1 != [] and input.brain_paths_ch3 != [])
+        or (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != [])
+    ):
+        # if only two channels are in use
+        mem_mb = (input.size_mb * 4.5)/2
+    else:
+        # only one channel is provided:
+        mem_mb = (input.size_mb * 4.5)
+    # Sherlock only allows us to request up to 256 Gb per job
+    if mem_mb > 256000:
+        mem_mb = 256000
+
+    return(max(mem_mb, 5000))
+
+
+# if all three channels are used
 
 def time_for_moco_input(wildcards, input):
     """

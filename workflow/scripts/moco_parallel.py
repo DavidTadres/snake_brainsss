@@ -328,14 +328,17 @@ def combine_temp_files(moving_path,
     savepath_root.mkdir(parents=True, exist_ok=True)
     # Prepare nifti file
     aff = np.eye(4)
-    # Save anatomy channel:
-    #savepath_anatomy = pathlib.Path(savepath_root, moving_path.stem + '_moco.nii')
-    stitched_anatomy_brain_nifty = nib.Nifti1Image(stitched_anatomy_brain, aff)
-    stitched_anatomy_brain_nifty.to_filename(moving_output_path)
+    # Save anatomy channel: - unfortunately this is super memory intensive! We
+    # make a copy of the huge array before we are able so save it.
+    #stitched_anatomy_brain_nifty = nib.Nifti1Image(stitched_anatomy_brain, aff)
+    #stitched_anatomy_brain_nifty.to_filename(moving_output_path)
+    # Try this and check if we still need 4 times memory
+    nib.Nifti1Image(stitched_anatomy_brain, aff).to_filename(moving_output_path)
+
 
     del stitched_anatomy_brain # Explicitly release the memory (it might not be
     # immediately released, though. Test this.
-    del stitched_anatomy_brain_nifty
+    #del stitched_anatomy_brain_nifty
 
     printlog('Done combining and saving ' + moving_output_path.name)
 
@@ -376,11 +379,12 @@ def combine_temp_files(moving_path,
                     index_tracker += 1
 
         #savepath_func_one = pathlib.Path(savepath_root, functional_path_one.stem + '_moco.nii')
-        stitched_functional_one_nifty = nib.Nifti1Image(stitched_functional_one, aff)
-        stitched_functional_one_nifty.to_filename(functional_channel_output_paths[0])
+        #stitched_functional_one_nifty = nib.Nifti1Image(stitched_functional_one, aff)
+        #stitched_functional_one_nifty.to_filename(functional_channel_output_paths[0])
+        nib.Nifti1Image(stitched_functional_one, aff).to_filename(functional_channel_output_paths[0])
 
         del stitched_functional_one
-        del stitched_functional_one_nifty
+        #del stitched_functional_one_nifty
 
         printlog('Done combining and saving ' + functional_channel_output_paths[0].name)
         ####
@@ -404,11 +408,12 @@ def combine_temp_files(moving_path,
                         print('Next index (based on filename) was ' + repr(index))
                     index_tracker += 1
             # Save the nifty file
-            stitched_functional_two_nifty = nib.Nifti1Image(stitched_functional_two, aff)
-            stitched_functional_two_nifty.to_filename(functional_channel_output_paths[1])
+            # stitched_functional_two_nifty = nib.Nifti1Image(stitched_functional_two, aff)
+            # stitched_functional_two_nifty.to_filename(functional_channel_output_paths[1])
+            nib.Nifti1Image(stitched_functional_two, aff).to_filename(functional_channel_output_paths[1])
 
             del stitched_functional_two
-            del stitched_functional_two_nifty
+            #del stitched_functional_two_nifty
 
             printlog('Done combining and saving ' + functional_channel_output_paths[1].name)
 
