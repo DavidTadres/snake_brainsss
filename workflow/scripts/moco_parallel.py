@@ -163,7 +163,7 @@ def motion_correction(index,
     print('Motion correction for ' + moving_path.as_posix()
           + ' at index ' + repr(index) + ' took : '
           + repr(round(time.time() - t_function_start, 1))
-          + 's')
+          + 's\n')
 
 def find_missing_temp_files(fixed_path,
                             moving_path,
@@ -191,11 +191,15 @@ def find_missing_temp_files(fixed_path,
             # Extract index number
             index = moco_utils.index_from_filename(current_file)
             if index == index_tracker:
-                index_tracker+=1
+                # Great!
+                pass
             else:
+                # in case more than one file (e.g. 1 & 2) are missing!
                 while index > index_tracker:
                     index_of_missing_files.append(index_tracker)
-                    index_tracker+=1
+                    index_tracker+=1 #
+            # Once index == index_tracker, add 1 to be prepared for the next loop!
+            index_tracker+=1
     # it's possible that we are missing only functional files but not anatomical files.
     # Also collect those
     if functional_channel_paths is None:
@@ -211,25 +215,35 @@ def find_missing_temp_files(fixed_path,
         index_tracker = 0
         for current_file in natsort.natsorted(temp_save_path.iterdir()):
             if '.npy' in current_file.name and functional_path_one.name in current_file.name:
+                # Extract index number
                 index = moco_utils.index_from_filename(current_file)
                 if index == index_tracker:
-                    index_tracker += 1
+                    # Great!
+                    pass
                 else:
+                    # in case more than one file (e.g. 1 & 2) are missing!
                     while index > index_tracker:
                         index_of_missing_files.append(index_tracker)
-                        index_tracker += 1
+                        index_tracker += 1  #
+                # Once index == index_tracker, add 1 to be prepared for the next loop!
+                index_tracker += 1
     if functional_path_two is not None:
         index_tracker = 0
         for current_file in natsort.natsorted(temp_save_path.iterdir()):
             if '.npy' in current_file.name and functional_path_two.name in current_file.name:
+                # Extract index number
                 index = moco_utils.index_from_filename(current_file)
                 if index == index_tracker:
-                    index_tracker += 1
+                    # Great!
+                    pass
                 else:
+                    # in case more than one file (e.g. 1 & 2) are missing!
                     while index > index_tracker:
                         index_of_missing_files.append(index_tracker)
-                        index_tracker += 1
-    # remove duplicate entries
+                        index_tracker += 1  #
+                # Once index == index_tracker, add 1 to be prepared for the next loop!
+                index_tracker += 1
+                # remove duplicate entries
     index_of_missing_files = np.unique(np.asarray(index_of_missing_files))
 
     # loop through index_of_missing_files. If it's an empty list, don't loop and skip
@@ -237,7 +251,7 @@ def find_missing_temp_files(fixed_path,
         # Call motion_correction function on index of missing files
         # THIS IS SLOW AS IT'S NOT PARALLELIZED. Hopefully this only is used
         # in very rare circumstances.
-        print('Missing index currently working on :' + repr(current_index))
+        print('Missing index currently working on: ' + repr(current_index))
         motion_correction(current_index,
                           fixed_path,
                           moving_path,
@@ -519,6 +533,7 @@ if __name__ == '__main__':
 
     # create an index going from [0,1,...,n]
     time_index = moco_utils.prepare_time_index(moving_path)
+    print('Will perform motion correction on a total of ' + repr(len(time_index)) + ' volumes.')
     if TESTING:
         time_index = [0,1,2,3,4,5,6,7]
 

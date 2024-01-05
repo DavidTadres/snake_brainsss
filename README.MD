@@ -134,6 +134,8 @@ source .env_snake_brainsss/bin/activate
 # Todo:
 ###
 1) Try parallelization of motion correction. This is by far the slowest step and would profit greatly from 
-   parallelization.
-2) Test what happens if we make supervoxels per volume (instead of z-slice).
+   parallelization. -> Done
+2) Test what happens if we make supervoxels per volume (instead of z-slice). TBD but reason for supervoxel
+   per z-slice is to keep temporal resolution as high as possible: Each slice is recorded ~20 ms later compared
+   to the previous one. If we do 3D supervoxels we'll time-smear 
 3) Keep track of dtypes more consistenly.
