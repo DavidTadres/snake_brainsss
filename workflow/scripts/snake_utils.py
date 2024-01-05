@@ -89,17 +89,17 @@ def mb_for_moco_input(wildcards, input):
             and input.brain_paths_ch3 != []
     ):
         # if all three channels are used
-        mem_mb = int((input.size_mb*4.5)/3)
+        mem_mb = int((input.size_mb*5.5)/3)
     elif (
         (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [])
         or (input.brain_paths_ch1 != [] and input.brain_paths_ch3 != [])
         or (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != [])
     ):
         # if only two channels are in use
-        mem_mb = int((input.size_mb * 4.5)/2)
+        mem_mb = int((input.size_mb * 5.5)/2)
     else:
         # only one channel is provided:
-        mem_mb = (input.size_mb * 4.5)
+        mem_mb = (input.size_mb * 5.5)
     # Sherlock only allows us to request up to 256 Gb per job
     if mem_mb > 256000:
         mem_mb = 256000
