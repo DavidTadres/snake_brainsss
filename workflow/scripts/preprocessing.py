@@ -1180,7 +1180,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
             dataset_proxy = nib.load(current_dataset_path)
             data = np.asarray(dataset_proxy.dataobj, dtype=DTYPE)
 
-            printlog("Data shape is {}".format(dims))
+            printlog("Data shape is {}".format(data.shape))
 
             # Expect a 4D array, xyz and the fourth dimension is time!
             mean_brain = np.nanmean(data, axis=3, dtype=DTYPE_CACLULATIONS)
