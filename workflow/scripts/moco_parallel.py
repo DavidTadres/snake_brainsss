@@ -191,6 +191,7 @@ def find_missing_temp_files(fixed_path,
 
     index_tracker = 0
     for current_file in natsort.natsorted(temp_save_path.iterdir()):
+        print('Finding missing files: current_file ' + repr(current_file.name))
         # Check if moving_path.name, for example channel_1.nii is in filename
         if '.npy' in current_file.name and moving_path.name in current_file.name:
             # Extract index number
@@ -201,6 +202,7 @@ def find_missing_temp_files(fixed_path,
             else:
                 # in case more than one file (e.g. 1 & 2) are missing!
                 while index > index_tracker:
+                    print('Missing files: ' + repr(index_tracker))
                     index_of_missing_files.append(index_tracker)
                     index_tracker+=1 #
             # Once index == index_tracker, add 1 to be prepared for the next loop!
