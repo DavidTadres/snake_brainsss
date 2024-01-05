@@ -1009,7 +1009,7 @@ def temporal_high_pass_filter(
     ):
         printlog("Working on " + repr(current_dataset_path.name))
 
-        if '.nii' in current_dataset_path:
+        if '.nii' in current_dataset_path.name:
             # this doesn't actually LOAD the data - it is just a proxy
             current_dataset_proxy = nib.load(current_dataset_path)
             # Now load into RAM
@@ -1176,7 +1176,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
 
     # we might get a second functional channel in the future!
     for current_dataset_path, current_zscore_path in zip(dataset_path, zscore_path):
-        if 'nii' in current_dataset_path:
+        if 'nii' in current_dataset_path.name:
             dataset_proxy = nib.load(current_dataset_path)
             data = np.asarray(dataset_proxy.dataobj, dtype=DTYPE)
 
