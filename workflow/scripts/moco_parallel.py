@@ -57,18 +57,20 @@ from brainsss import utils
 ###
 # Global variable
 ###
+WIDTH = 120 # Todo: make a global parameter class somewhere to keep track of this variable!
 type_of_transform = "SyN"
 flow_sigma = 3
 total_sigma = 0
 aff_metric = 'mattes'
 
-TESTING = False
+TESTING = True
 
 def motion_correction(index,
                       fixed_path,
                       moving_path,
                       functional_channel_paths,
                       temp_save_path,
+                      fly_directory
                       ):
     """
     Loop doing the motion correction for a given set of index.
@@ -78,97 +80,106 @@ def motion_correction(index,
     :param index:
     :return:
     """
-    # Keeping track of time
-    t_function_start = time.time()
-    # Load meanbrain (fixed) and put into ants format
-    fixed_proxy = nib.load(fixed_path)
-    # Load data to memory. Dtypes is a bit confusing here: Meanbrain comes as uint16...
-    fixed_data = fixed_proxy.dataobj
-    # However, ants seems to require float32 (I think)
-    fixed_ants = ants.from_numpy(np.asarray(fixed_data, dtype=np.float32))
 
-    # Load moving proxy in this process
-    moving_proxy = nib.load(moving_path)
+    try:
+        print(error)
+        # Keeping track of time
+        t_function_start = time.time()
+        # Load meanbrain (fixed) and put into ants format
+        fixed_proxy = nib.load(fixed_path)
+        # Load data to memory. Dtypes is a bit confusing here: Meanbrain comes as uint16...
+        fixed_data = fixed_proxy.dataobj
+        # However, ants seems to require float32 (I think)
+        fixed_ants = ants.from_numpy(np.asarray(fixed_data, dtype=np.float32))
 
-    # Load data in a given process
-    current_moving = moving_proxy.dataobj[:,:,:,index]
-    # Convert to ants images
-    moving_ants = ants.from_numpy(np.asarray(current_moving, dtype=np.float32))
+        # Load moving proxy in this process
+        moving_proxy = nib.load(moving_path)
 
-    #t0 = time.time()
-    # Perform the registration
-    moco = ants.registration(fixed_ants, moving_ants,
-                             type_of_transform=type_of_transform,
-                             flow_sigma=flow_sigma,
-                             total_sigma=total_sigma,
-                             aff_metric=aff_metric)
-    #print('Registration took ' + repr(time.time() - t0) + 's')
+        # Load data in a given process
+        current_moving = moving_proxy.dataobj[:,:,:,index]
+        # Convert to ants images
+        moving_ants = ants.from_numpy(np.asarray(current_moving, dtype=np.float32))
 
-    # Save warped image in temp_save_path with index in filename.
-    np.save(pathlib.Path(temp_save_path, moving_path.name + 'index_'
-                         + repr(index)),
-            moco["warpedmovout"].numpy())
+        #t0 = time.time()
+        # Perform the registration
+        moco = ants.registration(fixed_ants, moving_ants,
+                                 type_of_transform=type_of_transform,
+                                 flow_sigma=flow_sigma,
+                                 total_sigma=total_sigma,
+                                 aff_metric=aff_metric)
+        #print('Registration took ' + repr(time.time() - t0) + 's')
 
-    #t0 = time.time()
-    # Next, use the transform info for the functional image
-    transformlist = moco["fwdtransforms"]
-
-    # Unpack functional paths
-    if functional_channel_paths is None:
-        functional_path_one = None
-        functional_path_two = None
-    elif len(functional_channel_paths) == 1:
-        functional_path_one = functional_channel_paths[0]
-        functional_path_two = None
-    elif len(functional_channel_paths) == 2:
-        functional_path_one = functional_channel_paths[0]
-        functional_path_two = functional_channel_paths[1]
-    if functional_path_one is not None:
-        # Load functional one proxy in this process
-        functional_one_proxy = nib.load(functional_path_one)
-        if functional_path_two is not None:
-            functional_two_proxy = nib.load(functional_path_two)
-
-    if functional_path_one is not None:
-        current_functional_one = functional_one_proxy.dataobj[:,:,:,index]
-        moving_frame_one_ants = ants.from_numpy(np.asarray(current_functional_one, dtype=np.float32))
-        # to motion correction for functional image
-        moving_frame_one_ants = ants.apply_transforms(fixed_ants, moving_frame_one_ants, transformlist)
-        # put moco functional image into preallocated array
-        #moco_functional_one[:, :, :, counter] = moving_frame_one_ants.numpy()
-        #print('apply transforms took ' + repr(time.time() - t0) + 's')
-        np.save(pathlib.Path(temp_save_path, functional_path_one.name + 'index_'
+        # Save warped image in temp_save_path with index in filename.
+        np.save(pathlib.Path(temp_save_path, moving_path.name + 'index_'
                              + repr(index)),
-                moving_frame_one_ants.numpy())
+                moco["warpedmovout"].numpy())
 
-        if functional_path_two is not None:
-            current_functional_two = functional_two_proxy.dataobj[:,:,:, index]
-            moving_frame_two_ants = ants.from_numpy(np.asarray(current_functional_two, dtype=np.float32))
-            moco_functional_two = ants.apply_transforms(fixed_ants, moving_frame_two_ants, transformlist)
-            #moco_functional_two[:,:,:, counter] = moco_functional_two.numpy()
-            np.save(pathlib.Path(temp_save_path, functional_path_two.name + 'index_'
+        #t0 = time.time()
+        # Next, use the transform info for the functional image
+        transformlist = moco["fwdtransforms"]
+
+        # Unpack functional paths
+        if functional_channel_paths is None:
+            functional_path_one = None
+            functional_path_two = None
+        elif len(functional_channel_paths) == 1:
+            functional_path_one = functional_channel_paths[0]
+            functional_path_two = None
+        elif len(functional_channel_paths) == 2:
+            functional_path_one = functional_channel_paths[0]
+            functional_path_two = functional_channel_paths[1]
+        if functional_path_one is not None:
+            # Load functional one proxy in this process
+            functional_one_proxy = nib.load(functional_path_one)
+            if functional_path_two is not None:
+                functional_two_proxy = nib.load(functional_path_two)
+
+        if functional_path_one is not None:
+            current_functional_one = functional_one_proxy.dataobj[:,:,:,index]
+            moving_frame_one_ants = ants.from_numpy(np.asarray(current_functional_one, dtype=np.float32))
+            # to motion correction for functional image
+            moving_frame_one_ants = ants.apply_transforms(fixed_ants, moving_frame_one_ants, transformlist)
+            # put moco functional image into preallocated array
+            #moco_functional_one[:, :, :, counter] = moving_frame_one_ants.numpy()
+            #print('apply transforms took ' + repr(time.time() - t0) + 's')
+            np.save(pathlib.Path(temp_save_path, functional_path_one.name + 'index_'
                                  + repr(index)),
-                    moco_functional_two.numpy())
+                    moving_frame_one_ants.numpy())
 
-    #t0=time.time()
-    # delete writen files:
-    # Delete transform info - might be worth keeping instead of huge resulting file? TBD
-    for x in transformlist:
-        if ".mat" in x:
-            # Keep transform_matrix, I think this is used to make the plot
-            # called 'motion_correction.png'
-            temp = ants.read_transform(x)
-            #transform_matrix[counter, :] = temp.parameters
-            param_savename = pathlib.Path(temp_save_path, "motcorr_params" + 'index_'
-                                          + repr(index))
-            np.save(param_savename, temp.parameters) # that's the transform_matrix in brainsss
+            if functional_path_two is not None:
+                current_functional_two = functional_two_proxy.dataobj[:,:,:, index]
+                moving_frame_two_ants = ants.from_numpy(np.asarray(current_functional_two, dtype=np.float32))
+                moco_functional_two = ants.apply_transforms(fixed_ants, moving_frame_two_ants, transformlist)
+                #moco_functional_two[:,:,:, counter] = moco_functional_two.numpy()
+                np.save(pathlib.Path(temp_save_path, functional_path_two.name + 'index_'
+                                     + repr(index)),
+                        moco_functional_two.numpy())
 
-        # lets' delete all files created by ants - else we quickly create thousands of files!
-        pathlib.Path(x).unlink()
-    print('Motion correction for ' + moving_path.as_posix()
-          + ' at index ' + repr(index) + ' took : '
-          + repr(round(time.time() - t_function_start, 1))
-          + 's\n')
+        #t0=time.time()
+        # delete writen files:
+        # Delete transform info - might be worth keeping instead of huge resulting file? TBD
+        for x in transformlist:
+            if ".mat" in x:
+                # Keep transform_matrix, I think this is used to make the plot
+                # called 'motion_correction.png'
+                temp = ants.read_transform(x)
+                #transform_matrix[counter, :] = temp.parameters
+                param_savename = pathlib.Path(temp_save_path, "motcorr_params" + 'index_'
+                                              + repr(index))
+                np.save(param_savename, temp.parameters) # that's the transform_matrix in brainsss
+
+            # lets' delete all files created by ants - else we quickly create thousands of files!
+            pathlib.Path(x).unlink()
+        print('Motion correction for ' + moving_path.as_posix()
+              + ' at index ' + repr(index) + ' took : '
+              + repr(round(time.time() - t_function_start, 1))
+              + 's\n')
+    except Exception as error_stack:
+        logfile = utils.create_logfile(fly_directory, function_name='ERROR_MP_MOTION_CORRECTION')
+        utils.write_error(logfile=logfile,
+                          error_stack=error_stack,
+                          width=WIDTH)
+
 
 def find_missing_temp_files(fixed_path,
                             moving_path,
@@ -185,6 +196,7 @@ def find_missing_temp_files(fixed_path,
     :param temp_save_path:
     :return:
     """
+
     start_time = time.time()
     # A list to keep track of missing files!
     index_of_missing_files = []
@@ -469,7 +481,6 @@ if __name__ == '__main__':
     #####################
     ### SETUP LOGGING ###
     #####################
-    WIDTH = 120  # This is used in all logging files
     fly_directory = pathlib.Path(args.fly_directory)
     logfile = utils.create_logfile(fly_directory, function_name="moco_parallel_large_images")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
@@ -579,7 +590,8 @@ if __name__ == '__main__':
                                                   fixed_path,
                                                   moving_path,
                                                   functional_channel_paths,
-                                                  temp_save_path))
+                                                  temp_save_path,
+                                                  fly_directory))
                 # start process
                 p.start()
                 # To keep track of child processes, add to list
