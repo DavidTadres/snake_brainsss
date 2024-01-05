@@ -86,7 +86,7 @@ class PollSqueueThread(threading.Thread):
         self,
         squeue_wait,
         squeue_cmd,
-        squeue_timeout=300, # see notes above
+        squeue_timeout=600, # see notes above
         sleep_time=0.01,
         max_tries=3,
         *args,
