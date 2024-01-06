@@ -3,7 +3,7 @@ Here the idea is to do preprocessing a little bit differently:
 
 We assume that the fly_builder already ran and that the fly_dir exists.
 
-Note:
+Sherlock webpage writes:
     Although jobs can directly read and write to $OAK during execution,
     it is recommended to first stage files from $OAK to $SCRATCH at the
     beginning of a series of jobs, and save the desired results back from
@@ -37,6 +37,8 @@ current_user = 'dtadres'
 
 #>>>>
 fictrac_fps = 100 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE FUTURE!!!!
+# TODO!!!! Instead of just believing a framerate, use the voltage signal recorded during imaging
+# that defines the position of a given frame!
 #<<<<
 
 # First n frames to average over when computing mean/fixed brain | Default None
@@ -374,9 +376,9 @@ def convert_oak_path_to_scratch(oak_path):
 # Output data path
 #####
 # Output files for fictrac_qc rule
-print("full_fictrac_file_oak_paths" + repr(full_fictrac_file_oak_paths))
-fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_oak_paths,
-                                                             filename='fictrac_2d_hist_fixed.png')
+#print("full_fictrac_file_oak_paths" + repr(full_fictrac_file_oak_paths))
+#fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_oak_paths,
+#                                                             filename='fictrac_2d_hist_fixed.png')
 
 rule all:
     """

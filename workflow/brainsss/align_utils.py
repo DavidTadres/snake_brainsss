@@ -19,6 +19,9 @@ def extract_resolution(metadata_path):
                     temp_y = current_axis.get('value')
                 elif current_axis.get('index') == 'ZAxis':
                     temp_z = current_axis.get('value')
-    resolution = (temp_x, temp_y, temp_z)
+    resolution = (round(float(temp_x, 5)),
+                  round(float(temp_y, 5)),
+                  round(float(temp_z, 5))
+                  )
 
     return(resolution)

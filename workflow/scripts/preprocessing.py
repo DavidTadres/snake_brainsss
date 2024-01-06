@@ -314,8 +314,6 @@ def align_anat(
     resolution_of_fixed,
     resolution_of_moving,
     iso_2um_resample,
-    #iso_2um_fixed,
-    #iso_2um_moving,
     type_of_transform,
     grad_step,
     flow_sigma,
@@ -414,7 +412,7 @@ def align_anat(
         ### Moving
         # Find resolution if None
         if resolution_of_moving is None:
-            metadata_path = pathlib.Path(current_path_to_read_moving.parent, 'recording_metadata.xml')
+            metadata_path = pathlib.Path(current_path_to_read_moving.parents[1], 'recording_metadata.xml')
             resolution_of_moving = align_utils.extract_resolution(metadata_path)
         # Load brain data
         moving_brain_proxy = nib.load(current_path_to_read_moving)
