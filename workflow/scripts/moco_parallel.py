@@ -177,7 +177,8 @@ def motion_correction(index,
 def find_missing_temp_files(fixed_path,
                             moving_path,
                             functional_channel_paths,
-                            temp_save_path
+                            temp_save_path,
+                            fly_directory
                             ):
     """
     It can happen that registration of one or a few images fails.
@@ -275,7 +276,8 @@ def find_missing_temp_files(fixed_path,
                           fixed_path,
                           moving_path,
                           functional_channel_paths,
-                          temp_save_path)
+                          temp_save_path,
+                          fly_directory)
     print('Checking for missing files took: ' + repr(time.time() - start_time))
 
 def combine_temp_files(moving_path,
@@ -646,7 +648,8 @@ if __name__ == '__main__':
     find_missing_temp_files(fixed_path,
                             moving_path,
                             functional_channel_paths,
-                            temp_save_path
+                            temp_save_path,
+                            fly_directory
                             )
 
     print('Checked for missing files. See above if something was missing. Combining files now')
