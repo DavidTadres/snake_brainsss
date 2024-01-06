@@ -24,6 +24,7 @@ threads: 32, 8 cores 02:48:45, Memory Efficiency: 51.83% of 250.00 GB
 threads: 32, 16 cores -> failed SILENTLY with memory error
 --> I need to add a control mechanism, for loop checking if index is missing and call moco_func
 before combining
+threads: 32, 16 cores, more memory: 02:41:33, Memory Efficiency: 78.12% of 156.04 GB
 
 -> It seems that ant.registration is taking advantage of multiple available cores! No decrease
 when going from 8 to 16 parallel processes! But this is still much faster and memory requirements much

@@ -613,6 +613,13 @@ rule bleaching_qc_rule:
 
 rule make_mean_brain_rule:
     """
+    Yandan func0 file
+    CPU Utilized: 00:00:10
+    CPU Efficiency: 1.79% of 00:09:20 core-walltime
+    Job Wall-clock time: 00:04:40
+    Memory Utilized: 5.50 GB
+    Memory Efficiency: 36.26% of 15.18 GB
+    
     Changed memory usage by avoiding call to 'get_fdata()'
     With same 30min vol dataset I now get: 
     State: COMPLETED (exit code 0)
@@ -688,7 +695,9 @@ rule make_mean_brain_rule:
         save.mean_brain(output)
     """
     threads: 2  # It seems to go a bit faster. Can probably set to 1 if want to save cores
-    resources: mem_mb=snake_utils.mem_mb_less_times_input  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
+    resources:
+        mem_mb=snake_utils.mem_mb_less_times_input,  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
+        runtime='10m' # should be enough
     input:
             str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}.nii"
     output:
@@ -825,6 +834,15 @@ rule zscore_rule:
 
 rule temporal_high_pass_filter_rule:
     """
+    Yandan func0 dat
+    Cores per node: 10
+    CPU Utilized: 00:19:31
+    CPU Efficiency: 8.78% of 03:42:10 core-walltime
+    Job Wall-clock time: 00:22:13
+    Memory Utilized: 41.26 GB
+    Memory Efficiency: 58.24% of 70.84 GB
+    
+    
     Benchmark:
     Nodes: 1
     Cores per node: 2
@@ -884,7 +902,7 @@ rule temporal_high_pass_filter_rule:
     Memory Utilized: 7.50 GB
     Memory Efficiency: 59.48% of 12.60 GB
     """
-    threads: 2
+    threads: 2 # Will be overruled if more than 16Gb of memory are requested.
     resources: mem_mb=snake_utils.mem_mb_more_times_input
     input:
         zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
@@ -1003,7 +1021,7 @@ rule correlation_rule:
     threads: 1
     resources:
         mem_mb=snake_utils.mem_mb_less_times_input,
-        runtime=10 #snake_utils.time_for_correlation
+        runtime='10m' #snake_utils.time_for_correlation
     input:
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
@@ -1036,6 +1054,14 @@ rule STA_rule:
 
 rule moco_mean_brain_rule:
     """
+    Yandan func0
+    Cores per node: 6
+    CPU Utilized: 00:00:15
+    CPU Efficiency: 1.63% of 00:15:18 core-walltime
+    Job Wall-clock time: 00:02:33
+    Memory Utilized: 25.82 GB
+    Memory Efficiency: 51.03% of 50.60 GB
+    
     Similar to make mean brain but takes moco corrected brain! 
     Benchmark:
     Cores per node: 2
@@ -1115,6 +1141,7 @@ rule moco_mean_brain_rule:
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
+    runtime: '10m'# should be enough
     input:
         str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco.nii"
     output:
@@ -1134,6 +1161,14 @@ rule moco_mean_brain_rule:
 
 rule clean_anatomy_rule:
     """
+    Yandan anat0 data
+    Cores per node: 2
+    CPU Utilized: 00:00:36
+    CPU Efficiency: 22.50% of 00:02:40 core-walltime
+    Job Wall-clock time: 00:01:20
+    Memory Utilized: 3.96 GB
+    Memory Efficiency: 40.57% of 9.77 GB
+    
     Nodes: 1
     Cores per node: 2
     CPU Utilized: 00:00:57
@@ -1151,7 +1186,9 @@ rule clean_anatomy_rule:
     Memory Efficiency: 38.66% of 9.77 GB
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_much_more_times_input # Todo, optimize memory usage of this function! #mem_mb_more_times_input #snake_utils.mem_mb_times_input # OOM!!!
+    resources:
+        mem_mb=snake_utils.mem_mb_much_more_times_input, # Todo, optimize memory usage of this function! #mem_mb_more_times_input #snake_utils.mem_mb_times_input # OOM!!!
+        runtime='5m'
     input: str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean.nii",
     output: str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
     run:
@@ -1167,6 +1204,14 @@ rule clean_anatomy_rule:
 
 rule make_supervoxels_rule:
     """
+    Yamda, func0
+    Cores per node: 6
+    CPU Utilized: 00:07:40
+    CPU Efficiency: 11.63% of 01:05:54 core-walltime
+    Job Wall-clock time: 00:10:59
+    Memory Utilized: 22.95 GB
+    Memory Efficiency: 45.36% of 50.60 GB
+
     Nodes: 1
     Cores per node: 2
     CPU Utilized: 00:03:05
@@ -1176,7 +1221,9 @@ rule make_supervoxels_rule:
     Memory Efficiency: 51.74% of 9.00 GB
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input
+    resources:
+        mem_mb=snake_utils.mem_mb_times_input
+        #runtime=
     input: str(fly_folder_to_process_oak) + "/{supervoxel_paths}/channel_{supervoxel_ch}_moco_zscore_highpass.nii"
     output:
         cluster_labels = str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy",
@@ -1314,7 +1361,6 @@ rule anat_to_atlas:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack,
                 width=width)
-                
 
 rule apply_transforms_rule:
     """

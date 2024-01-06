@@ -377,7 +377,7 @@ def align_anat(
     ####
     # Should not be defined in snakefile but read automatically by xml file!
     if resolution_of_fixed is None:
-        metadata_path = pathlib.Path(path_to_read_fixed.parent, 'recording_metadata.xml')
+        metadata_path = pathlib.Path(path_to_read_fixed.parents[1], 'imaging/recording_metadata.xml')
         resolution_of_fixed = align_utils.extract_resolution(metadata_path)
 
     flip_X = False # Todo - what does this do? Was set to false in brainsss
