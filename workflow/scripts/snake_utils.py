@@ -75,7 +75,19 @@ def disk_mb_times_input(wildcards, input):
 
 def mb_for_moco_input(wildcards, input):
     """
-
+    Note on memory requirements:
+    https://sourceforge.net/p/advants/discussion/840261/thread/9a2a668a/?limit=25#aeff
+    ANTs converts all input images to floating point. Also, the SyN algorithm requires the use
+    of four displacement fields. Thus, in addition to the two input images, you also have an
+    additional set of 4 displacement fields * 3 component (i.e., x, y, z) images / displacement
+    field = 12 scalar images stored in memory. That's probably where most of your memory is going.
+    The number of threads shouldn't matter.
+    Also check here:
+    https://sourceforge.net/p/advants/discussion/840261/thread/907e5819/
+    I tried to use 5.5 times per channel. But that failed because of OOM error for large (1024x512)
+    recording where each volume would be an input of ~250 Mb (so ~500 Mb in float). According to info
+    above that should only lead to ~500*12*8=~50Gb of memory at one time.
+    With 6.5 times (159Gb or RAM requested) it worked for the anatomical image files.
     :param wildcards:
     :param input:
     :return:
