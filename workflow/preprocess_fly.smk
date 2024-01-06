@@ -1249,6 +1249,14 @@ rule make_supervoxels_rule:
 # Probably Bifrost does it better.
 rule func_to_anat_rule:
     """
+    Yandan anat data:
+    Cores: 1
+    CPU Utilized: 00:01:32
+    CPU Efficiency: 66.19% of 00:02:19 core-walltime
+    Job Wall-clock time: 00:02:19
+    Memory Utilized: 968.43 MB
+    Memory Efficiency: 24.21% of 3.91 GB
+    
     Nodes: 1
     Cores per node: 2
     CPU Utilized: 00:01:21
@@ -1318,7 +1326,14 @@ rule func_to_anat_rule:
 
 rule anat_to_atlas:
     """
-    Benchmark - Yandan data
+    Yandan data anat
+    CPU Utilized: 00:01:57
+    CPU Efficiency: 74.05% of 00:02:38 core-walltime
+    Job Wall-clock time: 00:02:38
+    Memory Utilized: 1.19 GB
+    Memory Efficiency: 30.51% of 3.91 GB
+    
+    Benchmark - Yandan data func
     Cores per node: 2 # one should be enough
     CPU Utilized: 00:01:58
     CPU Efficiency: 62.11% of 00:03:10 core-walltime
@@ -1328,7 +1343,9 @@ rule anat_to_atlas:
 
     """
     threads: 1
-    resources: mem_mb=snake_utils.mem_mb_more_times_input
+    resources:
+        mem_mb=snake_utils.mem_mb_more_times_input,
+        runtime='10m'
     input:
         path_to_read_fixed=atlas_path,
         path_to_read_moving=str(fly_folder_to_process_oak)
