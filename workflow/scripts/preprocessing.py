@@ -1517,12 +1517,12 @@ def fictrac_qc(fly_directory, fictrac_file_path, fictrac_fps):
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     utils.print_function_start(logfile, WIDTH, "fictrac_qc")
 
-    print(fictrac_file_path)
+    #####
+    # CONVERT PATHS TO PATHLIB.PATH OBJECTS
+    #####
     fictrac_file_path = utils.convert_list_of_string_to_posix_path(fictrac_file_path)
-    print(fictrac_file_path)
     # Organize path - there is only one, but it comes as a list
     fictrac_file_path = fictrac_file_path[0]
-    print(fictrac_file_path)
 
     ####
     # QUALITY CONTROL

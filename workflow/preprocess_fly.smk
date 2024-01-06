@@ -27,7 +27,7 @@ AND:
 ########################################################
 ### CHANGE THIS TO POINT TO THE FOLDER TO PREPROCESS ###
 ########################################################
-fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_003' # folder to be processed
+fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_004' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -215,81 +215,107 @@ FICTRAC_PATHS = []
 for current_path in fictrac_file_paths:
     FICTRAC_PATHS.append(current_path.split('/fictrac_behavior_data.dat')[0])
 
+# For wildcards we need lists of elements of the path for each folder.
+list_of_paths = []
+for current_path in imaging_file_paths:
+    list_of_paths.append(current_path.split('/imaging')[0])
+# This is a list of all imaging paths so something like this
+# ['anat0', 'func0', 'func1']
+
+#
+list_of_paths_func = []
+for current_path in imaging_file_paths:
+    if 'func' in current_path:
+        list_of_paths_func.append(current_path.split('/imaging')[0])
+
+list_of_paths_anat = []
+for current_path in imaging_file_paths:
+    if 'anat' in current_path:
+        list_of_paths_anat.append(current_path.split('/imaging')[0])
+
+list_of_channels = []
+if CH1_EXISTS:
+    list_of_channels.append("1")
+if CH2_EXISTS:
+    list_of_channels.append("2")
+if CH3_EXISTS:
+    list_of_channels.append("3")
+
+# Behaviors to correlate with neural activity
+corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
+# This would be a list like this ['1', '2']
 ###
 # List of paths for meanbrain
-imaging_paths_meanbrain =[]
-for current_path in imaging_file_paths:
-    imaging_paths_meanbrain.append(current_path.split('/imaging')[0])
-channels = []
-if CH1_EXISTS:
-    channels.append("1")
-if CH2_EXISTS:
-    channels.append("2")
-if CH3_EXISTS:
-    channels.append("3")
+#imaging_paths_meanbrain =[]
+#for current_path in imaging_file_paths:
+#    imaging_paths_meanbrain.append(current_path.split('/imaging')[0])
+#channels = []
+#if CH1_EXISTS:
+#    channels.append("1")
+#if CH2_EXISTS:
+#    channels.append("2")
+#if CH3_EXISTS:
+#    channels.append("3")
 
 ##
 # List of paths for bleaching
 # Identical to imaging_paths_meanbrain but define explicitly for readability
-imaging_paths_bleaching = []
-for current_path in imaging_file_paths:
-    imaging_paths_bleaching.append(current_path.split('/imaging')[0])
-print("imaging_paths_bleaching" + repr(imaging_paths_bleaching))
+#imaging_paths_bleaching = []
+#for current_path in imaging_file_paths:
+#    imaging_paths_bleaching.append(current_path.split('/imaging')[0])
 
 ##
 # List of paths for moco
 # Identical to imaging_paths_meanbrain but define explicitly for readability
-list_of_imaging_paths_moco = []
-for current_path in imaging_file_paths:
-    list_of_imaging_paths_moco.append(current_path.split('/imaging')[0])
+#list_of_imaging_paths_moco = []
+#for current_path in imaging_file_paths:
+#    list_of_imaging_paths_moco.append(current_path.split('/imaging')[0])
 
 ##
 # List of paths for zscore
-imaging_paths_zscore = []
-for current_path in imaging_file_paths:
-    if 'func' in current_path:
-        imaging_paths_zscore.append(current_path.split('/imaging')[0])
+#imaging_paths_zscore = []
+#for current_path in imaging_file_paths:
+#    if 'func' in current_path:
+#        imaging_paths_zscore.append(current_path.split('/imaging')[0])
 ##
 # list of paths for temporal highpass filter
 # identical to zscore imaging paths but for ease of readibility, explicitly create a new one
-imaging_paths_temp_HP_filter = []
-for current_path in imaging_file_paths:
-    if 'func' in current_path:
-        imaging_paths_temp_HP_filter.append(current_path.split('/imaging')[0])
+#imaging_paths_temp_HP_filter = []
+#for current_path in imaging_file_paths:
+#    if 'func' in current_path:
+#        imaging_paths_temp_HP_filter.append(current_path.split('/imaging')[0])
 
 ##
 # list of paths for correlation
 # identical to zscore imaging paths but for ease of readibility, explicitly create a new one
-imaging_paths_corr = []
-for current_path in imaging_file_paths:
-    if 'func' in current_path:
-        imaging_paths_corr.append(current_path.split('/imaging')[0])
-# Behavior to be correlated with z scored brain activity
-corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
+#imaging_paths_corr = []
+#for current_path in imaging_file_paths:
+#    if 'func' in current_path:
+#        imaging_paths_corr.append(current_path.split('/imaging')[0])
+## Behavior to be correlated with z scored brain activity
 
 ##
 # List of paths for moco meanbrains
 # Identical to imaging_paths_meanbrain but define explicitly for readability
-imaging_paths_moco_meanbrain = []
-for current_path in imaging_file_paths:
-    imaging_paths_moco_meanbrain.append(current_path.split('/imaging')[0])
-print("imaging_paths_moco_meanbrain" + repr(imaging_paths_moco_meanbrain))
+#imaging_paths_moco_meanbrain = []
+#for current_path in imaging_file_paths:
+#    imaging_paths_moco_meanbrain.append(current_path.split('/imaging')[0])
 
 ##
 # List of paths for clean anatomy - only anatomy folders!
-imaging_paths_clean_anatomy = []
-for current_path in imaging_file_paths:
-    if 'anat' in current_path:
-        imaging_paths_clean_anatomy.append(current_path.split('/imaging')[0])
+#imaging_paths_clean_anatomy f= []
+#for current_path in imaging_file_paths:
+#    if 'anat' in current_path:
+#        imaging_paths_clean_anatomy.append(current_path.split('/imaging')[0])
 
 ##
 # list of paths for supervoxel
 # identical to zscore imaging paths but for ease of readibility, explicitly create a new one
 atlas_path = pathlib.Path("brain_atlases/jfrc_atlas_from_brainsss.nii") #luke.nii"
-imaging_paths_supervoxels = []
-for current_path in imaging_file_paths:
-    if 'func' in current_path:
-        imaging_paths_supervoxels.append(current_path.split('/imaging')[0])
+#imaging_paths_supervoxels = []
+#for current_path in imaging_file_paths:
+#    if 'func' in current_path:
+#        imaging_paths_supervoxels.append(current_path.split('/imaging')[0])
 func_channels=[]
 if 'channel_1' in FUNCTIONAL_CHANNELS:
     func_channels.append('1')
@@ -373,88 +399,88 @@ rule all:
         ###,
         expand(str(fly_folder_to_process_oak)
                + "/{bleaching_imaging_paths}/imaging/bleaching.png",
-            bleaching_imaging_paths=imaging_paths_bleaching),
+            bleaching_imaging_paths=list_of_paths),
         ###
         # Meanbrain
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
-            meanbr_imaging_paths=imaging_paths_meanbrain,
-            meanbr_ch=channels),
+            meanbr_imaging_paths=list_of_paths, #imaging_paths_meanbrain,
+            meanbr_ch=list_of_channels),
         ###
         # Motion correction output
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths}/moco/motcorr_params.npy",
-            moco_imaging_paths=list_of_imaging_paths_moco),
+            moco_imaging_paths=list_of_paths),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
-            moco_imaging_paths=list_of_imaging_paths_moco),
+            moco_imaging_paths=list_of_paths),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[],
-            moco_imaging_paths=list_of_imaging_paths_moco),
+            moco_imaging_paths=list_of_paths),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
-            moco_imaging_paths=list_of_imaging_paths_moco),
+            moco_imaging_paths=list_of_paths),
         ####
         # Z-score
         ####
         expand(str(fly_folder_to_process_oak)
                + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-            zscore_imaging_paths=imaging_paths_zscore),
+            zscore_imaging_paths=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
                + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-            zscore_imaging_paths=imaging_paths_zscore),
+            zscore_imaging_paths=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
                + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
-            zscore_imaging_paths=imaging_paths_zscore),
+            zscore_imaging_paths=list_of_paths_func),
         ###
         # temporal high-pass filter
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-            temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+            temp_HP_filter_imaging_paths=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
                + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-            temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+            temp_HP_filter_imaging_paths=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
                + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
-            temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+            temp_HP_filter_imaging_paths=list_of_paths_func),
         ###
         # correlation with behavior
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-            corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+            corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
         expand(str(fly_folder_to_process_oak)
                + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-            corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+            corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
         expand(str(fly_folder_to_process_oak)
                + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
-            corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+            corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
         ###
         # Meanbrain of moco brain
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii",
-            moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain,
-            meanbr_moco_ch=channels),
+            moco_meanbr_imaging_paths=list_of_paths,
+            meanbr_moco_ch=list_of_channels),
         ###
         # Clean anatomy
         expand(str(fly_folder_to_process_oak)
                + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
-            clean_anatomy_paths=imaging_paths_clean_anatomy,
-            clean_anat_ch=channels),
+            clean_anatomy_paths=list_of_paths_anat,
+            clean_anat_ch=list_of_channels),
         ##
         # make supervoxels
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy",
-            supervoxel_paths=imaging_paths_supervoxels,
+            supervoxel_paths=list_of_paths_func,
             supervoxel_ch=func_channels),
         expand(str(fly_folder_to_process_oak)
                + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",
-            supervoxel_paths=imaging_paths_supervoxels,
+            supervoxel_paths=list_of_paths_func,
             supervoxel_ch=func_channels),
 
         # Below might be Bifrost territory - ignore for now.
