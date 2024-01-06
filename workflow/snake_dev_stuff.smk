@@ -9,6 +9,7 @@ ONLY ONE RULE PER RUN - COMMENT WHAT YOU DONT NEED
 
 import pathlib
 scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
+from scripts import snake_utils
 from dev import compare_h5_large_data
 from dev import compare_registration_results
 #from dev import moco_timing
@@ -20,6 +21,7 @@ savepath = pathlib.Path(root_path, 'David/Bruker/preprocessed/nsybGCaMP_tdTomato
 
 rule compare_registration_results_rule:
     threads: 16
+    resources: mem_mb=snake_utils.mem_mb_much_more_times_input
     input:
         path_original=path_original,
         path_my=path_my
