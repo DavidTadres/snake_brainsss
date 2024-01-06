@@ -24,13 +24,13 @@ AND:
 # snakemake -s preprocess_fly.smk --profile profiles/sherlock
 # OR
 # snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
-
-######
+########################################################
+### CHANGE THIS TO POINT TO THE FOLDER TO PREPROCESS ###
+########################################################
 fly_folder_to_process = 'nsybGCaMP_tdTomato/fly_003' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
-#####
 
 # the name of the file in 'user' that you want to use. Ideally it's your SUNet ID
 current_user = 'dtadres'
@@ -45,12 +45,12 @@ fictrac_fps = 100 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE
 # (average over all frames).
 meanbrain_n_frames =  None
 
-##############################################
+##########################################################
 import pathlib
 import json
 import datetime
-
-scripts_path = pathlib.Path(__file__).resolve()  # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
+# path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
+scripts_path = pathlib.Path(__file__).resolve()
 #print(scripts_path)
 from brainsss import utils
 from scripts import preprocessing
@@ -71,12 +71,13 @@ fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
 print('Analyze data in ' + repr(fly_folder_to_process_oak.as_posix()))
 
 # Read channel information from fly.json file
-# If fails here, means the folder specified doesn't exist. Check name. Note: Good place to let user know to check folder and exit!
+# If fails here, means the folder specified doesn't exist. Check name.
+# Note: Good place to let user know to check folder and exit!
 with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
     fly_json = json.load(file)
-
-ANATOMY_CHANNEL = fly_json['anatomy_channel'] # < This needs to come from some sort of json file the experimenter
+# This needs to come from some sort of json file the experimenter
 # creates while running the experiment. Same as genotype.
+ANATOMY_CHANNEL = fly_json['anatomy_channel']
 FUNCTIONAL_CHANNELS = fly_json['functional_channel']
 
 def ch_exists_func(channel):
@@ -91,6 +92,10 @@ def ch_exists_func(channel):
         ch_exists = False
     return(ch_exists)
 
+# Bool for which channel exists in this particular recording.
+# IMPORTANT: One FLY must have the same channels per recording. This
+# makes sense: If we have e.g. GCaMP and tdTomato we would always
+# record from both the green and red channel, right?
 CH1_EXISTS = ch_exists_func("1")
 CH2_EXISTS = ch_exists_func("2")
 CH3_EXISTS = ch_exists_func("3")
@@ -142,7 +147,7 @@ def create_path_func(fly_folder_to_process, list_of_paths, filename='', func_onl
 
     return(final_path)
 
-def create_output_path_func(list_of_paths, filename):
+'''def create_output_path_func(list_of_paths, filename):
     """
     :param list_of_paths: expects a list of paths pointing to a file, for example from variable full_fictrac_file_paths
     :param filename: filename
@@ -164,7 +169,7 @@ def create_output_path_func(list_of_paths, filename):
         else:
             final_path.append(pathlib.Path(pathlib.Path(current_path).parent, filename))
 
-    return(final_path)
+    return(final_path)'''
 
 #######
 # Data path on OAK
@@ -336,41 +341,6 @@ elif 'channel_2' in ANATOMY_CHANNEL:
 elif 'channel_3' in ANATOMY_CHANNEL:
     file_path_anat2atlas_moving.append('channel_3')
 
-'''
-#######
-# Data path on SCRATCH < Not working yet, might not be necessary!!!
-#######
-def convert_oak_path_to_scratch(oak_path):
-    """
-
-    :param oak_path: expects a list of path, i.e. ch1_func_file_oak_paths OR a single pathlib.Path object
-    :return: list of paths as pathlib.objects OR a single pathlib.Path object
-    """
-    #print("OAK PATH" + repr(oak_path))
-    if isinstance(oak_path, list):
-        all_scratch_paths = []
-        for current_path in oak_path:
-            # The [1::] is again necessary because split leads to something like /David/Bruker etc. which ignores preceeding parts
-            relevant_path_part = current_path.as_posix().split('data')[-1][1::] # data seems to be the root folder everyone is using
-            all_scratch_paths.append(pathlib.Path(SCRATCH_DIR, 'data', relevant_path_part))
-        return(all_scratch_paths)
-
-    elif oak_path.is_dir():
-        relevant_path_part = oak_path.as_posix().split('data')[-1][1::]
-        return(pathlib.Path(SCRATCH_DIR, 'data', relevant_path_part))
-
-    else:
-        print('oak_path needs to be a list of pathlib.Path objects or a single pathlib.Path object')
-        print('You provided: ' + repr(oak_path) +'. This might lead to a bug.')
-
-#all_imaging_scratch_paths = convert_oak_path_to_scratch(all_imaging_oak_paths)
-#print("all_imaging_scratch_paths" + repr(all_imaging_scratch_paths))
-
-#paths_for_make_mean_brain_rule_scratch = convert_oak_path_to_scratch(paths_for_make_mean_brain_rule_oak)
-#print("paths_for_make_mean_brain_rule_scratch" + repr(paths_for_make_mean_brain_rule_scratch))
-
-#fly_folder_to_process_scratch = convert_oak_path_to_scratch(fly_folder_to_process_oak) # Must be provided as a list
-'''
 
 #####
 # Output data path
@@ -394,53 +364,98 @@ rule all:
         ###
         # Fictrac QC
         ###
-        expand(str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png", fictrac_paths=FICTRAC_PATHS),
+        expand(str(fly_folder_to_process_oak)
+               + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
+            fictrac_paths=FICTRAC_PATHS),
         # data in fly_dirs.json!
         ###
         # Bleaching QC
         ###,
-        expand(str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png", bleaching_imaging_paths=imaging_paths_bleaching),
+        expand(str(fly_folder_to_process_oak)
+               + "/{bleaching_imaging_paths}/imaging/bleaching.png",
+            bleaching_imaging_paths=imaging_paths_bleaching),
         ###
         # Meanbrain
         ###
-        expand(str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii", meanbr_imaging_paths=imaging_paths_meanbrain, meanbr_ch=channels),
+        expand(str(fly_folder_to_process_oak)
+               + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
+            meanbr_imaging_paths=imaging_paths_meanbrain,
+            meanbr_ch=channels),
         ###
         # Motion correction output
         ###
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy", moco_imaging_paths=list_of_imaging_paths_moco),
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-        expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/motcorr_params.npy",
+            moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
+            moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[],
+            moco_imaging_paths=list_of_imaging_paths_moco),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
+            moco_imaging_paths=list_of_imaging_paths_moco),
         ####
         # Z-score
         ####
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
-        expand(str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[], zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+            zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+            zscore_imaging_paths=imaging_paths_zscore),
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+            zscore_imaging_paths=imaging_paths_zscore),
         ###
         # temporal high-pass filter
         ###
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
-        expand(str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[], temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak)
+               + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+            temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak)
+               + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+            temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
+        expand(str(fly_folder_to_process_oak)
+               + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+            temp_HP_filter_imaging_paths=imaging_paths_temp_HP_filter),
         ###
         # correlation with behavior
         ###
-        expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
-        expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
-        expand(str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [], corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+        expand(str(fly_folder_to_process_oak)
+               + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+            corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+        expand(str(fly_folder_to_process_oak)
+               + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+            corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
+        expand(str(fly_folder_to_process_oak)
+               + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+            corr_imaging_paths=imaging_paths_corr, corr_behavior=corr_behaviors),
         ###
         # Meanbrain of moco brain
         ###
-        expand(str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii", moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain, meanbr_moco_ch=channels),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii",
+            moco_meanbr_imaging_paths=imaging_paths_moco_meanbrain,
+            meanbr_moco_ch=channels),
         ###
         # Clean anatomy
-        expand(str(fly_folder_to_process_oak) + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii", clean_anatomy_paths=imaging_paths_clean_anatomy, clean_anat_ch=channels),
+        expand(str(fly_folder_to_process_oak)
+               + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
+            clean_anatomy_paths=imaging_paths_clean_anatomy,
+            clean_anat_ch=channels),
         ##
         # make supervoxels
         ###
-        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy", supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
-        expand(str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",supervoxel_paths=imaging_paths_supervoxels, supervoxel_ch=func_channels),
+        expand(str(fly_folder_to_process_oak)
+               + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy",
+            supervoxel_paths=imaging_paths_supervoxels,
+            supervoxel_ch=func_channels),
+        expand(str(fly_folder_to_process_oak)
+               + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",
+            supervoxel_paths=imaging_paths_supervoxels,
+            supervoxel_ch=func_channels),
 
         # Below might be Bifrost territory - ignore for now.
         ###
@@ -458,17 +473,6 @@ rule all:
             + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
             anat2atlas_paths=imaging_paths_anat2atlas,
             anat2atlas_moving=file_path_anat2atlas_moving),
-
-'''
-# OLD!!!
-# While we don't really need this file afterwards, it's a good idea to have it here because the empty h5 file
-# we actually want is created very early during the rule call and will be present even if the program
-# crashed.
-#>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy", moco_imaging_paths=list_of_imaging_paths_moco),
-# depending on which channels are present,
-#>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.h5" if CH1_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-#>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.h5" if CH2_EXISTS else[], moco_imaging_paths=list_of_imaging_paths_moco),
-#>expand(str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.h5" if CH3_EXISTS else[],moco_imaging_paths=list_of_imaging_paths_moco),'''
 
 rule fictrac_qc_rule:
     """
@@ -491,7 +495,7 @@ rule fictrac_qc_rule:
     run:
         try:
             preprocessing.fictrac_qc(fly_folder_to_process_oak,
-                                    fictrac_file_path= full_fictrac_file_oak_paths,
+                                    fictrac_file_path= input, #full_fictrac_file_oak_paths,
                                     fictrac_fps=fictrac_fps # AUTOMATE THIS!!!! ELSE BUG PRONE!!!!
                                     )
         except Exception as error_stack:
@@ -502,91 +506,6 @@ rule fictrac_qc_rule:
 
 rule bleaching_qc_rule:
     """
-    Benchmarking:
-    Cores per node: 2
-    CPU Utilized: 00:00:05
-    CPU Efficiency: 5.56% of 00:01:30 core-walltime
-    Job Wall-clock time: 00:00:45
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 9.00 GB (9.00 GB/node)
-    
-    Cores per node: 6
-    CPU Utilized: 00:00:08
-    CPU Efficiency: 1.65% of 00:08:06 core-walltime
-    Job Wall-clock time: 00:01:21
-    Memory Utilized: 9.87 GB
-    Memory Efficiency: 20.98% of 47.07 GB
-    
-    Cores per node: 6
-    CPU Utilized: 00:00:09
-    CPU Efficiency: 0.84% of 00:17:48 core-walltime
-    Job Wall-clock time: 00:02:58
-    Memory Utilized: 7.32 GB
-    Memory Efficiency: 14.46% of 50.60 GB
-    
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:00:08
-    CPU Efficiency: 3.60% of 00:03:42 core-walltime
-    Job Wall-clock time: 00:01:51
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 9.00 GB (9.00 GB/node)
-        
-    Now it works but I need to optimize the input/output files - check the memory requirement!!! This is overkill!
-    Cores per node: 14
-    CPU Utilized: 00:01:38
-    CPU Efficiency: 2.09% of 01:18:10 core-walltime
-    Job Wall-clock time: 00:05:35
-    Memory Utilized: 56.15 GB
-    Memory Efficiency: 48.54% of 115.68 GB
-    
-    Benchmark with full (30min) dataset
-    State: OUT_OF_MEMORY (exit code 0)
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:00:21
-    CPU Efficiency: 16.94% of 00:02:04 core-walltime
-    Job Wall-clock time: 00:01:02
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 14.65 GB (14.65 GB/node)
-    --> from mem_mb_times_threads to mem_mb_times_input
-    
-    Out of memory with 1 & 4 threads on sherlock.
-    With 8 I had a ~45% memory utiliziation which seems ok as in the test dataset I had a 
-    30 minute volumetric recording.
-    
-    # some timing testing (3 func folders, 2 small ones with 4Gb imaging data) and 1 large (20Gb)  
-    using oak as data source: 
-        16 threads: runtime 5 min, 34 seconds
-        8  threads: runtime (1) 2 min, 48 seconds (2) 3 min, 05 seconds
-    using scratch as data source:
-        8 threads: runtime (1) 3 min, 38 seconds (2) 35 seconds
-          
-    Try to properly parallelize code here: IF want output file X, run rule with file Y. 
-    Might not be possible in this case: input is EITHER 
-    '../functional_channel1.nii', '../functional_channel2.nii'
-    OR 
-    '../anatomical_channel1.nii',, '../anatomical_channel2.nii.
-    whereas output is always 
-    '../bleaching.png'.
-    As (I think) I need to use the same wildcard as in the rule all:
-    I don't see how this could be achieved.
-    If we had only 1 kind of input files, e.g.
-    '../channel_1.nii', '../channel_2.nii'
-    we could do define do the following
-    
-    rule all:
-        input:
-            expand("{path_to_imaging_folder}/bleaching.png", path_to_imaging_folder=all_imaging_oak_paths)
-    
-    rule bleaching_qc_rule:
-        input:
-            "{path_to_imaging_folder}/channel_1.nii", "{path_to_imaging_folder}/channel_2.nii", 
-        output:
-            {path_to_imaging_folder}/bleaching.png"
-            
-    path_to_imaging_folder would need to be a list of paths pointing to 'imaging', for example:
-    ['../fly_004/func0/imaging', '../fly_004/func1/imaging]
     """
     threads: 2
     resources:
@@ -615,68 +534,6 @@ rule bleaching_qc_rule:
 
 rule make_mean_brain_rule:
     """
-    Yandan func0 file
-    CPU Utilized: 00:00:10
-    CPU Efficiency: 1.79% of 00:09:20 core-walltime
-    Job Wall-clock time: 00:04:40
-    Memory Utilized: 5.50 GB
-    Memory Efficiency: 36.26% of 15.18 GB
-    
-    Changed memory usage by avoiding call to 'get_fdata()'
-    With same 30min vol dataset I now get: 
-    State: COMPLETED (exit code 0)
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:00:11
-    CPU Efficiency: 2.75% of 00:06:40 core-walltime
-    Job Wall-clock time: 00:01:40
-    Memory Utilized: 8.15 GB
-    Memory Efficiency: 34.65% of 23.54 GB
-    --> to 1.5 times input size memory
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:00:22
-    CPU Efficiency: 4.89% of 00:07:30 core-walltime
-    Job Wall-clock time: 00:03:45
-    Memory Utilized: 9.24 GB
-    Memory Efficiency: 60.85% of 15.18 GB
-
-
-    ######
-    Benchmark with full dataset (30min vol recording)
-    State: OUT_OF_MEMORY (exit code 0)
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:00:17
-    CPU Efficiency: 16.04% of 00:01:46 core-walltime
-    Job Wall-clock time: 00:00:53
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 14.65 GB (14.65 GB/node)
-    --> set from mem_mb_times_threads to mem_mb_times_input
-
-    State: OUT_OF_MEMORY (exit code 0)
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:00:11
-    CPU Efficiency: 2.75% of 00:06:40 core-walltime
-    Job Wall-clock time: 00:01:40
-    Memory Utilized: 27.95 GB
-    Memory Efficiency: 118.74% of 23.54 GB
-    --> set from mem_mb_times_threads to mem_mb_more_times_input
-    State: OUT_OF_MEMORY (exit code 0)
-
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:00:15
-    CPU Efficiency: 4.69% of 00:05:20 core-walltime
-    Job Wall-clock time: 00:01:20
-    Memory Utilized: 31.01 GB
-    Memory Efficiency: 94.12% of 32.95 GB
-    ??? The input file is 10Gb. We are not making any copies of the data. 
-
-    Tested with 16 threads, overkill as we wouldn't normally need more than 10Gb
-    of memory (each thread is ~8Gb)
-
     Here it should be possible to parallelize quite easily as each input file creates
     one output file!
 
@@ -761,6 +618,7 @@ rule motion_correction_parallel_processing_rule:
 
 rule zscore_rule:
     """
+    TODO what's the runtime??
     Benchmarking:
     Cores per node: 2
     CPU Utilized: 00:00:48
@@ -813,7 +671,9 @@ rule zscore_rule:
     
     """
     threads: 1
-    resources: mem_mb=snake_utils.mem_mb_much_more_times_input#mem_mb_times_input
+    resources:
+        mem_mb=snake_utils.mem_mb_much_more_times_input,
+
     input:
         path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
@@ -843,7 +703,6 @@ rule temporal_high_pass_filter_rule:
     Job Wall-clock time: 00:22:13
     Memory Utilized: 41.26 GB
     Memory Efficiency: 58.24% of 70.84 GB
-    
     
     Benchmark:
     Nodes: 1
@@ -905,7 +764,9 @@ rule temporal_high_pass_filter_rule:
     Memory Efficiency: 59.48% of 12.60 GB
     """
     threads: 2 # Will be overruled if more than 16Gb of memory are requested.
-    resources: mem_mb=snake_utils.mem_mb_more_times_input
+    resources:
+        mem_mb=snake_utils.mem_mb_more_times_input,
+        runtime='30m' # The call to 1d smooth takes quite a bit of time!
     input:
         zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
         zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
@@ -932,98 +793,12 @@ rule temporal_high_pass_filter_rule:
 
 rule correlation_rule:
     """
-    Benchmark Yandan's data
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:01:42
-    CPU Efficiency: 9.51% of 00:17:52 core-walltime
-    Job Wall-clock time: 00:04:28
-    Memory Utilized: 21.77 GB
-    Memory Efficiency: 70.63% of 30.83 GB
-    
-    Benchmark:
-    Cores: 1
-    CPU Utilized: 00:00:16
-    CPU Efficiency: 25.81% of 00:01:02 core-walltime
-    Job Wall-clock time: 00:01:02
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 5.49 GB (5.49 GB/node)
-    
-    State: COMPLETED (exit code 0)
-    Cores: 1
-    CPU Utilized: 00:00:29
-    CPU Efficiency: 34.12% of 00:01:25 core-walltime
-    Job Wall-clock time: 00:01:25
-    Memory Utilized: 643.89 MB
-    Memory Efficiency: 11.45% of 5.49 GB
-    
-    Cores: 1
-    CPU Utilized: 00:00:27
-    CPU Efficiency: 26.47% of 00:01:42 core-walltime
-    Job Wall-clock time: 00:01:42
-    Memory Utilized: 2.06 GB
-    Memory Efficiency: 37.62% of 5.48 GB
-    
-    Cores: 1
-    CPU Utilized: 00:00:27
-    CPU Efficiency: 26.47% of 00:01:42 core-walltime
-    Job Wall-clock time: 00:01:42
-    Memory Utilized: 2.07 GB
-    Memory Efficiency: 37.84% of 5.48 GB
-    
-    Cores: 1
-    CPU Utilized: 00:00:29
-    CPU Efficiency: 28.43% of 00:01:42 core-walltime
-    Job Wall-clock time: 00:01:42
-    Memory Utilized: 1.67 GB
-    Memory Efficiency: 30.40% of 5.49 GB
-    
-    Cores: 1
-    CPU Utilized: 00:00:27
-    CPU Efficiency: 26.47% of 00:01:42 core-walltime
-    Job Wall-clock time: 00:01:42
-    Memory Utilized: 2.08 GB
-    Memory Efficiency: 37.91% of 5.48 GB
-    
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:01:06
-    CPU Efficiency: 5.73% of 00:19:12 core-walltime
-    Job Wall-clock time: 00:04:48
-    Memory Utilized: 21.68 GB
-    Memory Efficiency: 70.38% of 30.81 GB
-    
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:01:05
-    CPU Efficiency: 5.64% of 00:19:12 core-walltime
-    Job Wall-clock time: 00:04:48
-    Memory Utilized: 21.68 GB
-    Memory Efficiency: 70.38% of 30.81 GB
-    
-    Nodes: 1
-    Cores per node: 4
-    CPU Utilized: 00:01:10
-    CPU Efficiency: 7.03% of 00:16:36 core-walltime
-    Job Wall-clock time: 00:04:09
-    Memory Utilized: 21.81 GB
-    Memory Efficiency: 70.78% of 30.81 GB
-    
-    threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input
-    State: COMPLETED (exit code 0)
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:01:02
-    CPU Efficiency: 27.93% of 00:03:42 core-walltime
-    Job Wall-clock time: 00:01:51
-    Memory Utilized: 4.44 GB
-    Memory Efficiency: 48.59% of 9.13 GB
+
     """
     threads: 1
     resources:
         mem_mb=snake_utils.mem_mb_less_times_input,
-        runtime='10m' #snake_utils.time_for_correlation
+        runtime='10m' # vectorization made this super fast
     input:
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
@@ -1056,90 +831,6 @@ rule STA_rule:
 
 rule moco_mean_brain_rule:
     """
-    Yandan func0
-    Cores per node: 6
-    CPU Utilized: 00:00:15
-    CPU Efficiency: 1.63% of 00:15:18 core-walltime
-    Job Wall-clock time: 00:02:33
-    Memory Utilized: 25.82 GB
-    Memory Efficiency: 51.03% of 50.60 GB
-    
-    Similar to make mean brain but takes moco corrected brain! 
-    Benchmark:
-    Cores per node: 2
-    CPU Utilized: 00:00:09
-    CPU Efficiency: 1.29% of 00:11:38 core-walltime
-    Job Wall-clock time: 00:05:49
-    Memory Utilized: 4.00 GB
-    Memory Efficiency: 43.99% of 9.09 GB
-    
-    Cores per node: 6 <- automatically increases if memory requirement is hig!
-    CPU Utilized: 00:01:25
-    CPU Efficiency: 6.62% of 00:21:24 core-walltime
-    Job Wall-clock time: 00:03:34
-    Memory Utilized: 13.38 GB
-    Memory Efficiency: 25.48% of 52.51 GB
-    
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:00:09
-    CPU Efficiency: 2.37% of 00:06:20 core-walltime
-    Job Wall-clock time: 00:03:10
-    Memory Utilized: 3.21 GB
-    Memory Efficiency: 35.31% of 9.09 GB
-    
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:00:18
-    CPU Efficiency: 4.05% of 00:07:24 core-walltime
-    Job Wall-clock time: 00:03:42
-    Memory Utilized: 3.90 GB
-    Memory Efficiency: 42.88% of 9.09 GB
-    
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:00:21
-    CPU Efficiency: 3.86% of 00:09:04 core-walltime
-    Job Wall-clock time: 00:04:32
-    Memory Utilized: 3.31 GB
-    Memory Efficiency: 36.45% of 9.09 GB
-    
-    Cores per node: 6
-    CPU Utilized: 00:00:39
-    CPU Efficiency: 3.05% of 00:21:18 core-walltime
-    Job Wall-clock time: 00:03:33
-    Memory Utilized: 13.27 GB
-    Memory Efficiency: 25.28% of 52.51 GB
-    
-    Cores per node: 6
-    CPU Utilized: 00:01:25
-    CPU Efficiency: 6.62% of 00:21:24 core-walltime
-    Job Wall-clock time: 00:03:34
-    Memory Utilized: 13.38 GB
-    Memory Efficiency: 25.48% of 52.51 GB
-    
-    Cores per node: 6
-    CPU Utilized: 00:01:21
-    CPU Efficiency: 1.46% of 01:32:36 core-walltime
-    Job Wall-clock time: 00:15:26
-    Memory Utilized: 23.73 GB
-    Memory Efficiency: 44.07% of 53.84 GB
-    
-    Nodes: 1
-    Cores per node: 6
-    CPU Utilized: 00:00:30
-    CPU Efficiency: 0.39% of 02:09:00 core-walltime
-    Job Wall-clock time: 00:21:30
-    Memory Utilized: 20.80 GB
-    Memory Efficiency: 38.64% of 53.84 GB
-    
-    Nodes: 1
-    Cores per node: 6
-    CPU Utilized: 00:00:27
-    CPU Efficiency: 2.24% of 00:20:06 core-walltime
-    Job Wall-clock time: 00:03:21
-    Memory Utilized: 16.89 GB
-    Memory Efficiency: 37.79% of 44.70 GB
     """
     threads: 2
     resources:
@@ -1164,29 +855,6 @@ rule moco_mean_brain_rule:
 
 rule clean_anatomy_rule:
     """
-    Yandan anat0 data
-    Cores per node: 2
-    CPU Utilized: 00:00:36
-    CPU Efficiency: 22.50% of 00:02:40 core-walltime
-    Job Wall-clock time: 00:01:20
-    Memory Utilized: 3.96 GB
-    Memory Efficiency: 40.57% of 9.77 GB
-    
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:00:57
-    CPU Efficiency: 36.54% of 00:02:36 core-walltime
-    Job Wall-clock time: 00:01:18
-    Memory Utilized: 2.89 GB
-    Memory Efficiency: 29.62% of 9.77 GB
-    
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:01:03
-    CPU Efficiency: 36.63% of 00:02:52 core-walltime
-    Job Wall-clock time: 00:01:26
-    Memory Utilized: 3.78 GB
-    Memory Efficiency: 38.66% of 9.77 GB
     """
     threads: 2
     resources:
@@ -1207,6 +875,7 @@ rule clean_anatomy_rule:
 
 rule make_supervoxels_rule:
     """
+    TODO: Find optimal runtime!
     Yamda, func0
     Cores per node: 6
     CPU Utilized: 00:07:40
@@ -1214,14 +883,6 @@ rule make_supervoxels_rule:
     Job Wall-clock time: 00:10:59
     Memory Utilized: 22.95 GB
     Memory Efficiency: 45.36% of 50.60 GB
-
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:03:05
-    CPU Efficiency: 43.84% of 00:07:02 core-walltime
-    Job Wall-clock time: 00:03:31
-    Memory Utilized: 4.66 GB
-    Memory Efficiency: 51.74% of 9.00 GB
     """
     threads: 2
     resources:
@@ -1326,21 +987,6 @@ rule func_to_anat_rule:
 
 rule anat_to_atlas:
     """
-    Yandan data anat
-    CPU Utilized: 00:01:57
-    CPU Efficiency: 74.05% of 00:02:38 core-walltime
-    Job Wall-clock time: 00:02:38
-    Memory Utilized: 1.19 GB
-    Memory Efficiency: 30.51% of 3.91 GB
-    
-    Benchmark - Yandan data func
-    Cores per node: 2 # one should be enough
-    CPU Utilized: 00:01:58
-    CPU Efficiency: 62.11% of 00:03:10 core-walltime
-    Job Wall-clock time: 00:01:35
-    Memory Utilized: 1.21 GB
-    Memory Efficiency: 30.91% of 3.91 GB
-
     """
     threads: 1
     resources:
@@ -1384,6 +1030,7 @@ rule anat_to_atlas:
 
 rule apply_transforms_rule:
     """
+    Not finished/tested yet!
     """
     threads: 2
     resources: mem_mb=snake_utils.mem_mb_times_input
@@ -1415,6 +1062,41 @@ rule apply_transforms_rule:
                 width=width)
 
 
+'''
+#######
+# Data path on SCRATCH < Not working yet, might not be necessary!!!
+#######
+def convert_oak_path_to_scratch(oak_path):
+    """
+
+    :param oak_path: expects a list of path, i.e. ch1_func_file_oak_paths OR a single pathlib.Path object
+    :return: list of paths as pathlib.objects OR a single pathlib.Path object
+    """
+    #print("OAK PATH" + repr(oak_path))
+    if isinstance(oak_path, list):
+        all_scratch_paths = []
+        for current_path in oak_path:
+            # The [1::] is again necessary because split leads to something like /David/Bruker etc. which ignores preceeding parts
+            relevant_path_part = current_path.as_posix().split('data')[-1][1::] # data seems to be the root folder everyone is using
+            all_scratch_paths.append(pathlib.Path(SCRATCH_DIR, 'data', relevant_path_part))
+        return(all_scratch_paths)
+
+    elif oak_path.is_dir():
+        relevant_path_part = oak_path.as_posix().split('data')[-1][1::]
+        return(pathlib.Path(SCRATCH_DIR, 'data', relevant_path_part))
+
+    else:
+        print('oak_path needs to be a list of pathlib.Path objects or a single pathlib.Path object')
+        print('You provided: ' + repr(oak_path) +'. This might lead to a bug.')
+
+#all_imaging_scratch_paths = convert_oak_path_to_scratch(all_imaging_oak_paths)
+#print("all_imaging_scratch_paths" + repr(all_imaging_scratch_paths))
+
+#paths_for_make_mean_brain_rule_scratch = convert_oak_path_to_scratch(paths_for_make_mean_brain_rule_oak)
+#print("paths_for_make_mean_brain_rule_scratch" + repr(paths_for_make_mean_brain_rule_scratch))
+
+#fly_folder_to_process_scratch = convert_oak_path_to_scratch(fly_folder_to_process_oak) # Must be provided as a list
+'''
 """
 https://farm.cse.ucdavis.edu/~ctbrown/2023-snakemake-book-draft/chapter_9.html
 While wildcards and expand use the same syntax, they do quite different things.
