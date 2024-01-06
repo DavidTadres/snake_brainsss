@@ -502,18 +502,11 @@ rule all:
 
 rule fictrac_qc_rule:
     """
-    Benchmark with full (30 min vol dataset)
-    State: OUT_OF_MEMORY (exit code 0)
-    Cores: 1
-    CPU Utilized: 00:00:10
-    CPU Efficiency: 30.30% of 00:00:33 core-walltime
-    Job Wall-clock time: 00:00:33
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 1000.00 MB (1000.00 MB/node)
-    add resources: mem_mb=snake_utils.mem_mb_times_threads
     """
     threads: 1
-    resources: mem_mb=snake_utils.mem_mb_times_threads
+    resources:
+        mem_mb=snake_utils.mem_mb_times_threads,
+        runtime='10m'
     input:
         str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_behavior_data.dat"
     output:
@@ -644,6 +637,15 @@ rule motion_correction_parallel_processing_rule:
 
 rule zscore_rule:
     """
+    Yandan func
+    Cores per node: 15
+    CPU Utilized: 00:01:22
+    CPU Efficiency: 2.31% of 00:59:15 core-walltime
+    Job Wall-clock time: 00:03:57
+    Memory Utilized: 27.29 GB
+    Memory Efficiency: 24.52% of 111.33 GB
+    
+    
     TODO what's the runtime??
     Benchmarking:
     Cores per node: 2
@@ -792,7 +794,7 @@ rule temporal_high_pass_filter_rule:
     threads: 2 # Will be overruled if more than 16Gb of memory are requested.
     resources:
         mem_mb=snake_utils.mem_mb_more_times_input,
-        runtime='30m' # The call to 1d smooth takes quite a bit of time!
+        runtime='30m' # The call to 1d smooth takes quite a bit of time! Todo< make dynamic for longer recordings!
     input:
         zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
         zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
@@ -901,6 +903,14 @@ rule clean_anatomy_rule:
 
 rule make_supervoxels_rule:
     """
+    Yandan fun0
+    Cores per node: 6
+    CPU Utilized: 00:08:18
+    CPU Efficiency: 13.41% of 01:01:54 core-walltime
+    Job Wall-clock time: 00:10:19
+    Memory Utilized: 30.96 GB
+    Memory Efficiency: 61.18% of 50.60 GB
+    
     TODO: Find optimal runtime!
     Yamda, func0
     Cores per node: 6
@@ -912,8 +922,8 @@ rule make_supervoxels_rule:
     """
     threads: 2
     resources:
-        mem_mb=snake_utils.mem_mb_times_input
-        #runtime=
+        mem_mb=snake_utils.mem_mb_times_input,
+        runtime='20m'
     input: str(fly_folder_to_process_oak) + "/{supervoxel_paths}/channel_{supervoxel_ch}_moco_zscore_highpass.nii"
     output:
         cluster_labels = str(fly_folder_to_process_oak) + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy",
@@ -936,42 +946,7 @@ rule make_supervoxels_rule:
 # Probably Bifrost does it better.
 rule func_to_anat_rule:
     """
-    Yandan anat data:
-    Cores: 1
-    CPU Utilized: 00:01:32
-    CPU Efficiency: 66.19% of 00:02:19 core-walltime
-    Job Wall-clock time: 00:02:19
-    Memory Utilized: 968.43 MB
-    Memory Efficiency: 24.21% of 3.91 GB
-    
-    Nodes: 1
-    Cores per node: 2
-    CPU Utilized: 00:01:21
-    CPU Efficiency: 38.21% of 00:03:32 core-walltime
-    Job Wall-clock time: 00:01:46
-    Memory Utilized: 1.09 GB
-    Memory Efficiency: 27.97% of 3.91 GB
-
-    Cores per node: 2
-    CPU Utilized: 00:01:15
-    CPU Efficiency: 35.71% of 00:03:30 core-walltime
-    Job Wall-clock time: 00:01:45
-    Memory Utilized: 1.09 GB
-    Memory Efficiency: 27.86% of 3.91 GB
-
-    Cores per node: 2
-    CPU Utilized: 00:01:19
-    CPU Efficiency: 34.96% of 00:03:46 core-walltime
-    Job Wall-clock time: 00:01:53
-    Memory Utilized: 1.12 GB
-    Memory Efficiency: 28.78% of 3.91 GB
-
-    Cores per node: 2
-    CPU Utilized: 00:01:14
-    CPU Efficiency: 46.25% of 00:02:40 core-walltime
-    Job Wall-clock time: 00:01:20
-    Memory Utilized: 0.00 MB (estimated maximum)
-    Memory Efficiency: 0.00% of 3.91 GB (3.91 GB/node)
+  
     """
     threads: 1
     resources:

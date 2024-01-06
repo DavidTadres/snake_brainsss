@@ -14,7 +14,7 @@ original_fly_path = pathlib.Path(
     "/Volumes/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308"
 )
 my_fly_paths = pathlib.Path(
-    "/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002"
+    "/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_004"
 )
 my_savepaths = pathlib.Path(my_fly_paths, "testing")
 
@@ -85,7 +85,7 @@ def compare_two_3D_arrays(original_brain_path, my_brain_path, savepath):
     savepath.parent.mkdir(exist_ok=True, parents=True)
     fig.savefig(savepath)
 
-'''
+
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "func_0/imaging/functional_channel_1_mean.nii"
@@ -117,11 +117,11 @@ compare_two_3D_arrays(
     my_brain_path=pathlib.Path(my_fly_paths, "anat_0/imaging/channel_2_mean.nii"),
     savepath=pathlib.Path(my_savepaths, "meanbrain_anat_0_imaging_ch2.png"),
 )
-'''
+
 #######
 # MOCO MEAN BRAINS
 #######
-'''
+
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "anat_0/moco/anatomy_channel_1_moc_mean.nii"
@@ -136,8 +136,8 @@ compare_two_3D_arrays(
     ),
     my_brain_path=pathlib.Path(my_fly_paths, "anat_0/moco/channel_2_moco_mean.nii"),
     savepath=pathlib.Path(my_savepaths, "meanbrain_anat_0_moco_ch2.png"),
-)'''
-'''
+)
+
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "func_0/moco/functional_channel_1_moc_mean.nii"
@@ -154,8 +154,8 @@ compare_two_3D_arrays(
     savepath=pathlib.Path(my_savepaths, "meanbrain_func_0_moco_ch2.png"),
 )
 
-'''
-'''
+
+
 ###
 # BEHAVIOR-Z SCORE CORRELATED BRAINS
 ###
@@ -182,7 +182,7 @@ compare_two_3D_arrays(
     my_brain_path=pathlib.Path(my_fly_paths, "func_0/corr/channel_2_corr_dRotLabZpos.nii"),
     savepath=pathlib.Path(my_savepaths, "corr_dRotLabZpos_func_0_ch2.png"),
 )
-'''
+
 ####
 # Clean anatomy
 #####

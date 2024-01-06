@@ -13,7 +13,21 @@ from dev import compare_h5_large_data
 from dev import compare_registration_results
 #from dev import moco_timing
 #from dev import visualize_brain_original
+root_path = pathlib.Path('/oak/stanford/groups/trc/data')
+path_original = pathlib.Path(root_path, 'Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/func_0/moco/functional_channel_1_moco.h5')
+path_my = pathlib.Path(root_path, 'David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_004/func_0/moco/channel_1_moco.nii')
+savepath = pathlib.Path(root_path, 'David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_004/testing/func0_moco_comparison.png')
 
+rule compare_registration_results_rule:
+    threads: 16
+    input:
+        path_original=path_original,
+        path_my=path_my
+    run:
+        compare_registration_results.compare_moco_results_nib(
+            input.path_original,
+            input.path_my, savepath)
+'''
 CH1_EXISTS = True
 CH2_EXISTS = True
 CH3_EXISTS = False
@@ -44,7 +58,7 @@ rule test_moco_timing_rule:
             "--ANATOMY_CHANNEL {ANATOMY_CHANNEL} "
             "--FUNCTIONAL_CHANNELS {FUNCTIONAL_CHANNELS}"
 
-
+'''
 '''
 rule compare_correlation_results_rule:
     threads: 2
