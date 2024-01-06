@@ -1140,8 +1140,9 @@ rule moco_mean_brain_rule:
     Memory Efficiency: 37.79% of 44.70 GB
     """
     threads: 2
-    resources: mem_mb=snake_utils.mem_mb_times_input
-    runtime: '10m'# should be enough
+    resources:
+        mem_mb=snake_utils.mem_mb_times_input,
+        runtime='10m'# should be enough
     input:
         str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco.nii"
     output:
