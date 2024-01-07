@@ -6,7 +6,7 @@ Code here is to prepare plots and compare arrays for the comparison
 import nibabel as nib
 import pathlib
 import matplotlib.pyplot as plt
-
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import traceback
 
@@ -30,16 +30,23 @@ def compare_two_3D_arrays(original_brain_path, my_brain_path, savepath):
     fig = plt.figure()
     # First, just plot a sample slice to see gross changes
     ax1 = fig.add_subplot(221)
-    ax1.imshow(
+    orig_brain_plot = ax1.imshow(
         original_mean_brain[:, :, int(round(original_mean_brain.shape[2] / 2))].T
     )
+    divider = make_axes_locatable(ax1)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    fig.colorbar(orig_brain_plot, cax=cax, orientation="vertical")
     ax1.set_title(
         original_fly_path.name
         + ", mean brain, z="
         + repr(int(round(original_mean_brain.shape[2] / 2)))
     )
+
     ax2 = fig.add_subplot(222, sharex=ax1, sharey=ax1)
-    ax2.imshow(my_mean_brain[:, :, int(round(my_mean_brain.shape[2] / 2))].T)
+    my_brain_plot = ax2.imshow(my_mean_brain[:, :, int(round(my_mean_brain.shape[2] / 2))].T)
+    divider = make_axes_locatable(ax2)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    fig.colorbar(my_brain_plot, cax=cax, orientation="vertical")
     ax2.set_title(
         my_fly_paths.name
         + ", mean brain, z="
@@ -52,7 +59,10 @@ def compare_two_3D_arrays(original_brain_path, my_brain_path, savepath):
             my_mean_brain[:, :, int(round(my_mean_brain.shape[2] / 2))].T
             - original_mean_brain[:, :, int(round(original_mean_brain.shape[2] / 2))].T
         )
-        ax3.imshow(subtracted_brain)
+        sub_brain_plot = ax3.imshow(subtracted_brain)
+        divider = make_axes_locatable(ax3)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        fig.colorbar(sub_brain_plot, cax=cax, orientation="vertical")
         ax3.set_title(
             "subtracted brain slice #" + repr(int(round(my_mean_brain.shape[2] / 2)))
         )
@@ -84,6 +94,7 @@ def compare_two_3D_arrays(original_brain_path, my_brain_path, savepath):
     fig.tight_layout()
     savepath.parent.mkdir(exist_ok=True, parents=True)
     fig.savefig(savepath)
+    print('Plotted ' + savepath.name)
 
 
 compare_two_3D_arrays(

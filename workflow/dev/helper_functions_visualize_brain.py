@@ -493,17 +493,18 @@ def place_roi_groups_on_canvas(
             input_canvas[ys, xs] = 0  # 1
     return input_canvas
 ##
-def prepare_brain_original(label_path, signal_path, fictrac_path, timestamps_path,
-                           WARP_DIRECTORY,
-                           WARP_SUB_DIR_FUNC_TO_ANAT,
-                           WARP_SUB_DIR_ANAT_TO_ATLAS,
-                           STA_WARP_DATASET_PATH,
-                           FLY,
-                           fixed,
-                           explosion_rois,
-                           roi_masks,
-                           roi_contours,
-                           input_canvas):
+def prepare_brain(label_path, signal_path, fictrac_path, timestamps_path,
+                  WARP_DIRECTORY,
+                  WARP_SUB_DIR_FUNC_TO_ANAT,
+                  WARP_SUB_DIR_ANAT_TO_ATLAS,
+                  STA_WARP_DATASET_PATH,
+                  FLY,
+                  fixed,
+                  explosion_rois,
+                  roi_masks,
+                  roi_contours,
+                  input_canvas
+                 ):
     labels = np.load(label_path)
     signal = np.load(signal_path)
 
@@ -531,7 +532,7 @@ def prepare_brain_original(label_path, signal_path, fictrac_path, timestamps_pat
     n_clusters = signal.shape[1]  # should be 2000
     # Corr brain is the correlation between signals from clustering and behavior!
     whole_corr_original = np.reshape(np.asarray(corrs), (49, 2000))
-    reformed_brain_original = []
+    reformed_brain = []
     for z in range(49):
         colored_by_betas = np.zeros((256 * 128))
         # for each cluster number (0, 1...1999)
@@ -540,9 +541,9 @@ def prepare_brain_original(label_path, signal_path, fictrac_path, timestamps_pat
             cluster_indeces = np.where(labels[z, :] == cluster_num)[0]
             colored_by_betas[cluster_indeces] = whole_corr_original[z, cluster_num]
         colored_by_betas = colored_by_betas.reshape(256, 128)
-        reformed_brain_original.append(colored_by_betas)
-    STA_brain_original = np.swapaxes(np.asarray(reformed_brain_original)[np.newaxis, :, :, :], 0, 1)
-    warps_ZPOS_original = warp_STA_brain(STA_brain=STA_brain_original, fly=FLY, fixed=fixed,
+        reformed_brain.append(colored_by_betas)
+    STA_brain = np.swapaxes(np.asarray(reformed_brain)[np.newaxis, :, :, :], 0, 1)
+    warps_ZPOS_original = warp_STA_brain(STA_brain=STA_brain, fly=FLY, fixed=fixed,
                                          anat_to_mean_type='myr',
                                          WARP_DIRECTORY=WARP_DIRECTORY,
                                          WARP_SUB_DIR_FUNC_TO_ANAT=WARP_SUB_DIR_FUNC_TO_ANAT,

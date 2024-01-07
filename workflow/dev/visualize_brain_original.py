@@ -25,33 +25,35 @@ print('prep complete')
 
 #################
 # general variables
-savepath = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002/testing/clustered_warped_brainsss_' + repr(warped_brainsss) + '.png')
+savepath = pathlib.Path('/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_004/testing/negative_control_(fly309)_clustered_warped_brainsss_' + repr(warped_brainsss) + '.png')
 
 WARP_DIRECTORY = "warp"  # YANDAN
 WARP_SUB_DIR_FUNC_TO_ANAT = "func-to-anat_fwdtransforms_2umiso"  # YANDAN
 WARP_SUB_DIR_ANAT_TO_ATLAS = "anat-to-meanbrain_fwdtransforms_2umiso"  # YANDAN
 STA_WARP_DATASET_PATH = "/Volumes/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset"
-FLY = 'fly_308'
-path = pathlib.Path('/Volumes/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_308/')  # YANDAN
+FLY = 'fly_309'
+path_orig = pathlib.Path('/Volumes/groups/trc/data/Brezovec/2P_Imaging/20190101_walking_dataset/fly_309/')  # YANDAN
 ######
 # brainsss data loading
 
-label_path = pathlib.Path(path, 'func_0/clustering/cluster_labels.npy')
-signal_path = pathlib.Path(path, 'func_0/clustering/cluster_signals.npy')
-fictrac_path = pathlib.Path(path, 'func_0/fictrac/fictrac-20230525_164921.dat')
-timestamps_path = pathlib.Path(path, 'func_0/imaging/functional.xml')
+label_path_orig = pathlib.Path(path_orig, 'func_0/clustering/cluster_labels.npy')
+signal_path_orig = pathlib.Path(path_orig, 'func_0/clustering/cluster_signals.npy')
+fictrac_path_orig = pathlib.Path(path_orig, 'func_0/fictrac/fictrac-20230525_164921.dat')
+timestamps_path_orig = pathlib.Path(path_orig, 'func_0/imaging/functional.xml')
 
-explosion_plot_original = hfvb.prepare_brain_original(label_path, signal_path, fictrac_path, timestamps_path,
-                                                      WARP_DIRECTORY,
-                                                      WARP_SUB_DIR_FUNC_TO_ANAT,
-                                                      WARP_SUB_DIR_ANAT_TO_ATLAS,
-                                                      STA_WARP_DATASET_PATH,
-                                                      FLY,
-                                                      fixed,
-                                                      explosion_rois,
-                                                      roi_masks,
-                                                      roi_contours,
-                                                      input_canvas)
+explosion_plot_original = hfvb.prepare_brain(label_path_orig, signal_path_orig,
+                                             fictrac_path_orig, timestamps_path_orig,
+                                             WARP_DIRECTORY,
+                                             WARP_SUB_DIR_FUNC_TO_ANAT,
+                                             WARP_SUB_DIR_ANAT_TO_ATLAS,
+                                             STA_WARP_DATASET_PATH,
+                                             FLY,
+                                             fixed,
+                                             explosion_rois,
+                                             roi_masks,
+                                             roi_contours,
+                                             input_canvas
+                                             )
 print('first explosion plot finished')
 ###################################################
 ####
@@ -63,33 +65,35 @@ if warped_brainsss:
     WARP_SUB_DIR_FUNC_TO_ANAT_MY = WARP_SUB_DIR_FUNC_TO_ANAT
     WARP_SUB_DIR_ANAT_TO_ATLAS_MY =  WARP_SUB_DIR_ANAT_TO_ATLAS
     STA_WARP_DATASET_PATH_MY = STA_WARP_DATASET_PATH
-    FLY_MY = "fly_308"
+    FLY_MY = FLY
 else:
     WARP_DIRECTORY_MY = ""
     WARP_SUB_DIR_FUNC_TO_ANAT_MY =  "func_0/warp/channel_1_func-to-channel_1_anat_fwdtransforms_2umiso"
     WARP_SUB_DIR_ANAT_TO_ATLAS_MY = "anat_0/warp/channel_1_anat-to-channel_jfrc_meanbrain_fwdtransforms_2umiso"
     STA_WARP_DATASET_PATH_MY = '/Volumes/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato'
-    FLY_MY = 'fly_002'
+    FLY_MY = 'fly_004'
 
 path_my = pathlib.Path('/Volumes'
-                    '/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_002')
-label_path = pathlib.Path(path_my, 'func_0/clustering/channel_2_cluster_labels.npy')
-signal_path = pathlib.Path(path_my, 'func_0/clustering/channel_2_cluster_signals.npy')
-fictrac_path = pathlib.Path(path_my, 'func_0/fictrac/fictrac_behavior_data.dat')
-timestamps_path = pathlib.Path(path_my, 'func_0/imaging/recording_metadata.xml')
+                    '/groups/trc/data/David/Bruker/preprocessed/nsybGCaMP_tdTomato/fly_004')
+label_path_my = pathlib.Path(path_my, 'func_0/clustering/channel_2_cluster_labels.npy')
+signal_path_my = pathlib.Path(path_my, 'func_0/clustering/channel_2_cluster_signals.npy')
+fictrac_path_my = pathlib.Path(path_my, 'func_0/fictrac/fictrac_behavior_data.dat')
+timestamps_path_my = pathlib.Path(path_my, 'func_0/imaging/recording_metadata.xml')
 
 
-explosion_plot_my = hfvb.prepare_brain_original(label_path, signal_path, fictrac_path, timestamps_path,
-                                                WARP_DIRECTORY_MY,
-                                                WARP_SUB_DIR_FUNC_TO_ANAT_MY,
-                                                WARP_SUB_DIR_ANAT_TO_ATLAS_MY,
-                                                STA_WARP_DATASET_PATH_MY,
-                                                FLY_MY,
-                                                fixed,
-                                                explosion_rois,
-                                                roi_masks,
-                                                roi_contours,
-                                                input_canvas)
+explosion_plot_my = hfvb.prepare_brain(label_path_my, signal_path_my,
+                                       fictrac_path_my, timestamps_path_my,
+                                       WARP_DIRECTORY_MY,
+                                       WARP_SUB_DIR_FUNC_TO_ANAT_MY,
+                                       WARP_SUB_DIR_ANAT_TO_ATLAS_MY,
+                                       STA_WARP_DATASET_PATH_MY,
+                                       FLY_MY,
+                                       fixed,
+                                       explosion_rois,
+                                       roi_masks,
+                                       roi_contours,
+                                       input_canvas
+                                       )
 ###################################################
 ###################################################
 ###################################################
