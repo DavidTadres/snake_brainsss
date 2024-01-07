@@ -327,12 +327,15 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             # each source path file can only be a single file - why if..if instead of if..elif?
             ### Change file names and filter various files
             # This is for split files from brukerbridge
-            elif "concat.nii" in source_path.name and folder_type == "anat": # <this should be 'func'
+            # Sometimes we have huge recordings. In that case, the nii files on Brukerbridge are split
+            # To combine them, run the stitch snakefile. It'll write a file like 'ch1_concat.nii'
+            elif "concat.nii" in source_path.name and folder_type == "func": # <this should be 'func'
                 target_name = (
                     "channel_" + source_path.name.split("ch")[1].split("_")[0] + ".nii"
                 )
                 target_path = pathlib.Path(destination, target_name)
-            # This is for non-split files from Brukerbridge
+            # This is for non-split files from Brukerbridge - they MUST not have a '_s' string
+            # which is indicative of a split file (see elif just above).
             elif (
                 ".nii" in source_path.name
                 and "_s" not in source_path.name
@@ -343,8 +346,20 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
                 )  # this already gets us the '.nii'!
                 print("target name" + repr(target_name))
                 target_path = pathlib.Path(destination, target_name)
-            # Rename anatomy file to anatomy_channel_x.nii
-            elif ".nii" in source_path.name and folder_type == "anat":
+            # I don't completely understand whether anatomy files are never or only sometimes split.
+            # To be safe, have an elif which first checks for concat
+            elif ("concat.nii" in source_path.name
+                  and folder_type == "anat"):  #
+                target_name = (
+                        "channel_" + source_path.name.split("ch")[1].split("_")[0] + ".nii"
+                )
+                target_path = pathlib.Path(destination, target_name)
+            # Finally, similar to the func case above, if we are in split directory (indicated by .._s0.nii')
+            # we ignore all nii files if they have the '_s' string.
+            # Else, make that file the 'channel_x.nii' file.
+            elif (".nii" in source_path.name
+                  and "_s" not in source_path.name
+                  and folder_type == "anat"):
                 target_name = (
                     "channel_" + source_path.name.split("channel")[1].split("_")[1]
                 )
