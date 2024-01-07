@@ -383,16 +383,16 @@ rule all:
                + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
             temp_HP_filter_imaging_paths=list_of_paths_func),
         ###
-        # correlation with behavior
+        # correlation with fictrac behavior
         ###
         expand(str(fly_folder_to_process_oak)
-               + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+               + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS)>0 else [],
             corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
         expand(str(fly_folder_to_process_oak)
-               + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+               + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS)>0 else [],
             corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
         expand(str(fly_folder_to_process_oak)
-               + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+               + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS)>0 else [],
             corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
         ###
         # Meanbrain of moco brain
