@@ -97,7 +97,7 @@ def fly_builder(user, import_dirs, dataset_dirs):
                 ),
                 "w",
             ) as outfile:
-                json.dump(fly_dirs_dict, outfile)
+                json.dump(fly_dirs_dict, outfile, indent=4)
 
             # If we are here it should mean that everything above has been copied as expected.
             # We can therefore delete the 'incomplete' file in this folder
@@ -336,7 +336,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             elif (
                 ".nii" in source_path.name
                 and "_s" not in source_path.name
-                and folder_type == "anat" # <this should be 'func'
+                and folder_type == "func" # <this should be 'func'
             ):
                 target_name = (
                     "channel_" + source_path.name.split("channel")[1].split("_")[1]
