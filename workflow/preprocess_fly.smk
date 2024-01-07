@@ -16,6 +16,7 @@ AND:
     The aggregate bandwidth of the filesystem is about 75GB/s. So any job with high
     data performance requirements will take advantage from using $SCRATCH for I/O.
 """
+import natsort
 
 # On sherlock using config file type:
 # ml python/3.9.0
@@ -205,12 +206,6 @@ def create_file_paths(path_to_fly_folder, imaging_file_paths, filename, func_onl
                 list_of_filepaths.append(pathlib.Path(path_to_fly_folder,current_path,'channel_3' + filename))
     return(list_of_filepaths)'''
 
-# >>>> This will hopefully change
-# Fictrac files are named non-deterministically (could be changed of course) but for now
-# the full filename is in the fly_dirs_dict
-full_fictrac_file_oak_paths = create_path_func(fly_folder_to_process_oak, fictrac_file_paths)
-# <<<<
-
 FICTRAC_PATHS = []
 for current_path in fictrac_file_paths:
     FICTRAC_PATHS.append(current_path.split('/fictrac_behavior_data.dat')[0])
@@ -232,6 +227,12 @@ list_of_paths_anat = []
 for current_path in imaging_file_paths:
     if 'anat' in current_path:
         list_of_paths_anat.append(current_path.split('/imaging')[0])
+if len(list_of_paths_anat) > 1:
+    print('!!!WARNING!!!')
+    print('The following folders have the "anat" keyword:')
+    print(list_of_paths_anat)
+    print('The folder ' + repr(natsort.natsorted(list_of_paths_anat[0])) + ' will be treated as the "main" anat folder.')
+    list_of_paths_anat = natsort.natsorted(list_of_paths_anat[0])
 
 list_of_channels = []
 if CH1_EXISTS:
@@ -244,78 +245,9 @@ if CH3_EXISTS:
 # Behaviors to correlate with neural activity
 corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
 # This would be a list like this ['1', '2']
-###
-# List of paths for meanbrain
-#imaging_paths_meanbrain =[]
-#for current_path in imaging_file_paths:
-#    imaging_paths_meanbrain.append(current_path.split('/imaging')[0])
-#channels = []
-#if CH1_EXISTS:
-#    channels.append("1")
-#if CH2_EXISTS:
-#    channels.append("2")
-#if CH3_EXISTS:
-#    channels.append("3")
 
-##
-# List of paths for bleaching
-# Identical to imaging_paths_meanbrain but define explicitly for readability
-#imaging_paths_bleaching = []
-#for current_path in imaging_file_paths:
-#    imaging_paths_bleaching.append(current_path.split('/imaging')[0])
-
-##
-# List of paths for moco
-# Identical to imaging_paths_meanbrain but define explicitly for readability
-#list_of_imaging_paths_moco = []
-#for current_path in imaging_file_paths:
-#    list_of_imaging_paths_moco.append(current_path.split('/imaging')[0])
-
-##
-# List of paths for zscore
-#imaging_paths_zscore = []
-#for current_path in imaging_file_paths:
-#    if 'func' in current_path:
-#        imaging_paths_zscore.append(current_path.split('/imaging')[0])
-##
-# list of paths for temporal highpass filter
-# identical to zscore imaging paths but for ease of readibility, explicitly create a new one
-#imaging_paths_temp_HP_filter = []
-#for current_path in imaging_file_paths:
-#    if 'func' in current_path:
-#        imaging_paths_temp_HP_filter.append(current_path.split('/imaging')[0])
-
-##
-# list of paths for correlation
-# identical to zscore imaging paths but for ease of readibility, explicitly create a new one
-#imaging_paths_corr = []
-#for current_path in imaging_file_paths:
-#    if 'func' in current_path:
-#        imaging_paths_corr.append(current_path.split('/imaging')[0])
-## Behavior to be correlated with z scored brain activity
-
-##
-# List of paths for moco meanbrains
-# Identical to imaging_paths_meanbrain but define explicitly for readability
-#imaging_paths_moco_meanbrain = []
-#for current_path in imaging_file_paths:
-#    imaging_paths_moco_meanbrain.append(current_path.split('/imaging')[0])
-
-##
-# List of paths for clean anatomy - only anatomy folders!
-#imaging_paths_clean_anatomy f= []
-#for current_path in imaging_file_paths:
-#    if 'anat' in current_path:
-#        imaging_paths_clean_anatomy.append(current_path.split('/imaging')[0])
-
-##
-# list of paths for supervoxel
-# identical to zscore imaging paths but for ease of readibility, explicitly create a new one
 atlas_path = pathlib.Path("brain_atlases/jfrc_atlas_from_brainsss.nii") #luke.nii"
-#imaging_paths_supervoxels = []
-#for current_path in imaging_file_paths:
-#    if 'func' in current_path:
-#        imaging_paths_supervoxels.append(current_path.split('/imaging')[0])
+
 func_channels=[]
 if 'channel_1' in FUNCTIONAL_CHANNELS:
     func_channels.append('1')
@@ -324,57 +256,61 @@ if 'channel_2' in FUNCTIONAL_CHANNELS:
 if 'channel_3' in FUNCTIONAL_CHANNELS:
     func_channels.append('3')
 
+anat_channel=[]
+if 'channel_1' in ANATOMY_CHANNEL:
+    anat_channel.append('channel_1')
+elif 'channel_2' in ANATOMY_CHANNEL:
+    anat_channel.append('channel_2')
+elif 'channel_3' in ANATOMY_CHANNEL:
+    anat_channel.append('channel_3')
+if len(anat_channel)>1:
+    print('!!!!WARNING!!!')
+    print('The following channels are defined as anatomy channels: ')
+    print(anat_channel)
+    print('There should only be a single anatomy channel for the pipeline to work as expected.')
+
 ####
 # probably not relevant - I think this is what bifrost does (better)
 ##
 # list of paths for func2anat
-imaging_paths_func2anat = []
-anat_path_func2anat = None
-for current_path in imaging_file_paths:
-    if 'func' in current_path:
-        imaging_paths_func2anat.append(current_path.split('/imaging')[0])
+#imaging_paths_func2anat = []
+#anat_path_func2anat = None
+#for current_path in imaging_file_paths:
+    #if 'func' in current_path:
+    #    imaging_paths_func2anat.append(current_path.split('/imaging')[0])
     # the folder name of the anatomical channel
-    elif 'anat' in current_path:
-        if anat_path_func2anat is None:
-            anat_path_func2anat = current_path.split('/imaging')[0]
-        else:
-            print('!!!! WARNING: More than one folder with "anat"-string in fly to analyze. ')
-            print('!!!! func to anat function will likely give unexpected results! ')
+    #elif 'anat' in current_path:
+    #    if anat_path_func2anat is None:
+    #        anat_path_func2anat = current_path.split('/imaging')[0]
+    #    else:
+    #        print('!!!! WARNING: More than one folder with "anat"-string in fly to analyze. ')
+    #        print('!!!! func to anat function will likely give unexpected results! ')
 # the anatomical channel for func2anat
-if 'channel_1' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed = ['channel_1']
-elif 'channel_2' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed = ['channel_2']
-elif 'channel_3' in ANATOMY_CHANNEL:
-    file_path_func2anat_fixed = ['channel_3']
+#if 'channel_1' in ANATOMY_CHANNEL:
+#    file_path_func2anat_fixed = ['channel_1']
+#elif 'channel_2' in ANATOMY_CHANNEL:
+#    file_path_func2anat_fixed = ['channel_2']
+#elif 'channel_3' in ANATOMY_CHANNEL:
+#    file_path_func2anat_fixed = ['channel_3']
 
 ##
 # list of paths for anat2atlas
 
-imaging_paths_anat2atlas =[]
-for current_path in imaging_file_paths:
-    if 'anat' in current_path:
-        # here it's ok to have more than one anatomy folder! However, script will break before...
-        # but at least this part doesn't have to break!
-        imaging_paths_anat2atlas.append(current_path.split('/imaging')[0])
+#imaging_paths_anat2atlas =[]
+#for current_path in imaging_file_paths:
+#    if 'anat' in current_path:
+#        # here it's ok to have more than one anatomy folder! However, script will break before...
+#        # but at least this part doesn't have to break!
+#        imaging_paths_anat2atlas.append(current_path.split('/imaging')[0])
 
 # the anatomical channel for func2anat
-file_path_anat2atlas_moving = []
-if 'channel_1' in ANATOMY_CHANNEL:
-    file_path_anat2atlas_moving.append('channel_1')
-elif 'channel_2' in ANATOMY_CHANNEL:
-    file_path_anat2atlas_moving.append('channel_2')
-elif 'channel_3' in ANATOMY_CHANNEL:
-    file_path_anat2atlas_moving.append('channel_3')
-
-
-#####
-# Output data path
-#####
-# Output files for fictrac_qc rule
-#print("full_fictrac_file_oak_paths" + repr(full_fictrac_file_oak_paths))
-#fictrac_output_files_2d_hist_fixed = create_output_path_func(list_of_paths=full_fictrac_file_oak_paths,
-#                                                             filename='fictrac_2d_hist_fixed.png')
+#file_path_anat2atlas_moving = []
+#if 'channel_1' in ANATOMY_CHANNEL:
+#    file_path_anat2atlas_moving.append('channel_1')
+#elif 'channel_2' in ANATOMY_CHANNEL:
+#    file_path_anat2atlas_moving.append('channel_2')
+#elif 'channel_3' in ANATOMY_CHANNEL:
+#    file_path_anat2atlas_moving.append('channel_3')
 
 rule all:
     """
@@ -489,16 +425,16 @@ rule all:
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
-            func2anat_paths=imaging_paths_func2anat,
-            func2anat_moving=file_path_func2anat_fixed, # This is the channel which is designated as ANATOMY_CHANNEL
-            func2anat_fixed=file_path_func2anat_fixed),
+            func2anat_paths=list_of_paths_func,
+            func2anat_moving=anat_channel, # This is the channel which is designated as ANATOMY_CHANNEL
+            func2anat_fixed=anat_channel),
         ##
         # anat2atlas
         ##
         expand(str(fly_folder_to_process_oak)
             + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
-            anat2atlas_paths=imaging_paths_anat2atlas,
-            anat2atlas_moving=file_path_anat2atlas_moving),
+            anat2atlas_paths=list_of_paths_anat,
+            anat2atlas_moving=anat_channel),
 
 rule fictrac_qc_rule:
     """
@@ -514,7 +450,7 @@ rule fictrac_qc_rule:
     run:
         try:
             preprocessing.fictrac_qc(fly_folder_to_process_oak,
-                                    fictrac_file_path= input, #full_fictrac_file_oak_paths,
+                                    fictrac_file_path= input,
                                     fictrac_fps=fictrac_fps # AUTOMATE THIS!!!! ELSE BUG PRONE!!!!
                                     )
         except Exception as error_stack:
@@ -632,9 +568,6 @@ rule motion_correction_parallel_processing_rule:
         "--moco_path_ch2 {output.moco_path_ch2} "
         "--moco_path_ch3 {output.moco_path_ch3} "
         "--par_output {output.par_output} "
-
-
-
 rule zscore_rule:
     """
     Yandan func
@@ -953,7 +886,7 @@ rule func_to_anat_rule:
         mem_mb=snake_utils.mem_mb_more_times_input,
         runtime='10m' # should be enough, is super quick already
     input:
-        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(anat_path_func2anat) + '/moco/{func2anat_fixed}_moco_mean.nii',
+        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(list_of_paths_anat) + '/moco/{func2anat_fixed}_moco_mean.nii',
         path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}_moco_mean.nii"
     output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii"
 

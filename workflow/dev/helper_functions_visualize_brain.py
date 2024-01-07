@@ -525,7 +525,7 @@ def prepare_brain(label_path, signal_path, fictrac_path, timestamps_path,
         for z in range(49):
             fictrac_trace = smooth_and_interp_fictrac(fictrac_raw_original, fps, resolution, expt_len, current_behavior,
                                                       timestamps_original[:, z])
-            fictrac_trace_L = np.clip(fictrac_trace.flatten(), None, 0) * -1  # Check what this does
+            #fictrac_trace_L = np.clip(fictrac_trace.flatten(), None, 0) * -1  # Check what this does
             for voxel in range(2000):
                 corrs.append(scipy.stats.pearsonr(signal[z, voxel, :], fictrac_trace.flatten())[0])
 

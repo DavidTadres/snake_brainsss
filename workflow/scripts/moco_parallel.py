@@ -470,7 +470,7 @@ if __name__ == '__main__':
     parser.add_argument("--mean_brain_paths_ch2", nargs="?", help="Path to ch2 meanbrain file, if it exists")
     parser.add_argument("--mean_brain_paths_ch3", nargs="?", help="Path to ch3 meanbrain file, if it exists")
 
-    parser.add_argument("--ANATOMY_CHANNEL", help="variable with string containing the anatomy channel")
+    parser.add_argument("--ANATOMY_CHANNEL", nargs="?", help="variable with string containing the anatomy channel")
     parser.add_argument("--FUNCTIONAL_CHANNELS", nargs="?", help="list with strings containing the anatomy channel")
 
     parser.add_argument("--moco_path_ch1", nargs="?", help="Path to ch1 moco corrected file, if Ch1 exists")
@@ -492,35 +492,58 @@ if __name__ == '__main__':
     ####################################
     ### Identify the anatomy channel ###
     ####################################
-    if 'channel_1' == args.ANATOMY_CHANNEL:
-        moving_path = pathlib.Path(args.brain_paths_ch1)
-        fixed_path = pathlib.Path(args.mean_brain_paths_ch1)
-        moving_output_path = pathlib.Path(args.moco_path_ch1)
-    elif 'channel_2' ==  args.ANATOMY_CHANNEL:
-        moving_path = pathlib.Path(args.brain_paths_ch2)
-        fixed_path = pathlib.Path(args.mean_brain_paths_ch2)
-        moving_output_path = pathlib.Path(args.moco_path_ch2)
-    elif 'channel_3' ==  args.ANATOMY_CHANNEL:
-        moving_path = pathlib.Path(args.brain_paths_ch3)
-        fixed_path = pathlib.Path(args.mean_brain_paths_ch3)
-        moving_output_path = pathlib.Path(args.moco_path_ch2)
-
-    if args.FUNCTIONAL_CHANNELS is not None:
-        # Convert the string represenation of a list to a list - it's either
-        # ['channel_1',] or ['channel_1','channel_2'] or similar
-        # if
-        functional_channel_paths = []
-        functional_channel_output_paths = []
-        if 'channel_1' in args.FUNCTIONAL_CHANNELS:
-            functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
-            functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
-        if 'channel_2' in args.FUNCTIONAL_CHANNELS:
-            functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
-            functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
-        if 'channel_3' in args.FUNCTIONAL_CHANNELS:
-            functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
-            functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
+    # Normally, we would have one anatomy channel
+    if args.ANATOMY_CHANNEL is not None:
+        if 'channel_1' == args.ANATOMY_CHANNEL:
+            moving_path = pathlib.Path(args.brain_paths_ch1)
+            fixed_path = pathlib.Path(args.mean_brain_paths_ch1)
+            moving_output_path = pathlib.Path(args.moco_path_ch1)
+        elif 'channel_2' ==  args.ANATOMY_CHANNEL:
+            moving_path = pathlib.Path(args.brain_paths_ch2)
+            fixed_path = pathlib.Path(args.mean_brain_paths_ch2)
+            moving_output_path = pathlib.Path(args.moco_path_ch2)
+        elif 'channel_3' ==  args.ANATOMY_CHANNEL:
+            moving_path = pathlib.Path(args.brain_paths_ch3)
+            fixed_path = pathlib.Path(args.mean_brain_paths_ch3)
+            moving_output_path = pathlib.Path(args.moco_path_ch2)
+        # If we have an antomy channel, we can use the parameters to
+        # motion correct the (generally) less clearly visible functional channel(s)
+        if args.FUNCTIONAL_CHANNELS is not None:
+            # Convert the string represenation of a list to a list - it's either
+            # ['channel_1',] or ['channel_1','channel_2'] or similar
+            # if
+            functional_channel_paths = []
+            functional_channel_output_paths = []
+            if 'channel_1' in args.FUNCTIONAL_CHANNELS:
+                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
+                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
+            if 'channel_2' in args.FUNCTIONAL_CHANNELS:
+                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
+                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
+            if 'channel_3' in args.FUNCTIONAL_CHANNELS:
+                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
+                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
+        else:
+            functional_channel_paths = None
     else:
+        # However, sometimes, we don't have an anatomy channel (e.g.
+        # when we only have GCAMP expressed and not anatomical marker)
+        # Note that it'll just take the first channel as the channel to
+        # perform moco and will ignore the rest. I.e. if your
+        # 'functional_channel: "['channel_1', 'channel_2']" we currently
+        # only do moco on channel_1
+        if 'channel_1' in args.FUNCTIONAL_CHANNELS:
+            moving_path = pathlib.Path(args.brain_paths_ch1)
+            fixed_path = pathlib.Path(args.mean_brain_paths_ch1)
+            moving_output_path = pathlib.Path(args.moco_path_ch1)
+        elif 'channel_2' == args.FUNCTIONAL_CHANNELS:
+            moving_path = pathlib.Path(args.brain_paths_ch2)
+            fixed_path = pathlib.Path(args.mean_brain_paths_ch2)
+            moving_output_path = pathlib.Path(args.moco_path_ch2)
+        elif 'channel_3' == args.FUNCTIONAL_CHANNELS:
+            moving_path = pathlib.Path(args.brain_paths_ch3)
+            fixed_path = pathlib.Path(args.mean_brain_paths_ch3)
+            moving_output_path = pathlib.Path(args.moco_path_ch2)
         functional_channel_paths = None
 
     param_output_path = args.par_output

@@ -1,4 +1,7 @@
-
+"""
+DOESNT WORK AS EXPECTED:
+I always get exactly the same plot, even if I put in a completely different fly!
+"""
 import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,7 +41,8 @@ path_orig = pathlib.Path('/Volumes/groups/trc/data/Brezovec/2P_Imaging/20190101_
 
 label_path_orig = pathlib.Path(path_orig, 'func_0/clustering/cluster_labels.npy')
 signal_path_orig = pathlib.Path(path_orig, 'func_0/clustering/cluster_signals.npy')
-fictrac_path_orig = pathlib.Path(path_orig, 'func_0/fictrac/fictrac-20230525_164921.dat')
+fictrac_path_orig = pathlib.Path(path_orig, 'func_0/fictrac/fictrac-20230525_164921.dat') # Fly 308
+#fictrac_path_orig = pathlib.Path(path_orig, 'func_0/fictrac/fictrac-20230601_142531.dat') # Fly 309
 timestamps_path_orig = pathlib.Path(path_orig, 'func_0/imaging/functional.xml')
 
 explosion_plot_original = hfvb.prepare_brain(label_path_orig, signal_path_orig,
