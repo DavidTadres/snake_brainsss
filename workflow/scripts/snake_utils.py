@@ -1,6 +1,7 @@
 # Functions to be called from snakefiles
 import numpy as np
-
+import nibabel as nib
+import pathlib
 
 def mem_mb_times_threads(wildcards, threads):
     """
@@ -84,34 +85,71 @@ def mb_for_moco_input(wildcards, input):
     The number of threads shouldn't matter.
     Also check here:
     https://sourceforge.net/p/advants/discussion/840261/thread/907e5819/
-    I tried to use 5.5 times per channel. But that failed because of OOM error for large (1024x512)
-    recording where each volume would be an input of ~250 Mb (so ~500 Mb in float). According to info
-    above that should only lead to ~500*12*8=~50Gb of memory at one time.
-    With 6.5 times (159Gb or RAM requested) it worked for the anatomical image files.
     :param wildcards:
     :param input:
     :return:
     """
+    # There's a huge discrepancy of memory requirement between anat (1024x512) and func (256x128) files.
+    # Can we read the file dimensions here?
+    if input.brain_paths_ch1 != []:
+        # Make a pointer to the nii file!
+        print(input.brain_paths_ch1)
+        brain_proxy = nib.load(input.brain_paths_ch1)
+        # Without reading the image into memory ,just look at the header
+        # to get image dimensions.
+        brain_dims = brain_proxy.header.get_data_shape()
+    # If channel_1 doesn't exist, try 2. All channels should have the same
+    # dimension, so checking one is sufficient.
+    elif input.brains_path_ch2 !=[]:
+        brain_proxy = nib.load(input.brain_paths_ch2)
+        brain_dims = brain_proxy.header.get_data_shape()
+    elif input.brains_path_ch2 !=[]:
+        brain_proxy = nib.load(input.brain_paths_ch2)
+        brain_dims = brain_proxy.header.get_data_shape()
+    # This is the size of the brain volume at one 'timepoint', meaning
+    # for x,y and z but NOT t(ime)
+    volume_size = brain_dims[0] * brain_dims[1] * brain_dims[2]
+    # When I use a 'standard' recording with (256,128,49) I need ~ 2.5 times the memory
+    # compared to the input. 256*128*49=1,605,632
+    # In contrast, I was just barely able to avoid OOM error for (1024,512,100) with
+    # Yandan's data when using 6.5x the memory. 1024*512*100=52,428,800
+    # And I get OOM error when doing (1024,512,241). 1024*512*241=126,353,408
+    ###
+    # There's clearly a non-linear relationship between memory requirement and size of the
+    # first three dimensions...
+    if volume_size < 5e6:
+        # Probably a functional dataset with something like (256,128,49)
+        multiplier = 2.5
+        # That's a pretty normal anat recording like (1024,512,100)
+    elif volume_size < 6e7:
+        multiplier = 7
+        # that's a larger anat recording like (1024,512,275)
+    elif volume_size < 1.5e8:
+        multiplier = 10
+
+    mem_mb = input.size_mb*multiplier
+
     # We need pretty much exactly 4 times the input file size OF ONE CHANNEL.
     # If we have two channels we only need ~2 times.
-    #
     if (
             input.brain_paths_ch1 != []
             and input.brain_paths_ch2 != []
             and input.brain_paths_ch3 != []
     ):
         # if all three channels are used
-        mem_mb = int((input.size_mb*6.5)/3)
+        #mem_mb = int((input.size_mb*6.5)/3)
+        mem_mb /= 3
     elif (
         (input.brain_paths_ch1 != [] and input.brain_paths_ch2 != [])
         or (input.brain_paths_ch1 != [] and input.brain_paths_ch3 != [])
         or (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != [])
     ):
         # if only two channels are in use
-        mem_mb = int((input.size_mb * 6.5)/2)
-    else:
-        # only one channel is provided:
-        mem_mb = (input.size_mb * 6.5)
+        #mem_mb = int((input.size_mb * 6.5)/2)
+        mem_mb /=2
+    #else:
+    #    # only one channel is provided:
+    #    mem_mb = (input.size_mb * 6.5)
     # Sherlock only allows us to request up to 256 Gb per job
     if mem_mb > 256000:
         mem_mb = 256000
@@ -133,7 +171,7 @@ def time_for_moco_input(wildcards, input):
     :return:
     """
     if input == "<TBD>":  # This should ONLY happen during a -np call of snakemake.
-        string_to_return = str(2) + "h"
+        time_in_minutes = 120
     elif (
         input.brain_paths_ch1 != []
         and input.brain_paths_ch2 != []

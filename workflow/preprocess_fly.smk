@@ -531,6 +531,37 @@ rule make_mean_brain_rule:
 
 rule motion_correction_parallel_processing_rule:
     """
+    OOM using an anat folder! :
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 32
+    CPU Utilized: 1-08:48:23
+    CPU Efficiency: 60.01% of 2-06:40:00 core-walltime
+    Job Wall-clock time: 01:42:30
+    Memory Utilized: 117.43 GB
+    Memory Efficiency: 99.69% of 117.79 GB
+    And another OOM for an anat 
+    State: OUT_OF_MEMORY (exit code 0)
+    Nodes: 1
+    Cores per node: 32
+    CPU Utilized: 1-11:00:39
+    CPU Efficiency: 62.09% of 2-08:23:28 core-walltime
+    Job Wall-clock time: 01:45:44
+    Memory Utilized: 115.60 GB
+    Memory Efficiency: 98.14% of 117.79 GB
+    
+    Same settings, func super happy
+    Nodes: 1
+    Cores per node: 32
+    CPU Utilized: 16:06:07
+    CPU Efficiency: 67.37% of 23:54:08 core-walltime
+    Job Wall-clock time: 00:44:49
+    Memory Utilized: 24.06 GB
+    Memory Efficiency: 32.56% of 73.90 GB
+    
+    -> There's clearly a huge discrepancy of memory used based on the resolution of the image.
+    Ideally I could set the memory depending on the resolution of the image instead of the size of the file...
+    
     To speed motion correction up, use the multiprocessing module. This requires the target to 
     be a module (not just a function). Hence we have a 'shell' directive here.
     """
@@ -570,6 +601,22 @@ rule motion_correction_parallel_processing_rule:
         "--par_output {output.par_output} "
 rule zscore_rule:
     """
+    David func0
+    Nodes: 1
+    Cores per node: 15
+    CPU Utilized: 00:01:32
+    CPU Efficiency: 1.84% of 01:23:30 core-walltime
+    Job Wall-clock time: 00:05:34
+    Memory Utilized: 65.03 GB
+    Memory Efficiency: 58.42% of 111.33 GB
+    
+    Cores per node: 16
+    CPU Utilized: 00:01:31
+    CPU Efficiency: 1.56% of 01:37:04 core-walltime
+    Job Wall-clock time: 00:06:04
+    Memory Utilized: 45.13 GB
+    Memory Efficiency: 36.11% of 124.96 GB
+
     Yandan func
     Cores per node: 15
     CPU Utilized: 00:01:22
@@ -657,6 +704,22 @@ rule zscore_rule:
 
 rule temporal_high_pass_filter_rule:
     """
+    David func 30min -> Timeout!
+    Nodes: 1
+    Cores per node: 10
+    CPU Utilized: 00:00:00
+    CPU Efficiency: 0.00% of 05:06:20 core-walltime
+    Job Wall-clock time: 00:30:38
+    Memory Utilized: 110.00 KB
+    Memory Efficiency: 0.00% of 70.84 GB
+    
+    Just made it
+    CPU Utilized: 00:25:45
+    CPU Efficiency: 8.47% of 05:04:00 core-walltime
+    Job Wall-clock time: 00:30:24
+    Memory Utilized: 46.22 GB
+    Memory Efficiency: 58.13% of 79.52 GB
+    
     Yandan func0 dat
     Cores per node: 10
     CPU Utilized: 00:19:31
@@ -727,7 +790,7 @@ rule temporal_high_pass_filter_rule:
     threads: 2 # Will be overruled if more than 16Gb of memory are requested.
     resources:
         mem_mb=snake_utils.mem_mb_more_times_input,
-        runtime='30m' # The call to 1d smooth takes quite a bit of time! Todo< make dynamic for longer recordings!
+        runtime='50m' # The call to 1d smooth takes quite a bit of time! Todo< make dynamic for longer recordings!
     input:
         zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
         zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
@@ -836,6 +899,14 @@ rule clean_anatomy_rule:
 
 rule make_supervoxels_rule:
     """
+    David, 30min func
+    Cores per node: 8
+    CPU Utilized: 00:11:23
+    CPU Efficiency: 10.34% of 01:50:08 core-walltime
+    Job Wall-clock time: 00:13:46
+    Memory Utilized: 27.31 GB
+    Memory Efficiency: 48.08% of 56.80 GB
+    
     Yandan fun0
     Cores per node: 6
     CPU Utilized: 00:08:18
