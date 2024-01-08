@@ -822,7 +822,7 @@ rule correlation_rule:
     threads: 1
     resources:
         mem_mb=snake_utils.mem_mb_less_times_input,
-        runtime='10m' # vectorization made this super fast
+        runtime='20m' # vectorization made this super fast
     input:
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
