@@ -525,6 +525,7 @@ if __name__ == '__main__':
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
         else:
             functional_channel_paths = None
+            functional_channel_output_paths = None
     else:
         # However, sometimes, we don't have an anatomy channel (e.g.
         # when we only have GCAMP expressed and not anatomical marker)
@@ -545,6 +546,7 @@ if __name__ == '__main__':
             fixed_path = pathlib.Path(args.mean_brain_paths_ch3)
             moving_output_path = pathlib.Path(args.moco_path_ch2)
         functional_channel_paths = None
+        functional_channel_output_paths = None
 
     param_output_path = args.par_output
 
