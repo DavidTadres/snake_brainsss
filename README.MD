@@ -14,17 +14,27 @@ ml python/3.9.0 (on sherlock only)
 make an environemnt and then do pip3 install snakemake
 
 python3 -m venv .env_snakemake # Local Mac is '.env_snake_brainsss'
+
 source .env_snakemake/bin/activate
+
 pip install --upgrade pip
+
 pip3 install antspyx
+
 pip install snakemake
+
 pip install natsort
 
 pip install lxml
+
 pip install openpyxl
+
 pip install h5py
+
 pip install pyfiglet
+
 pip3 install opencv-python-headless
+
 pip install scipy
 
 # On sherlock had warning message:
@@ -118,6 +128,8 @@ source .env_snake_brainsss/bin/activate
 2) Why use nibabel at all? e.g. motion correction ants.registration takes a numpy array it seems. > Probably because
    it can be opened natively in fiji?
 3) align_anat calls: Why do we provide a resolution (e.g. res_ant = (0.653, 0.653, 1)) and then resample with (2,2,2)? 
+   It helps with plotting! Bella made the FDA 2um isotropic. The resolution would be higher but we don't really see more
+   and it make plotting easier/faster
 
 ###
 # Other notes:
@@ -141,4 +153,7 @@ source .env_snake_brainsss/bin/activate
 2) Test what happens if we make supervoxels per volume (instead of z-slice). TBD but reason for supervoxel
    per z-slice is to keep temporal resolution as high as possible: Each slice is recorded ~20 ms later compared
    to the previous one. If we do 3D supervoxels we'll time-smear 
-3) Keep track of dtypes more consistenly.
+3) Keep track of dtypes more consistenly. -> Done
+4) Correct axis metadata in nii files! Problem is that for us z=0 is posterior whereas for field it's anterior.
+5) Resultion/voxel size should go into the nii file which should help with alignments.
+6) 

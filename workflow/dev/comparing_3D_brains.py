@@ -96,7 +96,7 @@ def compare_two_3D_arrays(original_brain_path, my_brain_path, savepath):
     fig.savefig(savepath)
     print('Plotted ' + savepath.name)
 
-
+'''
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "func_0/imaging/functional_channel_1_mean.nii"
@@ -165,8 +165,6 @@ compare_two_3D_arrays(
     savepath=pathlib.Path(my_savepaths, "meanbrain_func_0_moco_ch2.png"),
 )
 
-
-
 ###
 # BEHAVIOR-Z SCORE CORRELATED BRAINS
 ###
@@ -193,7 +191,7 @@ compare_two_3D_arrays(
     my_brain_path=pathlib.Path(my_fly_paths, "func_0/corr/channel_2_corr_dRotLabZpos.nii"),
     savepath=pathlib.Path(my_savepaths, "corr_dRotLabZpos_func_0_ch2.png"),
 )
-
+'''
 ####
 # Clean anatomy
 #####
@@ -205,20 +203,20 @@ compare_two_3D_arrays(
     my_brain_path=pathlib.Path(my_fly_paths, "anat_0/moco/channel_1_moco_mean_clean.nii"),
     savepath=pathlib.Path(my_savepaths, "channel_1_moco_mean_clean.png"),
 )
-'''
-"""
+
+
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "anat_0/moco/anatomy_channel_1_moc_mean_clean.nii"
     ),
     my_brain_path=pathlib.Path(my_fly_paths, "anat_0/moco/channel_1_moco_mean_clean.nii"),
     savepath=pathlib.Path(my_savepaths, "channel_1_moco_mean_clean.png"),
-)"""
+)
 
 ###
 # WARP FUNC2ANAT
 ####
-"""
+
 compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "warp/func-to-anat.nii"
@@ -243,7 +241,7 @@ compare_two_3D_arrays(
     my_brain_path=pathlib.Path(my_fly_paths, "func_0/warp1/channel_1_func-to-channel_1_anat.nii"),
     savepath=pathlib.Path(my_savepaths, "warp_func2anat_delta.png"),
 )
-"""
+'''
 ###
 # WARP ANAT2FUNC
 ####
@@ -252,6 +250,6 @@ compare_two_3D_arrays(
     original_brain_path=pathlib.Path(
         original_fly_path, "warp/anat-to-meanbrain.nii"
     ),
-    my_brain_path=pathlib.Path(my_fly_paths, "anat_0/warp/channel_1_-to-atlas.nii"),
+    my_brain_path=pathlib.Path(my_fly_paths, "anat_0/warp/channel_1_to-atlas.nii"),
     savepath=pathlib.Path(my_savepaths, "warp_anat2atlas.png"),
 )
