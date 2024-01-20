@@ -16,7 +16,7 @@ Can also only run a given rule:
 snakemake -s build_fly.smk stitch_split_nii --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
 '''
 # To be modified by the user
-imports_to_process = ['20240109',] # Data deposited by Brukerbridge on oak
+imports_to_process = ['20240116',] # Data deposited by Brukerbridge on oak
 # Only needed to run :fly_builder_rule:
 
 #fly_folder_to_process = '' # if already copied to 'fly_00X' folder and only
