@@ -485,9 +485,9 @@ if __name__ == '__main__':
     ### SETUP LOGGING ###
     #####################
     fly_directory = pathlib.Path(args.fly_directory)
-    logfile = utils.create_logfile(fly_directory, function_name="moco_parallel_large_images")
+    logfile = utils.create_logfile(fly_directory, function_name="moco_parallel")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "moco_parallel_large_images")
+    utils.print_function_start(logfile, WIDTH, "moco_parallel")
 
     ####################################
     ### Identify the anatomy channel ###
