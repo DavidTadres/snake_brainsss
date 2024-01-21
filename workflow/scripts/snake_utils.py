@@ -125,7 +125,7 @@ def mb_for_moco_input(wildcards, input):
         multiplier = 7
         # that's a larger anat recording like (1024,512,275)
     elif volume_size < 1.5e8:
-        multiplier = 14
+        multiplier = 16
 
     mem_mb = input.size_mb*multiplier
 
@@ -146,7 +146,7 @@ def mb_for_moco_input(wildcards, input):
     ):
         # if only two channels are in use
         #mem_mb = int((input.size_mb * 6.5)/2)
-        mem_mb /=2
+        mem_mb /= 2
     #else:
     #    # only one channel is provided:
     #    mem_mb = (input.size_mb * 6.5)
