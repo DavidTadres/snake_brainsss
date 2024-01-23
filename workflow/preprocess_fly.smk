@@ -704,6 +704,16 @@ rule zscore_rule:
 
 rule temporal_high_pass_filter_rule:
     """
+    David func 30min -> Timeout at 50 min runtime! Increase to 90
+    State: TIMEOUT (exit code 0)
+    Nodes: 1
+    Cores per node: 10
+    CPU Utilized: 00:00:00
+    CPU Efficiency: 0.00% of 08:34:10 core-walltime
+    Job Wall-clock time: 00:51:25
+    Memory Utilized: 109.00 KB
+    Memory Efficiency: 0.00% of 70.84 GB
+    
     David func 30min -> Timeout!
     Nodes: 1
     Cores per node: 10
@@ -790,7 +800,7 @@ rule temporal_high_pass_filter_rule:
     threads: 2 # Will be overruled if more than 16Gb of memory are requested.
     resources:
         mem_mb=snake_utils.mem_mb_more_times_input,
-        runtime='50m' # The call to 1d smooth takes quite a bit of time! Todo< make dynamic for longer recordings!
+        runtime='90m' # The call to 1d smooth takes quite a bit of time! Todo< make dynamic for longer recordings!
     input:
         zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
         zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
