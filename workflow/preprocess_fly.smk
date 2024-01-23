@@ -28,7 +28,7 @@ import natsort
 ########################################################
 ### CHANGE THIS TO POINT TO THE FOLDER TO PREPROCESS ###
 ########################################################
-fly_folder_to_process = 'SS31864_LAL013_x_GCaMP6f/fly_005' # folder to be processed
+fly_folder_to_process = 'SS31864_LAL013_x_GCaMP6f/fly_006' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
