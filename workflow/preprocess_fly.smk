@@ -242,7 +242,7 @@ if CH2_EXISTS:
 if CH3_EXISTS:
     list_of_channels.append("3")
 
-print("list_of_channels" + list_of_channels)
+print("list_of_channels" + repr(list_of_channels))
 
 # Behaviors to correlate with neural activity
 corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
