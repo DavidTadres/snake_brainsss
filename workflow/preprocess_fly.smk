@@ -567,7 +567,7 @@ rule motion_correction_parallel_processing_rule:
     """
     threads: 32 # the max that we can do - check with sh_part
     resources:
-        mem_mb='100000',#=snake_utils.mb_for_moco_input, #.mem_mb_much_more_times_input,
+        mem_mb=100000,#=snake_utils.mb_for_moco_input, #.mem_mb_much_more_times_input,
         runtime=snake_utils.time_for_moco_input # runtime takes input as seconds!
     input:
         # Only use the Channels that exists - this organizes the anatomy and functional paths inside the motion correction
