@@ -332,12 +332,7 @@ rule all:
                + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
             fictrac_paths=FICTRAC_PATHS),
         # data in fly_dirs.json!
-        ###
-        # Bleaching QC
-        ###,
-        expand(str(fly_folder_to_process_oak)
-               + "/{bleaching_imaging_paths}/imaging/bleaching.png",
-            bleaching_imaging_paths=list_of_paths),
+
         ###
         # Meanbrain
         ###
@@ -437,6 +432,15 @@ rule all:
             + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
             anat2atlas_paths=list_of_paths_anat,
             anat2atlas_moving=anat_channel),
+'''
+###
+# Bleaching QC
+###,
+expand(str(fly_folder_to_process_oak)
+       + "/{bleaching_imaging_paths}/imaging/bleaching.png",
+    bleaching_imaging_paths=list_of_paths),
+'''
+
 
 rule fictrac_qc_rule:
     """
