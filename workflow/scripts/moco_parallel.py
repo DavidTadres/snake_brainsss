@@ -229,6 +229,9 @@ def find_missing_temp_files(fixed_path,
     elif len(functional_channel_paths) == 2:
         functional_path_one = functional_channel_paths[0]
         functional_path_two = functional_channel_paths[1]
+    else:
+        functional_path_one = None
+        functional_path_two = None
     if functional_path_one is not None:
         index_tracker = 0
         for current_file in natsort.natsorted(temp_save_path.iterdir()):
@@ -376,6 +379,10 @@ def combine_temp_files(moving_path,
     elif len(functional_channel_paths) == 2:
         functional_path_one = functional_channel_paths[0]
         functional_path_two = functional_channel_paths[1]
+    else: # todo fix, should be same as the 'if' above.
+        functional_path_one = None
+        functional_path_two = None
+
 
     ####
     # STITCH FUNCTIONAL 1
