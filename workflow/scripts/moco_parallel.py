@@ -127,6 +127,10 @@ def motion_correction(index,
     elif len(functional_channel_paths) == 2:
         functional_path_one = functional_channel_paths[0]
         functional_path_two = functional_channel_paths[1]
+    else:
+        # Fix this, should be identical to if!
+        functional_path_one = None
+        functional_path_two = None
     if functional_path_one is not None:
         # Load functional one proxy in this process
         functional_one_proxy = nib.load(functional_path_one)
