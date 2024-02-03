@@ -325,11 +325,9 @@ rule all:
     threads: 1 # should be sufficent
     resources: mem_mb=1000 # should be sufficient
     input:
-
-
         ###
         # Bleaching QC
-        ###,
+        ###
         expand(str(fly_folder_to_process_oak)
                + "/{bleaching_imaging_paths}/imaging/bleaching.png",
             bleaching_imaging_paths=list_of_paths),
