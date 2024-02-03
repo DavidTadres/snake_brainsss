@@ -325,6 +325,15 @@ rule all:
     threads: 1 # should be sufficent
     resources: mem_mb=1000 # should be sufficient
     input:
+
+
+        ###
+        # Bleaching QC
+        ###,
+        expand(str(fly_folder_to_process_oak)
+               + "/{bleaching_imaging_paths}/imaging/bleaching.png",
+            bleaching_imaging_paths=list_of_paths),
+
         ###
         # Fictrac QC
         ###
@@ -338,7 +347,7 @@ rule all:
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
-            meanbr_imaging_paths=list_of_paths, #imaging_paths_meanbrain,
+            meanbr_imaging_paths=list_of_paths,
             meanbr_ch=list_of_channels),
         ###
         # Motion correction output
@@ -432,14 +441,6 @@ rule all:
             + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
             anat2atlas_paths=list_of_paths_anat,
             anat2atlas_moving=anat_channel),
-'''
-###
-# Bleaching QC
-###,
-expand(str(fly_folder_to_process_oak)
-       + "/{bleaching_imaging_paths}/imaging/bleaching.png",
-    bleaching_imaging_paths=list_of_paths),
-'''
 
 
 rule fictrac_qc_rule:
