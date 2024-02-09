@@ -172,14 +172,14 @@ python3 -m venv .env_snake_brainsss
 source .env_snake_brainsss/bin/activate
 
 # I don't think this is necessary!
-# Install mamba
+(### Install mamba
 https://snakemake.readthedocs.io/en/stable/tutorial/setup.html
 
  conda activate base
  mamba create -c conda-forge -c bioconda -n snakemake snakemake
 
 To activate env:
- conda activate snakemake
+ conda activate snakemake)
 
 ###
 # Things that are very different to Bella's brainsss
@@ -249,4 +249,3 @@ To activate env:
 3) Keep track of dtypes more consistenly. -> Done
 4) Correct axis metadata in nii files! Problem is that for us z=0 is posterior whereas for field it's anterior.
 5) Resultion/voxel size should go into the nii file which should help with alignments.
-6) 
