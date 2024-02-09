@@ -1,41 +1,43 @@
-# Install mamba
-https://snakemake.readthedocs.io/en/stable/tutorial/setup.html
+# Installation on Sherlock
+https://github.com/pimentel/sherlock-notes/blob/master/README.md (maybe useful info)
 
- conda activate base
- mamba create -c conda-forge -c bioconda -n snakemake snakemake
+`ml python/3.9.0` (on sherlock only)
 
-To activate env:
- conda activate snakemake
+### make an environment
 
-# Better
-https://github.com/pimentel/sherlock-notes/blob/master/README.md
+`python3 -m venv .env_snakemake` # Create environment (# Local Mac is '.env_snake_brainsss')
 
-ml python/3.9.0 (on sherlock only)
-make an environemnt and then do pip3 install snakemake
+`source .env_snakemake/bin/activate` # Activate environment
 
-python3 -m venv .env_snakemake # Local Mac is '.env_snake_brainsss'
+### Install necessary packages
 
-source .env_snakemake/bin/activate
+`pip install --upgrade pip`
 
-pip install --upgrade pip
+`pip3 install antspyx` # Install this first as it's the most fragile package
 
-pip3 install antspyx
+`pip install snakemake`
 
-pip install snakemake
+`pip install natsort`
 
-pip install natsort
+`pip install lxml`
 
-pip install lxml
+`pip install openpyxl`
 
-pip install openpyxl
+`pip install h5py`
 
-pip install h5py
+`pip install pyfiglet`
 
-pip install pyfiglet
+`pip3 install opencv-python-headless`
 
-pip3 install opencv-python-headless
+`pip install scipy`
 
-pip install scipy
+It's currently best to make your own fork of my repository as there are elements that 
+need to be changed from run to run in the source code. The goal is to not have to do that
+and just be able to call snake_brains with the relevant arguments. TBD! 
+
+In your favorite folder on sherlock type:
+
+`git clone https://github.com/DavidTadres/snake_brainsss` # Or better, your own fork! 
 
 # On sherlock had warning message:
 
@@ -50,9 +52,89 @@ pip install urllib3==1.26.6
 ```
 Warning indeed went away
 
-to use:
-ml python/3.9.0
-source .env_snakemake/bin/activate
+# Usage
+
+## On your own PC: 
+
+open terminal and type:
+
+`git clone https://github.com/DavidTadres/snake_brainsss` # Or better, your own fork!
+
+Open the repository on your laptop with some IDE, for example pycharm: https://www.jetbrains.com/pycharm/
+
+In the folder 'snake_brains/workflow/users/' make sure there's a file with your sunet id, i.e. 'dtadres.json'
+
+It needs to  have an imports_path and an dataset_path. Check dtadres.json for example
+
+To build a fly, i.e. in '/oak/stanford/groups/trc/data/David/Bruker/imports/20240206__queue__' open the
+file 'build_fly.smk'
+
+Make sure that in line #19 you have `imports_to_process = ['20240206__queue__',]`
+
+Make sure that in line #27 you have your sunet id, i.e. `current_user = 'dtadres'`
+
+### WARNING ###
+fictrac data currently problematic! TBD during meeting how to best deal with that data!
+
+### WARNING ###
+Visual stimulus not implemented TBD!
+
+commit and push from your PC to gitlab.
+
+## ON SHERLOCK
+
+Prepare the environment and pull the changes from your PC
+
+`ml python/3.9.0`
+
+`source .env_snakemake/bin/activate`
+
+`cd snake_brainsss/workflow`
+
+`git pull`
+
+To build the fly
+
+`snakemake --profile profiles/sherlock -s build_fly.smk`
+
+You will get an email when the job starts and another email when it ends (or fails, cancels etc.) 
+
+After building the fly, check if all data is in the expected folders (fictrac, anat & func)
+
+## On your own PC
+
+To do preprocessing of the fly you just built, open the 'preprocess_fly.smk' file
+
+Check line #31 and select the correct folder to process, for example `fly_folder_to_process = 'SS84990_DNa03_x_GCaMP6f/fly_005'`
+
+Check line #37 for username: `current_user = 'dtadres'`
+
+Check line 40 for fictrac fps: `fictrac_fps = 100`
+
+git commit and push to github
+
+## On Sherlock
+
+If you just built a fly ignore the first >3< lines that follow:
+
+`ml python/3.9.0`
+
+`source .env_snakemake/bin/activate`
+
+`cd snake_brainsss/workflow`
+
+`git pull` < Do that in any case!
+
+To run preprocessing
+
+`snakemake --profile profiles/sherlock -s preprocess_fly.smk`
+
+### Warning ### 
+This should take ~1-2 hours. Do not lose the connection to sherlock (e.g. by shutting down 
+the computer) or sherlock won't run the complete pipeline. Not a big problem as you can just restart
+and everything that was done won't be run again, though.
+
+# Other installation issues
 
 To install on my M2 Mac (also see: https://github.com/ANTsX/ANTsPy/issues/519)
 install homebrew: https://brew.sh/
@@ -88,6 +170,16 @@ pip install YOUR WHEEL, for example: pip install antspyx-0.3.8-cp310-cp310-macos
 # OR install python 3.9 and do:
 python3 -m venv .env_snake_brainsss
 source .env_snake_brainsss/bin/activate
+
+# I don't think this is necessary!
+# Install mamba
+https://snakemake.readthedocs.io/en/stable/tutorial/setup.html
+
+ conda activate base
+ mamba create -c conda-forge -c bioconda -n snakemake snakemake
+
+To activate env:
+ conda activate snakemake
 
 ###
 # Things that are very different to Bella's brainsss
