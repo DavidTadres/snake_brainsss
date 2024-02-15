@@ -51,12 +51,13 @@ import pathlib
 import json
 import datetime
 # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
-scripts_path = pathlib.Path(__file__).resolve()
-#print(scripts_path)
+#scripts_path = pathlib.Path(__file__).resolve()
+scripts_path = workflow.basedir # Exposes path to this file
 from brainsss import utils
 from scripts import preprocessing
 from scripts import snake_utils
 import os
+print(os.getcwd())
 
 #### KEEP for future
 # SCRATCH_DIR
@@ -592,7 +593,7 @@ rule motion_correction_parallel_processing_rule:
         moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
         par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
 
-    script: "python3 /scripts/moco_parallel.py "
+    shell: "python3 " + scripts_path + "/scripts/moco_parallel.py "
         "--fly_directory {fly_folder_to_process_oak} "
         "--brain_paths_ch1 {input.brain_paths_ch1} "
         "--brain_paths_ch2 {input.brain_paths_ch2} "
