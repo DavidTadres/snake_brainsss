@@ -56,6 +56,7 @@ scripts_path = pathlib.Path(__file__).resolve()
 from brainsss import utils
 from scripts import preprocessing
 from scripts import snake_utils
+import os
 
 #### KEEP for future
 # SCRATCH_DIR
@@ -68,7 +69,8 @@ dataset_path = pathlib.Path(settings['dataset_path'])
 imports_path = pathlib.Path(settings['imports_path'])
 
 # Define path to imports to find fly.json!
-fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
+#fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
+fly_folder_to_process_oak = pathlib.Path(os.getcwd())
 print('Analyze data in ' + repr(fly_folder_to_process_oak.as_posix()))
 
 # Read channel information from fly.json file

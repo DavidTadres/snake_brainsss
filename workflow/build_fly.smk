@@ -15,8 +15,7 @@ snakemake -s build_fly.smk --profile
 Can also only run a given rule:
 snakemake -s build_fly.smk stitch_split_nii --jobs 1 --cluster 'sbatch --partition trc --cpus-per-task 16 --ntasks 1 --mail-type=ALL'
 '''
-import os
-print(os.getcwd())
+
 # To be modified by the user
 
 #imports_to_process = ['20240201',] # Data deposited by Brukerbridge on oak
@@ -38,6 +37,7 @@ import shutil
 import json
 from brainsss import utils
 from scripts import snake_utils
+import os
 
 # Which folder to build flies from
 provided_working_directory = pathlib.Path(os.getcwd())
