@@ -28,7 +28,7 @@ import natsort
 ########################################################
 ### CHANGE THIS TO POINT TO THE FOLDER TO PREPROCESS ###
 ########################################################
-fly_folder_to_process = 'SS84990_DNa03_x_GCaMP6f/fly_007' # folder to be processed
+#fly_folder_to_process = 'SS84990_DNa03_x_GCaMP6f/fly_007' # folder to be processed
 # ONLY ONE FLY PER RUN for now. The path must be relative to
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
@@ -592,7 +592,7 @@ rule motion_correction_parallel_processing_rule:
         moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
         par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
 
-    shell: "python3 scripts/moco_parallel.py "
+    script: "python3 /scripts/moco_parallel.py "
         "--fly_directory {fly_folder_to_process_oak} "
         "--brain_paths_ch1 {input.brain_paths_ch1} "
         "--brain_paths_ch2 {input.brain_paths_ch2} "
