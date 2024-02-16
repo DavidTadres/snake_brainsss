@@ -260,3 +260,15 @@ def OLDtime_for_moco_input(wildcards, input):
     # return(input.fictrac_path.size_mb*60) DOESNT WORK!
     time_in_minutes = (input.size_mb/1000)*2.5
     return(time_in_minutes*60) # This turned out to give minutes...'''
+
+def threads_per_memory_much_more(wildcards, input):
+    """
+    It seems I now have to define the threads based on the memory requirements.
+    We get 8Gb per core so we need e.g. 2 threads if we want to use 15Gb of RAM
+    :param wildcards:
+    :param input:
+    :return:
+    """
+    calculated_memory = max(input.size_mb * 5.5, 10000)
+    cores = int(np.ceil(calculated_memory/8000))
+    return(cores)

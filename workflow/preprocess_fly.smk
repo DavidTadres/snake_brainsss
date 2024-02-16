@@ -686,7 +686,7 @@ rule zscore_rule:
     Memory Efficiency: 7.41% of 9.09 GB
     
     """
-    threads: 1
+    threads: snake_utils.threads_per_memory_much_more
     resources:
         mem_mb=snake_utils.mem_mb_much_more_times_input,
 
