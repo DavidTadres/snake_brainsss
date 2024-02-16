@@ -447,7 +447,7 @@ rule all:
 rule fictrac_qc_rule:
     """
     """
-    threads: 1
+    threads: snake_utils.threads_per_memory
     resources:
         mem_mb=snake_utils.mem_mb_times_threads,
         runtime='10m'
@@ -470,7 +470,7 @@ rule fictrac_qc_rule:
 rule bleaching_qc_rule:
     """
     """
-    threads: 2
+    threads: snake_utils.threads_per_memory_less
     resources:
         mem_mb=snake_utils.mem_mb_less_times_input, # This is probably overkill todo decrease!
         runtime='10m' # In my test cases it was never more than 5 minutes!
@@ -516,7 +516,7 @@ rule make_mean_brain_rule:
         mean_brain = mean(brain)
         save.mean_brain(output)
     """
-    threads: 2  # It seems to go a bit faster. Can probably set to 1 if want to save cores
+    threads: snake_utils.threads_per_memory_less
     resources:
         mem_mb=snake_utils.mem_mb_less_times_input,  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
         runtime='10m' # should be enough
@@ -805,7 +805,7 @@ rule temporal_high_pass_filter_rule:
     Memory Utilized: 7.50 GB
     Memory Efficiency: 59.48% of 12.60 GB
     """
-    threads: 2 # Will be overruled if more than 16Gb of memory are requested.
+    threads: snake_utils.threads_per_memory_more
     resources:
         mem_mb=snake_utils.mem_mb_more_times_input,
         runtime='90m' # The call to 1d smooth takes quite a bit of time! Todo< make dynamic for longer recordings!
@@ -837,7 +837,7 @@ rule correlation_rule:
     """
 
     """
-    threads: 1
+    threads: snake_utils.threads_per_memory_less
     resources:
         mem_mb=snake_utils.mem_mb_less_times_input,
         runtime='60m' # vectorization made this super fast
@@ -874,7 +874,7 @@ rule STA_rule:
 rule moco_mean_brain_rule:
     """
     """
-    threads: 2
+    threads: snake_utils.threads_per_memory
     resources:
         mem_mb=snake_utils.mem_mb_times_input,
         runtime='10m'# should be enough
@@ -898,7 +898,7 @@ rule moco_mean_brain_rule:
 rule clean_anatomy_rule:
     """
     """
-    threads: 2
+    threads: snake_utils.threads_per_memory_much_more
     resources:
         mem_mb=snake_utils.mem_mb_much_more_times_input, # Todo, optimize memory usage of this function! #mem_mb_more_times_input #snake_utils.mem_mb_times_input # OOM!!!
         runtime='5m'
@@ -942,7 +942,7 @@ rule make_supervoxels_rule:
     Memory Utilized: 22.95 GB
     Memory Efficiency: 45.36% of 50.60 GB
     """
-    threads: 2
+    threads: snake_utils.threads_per_memory
     resources:
         mem_mb=snake_utils.mem_mb_times_input,
         runtime='20m'
@@ -970,7 +970,7 @@ rule func_to_anat_rule:
     """
   
     """
-    threads: 1
+    threads: snake_utils.threads_per_memory_more
     resources:
         mem_mb=snake_utils.mem_mb_more_times_input,
         runtime='10m' # should be enough, is super quick already
@@ -1011,7 +1011,7 @@ rule func_to_anat_rule:
 rule anat_to_atlas:
     """
     """
-    threads: 1
+    threads: snake_utils.threads_per_memory_more
     resources:
         mem_mb=snake_utils.mem_mb_more_times_input,
         runtime='10m'
@@ -1055,7 +1055,7 @@ rule apply_transforms_rule:
     """
     Not finished/tested yet!
     """
-    threads: 2
+    threads: snake_utils.threads_per_memory
     resources: mem_mb=snake_utils.mem_mb_times_input
     input:
         path_to_read_fixed=atlas_path,
