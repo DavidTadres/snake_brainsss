@@ -1,3 +1,6 @@
+parameters:
+  user: dtadres
+
 cluster:
   mkdir -p logs/`date +"%Y-%m-%d"` &&
   sbatch

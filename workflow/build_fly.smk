@@ -44,7 +44,7 @@ provided_working_directory = pathlib.Path(os.getcwd())
 
 settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
-imports_path = pathlib.Path(settings['imports_path'])
+#imports_path = pathlib.Path(settings['imports_path'])
 
 all_imports_paths = []
 all_fly_dataset_paths = []
