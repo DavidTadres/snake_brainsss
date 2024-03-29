@@ -1,6 +1,9 @@
 from scripts import hello_world
 
 # Can't put a rule into a loop!!!
+import argparse
+
+print(config['user'])
 
 print('hello world')
 """rule class_test_rule:
