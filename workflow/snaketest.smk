@@ -7,8 +7,7 @@ print('hello world')
     input:
         path_1 = '/Users/dtadres/Documents/test.txt',
         #path_2 = '/Users/dtadres/Documents/test2.txt'
-    shell: "python3 scripts/hello_world.py --input {input} --ouput 'help.txt'""""
-
+    shell: "python3 scripts/hello_world.py --input {input} --ouput 'help.txt'"""
 """for i in range(3):
 
     rule HelloSnake:
