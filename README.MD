@@ -66,12 +66,11 @@ In the folder 'snake_brains/workflow/users/' make sure there's a file with your 
 
 It needs to  have an imports_path and an dataset_path. Check dtadres.json for example
 
-To build a fly, i.e. in '/oak/stanford/groups/trc/data/David/Bruker/imports/20240206__queue__' open the
-file 'build_fly.smk'
+To build a fly, i.e. in '/oak/stanford/groups/trc/data/David/Bruker/imports/20240326' 
 
-Make sure that in line #19 you have `imports_to_process = ['20240206__queue__',]`
-
-Make sure that in line #27 you have your sunet id, i.e. `current_user = 'dtadres'`
+type:
+`snakemake --profile profiles/simple_slurm -s build_fly.smk --directory /oak/stanf
+ord/groups/trc/data/David/Bruker/imports/20240326`
 
 ### WARNING ###
 fictrac data currently problematic! TBD during meeting how to best deal with that data!
