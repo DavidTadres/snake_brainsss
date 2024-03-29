@@ -5,7 +5,7 @@ https://github.com/pimentel/sherlock-notes/blob/master/README.md (maybe useful i
 
 ### make an environment
 
-`python3 -m venv .env_snakemake` # Create environment (# Local Mac is '.env_snake_brainsss')
+`python3 -m venv .env_snakemake` # Create environment (#Note for myself: Local Mac is '.env_snake_brainsss')
 
 `source .env_snakemake/bin/activate` # Activate environment
 
@@ -31,154 +31,128 @@ https://github.com/pimentel/sherlock-notes/blob/master/README.md (maybe useful i
 
 `pip install scipy`
 
-It's currently best to make your own fork of my repository as there are elements that 
-need to be changed from run to run in the source code. The goal is to not have to do that
-and just be able to call snake_brains with the relevant arguments. TBD! 
-
 In your favorite folder on sherlock type:
 
-`git clone https://github.com/DavidTadres/snake_brainsss` # Or better, your own fork! 
-
-# On sherlock had warning message:
-
-did:
-pip list showed that I had urllib3==2.1.0 installed
-
-https://stackoverflow.com/questions/76187256/importerror-urllib3-v2-0-only-supports-openssl-1-1-1-currently-the-ssl-modu
-suggested to just do:
-
-```shell
-pip install urllib3==1.26.6
-```
-Warning indeed went away
+`git clone https://github.com/DavidTadres/snake_brainsss` 
 
 # Usage
 
-## On your own PC: 
+## Building flies
 
-open terminal and type:
+Before the code works as expected, a config file with you name needs to be prepared. It can be
+arbitrarily named, just remember the name.
 
-`git clone https://github.com/DavidTadres/snake_brainsss` # Or better, your own fork!
+The config file is in the folder 'users' and contains two lines:
 
-Open the repository on your laptop with some IDE, for example pycharm: https://www.jetbrains.com/pycharm/
+1) The first line points to the fictrac data path.
 
-In the folder 'snake_brains/workflow/users/' make sure there's a file with your sunet id, i.e. 'dtadres.json'
+2) The second line defines the root path where all the preprocessed data lives. 
 
-It needs to  have an imports_path and an dataset_path. Check dtadres.json for example
+See an existing file, i.e. 'dtadres.json' for an example.
 
-To build a fly, i.e. in '/oak/stanford/groups/trc/data/David/Bruker/imports/20240326' 
+Before building your first fly, please read this part carefully to make sure it'll run as expected:
 
-type:
-`snakemake --profile profiles/simple_slurm -s build_fly.smk --directory /oak/stanf
-ord/groups/trc/data/David/Bruker/imports/20240326`
+1) fictrac: Your fictrac data must be in the folder define in the 'user.json' file. It must have the 
+   following name: DATE_FLY_FUNC
+   
+   For example if you want to build the flies in the imports folder 
+   "/oak/stanford/groups/trc/data/David/Bruker/imports/20240326" you'll see that there are 4 flies in 
+   that folder.
 
-### WARNING ###
-fictrac data currently problematic! TBD during meeting how to best deal with that data!
+   Each of those should have a fictrac folder. For the script to associate the correct fictrac data with
+   the imaging data you must rename the fictrac folders to:
+   "/oak/stanford/groups/trc/data/David/Bruker/Fictrac/20240328_fly1_func0"
+   
+   Since it's possible to have more than one 'func' folder per fly, you must define which imaging data 
+   a particular fictrac dataset is associated with. 
 
-### WARNING ###
-Visual stimulus not implemented TBD!
+2) Each fly must have a 'fly.json' in the 'imports' folder. For example, in  
+   ""/oak/stanford/groups/trc/data/David/Bruker/imports/20240326/fly1" you will find such a 
+   fly.json file. 
 
-commit and push from your PC to gitlab.
+   The file contains 3 essential and several self-explanatory optional fields. Here we focus on 
+   the essentials:
 
-## ON SHERLOCK
+   a) genotype - this is essential because the flybuilder will group flies per genotype. For example,
+   if genotype is "SS84990_DNa03_x_GCaMP6f" the fly builder will go to the 'dataset_folder' defined in the
+   user.json (for dtadres.json that would be "/oak/stanford/groups/trc/data/David/Bruker/preprocessed") and
+   create a folder "SS84990_DNa03_x_GCaMP6f" and deposit 'fly_001, fly_002...' in there.
+   
+   ! Hence, even a slight change in the genotype can be confusing as you'll create a lot of genotype folder.
+   Make sure to be consistent !
+   
+   b) anatomy_channel - This is the static imaging channel: For example if we have tdTomato on Channel 1 and GCaMP 
+   on channel 2, you would type "channel_1" (exactly like this!). There currently can only be a single 
+   anatomy channel for snakebrainsss to work as expected. 
+   
+   c) functiona_channel - This is the dynamic imaging channel. For example if we have tdTomato on Channel 1 and GCaMP 
+   on channel 2, you would type "[channel_2]" (exactly like this!). 
+   
+   If you have two imaging channels, i.e.
+   rGECI on Channel 1, gCarvi on channel 2 and mCardinal on Channel 3 you would type
+   "[channel_1, channel_2]" (exactly like this!). Note that this hasn't been tested yet.
 
-Prepare the environment and pull the changes from your PC
+Now you are ready to build a fly. 
+ 
+### Example: 
+
+to build flies in this folder'/oak/stanford/groups/trc/data/David/Bruker/imports/20240326' 
+
+On Sherlock type:
 
 `ml python/3.9.0`
 
 `source .env_snakemake/bin/activate`
 
-`cd snake_brainsss/workflow`
+cd to your snakebrainsss folder. If you don't know what this means try:
 
-`git pull`
+`cd snake_brainsss/workflow/`
 
-To build the fly
+Then type:
+`snakemake --config user=dtadres --profile profiles/simple_slurm -s build_fly.smk --directory /oak/stanf
+ord/groups/trc/data/David/Bruker/imports/20240326 -np`
 
-`snakemake --profile profiles/sherlock -s build_fly.smk`
+The '-np' at the end makes this a test run. Check the output.
+
+It will says which flies it wants to create in the genotype folder. If it looks ok, re-run the code
+without the '-np' flag:  
+
+`snakemake --config user=dtadres --profile profiles/simple_slurm -s build_fly.smk --directory /oak/stanf
+ord/groups/trc/data/David/Bruker/imports/20240326`
+
+Building the flies will take a few minutes (~2 minutes per fly)
 
 You will get an email when the job starts and another email when it ends (or fails, cancels etc.) 
 
-After building the fly, check if all data is in the expected folders (fictrac, anat & func)
+## Preprocess flies
 
-## On your own PC
+Before continuing, make sure that the fictrac and imaging data is in the expected folder!
 
-To do preprocessing of the fly you just built, open the 'preprocess_fly.smk' file
+### WARNING ###
+Visual stimulus not implemented TBD!
+### WARNING ###
+Fictrac fps is currently hardcoded to 100 fps (preprocess_fly.smk, line 37). To be changed in
+the future
+### WARNING ###
 
-Check line #31 and select the correct folder to process, for example `fly_folder_to_process = 'SS84990_DNa03_x_GCaMP6f/fly_005'`
+Once the fly is built, the preprocessing is straightforward. For example, to preprocess fl
+"oak/stanford/groups/trc/data/David/Bruker/preprocessed/SS84990_DNa03_x_GCaMP6f/fly_037" you 
+just type:
 
-Check line #37 for username: `current_user = 'dtadres'`
+`snakemake --config user=dtadres --profile profiles/simple_slurm -s preprocess.smk --directory /oak/stanf
+ord/groups/trc/data/David/Bruker/preprocessed/SS84990_DNa03_x_GCaMP6f/fly_037`
 
-Check line 40 for fictrac fps: `fictrac_fps = 100`
+This should take ~2 hours and you should have the same output as with the original brainsss.
 
-git commit and push to github
+You will get an email when the job starts and another email when it ends (or fails, cancels etc.). This is 
+useful for debugging so that it's set to send email. To be discussed to turn it off in the future.
 
-## On Sherlock
+It's easy to automatically move all incoming emails into a given folder so that snakebrainsss doesn't
+clog you inbox. 
 
-If you just built a fly ignore the first >3< lines that follow:
 
-`ml python/3.9.0`
 
-`source .env_snakemake/bin/activate`
 
-`cd snake_brainsss/workflow`
-
-`git pull` < Do that in any case!
-
-To run preprocessing
-
-`snakemake --profile profiles/sherlock -s preprocess_fly.smk`
-
-### Warning ### 
-This should take ~1-2 hours. Do not lose the connection to sherlock (e.g. by shutting down 
-the computer) or sherlock won't run the complete pipeline. Not a big problem as you can just restart
-and everything that was done won't be run again, though.
-
-# Other installation issues
-
-To install on my M2 Mac (also see: https://github.com/ANTsX/ANTsPy/issues/519)
-install homebrew: https://brew.sh/
-```shell
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install libpng
-```
-in environment:
-pip install cmake
-
-pip install itk
-
-pip install Downloads/antspyx-0.3.8-cp310-cp310-macosx_13_0_arm64.whl
-
-pip install snakemake
-
-pip install h5py
-
-pip install pyfiglet
-
-pip install natsort
-
-Create environment
-```shell
-python3 -m venv .env_snake_brainsss
-source .env_snake_brainsss/bin/activate
-```
-
-download wheel for arm Mac https://github.com/dipterix/rpyANTs/releases/tag/0.0.1.9000
-```shell
-pip install YOUR WHEEL, for example: pip install antspyx-0.3.8-cp310-cp310-macosx_13_0_arm64.whl
-```
-# OR install python 3.9 and do:
-python3 -m venv .env_snake_brainsss
-source .env_snake_brainsss/bin/activate
-
-# I don't think this is necessary!
-(### Install mamba
-https://snakemake.readthedocs.io/en/stable/tutorial/setup.html
-
- conda activate base
- mamba create -c conda-forge -c bioconda -n snakemake snakemake
-
-To activate env:
- conda activate snakemake)
 
 ###
 # Things that are very different to Bella's brainsss
@@ -248,3 +222,66 @@ To activate env:
 3) Keep track of dtypes more consistenly. -> Done
 4) Correct axis metadata in nii files! Problem is that for us z=0 is posterior whereas for field it's anterior.
 5) Resultion/voxel size should go into the nii file which should help with alignments.
+
+
+# FAQ 
+# On sherlock had warning message:
+
+did:
+pip list showed that I had urllib3==2.1.0 installed
+
+https://stackoverflow.com/questions/76187256/importerror-urllib3-v2-0-only-supports-openssl-1-1-1-currently-the-ssl-modu
+suggested to just do:
+
+```shell
+pip install urllib3==1.26.6
+```
+Warning indeed went away
+
+
+# Other installation issues
+
+To install on my M2 Mac (also see: https://github.com/ANTsX/ANTsPy/issues/519)
+install homebrew: https://brew.sh/
+```shell
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install libpng
+```
+in environment:
+pip install cmake
+
+pip install itk
+
+pip install Downloads/antspyx-0.3.8-cp310-cp310-macosx_13_0_arm64.whl
+
+pip install snakemake
+
+pip install h5py
+
+pip install pyfiglet
+
+pip install natsort
+
+Create environment
+```shell
+python3 -m venv .env_snake_brainsss
+source .env_snake_brainsss/bin/activate
+```
+
+download wheel for arm Mac https://github.com/dipterix/rpyANTs/releases/tag/0.0.1.9000
+```shell
+pip install YOUR WHEEL, for example: pip install antspyx-0.3.8-cp310-cp310-macosx_13_0_arm64.whl
+```
+# OR install python 3.9 and do:
+python3 -m venv .env_snake_brainsss
+source .env_snake_brainsss/bin/activate
+
+# I don't think this is necessary!
+(### Install mamba
+https://snakemake.readthedocs.io/en/stable/tutorial/setup.html
+
+ conda activate base
+ mamba create -c conda-forge -c bioconda -n snakemake snakemake
+
+To activate env:
+ conda activate snakemake)

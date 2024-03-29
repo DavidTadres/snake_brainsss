@@ -25,8 +25,7 @@ snakemake -s build_fly.smk stitch_split_nii --jobs 1 --cluster 'sbatch --partiti
 # do follow up analysis, enter the fly folder to be analyzed here.
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 
-# YOUR SUNET ID
-current_user = 'jcsimon'
+
 
 # fps of fictrac recording!
 #fictrac_fps = 50
@@ -42,9 +41,12 @@ import os
 # Which folder to build flies from
 provided_working_directory = pathlib.Path(os.getcwd())
 
+current_user = config['user'] # this is whatever is entered when calling snakemake, i.e.
+# snakemake --profile profiles/simple_slurm -s snaketest.smk --config user=jcsimon would
+# yield 'jcsimon' here
 settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
-#imports_path = pathlib.Path(settings['imports_path'])
+fictrac_folder = pathlib.Path(settings['fictrac_path'])
 
 all_imports_paths = []
 all_fly_dataset_paths = []
@@ -126,7 +128,7 @@ rule fly_builder_rule:
                 runtime='10m' # should generally be sufficient
 
     run:
-        build_fly.fly_builder(user=current_user,
-                                  import_dirs= all_imports_paths,
-                                  dataset_dirs = all_fly_dataset_paths
+        build_fly.fly_builder(fictrac_folder=fictrac_folder,
+            import_dirs= all_imports_paths,
+            dataset_dirs = all_fly_dataset_paths
                                                  )

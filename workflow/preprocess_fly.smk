@@ -33,9 +33,6 @@ import natsort
 # what you set in your 'user/username.json' file under 'dataset_path'
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
 
-# the name of the file in 'user' that you want to use. Ideally it's your SUNet ID
-current_user = 'jcsimon'
-
 #>>>>
 fictrac_fps = 100 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE FUTURE!!!!
 # TODO!!!! Instead of just believing a framerate, use the voltage signal recorded during imaging
@@ -65,6 +62,9 @@ print(os.getcwd())
 #print(SCRATCH_DIR)
 ####
 
+current_user = config['user'] # this is whatever is entered when calling snakemake, i.e.
+# snakemake --profile profiles/simple_slurm -s snaketest.smk --config user=jcsimon would
+# yield 'jcsimon' here
 settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
 imports_path = pathlib.Path(settings['imports_path'])

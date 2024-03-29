@@ -23,7 +23,7 @@ from brainsss import utils
 ####################
 WIDTH = 120  # This is used in all logging files
 
-def fly_builder(user, import_dirs, dataset_dirs):
+def fly_builder(fictrac_folder, import_dirs, dataset_dirs):
     """
     Move folders from imports to fly dataset - need to restructure folders.
     This is based on Bella's 'fly_builder.py' script
@@ -67,7 +67,7 @@ def fly_builder(user, import_dirs, dataset_dirs):
             # Copy fly data
             ####
             fly_dirs_dict = copy_fly(
-                current_import_dir, current_dataset_dir, printlog, user, fly_dirs_dict
+                current_import_dir, current_dataset_dir, printlog, fictrac_folder, fly_dirs_dict
             )
 
             ###
@@ -175,7 +175,7 @@ def add_date_to_fly(fly_folder):
         )
 
 
-def copy_fly(import_dir, dataset_dir, printlog, user, fly_dirs_dict):
+def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
     """
     #####
     # Todo - make sure the scratch folder is empty!!!!!
@@ -259,7 +259,7 @@ def copy_fly(import_dir, dataset_dir, printlog, user, fly_dirs_dict):
                     fly_dirs_dict = copy_fictrac(
                         current_dataset_folder,
                         printlog,
-                        user,
+                        fictrac_folder,
                         current_import_imaging_folder,
                         fly_dirs_dict,
                     )
@@ -495,19 +495,13 @@ def copy_visual(destination_region, printlog):
         json.dump(unique_stimuli, f, indent=4)"""
 
 
-def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
+def copy_fictrac(destination_region, printlog, fictrac_folder, source_fly, fly_dirs_dict):
     # The target file will be called 'fictrac_behavior_data.dat' because it makes
     # handling files much easier in the snakefile.
     # Make fictrac folder
     fictrac_destination = pathlib.Path(destination_region, "fictrac")
     fictrac_destination.mkdir(exist_ok=True)
     # Different users have different rule on what to do with the data
-    if user == "brezovec":
-        user = "luke"
-    if user == "yandanw":
-        user = "luke"
-    if user == "ilanazs":
-        user = "luke"
     if user == "dtadres":
         # TODO!!!
         fictrac_folder = pathlib.Path(
