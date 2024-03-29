@@ -545,6 +545,43 @@ def copy_fictrac(destination_region, printlog, user, source_fly, fly_dirs_dict):
                 fly_dirs_dict[
                     destination_region.name + " Fictrac "
                 ] = current_fly_dir_dict
+
+    if user == 'jcsimon':
+        fictrac_folder = pathlib.Path(
+            "/oak/stanford/groups/trc/data/Jacob/Fictrac"
+        )
+        # when doing post-hoc fictrac, Bella's code where one compare the recording
+        # timestamps of imaging and fictrac doesn't work anymore.
+        # I instead use a deterministic file structure:
+        # for example for fly 20231201\fly2\func1 imaging data, fictrac data must
+        # be in the folder 20231201_fly2_func1. There must only be a single dat file in that folder.
+        source_path = pathlib.Path(
+            fictrac_folder,
+            source_fly.parts[-3]
+            + "_"
+            + source_fly.parts[-2]
+            + "_"
+            + source_fly.parts[-1],
+        )
+        for current_file in source_path.iterdir():
+            if "dat" in current_file.name:
+                # width = 120
+                # source_path = os.path.join(source_path, file)
+                dat_path = current_file
+                # target_path = pathlib.Path(fictrac_destination, current_file.name)
+                target_path = pathlib.Path(
+                    fictrac_destination, "fictrac_behavior_data.dat"
+                )
+                to_print = str(target_path)
+                printlog(f"Transfering file{to_print:.>{WIDTH - 16}}")
+
+                # put fictrac file path in into fly_dirs_dict
+                current_fly_dir_dict = str(target_path).split(
+                    fictrac_destination.parents[1].name
+                )[-1]
+                fly_dirs_dict[
+                    destination_region.name + " Fictrac "
+                ] = current_fly_dir_dict
     else:
         # fictrac_folder = os.path.join("/oak/stanford/groups/trc/data/fictrac", user)
         fictrac_folder = pathlib.Path("/oak/stanford/groups/trc/data/fictrac", user)

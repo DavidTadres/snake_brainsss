@@ -34,7 +34,7 @@ import natsort
 # in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
 
 # the name of the file in 'user' that you want to use. Ideally it's your SUNet ID
-current_user = 'dtadres'
+current_user = 'jcsimon'
 
 #>>>>
 fictrac_fps = 100 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE FUTURE!!!!
@@ -860,7 +860,7 @@ rule correlation_rule:
                                 fictrac_fps=fictrac_fps,
                                 metadata_path=input.metadata_path,
                                 fictrac_path=input.fictrac_path,
-                                fictrac_resolution=10 # copy paste from brainsss! seems to be ms
+                                 
             )
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_correlation')

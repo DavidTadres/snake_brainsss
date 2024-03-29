@@ -26,7 +26,7 @@ snakemake -s build_fly.smk stitch_split_nii --jobs 1 --cluster 'sbatch --partiti
 # ONLY ONE FLY PER RUN. Reason is to cleanly separate log files per fly
 
 # YOUR SUNET ID
-current_user = 'dtadres'
+current_user = 'jcsimon'
 
 # fps of fictrac recording!
 #fictrac_fps = 50

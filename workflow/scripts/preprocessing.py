@@ -702,7 +702,7 @@ def correlation(
     To speed the correlation up, I used only the parts from the scipy pearsonr function we need.
     One difference is that we only work in float32 space. The scipy function would cast everything as float64,
     doubling the memory requirements.
-    When I subtract the vectorized result with the looped scipy pearson result I gat a max(diff) of 9.8e-8. This
+    When I subtract the vectorized result with the looped scipy pearson result I get a max(diff) of 9.8e-8. This
     should not be relevant for us.
 
     See script 'pearson_correlation.py' - the vectorized version should take 0.03% of the time the
@@ -784,7 +784,7 @@ def correlation(
             brain_proxy = nib.load(current_dataset_path)
             brain = np.asarray(brain_proxy.dataobj, dtype=DTYPE)
             printlog(
-                "Loaded nii file - BEWARE, I have not tested this. Better to use h5 files!"
+                "Loaded nii file - note that this was only tested with h5 files. nii seems to work, though."
             )
         elif ".h5" in current_dataset_path.name:
             with h5py.File(current_dataset_path, "r") as hf:
@@ -875,79 +875,13 @@ def correlation(
                 current_dataset_path.name, behavior
             )
         )
-
-        '''ORIGINAL = False
-        if ORIGINAL:
-            del brain  # remove brain from memory
-            del corr_brain
-            time.sleep(2)
-            with h5py.File(current_dataset_path, "r") as hf:
-                brain = hf["data"][:]  # load everything into memory!
-
-            from scipy.stats import pearsonr
-
-            # Keep for a few tests for now
-            ##### BELLAS LOOP CODE BELOW ####
-            # Get brain size
-            x_dim = brain.shape[0]
-            y_dim = brain.shape[1]
-            z_dim = brain.shape[2]
-
-            idx_to_use = list(range(timestamps.shape[0]))
-            # timestamps.shape > (602, 49)
-            # So we'd get a list going from 0 - 601
-
-            corr_brain = np.zeros((x_dim, y_dim, z_dim))
-            # For z dimension
-            for z in range(z_dim):
-                ### interpolate fictrac to match the timestamps of this slice
-                printlog(f"{z}")
-                # Why in here and what does z do?
-                fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(
-                    fictrac_raw,
-                    fictrac_fps,
-                    fictrac_resolution,
-                    expt_len,
-                    behavior,
-                    timestamps=timestamps,
-                    z=z,
-                )
-                # for x dimension
-                for i in range(x_dim):
-                    # for y dimension
-                    for j in range(y_dim):
-                        # nan to num should be taken care of in zscore, but checking here for some already processed brains
-                        if np.any(np.isnan(brain[i, j, z, :])):
-                            printlog(f"warning found nan at x = {i}; y = {j}; z = {z}")
-                            corr_brain[i, j, z] = 0
-                        elif len(np.unique(brain[i, j, z, :])) == 1:
-                            #     if np.unique(brain[i,j,z,:]) != 0:
-                            #         printlog(F'warning found non-zero constant value at x = {i}; y = {j}; z = {z}')
-                            corr_brain[i, j, z] = 0
-                        else:
-                            # idx_to_use can be used to select a subset of timepoints
-                            corr_brain[i, j, z] = pearsonr(
-                                fictrac_interp[idx_to_use],
-                                brain[i, j, z, :][idx_to_use],
-                            )[0]
-
-            save_file = pathlib.Path(
-                current_save_path.parent,
-                current_save_path.name.split(".nii")[0] + "_testing.nii",
-            )
-            printlog("Saving testfile to" + repr(save_file))
-            aff = np.eye(4)
-            object_to_save = nib.Nifti1Image(corr_brain, aff)
-            # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
-            object_to_save.to_filename(save_file)
-'''
 def temporal_high_pass_filter(
         fly_directory,
         dataset_path,
         temporal_high_pass_filtered_path
 ):
     """
-    Filters z-scored brain with scipt.ndimage.gaussian_filter1d in time dimension.
+    Filters z-scored brain with scipy.ndimage.gaussian_filter1d in time dimension.
 
     Todo: Currently sigma is set to 200. It should be dependent on the recording frequency (per volume)!
 
@@ -1041,57 +975,8 @@ def temporal_high_pass_filter(
             printlog('Successfully saved ' + current_temporal_high_pass_filtered_path.as_posix())
 
         else:
-           with h5py.File(current_dataset_path, "r") as hf:
-            data = hf[
-                "data"
-            ]  # this doesn't actually LOAD the data - it is just a proxy
-            dims = np.shape(data)
-            printlog("Data shape is {}".format(dims))
-
-            # steps = list(range(0, dims[-1], stepsize))
-            # steps.append(dims[-1])
-            # Here we create a document we are going to write to in the loop
-            with h5py.File(current_temporal_high_pass_filtered_path, "w") as f:
-                # dset = f.create_dataset('data', dims, dtype='float32', chunks=True) # Original
-                _ = f.create_dataset("data", dims, dtype=DTYPE)
-
-                data_mean = np.mean(data, axis=-1)
-                smoothed_data = ndimage.gaussian_filter1d(
-                    data, sigma=200, axis=-1, truncate=1
-                )  # This for sure makes a copy of
-                # the array, doubling memory requirements
-
-                # To save memory, do in-place operations where possible
-                # data_high_pass = data - smoothed_data + data_mean[:,:,:,None]
-                data -= smoothed_data
-                data += data_mean[:, :, :, None]
-                f["data"][:, :, :, :] = data
-                """for chunk_num in range(len(steps)):
-                    print('cunk_num' + repr(chunk_num))
-                    #t0 = time.time()
-                    if chunk_num + 1 <= len(steps) - 1:
-                        chunkstart = steps[chunk_num]
-                        chunkend = steps[chunk_num + 1]
-                        chunk = data[:, :, chunkstart:chunkend, :]
-                        # Check if we really are getting a [128,256,2,3000] chunk
-                        # over the z dimension. Interesting choice? Why not over time?
-                        # > because we want to filter over time. Could choose any dimension except time!
-                        chunk_mean = np.mean(chunk, axis=-1)
-                        print("chunk_mean" + repr(chunk_mean))
-
-                        ### SMOOTH ###
-                        #t0 = time.time()
-                        # I'm pretty sure this is identical to just filtering over the whole brain at once
-                        smoothed_chunk = gaussian_filter1d(chunk, sigma=200, axis=-1, truncate=1)
-
-                        ### Apply Smooth Correction ###
-                        #t0 = time.time()
-                        chunk_high_pass = chunk - smoothed_chunk + chunk_mean[:, :, :, None]  # need to add back in mean to preserve offset
-
-                        ### Save ###
-                        time.t0 = time()
-                        f['data'][:, :, chunkstart:chunkend, :] = chunk_high_pass
-                        """
+            printlog('Function currently only works with nii as output')
+            printlog('this will probably break')
 
     printlog("high pass done")
 
@@ -1207,106 +1092,9 @@ def zscore(fly_directory, dataset_path, zscore_path):
             zscore_nifty.to_filename(current_zscore_path)
 
             printlog('Saved z-score image as ' + current_zscore_path.as_posix())
-
         else:
-            # OLD H5 VERSION
-            # Open file - Must keep file open while accessing it.
-            # I'm pretty sure we don't overwrite it because we open it as r.
-            # This should mean that we are reading stuff into memory, of course
-            with h5py.File(current_dataset_path, "r") as hf:
-                data = hf[
-                    "data"
-                ]  # this doesn't actually LOAD the data - it is just a proxy
-                dims = np.shape(data)
-
-                printlog("Data shape is {}".format(dims))
-
-                '''if RUN_LOOPED:
-                    save_loop = pathlib.Path(current_zscore_path.parent, current_zscore_path.name + 'loop.h5')
-                    ####
-                    # Bella's code that allows chunking
-                    ###
-                    running_sum = np.zeros(dims[:3])
-                    running_sumofsq = np.zeros(dims[:3])
-                    steps = list(range(0, dims[-1], stepsize))
-                    steps.append(dims[-1])
-    
-                    for chunk_num in range(len(steps)):
-                        if chunk_num + 1 <= len(steps) - 1:
-                            chunkstart = steps[chunk_num]
-                            chunkend = steps[chunk_num + 1]
-                            chunk = data[:, :, :, chunkstart:chunkend]
-                            running_sum += np.sum(chunk, axis=3)
-                            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-                    meanbrain = running_sum / dims[-1]
-    
-                    np.save('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/loop_meanbrain.npy',
-                            meanbrain)
-    
-                    for chunk_num in range(len(steps)):
-                        if chunk_num + 1 <= len(steps) - 1:
-                            chunkstart = steps[chunk_num]
-                            chunkend = steps[chunk_num + 1]
-                            chunk = data[:, :, :, chunkstart:chunkend]
-                            running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-                            # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")
-                    final_std = np.sqrt(running_sumofsq / dims[-1])
-                    np.save('/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_002/loopfinal_std.npy',
-                            final_std)
-    
-                    ### Calculate zscore and save ###
-    
-                    with h5py.File(save_loop, 'w') as f:
-                        dset = f.create_dataset('data', dims, dtype='float32', chunks=True)
-    
-                        for chunk_num in range(len(steps)):
-                            if chunk_num + 1 <= len(steps) - 1:
-                                chunkstart = steps[chunk_num]
-                                chunkend = steps[chunk_num + 1]
-                                chunk = data[:, :, :, chunkstart:chunkend]
-                                running_sumofsq += np.sum((chunk - meanbrain[..., None]) ** 2, axis=3)
-                                zscored = (chunk - meanbrain[..., None]) / final_std[..., None]
-                                f['data'][:, :, :, chunkstart:chunkend] = np.nan_to_num(
-                                    zscored)  ### Added nan to num because if a pixel is a constant value (over saturated) will divide by 0
-                                # printlog(F"vol: {chunkstart} to {chunkend} time: {time()-t0}")'''
-                #else:
-                # Then do vectorized version
-                # I think we don't have to worry about memory too much - since we only work
-                # with one h5 file at a time and 30 minutes at float32 is ~20Gb
-                # Expect a 4D array, xyz and the fourth dimension is time!
-                meanbrain = np.nanmean(data, axis=3, dtype=DTYPE_CACLULATIONS)
-
-                # Might get out of memory error, test!
-                final_std = np.std(data, axis=3, dtype=DTYPE_CACLULATIONS) # With float64 need much more memory
-
-                ### Calculate zscore and save ###
-
-                # Calculate z-score
-                # z_scored = (data - meanbrain[:,:,:,np.newaxis])/final_std[:,:,:,np.newaxis]
-                # The above works, is easy to read but makes a copy in memory. Since brain data is
-                # huge (easily 20Gb) we'll avoid making a copy by doing in place operations to save
-                # memory! See docstring for more information
-
-                # data will be data-meanbrain after this operation
-                data -= meanbrain[:, :, :, np.newaxis]
-                # Then it will be divided by std which leads to zscore
-                data /= final_std[:, :, :, np.newaxis]
-                # convert nan to zeros - from brainsss
-                data=np.nan_to_num(data)
-                # Save file as h5 file
-                with h5py.File(current_zscore_path, "w") as file:
-                    dset = file.create_dataset("data", dims, data=data, dtype=DTYPE
-                    )  # , dims, chunks=False)
-
-                if len(dataset_path) > 1:
-                    del data
-                    printlog(
-                        "Sleeping for 10 seconds before loading the next functional channel"
-                    )
-                    time.sleep(
-                        10
-                    )  # allow garbage collector to start cleaning up memory before potentially loading
-                    # the other functional channel!
+            printlog('Function currently only works with nii as output')
+            printlog('this will probably break')
 
     printlog("z-scoring done")
 
