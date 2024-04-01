@@ -85,12 +85,12 @@ Before building your first fly, please read this part carefully to make sure it'
    on channel 2, you would type "channel_1" (exactly like this!). There currently can only be a single 
    anatomy channel for snakebrainsss to work as expected. 
    
-   c) functiona_channel - This is the dynamic imaging channel. For example if we have tdTomato on Channel 1 and GCaMP 
-   on channel 2, you would type "[channel_2]" (exactly like this!). 
+   c) functional_channel - This is the dynamic imaging channel. For example if we have tdTomato on Channel 1 and GCaMP 
+   on channel 2, you would type "['channel_2']" (exactly like this!). 
    
    If you have two imaging channels, i.e.
    rGECI on Channel 1, gCarvi on channel 2 and mCardinal on Channel 3 you would type
-   "[channel_1, channel_2]" (exactly like this!). Note that this hasn't been tested yet.
+   "['channel_1', 'channel_2']" (exactly like this!). Note that this hasn't been tested yet.
 
 Now you are ready to build a fly. 
  
