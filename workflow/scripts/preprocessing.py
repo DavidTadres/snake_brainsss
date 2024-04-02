@@ -689,8 +689,7 @@ def correlation(
     save_path,
     fictrac_fps,
     metadata_path,
-    fictrac_path,
-    fictrac_resolution
+    fictrac_path
 ):
     """
     Correlate z-scored brain activity with behavioral activity.
@@ -770,6 +769,7 @@ def correlation(
     expt_len = (fictrac_raw.shape[0] / fictrac_fps) * 1000
     # how many datapoints divide by how many times per seconds,in ms
 
+    fictrac_resolution = (1/fictrac_fps) * 1000 # in ms
     ### interpolate fictrac to match the timestamps from the microscope!
     fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(
         fictrac_raw, fictrac_fps, fictrac_resolution, expt_len, behavior, timestamps=timestamps
