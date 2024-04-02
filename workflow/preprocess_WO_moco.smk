@@ -179,9 +179,7 @@ rule all:
 rule zscore_rule:
     """
     """
-    threads: snake_utils.threads_per_memory_much_more
-    resources:
-        mem_mb=snake_utils.mem_mb_much_more_times_input,
+    threads: snake_utils.threads_8x_more_input
 
     input:
         path_ch1=str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/imaging/channel_1.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],

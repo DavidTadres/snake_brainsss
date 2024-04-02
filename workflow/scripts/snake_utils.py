@@ -122,6 +122,18 @@ def threads_per_memory_much_more(wildcards, input):
     cores = int(np.ceil(calculated_memory/8000))
     return(cores)
 
+def threads_8x_more_input(wildcards, input):
+    """
+    It seems I now have to define the threads based on the memory requirements.
+    We get 8Gb per core so we need e.g. 2 threads if we want to use 15Gb of RAM
+    :param wildcards:
+    :param input:
+    :return:
+    """
+    calculated_memory = max(input.size_mb * 8, 10000)
+    cores = int(np.ceil(calculated_memory/8000))
+    return(cores)
+
 def disk_mb_times_input(wildcards, input):
     """
     Returns memory in mb as 2.5*input memory size or 1Gb, whichever is larger
