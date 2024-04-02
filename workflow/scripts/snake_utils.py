@@ -3,6 +3,19 @@ import numpy as np
 import nibabel as nib
 import pathlib
 
+
+def ch_exists_func(channel, ANATOMY_CHANNEL, FUNCTIONAL_CHANNELS):
+    """
+    Check if a given channel exists in global variables ANATOMY_CHANNEL and FUNCTIONAL_CHANNELS
+    :param channel:
+    :return:
+    """
+    if 'channel_' + str(channel) in ANATOMY_CHANNEL or 'channel_' + str(channel) in FUNCTIONAL_CHANNELS:
+        ch_exists = True
+    else:
+        ch_exists = False
+    return(ch_exists)
+
 def mem_mb_times_threads(wildcards, threads):
     """
     Returns memory in mb as 7500Mb/thread (I think we have ~8Gb/thread? to be confirmed)

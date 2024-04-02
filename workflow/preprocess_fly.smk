@@ -42,6 +42,8 @@ fictrac_fps = 100 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE
 # First n frames to average over when computing mean/fixed brain | Default None
 # (average over all frames).
 meanbrain_n_frames =  None
+# For logfile
+width = 120 # can go into a config file as well.
 
 ##########################################################
 import pathlib
@@ -67,7 +69,6 @@ current_user = config['user'] # this is whatever is entered when calling snakema
 # yield 'jcsimon' here
 settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
-imports_path = pathlib.Path(settings['imports_path'])
 
 # Define path to imports to find fly.json!
 #fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
@@ -107,7 +108,6 @@ CH3_EXISTS = ch_exists_func("3")
 ####
 # Load fly_dir.json
 ####
-width = 120 # can go into a config file as well.
 fly_dirs_dict_path = pathlib.Path(fly_folder_to_process_oak, fly_folder_to_process_oak.name + '_dirs.json')
 with open(pathlib.Path(fly_dirs_dict_path),'r') as file:
     fly_dirs_dict = json.load(file)
@@ -130,50 +130,6 @@ for key in fly_dirs_dict:
     elif 'Fictrac' in key:
         fictrac_file_paths.append(fly_dirs_dict[key][1::])
         # This yields for example 'func1/fictrac/fictrac_behavior_data.dat'
-def create_path_func(fly_folder_to_process, list_of_paths, filename='', func_only=False):
-    """
-    Creates lists of path that can be feed as input/output to snakemake rules
-    :param fly_folder_to_process: a folder pointing to a fly, i.e. /Volumes/groups/trc/data/David/Bruker/preprocessed/fly_001
-    :param list_of_paths: a list of path created, usually created from fly_dirs_dict (e.g. fly_004_dirs.json)
-    :param filename: filename to append at the end. Can be nothing (i.e. for fictrac data).
-    :return: list of full paths as pathlib.Path objects to a file based on the list_of_path provided
-    """
-    final_path = []
-    for current_path in list_of_paths:
-        # Sometimes we need only paths from the functional channel, for example for z-scoring
-        if func_only:
-            if 'func' in current_path:
-                final_path.append(pathlib.Path(fly_folder_to_process,current_path,filename))
-            else:
-                pass # if no func, don't use the path!
-        else:
-            final_path.append(pathlib.Path(fly_folder_to_process, current_path, filename))
-
-    return(final_path)
-
-'''def create_output_path_func(list_of_paths, filename):
-    """
-    :param list_of_paths: expects a list of paths pointing to a file, for example from variable full_fictrac_file_paths
-    :param filename: filename
-    returns a list paths as pathlib.Path objects pointing to where the output file is going to be expecte4d
-    """
-    final_path = []
-    for current_path in list_of_paths:
-        #print("current_path" + repr(current_path))
-        if isinstance(current_path, list):
-            # This is for lists of lists, for example created by :func: create_paths_each_experiment
-            # If there's another list assume that we only want one output file!
-            # For example, in the bleaching_qc the reason we have a list of lists is because each experiment
-            # is plotted in one file. Hence, the output should be only one file
-            #print(pathlib.Path(pathlib.Path(current_path[0]).parent, filename))
-            try:
-                final_path.append(pathlib.Path(pathlib.Path(current_path[0]).parent, filename))
-            except IndexError:
-                pass # Happens because we don't always hvae two functional channels
-        else:
-            final_path.append(pathlib.Path(pathlib.Path(current_path).parent, filename))
-
-    return(final_path)'''
 
 #######
 # Data path on OAK
