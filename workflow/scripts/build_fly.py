@@ -961,11 +961,11 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
         elif column == 'Import folder':
             dict_for_csv[column] = import_folder.as_posix()
         elif column == 'Dataset folder':
-            dict_for_csv[column] == fly_folder.as_posix()
+            dict_for_csv[column] = fly_folder.as_posix()
         elif column == 'Date':
-            dict_for_csv[column] == current_date
+            dict_for_csv[column] = current_date
         elif column == 'Time':
-            dict_for_csv[column] == current_time
+            dict_for_csv[column] = current_time
         else:
             dict_for_csv[column] = fly_data.get(column)
     # It would be grand to do this also the other way around: If there are
