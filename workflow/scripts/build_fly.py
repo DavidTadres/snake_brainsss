@@ -946,8 +946,8 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
     # Load fly.json.
     # At the moment this file is essential else snakebrainsss just doens't work.
     # So no need to wrap in try...except
-    fly_json = pathlib.Path(fly_folder, "fly.json")
-    fly_data = load_json(fly_json)
+    fly_json_path = pathlib.Path(fly_folder, "fly.json")
+    fly_data = load_json(fly_json_path)
     printlog("Successfully loaded fly.json")
 
     # Prepare dict for csv
@@ -970,9 +970,9 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
             dict_for_csv[column] = fly_data.get(column)
     # It would be grand to do this also the other way around: If there are
     # fields in the json that do not have a column, create a column!
-    for json_key in fly_json:
+    for json_key in fly_data:
         if json_key not in csv_file.columns:
-            dict_for_csv[json_key] = fly_json[json_key]
+            dict_for_csv[json_key] = fly_data[json_key]
     # This of course has the slight downside that users have to be careful to
     # not slightly change their json file (i.e. from Genotype to genotype).
     # Upside is that the json file becomes very flexible in combination with this
