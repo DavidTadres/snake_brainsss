@@ -57,7 +57,7 @@ all_fly_dataset_paths = []
 #    # Make it pathlib.Path
 #current_day_path = pathlib.Path(imports_path, current_day)
 #for current_fly in current_day_path.iterdir():
-for current_fly in provided_working_directory.iterdir():
+for current_fly in sorted(provided_working_directory.iterdir()):
     # There should be 'fly' folders in here, i.e. 'fly1' or similar, just needs to have the keyword fly and be a folder
     if 'fly' in current_fly.name and current_fly.is_dir():
         print('Working on fly: ' + repr(current_fly.name))
