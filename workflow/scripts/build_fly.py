@@ -232,8 +232,18 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                     current_import_imaging_folder.name + " Imaging"
                 ] = current_fly_dir_dict
 
-                # Write anat info to csv file
-                add_fly_to_csv(import_dir, dataset_dir, current_import_imaging_folder, printlog)
+                ###
+                # write anat info to csv file
+                ###
+                # Define date and especially time of this particular recording
+                current_recording_metadata_path = pathlib.Path(imaging_destination, 'recording_metadata.xml')
+                # Extract datetime
+                datetime_str, _, _ = get_datetime_from_xml(current_recording_metadata_path)
+                # Get just date
+                current_date = datetime_str.split("-")[0]
+                current_time = datetime_str.split("-")[1]
+                # Finally write anat info to csv file
+                add_fly_to_csv(import_dir, dataset_dir, current_import_imaging_folder, current_date, current_time, printlog)
                 ######################################################################
                 print(
                     f"anat:{current_dataset_folder}"
@@ -277,8 +287,19 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                 except Exception as e:
                     printlog("Could not copy visual data because of error:")
                     printlog(str(e))
-                # Write anat info to csv file
-                add_fly_to_csv(import_dir, dataset_dir, current_import_imaging_folder, printlog)
+                ###
+                # write func info to csv file
+                ###
+                # Define date and especially time of this particular recording
+                current_recording_metadata_path = pathlib.Path(imaging_destination, 'recording_metadata.xml')
+                # Extract datetime
+                datetime_str, _, _ = get_datetime_from_xml(current_recording_metadata_path)
+                # Get just date
+                current_date = datetime_str.split("-")[0]
+                current_time = datetime_str.split("-")[1]
+                # Finally write anat info to csv file
+                add_fly_to_csv(import_dir, dataset_dir, current_import_imaging_folder, current_date, current_time,
+                               printlog)
                 ######################################################################
                 # print(f"func:{expt_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
@@ -897,7 +918,8 @@ def load_xml(file):
     root = tree.getroot()
     return root
 
-def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, printlog):
+def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
+                   current_date, current_time, printlog):
     """
     brainsss originally had a xlsx file. However, it seemed to be a bit sensitive to slight
     changes in the keywords.
@@ -941,13 +963,21 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, prin
         elif column == 'Dataset folder':
             dict_for_csv[column] == fly_folder.as_posix()
         elif column == 'Date':
-            dict_for_csv[column] == fly_json["Date"]
+            dict_for_csv[column] == current_date
         elif column == 'Time':
-            dict_for_csv[column] == fly_json["Date"]
+            dict_for_csv[column] == current_time
         else:
             dict_for_csv[column] = fly_data.get(column)
     # It would be grand to do this also the other way around: If there are
     # fields in the json that do not have a column, create a column!
+    for json_key in fly_json:
+        if json_key not in csv_file.columns:
+            dict_for_csv[json_key] = fly_json[json_key]
+    # This of course has the slight downside that users have to be careful to
+    # not slightly change their json file (i.e. from Genotype to genotype).
+    # Upside is that the json file becomes very flexible in combination with this
+    # csv: User x can just always add a key: visual stimulus and call it 'rectangle'
+    # or 'circle' or whatever for easy sorting in the csv later on
 
     csv_file = pd.concat([csv_file, pd.DataFrame([dict_for_csv])], ignore_index=True)
 
