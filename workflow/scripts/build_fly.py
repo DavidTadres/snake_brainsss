@@ -8,6 +8,7 @@ import pathlib
 import traceback
 import shutil
 import numpy as np
+import pandas as pd
 
 # To import files (or 'modules') from the brainsss folder, define path to scripts!
 # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
@@ -83,12 +84,13 @@ def fly_builder(fictrac_folder, import_dirs, dataset_dirs):
                 printlog(traceback.format_exc())
 
             # Add json metadata to master dataset
-            try:
-                add_fly_to_xlsx(current_dataset_dir, printlog)
-            except Exception as e:
-                printlog("Could not add xls data because of error:")
-                printlog(str(e))
-                printlog(traceback.format_exc())
+            #try:
+                #add_fly_to_csv(current_import_dir, current_dataset_dir, printlog)
+                #add_fly_to_xlsx(current_dataset_dir, printlog)
+            #except Exception as e:
+            #    printlog("Could not add xls data because of error:")
+            #    printlog(str(e))
+            #    printlog(traceback.format_exc())
 
             # Save json file with all relevant paths
             with open(
@@ -163,8 +165,8 @@ def add_date_to_fly(fly_folder):
         # json_file = os.path.join(destination_fly, 'fly.json')
         with open(json_file, "r+") as f:
             metadata = json.load(f)
-            metadata["date"] = str(date)
-            metadata["time"] = str(time)
+            metadata["Date"] = str(date)
+            metadata["Time"] = str(time)
             f.seek(0)
             json.dump(metadata, f, indent=4)
             f.truncate()
@@ -231,6 +233,9 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                 fly_dirs_dict[
                     current_import_imaging_folder.name + " Imaging"
                 ] = current_fly_dir_dict
+
+                # Write anat info to csv file
+                add_fly_to_csv(import_dir, dataset_dir, current_import_imaging_folder, printlog)
                 ######################################################################
                 print(
                     f"anat:{current_dataset_folder}"
@@ -274,7 +279,8 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                 except Exception as e:
                     printlog("Could not copy visual data because of error:")
                     printlog(str(e))
-
+                # Write anat info to csv file
+                add_fly_to_csv(import_dir, dataset_dir, current_import_imaging_folder, printlog)
                 ######################################################################
                 # print(f"func:{expt_folder}")  # IMPORTANT - FOR COMMUNICATING WITH MAIN
                 ######################################################################
@@ -858,9 +864,54 @@ def load_xml(file):
     root = tree.getroot()
     return root
 
+def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, printlog):
+    """
+    brainsss originally had a xlsx file. However, it seemed to be a bit sensitive to slight
+    changes in the keywords.
+    I hope to address this (so that every built fly does have an entry, even if incomplete).
+    """
+    printlog('Adding fly to master_2P csv log')
+
+    try:
+        csv_path = pathlib.Path(fly_folder.parent, 'master_2P.csv')
+        csv_file = pd.read_csv(csv_path)
+        printlog('Successfully opened master_2P log')
+    except FileNotFoundError:
+        try:
+            # This should work if I don't move it out of that folder
+            csv_path = pathlib.Path(fly_folder.parent, 'master_2P.csv')
+            empty_csv_path = pathlib.Path('/oak/stanford/groups/trc/data/David/shared_files/master_2P.csv')
+            shutil.copyfile(empty_csv_path, csv_path)
+            csv_file = pd.read_csv(csv_path)
+            printlog('Successfully opened master_2P log')
+        except Exception as e:
+            printlog('Error while trying to move or open the csv file:')
+            print(e)
+
+    # Load fly.json.
+    # At the moment this file is essential else snakebrainsss just doens't work.
+    # So no need to wrap in try...except
+    fly_json = pathlib.Path(fly_folder, "fly.json")
+    fly_data = load_json(fly_json)
+    printlog("Successfully loaded fly.json")
+
+
+    # Prepare dict for csv
+    dict_for_csv = {}
+
+    for column in csv_file.columns:
+        if column == 'Fly ID':
+            dict_for_csv[column] = fly_folder.name
+        elif column == 'Expt ID':
+            dict_for_csv[column] = current_import_imaging_folder.name
+        elif column == 'Import folder':
+            dict_for_csv[column] = import_folder.as_posix()
+        else:
+            dict_for_csv[column] = fly_data.get(column)
 
 def add_fly_to_xlsx(fly_folder, printlog):
     printlog("Adding fly to master_2P excel log")
+
 
     ### TRY TO LOAD ELSX ###
     try:
