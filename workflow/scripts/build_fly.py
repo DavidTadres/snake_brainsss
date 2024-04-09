@@ -942,7 +942,7 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, prin
         else:
             dict_for_csv[column] = fly_data.get(column)
 
-    csv_file = pd.concat([csv_file, dict_for_csv], ignore_index=True)
+    csv_file = pd.concat([csv_file, pd.Series(dict_for_csv)], ignore_index=True)
 
     csv_file.to_csv(csv_path)
 
