@@ -64,18 +64,17 @@ def fly_builder(fictrac_folder, import_dirs, dataset_dirs):
             ###
             fly_dirs_dict = {}
             fly_dirs_dict["fly ID"] = current_dataset_dir.name
-            ###
-            # Copy fly data
-            ####
-            fly_dirs_dict = copy_fly(
-                current_import_dir, current_dataset_dir, printlog, fictrac_folder, fly_dirs_dict
-            )
 
             ###
-            # Avoid for now - it's going to be tricky getting the correct time for fly.json.
-            # much easier to rely on user input here.
-            # We have cleaner way of sorting this anyway with the xls file
-            # Add date to fly.json file
+            # Copy the fly.json file
+            ###
+            fly_json_import_path = pathlib.Path(current_import_dir, 'fly.json')
+            fly_json_fly_path = pathlib.Path(current_dataset_dir, 'fly.json')
+            shutil.copyfile(fly_json_import_path, fly_json_fly_path)
+
+            ###
+            # Add date & time to fly.json
+            ###
             try:
                 add_date_to_fly(current_dataset_dir)
             except Exception as e:
@@ -83,14 +82,13 @@ def fly_builder(fictrac_folder, import_dirs, dataset_dirs):
                 printlog(str(e))
                 printlog(traceback.format_exc())
 
-            # Add json metadata to master dataset
-            #try:
-                #add_fly_to_csv(current_import_dir, current_dataset_dir, printlog)
-                #add_fly_to_xlsx(current_dataset_dir, printlog)
-            #except Exception as e:
-            #    printlog("Could not add xls data because of error:")
-            #    printlog(str(e))
-            #    printlog(traceback.format_exc())
+            ###
+            # Copy fly data
+            ####
+            fly_dirs_dict = copy_fly(
+                current_import_dir, current_dataset_dir, printlog, fictrac_folder, fly_dirs_dict
+            )
+
 
             # Save json file with all relevant paths
             with open(
@@ -294,17 +292,19 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                 )
 
         # Copy fly.json file
+        #else:
+        #    current_import_file = current_import_file_or_folder
+        #    if current_import_file_or_folder.name == "fly.json":
+        #        target_path = pathlib.Path(dataset_dir, current_import_file.name)
+        #        shutil.copyfile(current_import_file, target_path)
         else:
-            current_import_file = current_import_file_or_folder
-            if current_import_file_or_folder.name == "fly.json":
-                target_path = pathlib.Path(dataset_dir, current_import_file.name)
-                shutil.copyfile(current_import_file, target_path)
-            else:
-                printlog(
-                    "Invalid file in fly folder (skipping): {}".format(
-                        current_import_file.name
-                    )
+            # There shouldn't be any files in the top folder except fly.json.
+            # If there are other files that need to be copied, make an elif above.
+            printlog(
+                "Invalid file in fly folder (skipping): {}".format(
+                    current_import_file_or_folder.name
                 )
+            )
 
     return fly_dirs_dict
 
@@ -907,7 +907,7 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, prin
 
     try:
         csv_path = pathlib.Path(fly_folder.parent, 'master_2P.csv')
-        csv_file = pd.read_csv(csv_path)
+        csv_file = pd.read_csv(csv_path, index_col=0)
         printlog('Successfully opened master_2P log')
     except FileNotFoundError:
         try:
@@ -915,7 +915,7 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, prin
             csv_path = pathlib.Path(fly_folder.parent, 'master_2P.csv')
             empty_csv_path = pathlib.Path('/oak/stanford/groups/trc/data/David/shared_files/master_2P.csv')
             shutil.copyfile(empty_csv_path, csv_path)
-            csv_file = pd.read_csv(csv_path)
+            csv_file = pd.read_csv(csv_path, index_col=0)
             printlog('Successfully opened master_2P log')
         except Exception as e:
             printlog('Error while trying to move or open the csv file:')
@@ -944,7 +944,7 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, prin
 
     csv_file = pd.concat([csv_file, pd.DataFrame([dict_for_csv])], ignore_index=True)
 
-    csv_file.to_csv(csv_path)
+    csv_file.to_csv(csv_path, index='False')
 
 def add_fly_to_xlsx(fly_folder, printlog):
     printlog("Adding fly to master_2P excel log")
