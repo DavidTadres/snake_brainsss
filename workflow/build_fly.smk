@@ -74,7 +74,7 @@ for current_fly in provided_working_directory.iterdir():
             fly_json_path = pathlib.Path(current_fly, 'fly.json') # if not present will throw error
             with open(fly_json_path,'r') as openfile:
                 fly_json = json.load(openfile)
-                GENOTYPE = fly_json['genotype']  # Must be present, else error
+                GENOTYPE = fly_json['Genotype']  # Must be present, else error
 
             # Since we have now different genotypes, will have to create new folders. Check if this is the first
             # fly with this genotype during this run.
