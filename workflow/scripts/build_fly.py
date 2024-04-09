@@ -507,6 +507,39 @@ def copy_fictrac(destination_region, printlog, fictrac_folder, source_fly, fly_d
     # Make fictrac folder
     fictrac_destination = pathlib.Path(destination_region, "fictrac")
     fictrac_destination.mkdir(exist_ok=True)
+    # Fictrac source folder is defined in user.json
+    # when doing post-hoc fictrac, Bella's code where one compare the recording
+    # timestamps of imaging and fictrac doesn't work anymore.
+    # I instead use a deterministic file structure:
+    # for example for fly 20231201\fly2\func1 imaging data, fictrac data must
+    # be in the folder 20231201_fly2_func1. There must only be a single dat file in that folder.
+    source_path = pathlib.Path(
+        fictrac_folder,
+        source_fly.parts[-3]
+        + "_"
+        + source_fly.parts[-2]
+        + "_"
+        + source_fly.parts[-1],
+    )
+    for current_file in source_path.iterdir():
+        if "dat" in current_file.name:
+            # width = 120
+            # source_path = os.path.join(source_path, file)
+            dat_path = current_file
+            # target_path = pathlib.Path(fictrac_destination, current_file.name)
+            target_path = pathlib.Path(
+                fictrac_destination, "fictrac_behavior_data.dat"
+            )
+            to_print = str(target_path)
+            printlog(f"Transfering file{to_print:.>{WIDTH - 16}}")
+
+            # put fictrac file path in into fly_dirs_dict
+            current_fly_dir_dict = str(target_path).split(
+                fictrac_destination.parents[1].name
+            )[-1]
+            fly_dirs_dict[destination_region.name + " Fictrac "] = current_fly_dir_dict
+
+    """# OLD
     # Different users have different rule on what to do with the data
     if user == "dtadres":
         # TODO!!!
@@ -686,7 +719,7 @@ def copy_fictrac(destination_region, printlog, fictrac_folder, source_fly, fly_d
             printlog(f"Transfering file{to_print:.>{WIDTH - 16}}")
             # printlog('Transfering {}'.format(target_path))
             ##sys.stdout.flush()
-
+    """
     shutil.copyfile(dat_path, target_path)
 
     ### Create empty xml file.
@@ -908,6 +941,10 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, prin
             dict_for_csv[column] = import_folder.as_posix()
         else:
             dict_for_csv[column] = fly_data.get(column)
+
+    csv_file = pd.concat([csv_file, dict_for_csv], ignore_index=True)
+
+    csv_file.to_csv(csv_path)
 
 def add_fly_to_xlsx(fly_folder, printlog):
     printlog("Adding fly to master_2P excel log")

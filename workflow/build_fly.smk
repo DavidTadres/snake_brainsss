@@ -96,10 +96,10 @@ for current_fly in provided_working_directory.iterdir():
             with open(pathlib.Path(current_fly_dataset_folder, 'incomplete'),"w") as f:
                 f.write("")
 
-            if current_fly_dataset_folder.name == 'fly_001':
-                # If this is the first time a fly of a given genotype is used, copy the master_2P.xlsx file from this
-                # repository into the folder
-                shutil.copy(workflow.source_path('master_2P.xlsx'), current_fly_dataset_folder.parent)
+            #if current_fly_dataset_folder.name == 'fly_001':
+            #    # If this is the first time a fly of a given genotype is used, copy the master_2P.xlsx file from this
+            #    # repository into the folder
+            #    shutil.copy(workflow.source_path('master_2P.xlsx'), current_fly_dataset_folder.parent)
             # Collect all paths in list
             all_fly_dataset_paths.append(current_fly_dataset_folder)
             all_imports_paths.append(current_fly)
