@@ -928,7 +928,6 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, prin
     fly_data = load_json(fly_json)
     printlog("Successfully loaded fly.json")
 
-
     # Prepare dict for csv
     dict_for_csv = {}
 
@@ -939,13 +938,21 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder, prin
             dict_for_csv[column] = current_import_imaging_folder.name
         elif column == 'Import folder':
             dict_for_csv[column] = import_folder.as_posix()
+        elif column == 'Dataset folder':
+            dict_for_csv[column] == fly_folder.as_posix()
+        elif column == 'Date':
+            dict_for_csv[column] == fly_json["Date"]
+        elif column == 'Time':
+            dict_for_csv[column] == fly_json["Date"]
         else:
             dict_for_csv[column] = fly_data.get(column)
+    # It would be grand to do this also the other way around: If there are
+    # fields in the json that do not have a column, create a column!
 
     csv_file = pd.concat([csv_file, pd.DataFrame([dict_for_csv])], ignore_index=True)
 
     csv_file.to_csv(csv_path, index='False')
-
+"""
 def add_fly_to_xlsx(fly_folder, printlog):
     printlog("Adding fly to master_2P excel log")
 
@@ -1084,4 +1091,4 @@ def add_fly_to_xlsx(fly_folder, printlog):
 
     # Save the file
     wb.save(xlsx_path)
-    printlog("master_2P successfully updated")
+    printlog("master_2P successfully updated")"""
