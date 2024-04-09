@@ -981,7 +981,7 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
 
     csv_file = pd.concat([csv_file, pd.DataFrame([dict_for_csv])], ignore_index=True)
 
-    csv_file.to_csv(csv_path, index='False')
+    csv_file.to_csv(csv_path)#, index='False')
 """
 def add_fly_to_xlsx(fly_folder, printlog):
     printlog("Adding fly to master_2P excel log")
