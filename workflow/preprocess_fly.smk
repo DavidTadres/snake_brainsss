@@ -82,16 +82,22 @@ with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
     fly_json = json.load(file)
 # This needs to come from some sort of json file the experimenter
 # creates while running the experiment. Same as genotype.
-ANATOMY_CHANNEL = fly_json['anatomy_channel']
+STRUCTURAL_CHANNEL = fly_json['structural_channel']
 FUNCTIONAL_CHANNELS = fly_json['functional_channel']
+# It is probably necessary to forcibly define STRUCTURAL_CHANNEL if not defined
+# Would be better to have an error to be explicit!
+#if STRUCTURAL_CHANNEL != 'channel_1' and \
+#    STRUCTURAL_CHANNEL != 'channel_2' and \
+#        STRUCTURAL_CHANNEL != 'channel_3':
+#    STRUCTURAL_CHANNEL = FUNCTIONAL_CHANNELS[0]
 
 def ch_exists_func(channel):
     """
-    Check if a given channel exists in global variables ANATOMY_CHANNEL and FUNCTIONAL_CHANNELS
+    Check if a given channel exists in global variables STRUCTURAL_CHANNEL and FUNCTIONAL_CHANNELS
     :param channel:
     :return:
     """
-    if 'channel_' + str(channel) in ANATOMY_CHANNEL or 'channel_' + str(channel) in FUNCTIONAL_CHANNELS:
+    if 'channel_' + str(channel) in STRUCTURAL_CHANNEL or 'channel_' + str(channel) in FUNCTIONAL_CHANNELS:
         ch_exists = True
     else:
         ch_exists = False
@@ -218,11 +224,11 @@ if 'channel_3' in FUNCTIONAL_CHANNELS:
     func_channels.append('3')
 
 anat_channel=[]
-if 'channel_1' in ANATOMY_CHANNEL:
+if 'channel_1' in STRUCTURAL_CHANNEL:
     anat_channel.append('channel_1')
-elif 'channel_2' in ANATOMY_CHANNEL:
+elif 'channel_2' in STRUCTURAL_CHANNEL:
     anat_channel.append('channel_2')
-elif 'channel_3' in ANATOMY_CHANNEL:
+elif 'channel_3' in STRUCTURAL_CHANNEL:
     anat_channel.append('channel_3')
 if len(anat_channel)>1:
     print('!!!!WARNING!!!')
@@ -557,7 +563,7 @@ rule motion_correction_parallel_processing_rule:
         "--mean_brain_paths_ch1 {input.mean_brain_paths_ch1} "
         "--mean_brain_paths_ch2 {input.mean_brain_paths_ch2} "
         "--mean_brain_paths_ch3 {input.mean_brain_paths_ch3} "
-        "--ANATOMY_CHANNEL {ANATOMY_CHANNEL} "
+        "--STRUCTURAL_CHANNEL {STRUCTURAL_CHANNEL} "
         "--FUNCTIONAL_CHANNELS {FUNCTIONAL_CHANNELS} "
         "--moco_path_ch1 {output.moco_path_ch1} "
         "--moco_path_ch2 {output.moco_path_ch2} "

@@ -481,8 +481,8 @@ if __name__ == '__main__':
     parser.add_argument("--mean_brain_paths_ch2", nargs="?", help="Path to ch2 meanbrain file, if it exists")
     parser.add_argument("--mean_brain_paths_ch3", nargs="?", help="Path to ch3 meanbrain file, if it exists")
 
-    parser.add_argument("--ANATOMY_CHANNEL", nargs="?", help="variable with string containing the anatomy channel")
-    parser.add_argument("--FUNCTIONAL_CHANNELS", nargs="?", help="list with strings containing the anatomy channel")
+    parser.add_argument("--STRUCTURAL_CHANNEL", nargs="?", help="variable with string containing the structural channel")
+    parser.add_argument("--FUNCTIONAL_CHANNELS", nargs="?", help="list with strings containing the functional channel")
 
     parser.add_argument("--moco_path_ch1", nargs="?", help="Path to ch1 moco corrected file, if Ch1 exists")
     parser.add_argument("--moco_path_ch2", nargs="?", help="Path to ch2 moco corrected file, if Ch2 exists")
@@ -504,16 +504,16 @@ if __name__ == '__main__':
     ### Identify the anatomy channel ###
     ####################################
     # Normally, we would have one anatomy channel
-    if args.ANATOMY_CHANNEL is not None:
-        if 'channel_1' == args.ANATOMY_CHANNEL:
+    if args.STRUCTURAL_CHANNEL is not None:
+        if 'channel_1' == args.STRUCTURAL_CHANNEL:
             moving_path = pathlib.Path(args.brain_paths_ch1)
             fixed_path = pathlib.Path(args.mean_brain_paths_ch1)
             moving_output_path = pathlib.Path(args.moco_path_ch1)
-        elif 'channel_2' ==  args.ANATOMY_CHANNEL:
+        elif 'channel_2' ==  args.STRUCTURAL_CHANNEL:
             moving_path = pathlib.Path(args.brain_paths_ch2)
             fixed_path = pathlib.Path(args.mean_brain_paths_ch2)
             moving_output_path = pathlib.Path(args.moco_path_ch2)
-        elif 'channel_3' ==  args.ANATOMY_CHANNEL:
+        elif 'channel_3' ==  args.STRUCTURAL_CHANNEL:
             moving_path = pathlib.Path(args.brain_paths_ch3)
             fixed_path = pathlib.Path(args.mean_brain_paths_ch3)
             moving_output_path = pathlib.Path(args.moco_path_ch2)

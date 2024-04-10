@@ -929,14 +929,17 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
 
     try:
         csv_path = pathlib.Path(fly_folder.parent, 'master_2P.csv')
+        # Read csv, explicity state that first column is index
         csv_file = pd.read_csv(csv_path, index_col=0)
         printlog('Successfully opened master_2P log')
     except FileNotFoundError:
         try:
             # This should work if I don't move it out of that folder
             csv_path = pathlib.Path(fly_folder.parent, 'master_2P.csv')
+            # Todo, could also have it pulled from github
             empty_csv_path = pathlib.Path('/oak/stanford/groups/trc/data/David/shared_files/master_2P.csv')
             shutil.copyfile(empty_csv_path, csv_path)
+            # Read csv, explicity state that first column is index
             csv_file = pd.read_csv(csv_path, index_col=0)
             printlog('Successfully opened master_2P log')
         except Exception as e:
@@ -980,8 +983,8 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
     # or 'circle' or whatever for easy sorting in the csv later on
 
     csv_file = pd.concat([csv_file, pd.DataFrame([dict_for_csv])], ignore_index=True)
-
-    csv_file.to_csv(csv_path)#, index='False')
+    # Include an index as the first column!
+    csv_file.to_csv(csv_path)
 """
 def add_fly_to_xlsx(fly_folder, printlog):
     printlog("Adding fly to master_2P excel log")
