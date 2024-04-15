@@ -85,7 +85,7 @@ with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
 try:
     ANATOMY_CHANNEL = fly_json['anatomy_channel']
 except:
-    ANATOMY_CHANNEL = fly_json["structural_channel"]
+    ANATOMY_CHANNEL = ""
 FUNCTIONAL_CHANNELS = fly_json['functional_channel']
 
 def ch_exists_func(channel):
