@@ -1,13 +1,10 @@
 from xml.etree import ElementTree as ET
 from lxml import etree, objectify
-from openpyxl import load_workbook
 import json
-import natsort
 import sys
 import pathlib
 import traceback
 import shutil
-import numpy as np
 import pandas as pd
 
 # To import files (or 'modules') from the brainsss folder, define path to scripts!
@@ -791,10 +788,14 @@ def create_imaging_json(xml_source_file, printlog):
                 elif axis == "ZAxis":
                     source_data["z_voxel_size"] = float(index.get("value"))
         if key == "laserPower":
-            # I think this is the maximum power if set to vary by z depth - WRONG
+            # This is not great - this is just the first pockels value
             indices = statevalue.findall("IndexedValue")
             laser_power_overall = int(float(indices[0].get("value")))
             source_data["laser_power"] = laser_power_overall
+        if key == "laserWavelength":
+            index = statevalue.findall("IndexedValue")
+            laser_wavelength = int(float(index[0]).get("value"))
+            source_data["laser_wavelength"] = laser_wavelength
         if key == "pmtGain":
             indices = statevalue.findall("IndexedValue")
             for index in indices:
@@ -838,7 +839,7 @@ def create_imaging_json(xml_source_file, printlog):
     with open(pathlib.Path(xml_source_file.parent, "scan.json"), "w") as f:
         json.dump(source_data, f, indent=4)
 
-
+'''
 def get_expt_time(directory):
     """Finds time of experiment based on functional.xml"""
     xml_file = pathlib.Path(directory, "functional.xml")
@@ -851,7 +852,7 @@ def get_expt_time(directory):
         + int(datetime_dict["second"])
     )
 
-    return true_ymd, true_total_seconds
+    return true_ymd, true_total_seconds'''
 
 def get_datetime_from_xml(xml_file):
     ##print('Getting datetime from {}'.format(xml_file))

@@ -139,7 +139,7 @@ Once the fly is built, the preprocessing is straightforward. For example, to pre
 "oak/stanford/groups/trc/data/David/Bruker/preprocessed/SS84990_DNa03_x_GCaMP6f/fly_037" you 
 just type:
 
-`snakemake --config user=dtadres --profile profiles/simple_slurm -s preprocess.smk --directory /oak/stanf
+`snakemake --config user=dtadres --profile profiles/simple_slurm -s preprocess_fly.smk --directory /oak/stanf
 ord/groups/trc/data/David/Bruker/preprocessed/SS84990_DNa03_x_GCaMP6f/fly_037`
 
 This should take ~2 hours and you should have the same output as with the original brainsss.
