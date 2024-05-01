@@ -408,10 +408,11 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             elif ".xml" in source_path.name and "Voltage" not in source_path.name:
                 target_name = "recording_metadata.xml"
                 target_path = pathlib.Path(destination, target_name)
+                # Create json file
+                create_imaging_json(target_path, printlog)
                 if folder_type == "func":
                     copy_file_func(source_path, target_path, printlog)
-                    # Create json file
-                    create_imaging_json(target_path, printlog)
+
                     continue
             # Rename to anatomy.xml if appropriate
             # if '.xml' in source_path.name and folder_type == 'anat' and \
