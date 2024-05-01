@@ -794,16 +794,20 @@ def create_imaging_json(xml_source_file, printlog):
             source_data["laser_power"] = laser_power_overall
         if key == "laserWavelength":
             index = statevalue.findall("IndexedValue")
-            laser_wavelength = int(float(index[0]).get("value"))
+            laser_wavelength = int(float(index[0].get("value")))
             source_data["laser_wavelength"] = laser_wavelength
         if key == "pmtGain":
             indices = statevalue.findall("IndexedValue")
             for index in indices:
                 index_num = index.get("index")
+                # I changed this from 'red' and 'green' to the actual description used by the
+                # microscope itself! Since we now have 2 Brukers, this seems safer!
                 if index_num == "0":
-                    source_data["PMT_red"] = int(float(index.get("value")))
+                    source_data[index.get("description")] = int(float(index.get("value")))
                 if index_num == "1":
-                    source_data["PMT_green"] = int(float(index.get("value")))
+                    source_data[index.get("description")] = int(float(index.get("value")))
+                if index_num == "2":
+                    source_data[index.get("description")] = int(float(index.get("value")))
         if key == "pixelsPerLine":
             source_data["x_dim"] = int(float(statevalue.get("value")))
         if key == "linesPerFrame":
@@ -812,47 +816,10 @@ def create_imaging_json(xml_source_file, printlog):
     last_frame = sequence.findall("Frame")[-1]
     source_data["z_dim"] = int(last_frame.get("index"))
 
-    # Need this try block since sometimes first 1 or 2 frames don't have laser info...
-    # try:
-    #     # Get laser power of first and last frames
-    #     last_frame = sequence.findall('Frame')[-1]
-    #     source_data['laser_power'] = int(last_frame.findall('PVStateShard')[0].findall('PVStateValue')[1].findall('IndexedValue')[0].get('value'))
-    #     #first_frame = sequence.findall('Frame')[0]
-    #     #source_data['laser_power_min'] = int(first_frame.findall('PVStateShard')[0].findall('PVStateValue')[1].findall('IndexedValue')[0].get('value'))
-    # except:
-    #     source_data['laser_power_min'] = laser_power_overall
-    #     source_data['laser_power_max'] = laser_power_overall
-    #     #printlog('Used overall laser power.')
-    #     # try:
-    #     #     first_frame = sequence.findall('Frame')[2]
-    #     #     source_data['laser_power_min'] = int(first_frame.findall('PVStateShard')[0].findall('PVStateValue')[1].findall('IndexedValue')[0].get('value'))
-    #     #     printlog('Took min laser data from frame 3, not frame 1, due to bruker metadata error.')
-    #     # # Apparently sometimes the metadata will only include the
-    #     # # laser value at the very beginning
-    #     # except:
-    #     #     source_data['laser_power_min'] = laser_power_overall
-    #     #     source_data['laser_power_max'] = laser_power_overall
-    #     #     printlog('Used overall laser power.')
-
     # Save data
     # with open(os.path.join(os.path.split(xml_source_file)[0], 'scan.json'), 'w') as f:
     with open(pathlib.Path(xml_source_file.parent, "scan.json"), "w") as f:
         json.dump(source_data, f, indent=4)
-
-'''
-def get_expt_time(directory):
-    """Finds time of experiment based on functional.xml"""
-    xml_file = pathlib.Path(directory, "functional.xml")
-    # xml_file = os.path.join(directory, 'functional.xml')
-    _, _, datetime_dict = get_datetime_from_xml(xml_file)
-    true_ymd = datetime_dict["year"] + datetime_dict["month"] + datetime_dict["day"]
-    true_total_seconds = (
-        int(datetime_dict["hour"]) * 60 * 60
-        + int(datetime_dict["minute"]) * 60
-        + int(datetime_dict["second"])
-    )
-
-    return true_ymd, true_total_seconds'''
 
 def get_datetime_from_xml(xml_file):
     ##print('Getting datetime from {}'.format(xml_file))
@@ -919,7 +886,7 @@ def load_xml(file):
     root = tree.getroot()
     return root
 
-def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
+def add_fly_to_csv(import_folder, fly_folder, current_import_imaging_folder,
                    current_date, current_time, printlog):
     """
     brainsss originally had a xlsx file. However, it seemed to be a bit sensitive to slight
@@ -947,12 +914,18 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
             printlog('Error while trying to move or open the csv file:')
             print(e)
 
+    # Load scan.json with the scanning parameters
+    scan_json_path = pathlib.Path(current_import_imaging_folder, "scan.json")
+    scan_json = load_json(scan_json_path)
+    printlog("Successfully loaded scan.json file")
+
+
     # Load fly.json.
     # At the moment this file is essential else snakebrainsss just doens't work.
     # So no need to wrap in try...except
     fly_json_path = pathlib.Path(fly_folder, "fly.json")
     fly_data = load_json(fly_json_path)
-    printlog("Successfully loaded fly.json")
+    printlog("Successfully loaded fly.json file")
 
     # Prepare dict for csv
     dict_for_csv = {}
@@ -971,12 +944,24 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
         elif column == 'Time':
             dict_for_csv[column] = current_time
         else:
-            dict_for_csv[column] = fly_data.get(column)
+            # Some data is in 'fly_data'
+            if column in fly_data:
+                dict_for_csv[column] = fly_data.get(column)
+            # And other data is in 'scan_json'
+            elif column in scan_json:
+                dict_for_csv[column] = scan_json.get(column)
+            else:
+                printlog("master.csv file contains column: " + column + " which couldn't be assigned.")
+
     # It would be grand to do this also the other way around: If there are
     # fields in the json that do not have a column, create a column!
     for json_key in fly_data:
         if json_key not in csv_file.columns:
             dict_for_csv[json_key] = fly_data[json_key]
+
+    for json_key in scan_json:
+        if json_key not in csv_file.columns:
+            dict_for_csv[json_key] = scan_json[json_key]
     # This of course has the slight downside that users have to be careful to
     # not slightly change their json file (i.e. from Genotype to genotype).
     # Upside is that the json file becomes very flexible in combination with this
