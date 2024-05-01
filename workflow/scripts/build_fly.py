@@ -410,10 +410,9 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
                 target_path = pathlib.Path(destination, target_name)
                 # Create json file
                 create_imaging_json(target_path, printlog)
-                if folder_type == "func":
-                    copy_file_func(source_path, target_path, printlog)
-
-                    continue
+                #if folder_type == "func":
+                copy_file_func(source_path, target_path, printlog)
+                continue
             # Rename to anatomy.xml if appropriate
             # if '.xml' in source_path.name and folder_type == 'anat' and \
             #        'Voltage' not in source_path.name:
@@ -451,7 +450,7 @@ def copy_file_func(source, target, printlog):
 
 
 def copy_visual(destination_region, printlog):
-    print("copy_visual NOT IMPLEMENTED YET")
+    printlog("copy_visual NOT IMPLEMENTED YET")
     """width = 120
     printlog(F"Copying visual stimulus data{'':.^{width - 28}}")
     visual_folder = '/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/imports/visual'
