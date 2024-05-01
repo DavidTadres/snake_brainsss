@@ -915,7 +915,7 @@ def add_fly_to_csv(import_folder, fly_folder, current_import_imaging_folder,
             print(e)
 
     # Load scan.json with the scanning parameters
-    scan_json_path = pathlib.Path(current_import_imaging_folder, "scan.json")
+    scan_json_path = pathlib.Path(current_import_imaging_folder, "imaging/scan.json")
     scan_json = load_json(scan_json_path)
     printlog("Successfully loaded scan.json file")
 
