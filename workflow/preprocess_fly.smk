@@ -56,6 +56,7 @@ from brainsss import utils
 from scripts import preprocessing
 from scripts import snake_utils
 import os
+import sys
 print(os.getcwd())
 
 #### KEEP for future
@@ -82,17 +83,21 @@ with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
     fly_json = json.load(file)
 # This needs to come from some sort of json file the experimenter
 # creates while running the experiment. Same as genotype.
-try:
-    STRUCTURAL_CHANNEL = fly_json['structural_channel']
-except:
-    STRUCTURAL_CHANNEL = ""
 FUNCTIONAL_CHANNELS = fly_json['functional_channel']
 # It is probably necessary to forcibly define STRUCTURAL_CHANNEL if not defined
 # Would be better to have an error to be explicit!
-#if STRUCTURAL_CHANNEL != 'channel_1' and \
-#    STRUCTURAL_CHANNEL != 'channel_2' and \
-#        STRUCTURAL_CHANNEL != 'channel_3':
-#    STRUCTURAL_CHANNEL = FUNCTIONAL_CHANNELS[0]
+
+# Throw an error if missing! User must provide this!
+STRUCTURAL_CHANNEL = fly_json['structural_channel']
+if STRUCTURAL_CHANNEL != 'channel_1' and \
+    STRUCTURAL_CHANNEL != 'channel_2' and \
+        STRUCTURAL_CHANNEL != 'channel_3':
+    print('!!! ERROR !!!')
+    print('You must provide "structural_channel" in the "fly.json" file for snake_brainsss to run!')
+    sys.exit()
+    # This would be a implicit fix. Not great as it'll
+    # hide potential bugs. Better explicit
+    #STRUCTURAL_CHANNEL = FUNCTIONAL_CHANNELS[0]
 
 def ch_exists_func(channel):
     """
