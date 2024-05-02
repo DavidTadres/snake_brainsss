@@ -292,12 +292,7 @@ if len(struct_channel)>1:
 
 
 
-        ###
-        # Clean anatomy
-        expand(str(fly_folder_to_process_oak)
-               + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
-            clean_anatomy_paths=list_of_paths_anat,
-            clean_anat_ch=list_of_channels),
+
         ##
         # make supervoxels
         ###
@@ -426,6 +421,14 @@ rule all:
                + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii",
                moco_meanbr_imaging_paths=list_of_paths,
                meanbr_moco_ch=list_of_channels),
+
+        ###
+        # Clean anatomy
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
+            clean_anatomy_paths=list_of_paths_anat,
+            clean_anat_ch=list_of_channels),
 
 
 rule fictrac_qc_rule:
