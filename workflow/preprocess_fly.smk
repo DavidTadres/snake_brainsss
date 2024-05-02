@@ -285,40 +285,9 @@ if len(struct_channel)>1:
 #elif 'channel_3' in ANATOMY_CHANNEL:
 #    file_path_anat2atlas_moving.append('channel_3')
 
-###
-# Meanbrain
-###
-#expand(str(fly_folder_to_process_oak)
-#       + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
-#    meanbr_imaging_paths=list_of_paths,
-#    meanbr_ch=list_of_channels),
-rule all:
-    """
-    See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
-        By default snakemake executes the first rule in the snakefile. This gives rise to pseudo-rules at the beginning 
-        of the file that can be used to define build-targets similar to GNU Make
-    Or in other words: Here we define which file we want at the end. Snakemake checks which one is there and which 
-    one is missing. It then uses the other rules to see how it can produce the missing files.
-    """
-    threads: 1 # should be sufficent
-    resources: mem_mb=1000 # should be sufficient
-    input:
-        ###
-        # Bleaching QC
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{bleaching_imaging_paths}/imaging/bleaching.png",
-            bleaching_imaging_paths=list_of_paths),
-
-        ###
-        # Fictrac QC
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
-            fictrac_paths=FICTRAC_PATHS),
-        # data in fly_dirs.json!
 
 
+"""
         ###
         # Motion correction output
         ###
@@ -411,6 +380,43 @@ rule all:
             + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
             anat2atlas_paths=list_of_paths_anat,
             anat2atlas_moving=struct_channel),
+
+"""
+
+###
+# Meanbrain
+###
+#expand(str(fly_folder_to_process_oak)
+#       + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
+#    meanbr_imaging_paths=list_of_paths,
+#    meanbr_ch=list_of_channels),
+rule all:
+    """
+    See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
+        By default snakemake executes the first rule in the snakefile. This gives rise to pseudo-rules at the beginning 
+        of the file that can be used to define build-targets similar to GNU Make
+    Or in other words: Here we define which file we want at the end. Snakemake checks which one is there and which 
+    one is missing. It then uses the other rules to see how it can produce the missing files.
+    """
+    threads: 1 # should be sufficent
+    resources: mem_mb=1000 # should be sufficient
+    input:
+        ###
+        # Bleaching QC
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{bleaching_imaging_paths}/imaging/bleaching.png",
+            bleaching_imaging_paths=list_of_paths),
+
+        ###
+        # Fictrac QC
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
+            fictrac_paths=FICTRAC_PATHS),
+        # data in fly_dirs.json!
+
+
 
 
 rule fictrac_qc_rule:
