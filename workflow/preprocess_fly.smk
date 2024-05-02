@@ -226,17 +226,17 @@ if 'channel_2' in FUNCTIONAL_CHANNELS:
 if 'channel_3' in FUNCTIONAL_CHANNELS:
     func_channels.append('3')
 
-anat_channel=[]
-if 'channel_1' in ANATOMY_CHANNEL:
-    anat_channel.append('channel_1')
-elif 'channel_2' in ANATOMY_CHANNEL:
-    anat_channel.append('channel_2')
-elif 'channel_3' in ANATOMY_CHANNEL:
-    anat_channel.append('channel_3')
-if len(anat_channel)>1:
+struct_channel=[]
+if 'channel_1' in STRUCTURAL_CHANNEL:
+    struct_channel.append('channel_1')
+elif 'channel_2' in STRUCTURAL_CHANNEL:
+    struct_channel.append('channel_2')
+elif 'channel_3' in STRUCTURAL_CHANNEL:
+    struct_channel.append('channel_3')
+if len(struct_channel)>1:
     print('!!!!WARNING!!!')
     print('The following channels are defined as anatomy channels: ')
-    print(anat_channel)
+    print(struct_channel)
     print('There should only be a single anatomy channel for the pipeline to work as expected.')
 
 ####
@@ -398,15 +398,15 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
             func2anat_paths=list_of_paths_func,
-            func2anat_moving=anat_channel, # This is the channel which is designated as ANATOMY_CHANNEL
-            func2anat_fixed=anat_channel),
+            func2anat_moving=struct_channel, # This is the channel which is designated as ANATOMY_CHANNEL
+            func2anat_fixed=struct_channel),
         ##
         # anat2atlas
         ##
         expand(str(fly_folder_to_process_oak)
             + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
             anat2atlas_paths=list_of_paths_anat,
-            anat2atlas_moving=anat_channel),
+            anat2atlas_moving=struct_channel),
 
 
 rule fictrac_qc_rule:
