@@ -288,21 +288,7 @@ if len(struct_channel)>1:
 
 
 """
-        ###
-        # Motion correction output
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/motcorr_params.npy",
-            moco_imaging_paths=list_of_paths),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
-            moco_imaging_paths=list_of_paths),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else[],
-            moco_imaging_paths=list_of_paths),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else[],
-            moco_imaging_paths=list_of_paths),
+
         ####
         # Z-score
         ####
@@ -418,6 +404,21 @@ rule all:
             meanbr_imaging_paths=list_of_paths,
             meanbr_ch=list_of_channels),
 
+        ###
+        # Motion correction output
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/motcorr_params.npy",
+               moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else [],
+               moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else [],
+               moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
+               moco_imaging_paths=list_of_paths),
 rule fictrac_qc_rule:
     """
     """
