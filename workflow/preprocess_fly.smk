@@ -184,7 +184,9 @@ for current_path in imaging_file_paths:
     list_of_paths.append(current_path.split('/imaging')[0])
 # This is a list of all imaging paths so something like this
 # ['anat0', 'func0', 'func1']
-#
+print('list_of_paths ' +repr(list_of_paths) )
+
+
 list_of_paths_func = []
 for current_path in imaging_file_paths:
     if 'func' in current_path:
@@ -312,7 +314,7 @@ rule all:
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
-            meanbr_imaging_paths=list_of_paths_func,
+            meanbr_imaging_paths=list_of_paths,
             meanbr_ch=list_of_channels),
         ###
         # Motion correction output
