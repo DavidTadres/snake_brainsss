@@ -285,6 +285,13 @@ if len(struct_channel)>1:
 #elif 'channel_3' in ANATOMY_CHANNEL:
 #    file_path_anat2atlas_moving.append('channel_3')
 
+###
+# Meanbrain
+###
+#expand(str(fly_folder_to_process_oak)
+#       + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
+#    meanbr_imaging_paths=list_of_paths,
+#    meanbr_ch=list_of_channels),
 rule all:
     """
     See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
@@ -311,13 +318,7 @@ rule all:
             fictrac_paths=FICTRAC_PATHS),
         # data in fly_dirs.json!
 
-        ###
-        # Meanbrain
-        ###
-        #expand(str(fly_folder_to_process_oak)
-        #       + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
-        #    meanbr_imaging_paths=list_of_paths,
-        #    meanbr_ch=list_of_channels),
+
         ###
         # Motion correction output
         ###
