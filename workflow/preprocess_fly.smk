@@ -294,6 +294,22 @@ if len(struct_channel)>1:
 
 
 
+        # Below might be Bifrost territory - ignore for now.
+        ###
+        # func2anat
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
+               func2anat_paths=list_of_paths_func,
+               func2anat_moving=struct_channel,  # This is the channel which is designated as ANATOMY_CHANNEL
+               func2anat_fixed=struct_channel),
+        ##
+        # anat2atlas
+        ##
+        expand(str(fly_folder_to_process_oak)
+               + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
+               anat2atlas_paths=list_of_paths_anat,
+               anat2atlas_moving=struct_channel),
 
 """
 
@@ -415,22 +431,6 @@ rule all:
                supervoxel_paths=list_of_paths_func,
                supervoxel_ch=func_channels),
 
-        # Below might be Bifrost territory - ignore for now.
-        ###
-        # func2anat
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
-               func2anat_paths=list_of_paths_func,
-               func2anat_moving=struct_channel,  # This is the channel which is designated as ANATOMY_CHANNEL
-               func2anat_fixed=struct_channel),
-        ##
-        # anat2atlas
-        ##
-        expand(str(fly_folder_to_process_oak)
-               + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
-               anat2atlas_paths=list_of_paths_anat,
-               anat2atlas_moving=struct_channel),
 
 rule fictrac_qc_rule:
     """
