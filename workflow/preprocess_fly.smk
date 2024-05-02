@@ -185,7 +185,6 @@ for current_path in imaging_file_paths:
 # This is a list of all imaging paths so something like this
 # ['anat0', 'func0', 'func1']
 print('list_of_paths ' +repr(list_of_paths) )
-list_of_paths = ['func0']
 
 
 list_of_paths_func = []
