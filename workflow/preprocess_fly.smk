@@ -583,7 +583,7 @@ rule motion_correction_parallel_processing_rule:
         "--mean_brain_paths_ch1 {input.mean_brain_paths_ch1} "
         "--mean_brain_paths_ch2 {input.mean_brain_paths_ch2} "
         "--mean_brain_paths_ch3 {input.mean_brain_paths_ch3} "
-        "--ANATOMY_CHANNEL {ANATOMY_CHANNEL} "
+        "--STRUCTURAL_CHANNEL {STRUCTURAL_CHANNEL} "
         "--FUNCTIONAL_CHANNELS {FUNCTIONAL_CHANNELS} "
         "--moco_path_ch1 {output.moco_path_ch1} "
         "--moco_path_ch2 {output.moco_path_ch2} "

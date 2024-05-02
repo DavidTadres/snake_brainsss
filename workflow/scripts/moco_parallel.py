@@ -310,7 +310,7 @@ def combine_temp_files(moving_path,
     """
     time_start = time.time()
     ####
-    # STITCH ANATOMY
+    # STITCH STRUCTURAL_CHANNEL
     ####
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
