@@ -314,10 +314,10 @@ rule all:
         ###
         # Meanbrain
         ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
-            meanbr_imaging_paths=list_of_paths_func,
-            meanbr_ch=list_of_channels),
+        #expand(str(fly_folder_to_process_oak)
+        #       + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
+        #    meanbr_imaging_paths=list_of_paths,
+        #    meanbr_ch=list_of_channels),
         ###
         # Motion correction output
         ###
