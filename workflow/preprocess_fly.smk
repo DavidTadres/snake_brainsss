@@ -289,18 +289,7 @@ if len(struct_channel)>1:
 
 """
 
-        ####
-        # Z-score
-        ####
-        expand(str(fly_folder_to_process_oak)
-               + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-            zscore_imaging_paths=list_of_paths_func),
-        expand(str(fly_folder_to_process_oak)
-               + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-            zscore_imaging_paths=list_of_paths_func),
-        expand(str(fly_folder_to_process_oak)
-               + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
-            zscore_imaging_paths=list_of_paths_func),
+
         ###
         # temporal high-pass filter
         ###
@@ -419,6 +408,19 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
                moco_imaging_paths=list_of_paths),
+
+        ####
+        # Z-score
+        ####
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+               zscore_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+               zscore_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+               zscore_imaging_paths=list_of_paths_func),
 rule fictrac_qc_rule:
     """
     """
