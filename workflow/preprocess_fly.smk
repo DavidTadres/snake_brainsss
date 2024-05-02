@@ -203,6 +203,7 @@ if len(list_of_paths_anat) > 1:
     print(list_of_paths_anat)
     print('The folder ' + repr(natsort.natsorted(list_of_paths_anat[0])) + ' will be treated as the "main" anat folder.')
     list_of_paths_anat = natsort.natsorted(list_of_paths_anat[0])
+print('list_of_paths_anat' + repr(list_of_paths_anat))
 
 list_of_channels = []
 if CH1_EXISTS:
