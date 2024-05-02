@@ -291,13 +291,7 @@ if len(struct_channel)>1:
 
 
 
-        ###
-        # Meanbrain of moco brain
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii",
-            moco_meanbr_imaging_paths=list_of_paths,
-            meanbr_moco_ch=list_of_channels),
+
         ###
         # Clean anatomy
         expand(str(fly_folder_to_process_oak)
@@ -424,6 +418,15 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS) > 0 else [],
                corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
+
+        ###
+        # Meanbrain of moco brain
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii",
+               moco_meanbr_imaging_paths=list_of_paths,
+               meanbr_moco_ch=list_of_channels),
+
 
 rule fictrac_qc_rule:
     """
