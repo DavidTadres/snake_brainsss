@@ -185,6 +185,7 @@ for current_path in imaging_file_paths:
 # This is a list of all imaging paths so something like this
 # ['anat0', 'func0', 'func1']
 print('list_of_paths ' +repr(list_of_paths) )
+list_of_paths = ['test0', 'foo1']
 
 
 list_of_paths_func = []
@@ -461,7 +462,47 @@ rule bleaching_qc_rule:
                 width=width)
             print('Error with bleaching_qc' )
 
+rule make_mean_brain_rule:
+    """
+    Here it should be possible to parallelize quite easily as each input file creates
+    one output file!
 
+    input would be something like
+    paths_to_use = ['../fly_004/func0/imaging/functional_channel_1', '../fly_004/func1/imaging/functional_channel_2']
+
+    rule all would request the 'mean' brain of each of those
+    expand("{imaging_path}_mean.nii", imaging_path=paths_to_use)
+
+    rule make_mean_brain_rule:
+        input: "{imaging_path}.nii"
+        output: "{imaging_path}_mean.nii"
+        run: function(imaging_path)
+
+    which will do:
+        brain = read(input)
+        mean_brain = mean(brain)
+        save.mean_brain(output)
+    """
+    threads: snake_utils.threads_per_memory_less
+    resources:
+        mem_mb=snake_utils.mem_mb_less_times_input,  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
+        runtime='10m' # should be enough
+    input:
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}.nii"
+    output:
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii"
+    run:
+        try:
+            preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
+                meanbrain_n_frames=meanbrain_n_frames,
+                path_to_read=input,
+                path_to_save=output,
+                rule_name='make_mean_brain_rule')
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_mean_brain')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
 
 rule motion_correction_parallel_processing_rule:
     """
