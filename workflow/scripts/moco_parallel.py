@@ -310,7 +310,7 @@ def combine_temp_files(moving_path,
     """
     time_start = time.time()
     ####
-    # STITCH ANATOMY
+    # STITCH STRUCTURAL_CHANNEL
     ####
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
@@ -542,6 +542,12 @@ if __name__ == '__main__':
             functional_channel_output_paths = None
             print('No functional channel defined!')
     else:
+        printlog('"structural_channel" NOT DEFINED!!! \n'
+                 'You must define the "structural_channel" in the "fly.json" file!')
+    """
+    # With the 'STRUCTURAL_CHANNEL' we are now enforcing that the user must define
+    # the channel to be used as the structural channel (previously 'anatomy_channel')
+    else:
         # However, sometimes, we don't have an anatomy channel (e.g.
         # when we only have GCAMP expressed and not anatomical marker)
         # Note that it'll just take the first channel as the channel to
@@ -562,6 +568,7 @@ if __name__ == '__main__':
             moving_output_path = pathlib.Path(args.moco_path_ch2)
         functional_channel_paths = None
         functional_channel_output_paths = None
+    """
 
     print("moving_path" + repr(moving_path))
     print("fixed_path" + repr(fixed_path))
@@ -577,9 +584,13 @@ if __name__ == '__main__':
     # We can just put in on scratch
     # This will only work if we have a folder called trc and data is in /data, of course
     relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
+
+    ###################
     # DON'T CHANGE THIS-if this points to your actual experimental folder, the shutil.rmtree
     # below will DELETE YOUR DATA. THIS MUST BE A TEMPORARY PATH
     temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
+    ##################
+
     if TESTING:
         temp_save_path = pathlib.Path('/Users/dtadres/Documents/test_folder')
         if temp_save_path.is_dir():
