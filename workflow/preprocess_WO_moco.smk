@@ -15,6 +15,7 @@ width=120
 ##########################################################
 import pathlib
 import json
+import sys
 import datetime
 # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
 #scripts_path = pathlib.Path(__file__).resolve()
@@ -43,16 +44,41 @@ with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
     fly_json = json.load(file)
 # This needs to come from some sort of json file the experimenter
 # creates while running the experiment. Same as genotype.
-ANATOMY_CHANNEL = fly_json['anatomy_channel']
 FUNCTIONAL_CHANNELS = fly_json['functional_channel']
+# It is probably necessary to forcibly define STRUCTURAL_CHANNEL if not defined
+# Would be better to have an error to be explicit!
+
+# Throw an error if missing! User must provide this!
+STRUCTURAL_CHANNEL = fly_json['structural_channel']
+if STRUCTURAL_CHANNEL != 'channel_1' and \
+    STRUCTURAL_CHANNEL != 'channel_2' and \
+        STRUCTURAL_CHANNEL != 'channel_3':
+    print('!!! ERROR !!!')
+    print('You must provide "structural_channel" in the "fly.json" file for snake_brainsss to run!')
+    sys.exit()
+    # This would be a implicit fix. Not great as it'll
+    # hide potential bugs. Better explicit
+    #STRUCTURAL_CHANNEL = FUNCTIONAL_CHANNELS[0]
+
+def ch_exists_func(channel):
+    """
+    Check if a given channel exists in global variables STRUCTURAL_CHANNEL and FUNCTIONAL_CHANNELS
+    :param channel:
+    :return:
+    """
+    if 'channel_' + str(channel) in STRUCTURAL_CHANNEL or 'channel_' + str(channel) in FUNCTIONAL_CHANNELS:
+        ch_exists = True
+    else:
+        ch_exists = False
+    return(ch_exists)
 
 # Bool for which channel exists in this particular recording.
 # IMPORTANT: One FLY must have the same channels per recording. This
 # makes sense: If we have e.g. GCaMP and tdTomato we would always
 # record from both the green and red channel, right?
-CH1_EXISTS = snake_utils.ch_exists_func("1", ANATOMY_CHANNEL, FUNCTIONAL_CHANNELS)
-CH2_EXISTS = snake_utils.ch_exists_func("2", ANATOMY_CHANNEL, FUNCTIONAL_CHANNELS)
-CH3_EXISTS = snake_utils.ch_exists_func("3", ANATOMY_CHANNEL, FUNCTIONAL_CHANNELS)
+CH1_EXISTS = ch_exists_func("1")
+CH2_EXISTS = ch_exists_func("2")
+CH3_EXISTS = ch_exists_func("3")
 
 ####
 # Load fly_dir.json
