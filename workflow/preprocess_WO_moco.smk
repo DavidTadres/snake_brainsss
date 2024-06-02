@@ -150,6 +150,23 @@ for current_path in imaging_file_paths:
     if 'func' in current_path:
         list_of_paths_func.append(current_path.split('/imaging')[0])
 
+list_of_channels = []
+if CH1_EXISTS:
+    list_of_channels.append("1")
+if CH2_EXISTS:
+    list_of_channels.append("2")
+if CH3_EXISTS:
+    list_of_channels.append("3")
+
+print("list_of_channels" + repr(list_of_channels))
+
+# For wildcards we need lists of elements of the path for each folder.
+list_of_paths = []
+for current_path in imaging_file_paths:
+    list_of_paths.append(current_path.split('/imaging')[0])
+# This is a list of all imaging paths so something like this
+# ['anat0', 'func0', 'func1']
+print('list_of_paths ' +repr(list_of_paths) )
 
 # Behaviors to correlate with neural activity
 corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
@@ -165,6 +182,15 @@ rule all:
     threads: 1 # should be sufficent
     resources: mem_mb=1000 # should be sufficient
     input:
+
+        ###
+        # Meanbrain
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
+            meanbr_imaging_paths=list_of_paths,
+            meanbr_ch=list_of_channels),
+
         ####
         # Z-score
         ####
