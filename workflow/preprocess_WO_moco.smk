@@ -182,7 +182,6 @@ rule all:
     threads: 1 # should be sufficent
     resources: mem_mb=1000 # should be sufficient
     input:
-
         ###
         # Meanbrain
         ###
@@ -190,7 +189,6 @@ rule all:
                + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
             meanbr_imaging_paths=list_of_paths,
             meanbr_ch=list_of_channels),
-
         ####
         # Z-score
         ####
