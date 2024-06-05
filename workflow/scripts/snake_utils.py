@@ -169,10 +169,10 @@ def mb_for_moco_input(wildcards, input):
         brain_dims = brain_proxy.header.get_data_shape()
     # If channel_1 doesn't exist, try 2. All channels should have the same
     # dimension, so checking one is sufficient.
-    elif input.brains_path_ch2 !=[]:
+    elif input.brain_paths_ch2 !=[]:
         brain_proxy = nib.load(input.brain_paths_ch2)
         brain_dims = brain_proxy.header.get_data_shape()
-    elif input.brains_path_ch2 !=[]:
+    elif input.brain_paths_ch3 !=[]:
         brain_proxy = nib.load(input.brain_paths_ch2)
         brain_dims = brain_proxy.header.get_data_shape()
     # This is the size of the brain volume at one 'timepoint', meaning
