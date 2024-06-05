@@ -89,6 +89,7 @@ FUNCTIONAL_CHANNELS = fly_json['functional_channel']
 
 # Throw an error if missing! User must provide this!
 STRUCTURAL_CHANNEL = fly_json['structural_channel']
+print(STRUCTURAL_CHANNEL)
 if STRUCTURAL_CHANNEL != 'channel_1' and \
     STRUCTURAL_CHANNEL != 'channel_2' and \
         STRUCTURAL_CHANNEL != 'channel_3':
