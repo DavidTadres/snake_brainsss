@@ -84,13 +84,11 @@ with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
 # This needs to come from some sort of json file the experimenter
 # creates while running the experiment. Same as genotype.
 FUNCTIONAL_CHANNELS = fly_json['functional_channel']
-print("FUNCTIONAL_CHANNELS: " + repr(FUNCTIONAL_CHANNELS))
 # It is probably necessary to forcibly define STRUCTURAL_CHANNEL if not defined
 # Would be better to have an error to be explicit!
 
 # Throw an error if missing! User must provide this!
 STRUCTURAL_CHANNEL = fly_json['structural_channel']
-print(STRUCTURAL_CHANNEL)
 if STRUCTURAL_CHANNEL != 'channel_1' and \
     STRUCTURAL_CHANNEL != 'channel_2' and \
         STRUCTURAL_CHANNEL != 'channel_3':
