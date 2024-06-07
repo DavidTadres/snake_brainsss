@@ -935,11 +935,17 @@ def temporal_high_pass_filter(
     )
 
     printlog("Beginning high pass")
+
     # dataset_path might be a list of 2 channels (or a list with one channel only)
     for current_dataset_path, current_temporal_high_pass_filtered_path in zip(
         dataset_path, temporal_high_pass_filtered_path
     ):
         printlog("Working on " + repr(current_dataset_path.name))
+
+        # Dynamically define sigma for filtering! This was recently introduced to brainsss
+        timestamps = utils.load_timestamps(current_dataset_path, 'imaging', 'recording_metadata.xml')
+        hz = (1 / np.diff(timestamps[:, 0])[0]) * 1000 # This is volumes per second!
+        sigma = int(hz / 0.01)  # gets a sigma of ~100 second
 
         if '.nii' in current_dataset_path.name:
             # this doesn't actually LOAD the data - it is just a proxy
@@ -950,13 +956,9 @@ def temporal_high_pass_filter(
 
             # Calculate mean
             data_mean = np.mean(data, axis=-1)
-            # Using filter to smoothen data. This gets rid of
-            # high frequency noise.
-            # Note: sigma: standard deviation for Gaussian kernel
-            # This needs to be made dynamic else we'll filter differently
-            # at different
+            # Using filter to smoothen data. This gets rid of high frequency noise.
             smoothed_data = ndimage.gaussian_filter1d(
-                data, sigma=200, axis=-1, truncate=1
+                data, sigma=sigma, axis=-1, truncate=1
             )  # This for sure makes a copy of
             # the array, doubling memory requirements
 
