@@ -21,14 +21,20 @@ from brainsss import utils
 ####################
 WIDTH = 120  # This is used in all logging files
 
-def fly_builder(fictrac_folder, import_dirs, dataset_dirs):
+def fly_builder(autotransferred_stimpack,
+                fictrac_folder,
+                import_dirs,
+                dataset_dirs):
     """
     Move folders from imports to fly dataset - need to restructure folders.
     This is based on Bella's 'fly_builder.py' script
 
     # Note: I removed the discrepancy between 'anat' and 'func' folders. All files
     are now just called 'channel_1.nii' or 'channel_2.nii' as it makes handling filenames
-    much, much simpler, especially when going through snakemake
+    much, much simpler, especially when going through snakemake.
+
+    In addition, channel # is conserved and does reflect the channel # assigned by the
+    Bruker software!
 
     :param logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
     :param user: your SUnet ID as a string
@@ -83,9 +89,14 @@ def fly_builder(fictrac_folder, import_dirs, dataset_dirs):
             # Copy fly data
             ####
             fly_dirs_dict = copy_fly(
-                current_import_dir, current_dataset_dir, printlog, fictrac_folder, fly_dirs_dict
+                current_import_dir, current_dataset_dir, printlog,
+                autotransferred_stimpack,
+                fictrac_folder,
+                fly_dirs_dict
             )
-
+            ###
+            # Done copying fly data!
+            ###
 
             # Save json file with all relevant paths
             with open(
@@ -172,15 +183,14 @@ def add_date_to_fly(fly_folder):
         )
 
 
-def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
+def copy_fly(import_dir,
+             dataset_dir,
+             printlog,
+             autotransferred_stimpack,
+             fictrac_folder,
+             fly_dirs_dict,
+             ):
     """
-    #####
-    # Todo - make sure the scratch folder is empty!!!!!
-    #####
-    Otherwise it's easy to imagine a situation where a user creates ../fly002/
-    deletes it and records another fly which is then called fly002. All analysis
-    would then be done on the initial fly002!
-
     There will be two types of folders in a fly folder.
     1) func_x folder
     2) anat_x folder
@@ -199,6 +209,7 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                 current_import_file_or_folder.name
             )
         )
+
         # Handle folders
         if current_import_file_or_folder.is_dir():
             # Call this folder source expt folder
@@ -264,20 +275,31 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                 fly_dirs_dict[
                     current_import_imaging_folder.name + " Imaging"
                 ] = current_fly_dir_dict
-                # Copy fictrac data based on timestamps
-                try:
-                    fly_dirs_dict = copy_fictrac(
-                        current_dataset_folder,
-                        printlog,
-                        fictrac_folder,
-                        current_import_imaging_folder,
-                        fly_dirs_dict,
-                    )
-                    # printlog('Fictrac data copied')
-                except Exception as e:
-                    printlog("Could not copy fictrac data because of error:")
-                    printlog(str(e))
-                    printlog(traceback.format_exc())
+                # Copy fictrac data
+                # Automatic fictrac assignment (done on davidtadres/brukerbridge) where
+                # each func folder would have a folder with stimpack/#/loco/*.dat
+                if autotransferred_stimpack:
+                    # while data is PROBABLY TEST automatically transferred, the name
+                    # of the *.dat file needs to be changed for downstream analysis!
+                    automatic_copy_stimpack(target_folder=current_dataset_folder,
+                                            fly_dirs_dict=fly_dirs_dict,
+                                           )
+
+                # Manual fictrac assignment
+                if fictrac_folder is not None and not autotransferred_stimpack:
+                    try:
+                        fly_dirs_dict = manual_copy_fictrac(
+                            current_dataset_folder,
+                            printlog,
+                            fictrac_folder,
+                            current_import_imaging_folder,
+                            fly_dirs_dict,
+                        )
+                        # printlog('Fictrac data copied')
+                    except Exception as e:
+                        printlog("Could not copy fictrac data because of error:")
+                        printlog(str(e))
+                        printlog(traceback.format_exc())
                 # Copy visual data based on timestamps, and create visual.json
                 try:
                     copy_visual(current_dataset_folder, printlog)
@@ -413,22 +435,7 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
                 create_imaging_json(target_path, printlog)
                 #if folder_type == "func":
                 continue
-            # Rename to anatomy.xml if appropriate
-            # if '.xml' in source_path.name and folder_type == 'anat' and \
-            #        'Voltage' not in source_path.name:
-            #    target_name = 'anatomy.xml'
-            #    target_path = pathlib.Path(destination, target_name)
 
-            # Rename to functional.xml if appropriate, copy immediately, then make scan.json
-            # if ('.xml' in source_path.name and folder_type == 'func' and
-            #        'Voltage' not in source_path.name):
-            #    # TOdo: rename to something like 'microscope.xml'. Similar to ch, keep filenames consistent!
-            #    target_path = pathlib.Path(destination, 'functional.xml')
-            #    #target_item = os.path.join(destination, item)
-            #    copy_file(source_path, target_path, printlog)
-            #    # Create json file
-            #    create_imaging_json(target_path, printlog)
-            #    continue
             elif ".xml" in source_path.name and "VoltageOutput" in source_path.name:
                 target_path = pathlib.Path(destination, "voltage_output.xml")
 
@@ -518,8 +525,39 @@ def copy_visual(destination_region, printlog):
     with open(os.path.join(visual_destination, 'visual.json'), 'w') as f:
         json.dump(unique_stimuli, f, indent=4)"""
 
+def automatic_copy_stimpack(target_folder, fly_dirs_dict):
+    """
+    When using stimpack to trigger fictrac, davidtadres/brukerbridge has the option
+    to automatically assign a given fictrac dataset to the corresponding imaging series.
+    Now all that's left is to copy from imports folder to built fly
+    """
 
-def copy_fictrac(destination_region, printlog, fictrac_folder, source_fly, fly_dirs_dict):
+    # Check if fictrac data exists:
+    fictrac_target_path = pathlib.Path(target_folder, 'stimpack/loco')
+    if fictrac_target_path.is_dir():
+        for current_file in fictrac_target_path.iterdir():
+            if '.dat' in current_file.name:
+                # Test if this works: https://stackoverflow.com/questions/2491222/how-to-rename-a-file-using-python
+                old_path = current_file # Just to be explicit!
+                new_path = pathlib.Path(current_file.parent, 'fictrac_behavior_data.dat')
+                old_path.rename(new_path)
+
+    relative_path = pathlib.Path(fictrac_target_path.name, 'stimpack/loco/fictrac_behavior_data.dat')
+    fly_dirs_dict[target_folder.name + " Fictrac "] = relative_path # Check if this correct!
+
+    # Add more stuff if needed such as renaming visual data!
+
+def manual_copy_fictrac(destination_region, printlog, fictrac_folder, source_fly, fly_dirs_dict):
+    """
+    Attempt to get correct fictrac data into the corresponding 'func' folder.
+    This is called 'manual' because for each experiment (i.e. each TSeries) the
+    user has to prepare a folder containing the .dat file for fictrac based on
+    'fictrac_path' in user.json (i.e. david.json)
+    For example for fly 20231201\fly2\func1 imaging data, fictrac data must
+    be in the folder 20231201_fly2_func1. There must only be a single dat file in that folder!
+
+    Consider using the stimpack autotransfer option.
+    """
     # The target file will be called 'fictrac_behavior_data.dat' because it makes
     # handling files much easier in the snakefile.
     # Make fictrac folder

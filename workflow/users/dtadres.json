@@ -1,4 +1,5 @@
 {
+    "autotransferred_stimpack" : "True",
     "fictrac_path": "/oak/stanford/groups/trc/data/David/Bruker/Fictrac",
     "dataset_path": "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
 }
