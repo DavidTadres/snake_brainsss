@@ -27,6 +27,7 @@ try:
 except ImportError:
     # import windows analog
     FCNTL_EXISTS = False
+    import threading
 
 """try:
     # Posix based file locking (Linux, Ubuntu, MacOS, etc.)
@@ -242,6 +243,14 @@ class PrintlogOLD:
                 fcntl.flock(f, fcntl.LOCK_UN)
         else:
             # do windows stuff
+            lock = threading.Lock()
+            def write_to_file():
+                with lock:
+                    with open(self.logfile, "a+") as file:
+                        file.write(message)
+                        file.write("\n")
+
+            write_to_file()
             print(message)
             print('\n')
         print('success print_to_log called')
