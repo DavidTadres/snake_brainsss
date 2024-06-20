@@ -23,7 +23,9 @@ import pathlib
 # only imports on linux, which is fine since only needed for sherlock
 try:
     import fcntl
-except ImportError:
+except ImportError as e:
+    print('Unabble to load fcntl')
+    print(e)
     pass
 
 
