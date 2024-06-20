@@ -234,7 +234,6 @@ class Printlog:
         self.logfile = logfile
 
     def print_to_log(self, message):
-        print('try print_to_log called')
         if FCNTL_EXISTS:
             with open(self.logfile, "a+") as f:
                 fcntl.flock(f, fcntl.LOCK_EX)
@@ -253,7 +252,6 @@ class Printlog:
             write_to_file()
             print(message)
             print('\n')
-        print('success print_to_log called')
 
 """# Class for ensuring that all file operations are atomic, treat
 # initialization like a standard call to 'open' that happens to be atomic.

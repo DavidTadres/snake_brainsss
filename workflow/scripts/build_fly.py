@@ -958,6 +958,7 @@ def add_fly_to_csv(import_folder, fly_folder, current_import_imaging_folder,
             csv_file = pd.read_csv(csv_path, index_col=0)
             printlog('Successfully opened master_2P log')
         except Exception as e:
+            # Better to create it from scratch!
             printlog('Error while trying to move or open the csv file:')
             print(e)
 
