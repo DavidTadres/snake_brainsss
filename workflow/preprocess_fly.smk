@@ -184,6 +184,7 @@ FICTRAC_PATHS = []
 for current_path in fictrac_file_paths:
     print("current_path: " + repr(current_path))
     FICTRAC_PATHS.append(current_path.split('/fictrac_behavior_data.dat')[0])
+print("FICTRAC_PATHS: " + repr(FICTRAC_PATHS) )
 
 # For wildcards we need lists of elements of the path for each folder.
 list_of_paths = []
