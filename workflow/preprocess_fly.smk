@@ -182,7 +182,7 @@ def create_file_paths(path_to_fly_folder, imaging_file_paths, filename, func_onl
 
 FICTRAC_PATHS = []
 for current_path in fictrac_file_paths:
-    print(current_path)
+    print("current_path: " + repr(current_path))
     FICTRAC_PATHS.append(current_path.split('/fictrac_behavior_data.dat')[0])
 
 # For wildcards we need lists of elements of the path for each folder.
