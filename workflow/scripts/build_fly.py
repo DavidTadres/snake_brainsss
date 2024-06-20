@@ -284,7 +284,7 @@ def copy_fly(import_dir,
                                                )
                     except Exception as error:
                         printlog('***** ERROR *****')
-                        printlog(str(e))
+                        printlog(str(error))
                         printlog('\n')
 
                 # Manual fictrac assignment
