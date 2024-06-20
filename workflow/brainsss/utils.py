@@ -151,16 +151,14 @@ def create_logfile(fly_folder, function_name):
 
     # Not sure what this does exactly, from Bella's code
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
-    print('print PrintLog called')
     # Pipe all errors to the logfile
     sys.stderr = LoggerRedirect(logfile)
     # Pipe all print statements (and other console output) to the logfile
     sys.stdout = LoggerRedirect(logfile)
-    print('print rerouted')
-    printlog('printlog rerouted')
     # Problem: Snakemake runs twice. Seems to be a bug: https://github.com/snakemake/snakemake/issues/2350
     # Only print title and fly if logfile doesn't yet exist
     width = 120  # can go into a config file as well.
+    printlog('getting start text')
     print_function_start(logfile, width, function_name)
     return logfile
 
@@ -647,6 +645,8 @@ def print_function_done(logfile, width, function_name):
 def print_function_start(logfile, width, function_name):
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
+    print('day_now:' + repr(day_now))
+    printlog('day_now:' + repr(day_now))
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
     day_time = str(day_now) + " | " + str(time_now)
     printlog(
