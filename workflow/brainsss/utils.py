@@ -23,10 +23,29 @@ import pathlib
 # only imports on linux, which is fine since only needed for sherlock
 try:
     import fcntl
-except ImportError as e:
-    print('Unabble to load fcntl')
-    print(e)
-    pass
+    FCNTL_EXISTS = True
+except ImportError:
+    # import windows analog
+    FCNTL_EXISTS = False
+
+"""try:
+    # Posix based file locking (Linux, Ubuntu, MacOS, etc.)
+    #   Only allows locking on writable files, might cause
+    #   strange results for reading.
+    import fcntl, os
+    def lock_file(f):
+        if f.writable(): fcntl.lockf(f, fcntl.LOCK_EX)
+    def unlock_file(f):
+        if f.writable(): fcntl.lockf(f, fcntl.LOCK_UN)
+except ModuleNotFoundError:
+    # Windows file locking
+    import msvcrt, os
+    def file_size(f):
+        return os.path.getsize( os.path.realpath(f.name) )
+    def lock_file(f):
+        msvcrt.locking(f.fileno(), msvcrt.LK_RLCK, file_size(f))
+    def unlock_file(f):
+        msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, file_size(f))"""
 
 
 
@@ -205,7 +224,7 @@ class LoggerRedirect(object):
         pass'''
 
 
-class Printlog:
+class PrintlogOLD:
     """
     for printing all processes into same log file on sherlock
     """
@@ -215,16 +234,45 @@ class Printlog:
 
     def print_to_log(self, message):
         print('try print_to_log called')
-        with open(self.logfile, "a+") as f:
-            print('fcntl.flock(f, fcntl.LOCK_EX)')
-            fcntl.flock(f, fcntl.LOCK_EX)
-            print('f.write(message)')
-            f.write(message)
-            f.write("\n")
-            fcntl.flock(f, fcntl.LOCK_UN)
+        if FCNTL_EXISTS:
+            with open(self.logfile, "a+") as f:
+                fcntl.flock(f, fcntl.LOCK_EX)
+                f.write(message)
+                f.write("\n")
+                fcntl.flock(f, fcntl.LOCK_UN)
+        else:
+            # do windows stuff
+            print(message)
+            print('\n')
         print('success print_to_log called')
 
+"""# Class for ensuring that all file operations are atomic, treat
+# initialization like a standard call to 'open' that happens to be atomic.
+# This file opener *must* be used in a "with" block.
+class AtomicOpen:
+    # Open the file with arguments provided by user. Then acquire
+    # a lock on that file object (WARNING: Advisory locking).
+    def __init__(self, path, *args, **kwargs):
+        # Open the file and acquire a lock on the file before operating
+        self.file = open(path,*args, **kwargs)
+        # Lock the opened file
+        lock_file(self.file)
 
+    # Return the opened file object (knowing a lock has been obtained).
+    def __enter__(self, *args, **kwargs): return self.file
+
+    # Unlock the file and close the file object.
+    def __exit__(self, exc_type=None, exc_value=None, traceback=None):
+        # Flush to make sure all buffered contents are written to file.
+        self.file.flush()
+        os.fsync(self.file.fileno())
+        # Release the lock on the file.
+        unlock_file(self.file)
+        self.file.close()
+        # Handle exceptions that may have come up during execution, by
+        # default any exceptions are raised to the user.
+        if (exc_type != None): return False
+        else:                  return True"""
 def sbatch(
     jobname,
     script,
