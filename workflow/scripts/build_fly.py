@@ -551,7 +551,7 @@ def automatic_copy_stimpack(import_folder, target_folder, fly_dirs_dict):
         shutil.copyfile(current_file, current_target_path)
 
     # To keep track of where files are, ass to fly_dirs_dict
-    relative_path = pathlib.Path(target_folder.name, 'stimpack/loco/fictrac_behavior_data.dat')
+    relative_path = pathlib.Path('/' + target_folder.name, 'stimpack/loco/fictrac_behavior_data.dat')
     fly_dirs_dict[import_folder.name + " Fictrac "] = relative_path.as_posix() # Check if this correct!
 
     # Add more stuff if needed such as renaming visual data!
