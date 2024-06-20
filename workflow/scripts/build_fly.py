@@ -275,12 +275,17 @@ def copy_fly(import_dir,
                 # each func folder would have a folder with stimpack/#/loco/*.dat
                 print('autotransferred_stimpack: ' + repr(autotransferred_stimpack))
                 if autotransferred_stimpack:
-                    # while data is PROBABLY TEST automatically transferred, the name
-                    # of the *.dat file needs to be changed for downstream analysis!
-                    automatic_copy_stimpack(import_folder=current_import_imaging_folder,
-                                            target_folder=current_dataset_folder,
-                                            fly_dirs_dict=fly_dirs_dict,
-                                           )
+                    try:
+                        # while data is PROBABLY TEST automatically transferred, the name
+                        # of the *.dat file needs to be changed for downstream analysis!
+                        automatic_copy_stimpack(import_folder=current_import_imaging_folder,
+                                                target_folder=current_dataset_folder,
+                                                fly_dirs_dict=fly_dirs_dict,
+                                               )
+                    except Exception as error:
+                        printlog('***** ERROR *****')
+                        printlog(str(e))
+                        printlog('\n')
 
                 # Manual fictrac assignment
                 if fictrac_folder is not None and not autotransferred_stimpack:

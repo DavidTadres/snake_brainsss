@@ -165,26 +165,20 @@ def get_json_data(file_path):
 
 def create_logfile(fly_folder, function_name):
     pathlib.Path(fly_folder, "logs").mkdir(exist_ok=True, parents=True)
-    print('before creating log file')
     # Have one log file per rule placed into the destination folder!
     # This will make everything super traceable!
     logfile = (
         str(fly_folder) + "/logs/" + function_name + "_" + fly_folder.name + ".txt"
     )
-
     # Not sure what this does exactly, from Bella's code
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
-    print('print called')
-    printlog('printlog called')
     # Pipe all errors to the logfile
     sys.stderr = LoggerRedirect(logfile)
     # Pipe all print statements (and other console output) to the logfile
     sys.stdout = LoggerRedirect(logfile)
-    printlog('Redirected')
     # Problem: Snakemake runs twice. Seems to be a bug: https://github.com/snakemake/snakemake/issues/2350
     # Only print title and fly if logfile doesn't yet exist
     width = 120  # can go into a config file as well.
-    printlog('getting start text')
     print_function_start(logfile, width, function_name)
     return logfile
 
