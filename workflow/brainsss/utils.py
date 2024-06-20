@@ -143,6 +143,7 @@ def get_json_data(file_path):
 
 def create_logfile(fly_folder, function_name):
     pathlib.Path(fly_folder, "logs").mkdir(exist_ok=True, parents=True)
+    print('before creating log file')
     # Have one log file per rule placed into the destination folder!
     # This will make everything super traceable!
     logfile = (
@@ -151,6 +152,7 @@ def create_logfile(fly_folder, function_name):
 
     # Not sure what this does exactly, from Bella's code
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
+    print('print called')
     printlog('printlog called')
     # Pipe all errors to the logfile
     sys.stderr = LoggerRedirect(logfile)
@@ -210,11 +212,13 @@ class Printlog:
         self.logfile = logfile
 
     def print_to_log(self, message):
+        print('try print_to_log called')
         with open(self.logfile, "a+") as f:
             fcntl.flock(f, fcntl.LOCK_EX)
             f.write(message)
             f.write("\n")
             fcntl.flock(f, fcntl.LOCK_UN)
+        print('success print_to_log called')
 
 
 def sbatch(
