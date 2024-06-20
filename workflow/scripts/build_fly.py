@@ -273,10 +273,12 @@ def copy_fly(import_dir,
                 # Copy fictrac data
                 # Automatic fictrac assignment (done on davidtadres/brukerbridge) where
                 # each func folder would have a folder with stimpack/#/loco/*.dat
+                print('autotransferred_stimpack: ' + repr(autotransferred_stimpack))
                 if autotransferred_stimpack:
                     # while data is PROBABLY TEST automatically transferred, the name
                     # of the *.dat file needs to be changed for downstream analysis!
-                    automatic_copy_stimpack(target_folder=current_dataset_folder,
+                    automatic_copy_stimpack(import_folder=current_import_imaging_folder,
+                                            target_folder=current_dataset_folder,
                                             fly_dirs_dict=fly_dirs_dict,
                                            )
 
@@ -520,25 +522,34 @@ def copy_visual(destination_region, printlog):
     with open(os.path.join(visual_destination, 'visual.json'), 'w') as f:
         json.dump(unique_stimuli, f, indent=4)"""
 
-def automatic_copy_stimpack(target_folder, fly_dirs_dict):
+def automatic_copy_stimpack(import_folder, target_folder, fly_dirs_dict):
     """
     When using stimpack to trigger fictrac, davidtadres/brukerbridge has the option
     to automatically assign a given fictrac dataset to the corresponding imaging series.
-    Now all that's left is to copy from imports folder to built fly
+
+    This function makes sure data is copied as expected
+
+    :param import_folder: current_dataset_folder, pathlib object pointing to i.e. \\oak-smb-trc.stanford.edu\groups\trc\data\David\Bruker\imports\20240619\fly1\func0
+    :param target_folder: pathlib object pointing to i.e. \\oak-smb-trc.stanford.edu\groups\trc\data\David\Bruker\preprocessed\FS144_x_FS61\fly_001\func0
+    :param fly_dirs_dict: dict with relative path used by snakemake
     """
 
     # Check if fictrac data exists:
+    fictrac_import_path = pathlib.Path(import_folder, 'stimpack/loco')
     fictrac_target_path = pathlib.Path(target_folder, 'stimpack/loco')
-    if fictrac_target_path.is_dir():
-        for current_file in fictrac_target_path.iterdir():
-            if '.dat' in current_file.name:
-                # Test if this works: https://stackoverflow.com/questions/2491222/how-to-rename-a-file-using-python
-                old_path = current_file # Just to be explicit!
-                new_path = pathlib.Path(current_file.parent, 'fictrac_behavior_data.dat')
-                old_path.rename(new_path)
+    # Go through import folder
+    for current_file in fictrac_import_path.iterdir():
+        # Rename this file because it needs to be consistent for snake_brainsss to work
+        if '.dat' in current_file.name:
+            current_target_path = pathlib.Path(current_file.parent, 'fictrac_behavior_data.dat')
+            shutil.copyfile(current_file, current_target_path)
+        else:
+            # Copy the rest of the content as well
+            current_target_path = pathlib.Path(target_folder.parent, current_file.name)
+            shutil.copyfile(current_file, current_target_path)
 
     relative_path = pathlib.Path(fictrac_target_path.name, 'stimpack/loco/fictrac_behavior_data.dat')
-    fly_dirs_dict[target_folder.name + " Fictrac "] = relative_path.as_posix() # Check if this correct!
+    fly_dirs_dict[import_folder.name + " Fictrac "] = relative_path.as_posix() # Check if this correct!
 
     # Add more stuff if needed such as renaming visual data!
 
