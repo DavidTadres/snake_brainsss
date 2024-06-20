@@ -99,12 +99,7 @@ def fly_builder(autotransferred_stimpack,
             ###
 
             # Save json file with all relevant paths
-            with open(
-                pathlib.Path(
-                    current_dataset_dir, current_dataset_dir.name + "_dirs.json"
-                ),
-                "w",
-            ) as outfile:
+            with open(pathlib.Path(current_dataset_dir, current_dataset_dir.name + "_dirs.json"), "w", ) as outfile:
                 json.dump(fly_dirs_dict, outfile, indent=4)
 
             # If we are here it should mean that everything above has been copied as expected.
@@ -543,7 +538,7 @@ def automatic_copy_stimpack(target_folder, fly_dirs_dict):
                 old_path.rename(new_path)
 
     relative_path = pathlib.Path(fictrac_target_path.name, 'stimpack/loco/fictrac_behavior_data.dat')
-    fly_dirs_dict[target_folder.name + " Fictrac "] = relative_path # Check if this correct!
+    fly_dirs_dict[target_folder.name + " Fictrac "] = relative_path.as_posix() # Check if this correct!
 
     # Add more stuff if needed such as renaming visual data!
 
