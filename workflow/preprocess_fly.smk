@@ -192,7 +192,7 @@ current_fictrac_rel_path = FICTRAC_PATHS[0]
 rel_path_parts = pathlib.Path(current_fictrac_rel_path).parts[2::]
 # Then put the parts back together
 fictrac_rel_path_correlation = pathlib.Path(*rel_path_parts)
-print('fictrac_rel_path_correlation:' + fictrac_rel_path_correlation)
+print('fictrac_rel_path_correlation:' + repr(fictrac_rel_path_correlation))
 
 # For wildcards we need lists of elements of the path for each folder.
 list_of_paths = []
