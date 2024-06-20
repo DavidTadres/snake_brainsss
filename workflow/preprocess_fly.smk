@@ -188,12 +188,10 @@ for current_path in fictrac_file_paths:
 # IN ONE EXPERIMENT I ASSUME THAT THE FICTRAC STRUCTURE IS CONSISTENT!
 fictrac_rel_path_correlation = None
 current_fictrac_rel_path = FICTRAC_PATHS[0]
-print("current_fictrac_rel_path" + repr(current_fictrac_rel_path))
 # Remove the first folder which is going to be likely 'func0'
 rel_path_parts = pathlib.Path(current_fictrac_rel_path).parts[1::]
 # Then put the parts back together
 fictrac_rel_path_correlation = pathlib.Path(*rel_path_parts)
-print('fictrac_rel_path_correlation:' + repr(fictrac_rel_path_correlation))
 
 # For wildcards we need lists of elements of the path for each folder.
 list_of_paths = []
