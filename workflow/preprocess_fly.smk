@@ -187,10 +187,10 @@ for current_path in fictrac_file_paths:
 # relative path following 'funcX'.
 # IN ONE EXPERIMENT I ASSUME THAT THE FICTRAC STRUCTURE IS CONSISTENT!
 fictrac_rel_path_correlation = None
-if len(FICTRAC_PATHS)>1:
-    current_fictrac_rel_path = FICTRAC_PATHS[0]
-else:
-    current_fictrac_rel_path = FICTRAC_PATHS
+#if len(FICTRAC_PATHS)>1:
+current_fictrac_rel_path = FICTRAC_PATHS[0]
+#else:
+#    current_fictrac_rel_path = FICTRAC_PATHS
 print("current_fictrac_rel_path" + repr(current_fictrac_rel_path))
 # Remove the first folder which is going to be likely 'func0'
 rel_path_parts = pathlib.Path(current_fictrac_rel_path).parts[2::]
