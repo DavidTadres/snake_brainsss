@@ -644,6 +644,7 @@ def print_function_done(logfile, width, function_name):
 
 def print_function_start(logfile, width, function_name):
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
+    print('before calling datetime')
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
     print('day_now:' + repr(day_now))
     printlog('day_now:' + repr(day_now))
