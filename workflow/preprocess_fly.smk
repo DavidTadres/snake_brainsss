@@ -845,7 +845,7 @@ fictrac_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/fictrac/fic
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch3=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
-        fictrac_path=str(fly_folder_to_process_oak) + "/" + str(fictrac_rel_path_correlation) + '/fictrac_behavior_data.dat',
+        fictrac_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/" + str(fictrac_rel_path_correlation) + '/fictrac_behavior_data.dat',
         metadata_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/imaging/recording_metadata.xml"
     output:
         save_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
