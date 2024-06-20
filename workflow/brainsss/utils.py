@@ -214,7 +214,9 @@ class Printlog:
     def print_to_log(self, message):
         print('try print_to_log called')
         with open(self.logfile, "a+") as f:
+            print('fcntl.flock(f, fcntl.LOCK_EX)')
             fcntl.flock(f, fcntl.LOCK_EX)
+            print('f.write(message)')
             f.write(message)
             f.write("\n")
             fcntl.flock(f, fcntl.LOCK_UN)
