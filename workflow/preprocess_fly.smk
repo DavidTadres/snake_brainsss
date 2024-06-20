@@ -187,7 +187,10 @@ for current_path in fictrac_file_paths:
 # relative path following 'funcX'.
 # IN ONE EXPERIMENT I ASSUME THAT THE FICTRAC STRUCTURE IS CONSISTENT!
 fictrac_rel_path_correlation = None
-current_fictrac_rel_path = FICTRAC_PATHS[0]
+if len(FICTRAC_PATHS)>1:
+    current_fictrac_rel_path = FICTRAC_PATHS[0]
+else:
+    current_fictrac_rel_path = FICTRAC_PATHS
 print("current_fictrac_rel_path" + repr(current_fictrac_rel_path))
 # Remove the first folder which is going to be likely 'func0'
 rel_path_parts = pathlib.Path(current_fictrac_rel_path).parts[2::]
@@ -845,7 +848,7 @@ fictrac_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/fictrac/fic
         corr_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch3=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
-        fictrac_path=str(fly_folder_to_process_oak) + "/" + str(fictrac_rel_path_correlation),
+        fictrac_path=str(fly_folder_to_process_oak) + "/" + str(fictrac_rel_path_correlation + '/fictrac_behavior_data.dat'),
         metadata_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/imaging/recording_metadata.xml"
     output:
         save_path_ch1=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
