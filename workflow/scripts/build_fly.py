@@ -541,14 +541,14 @@ def automatic_copy_stimpack(import_folder, target_folder, fly_dirs_dict):
     for current_file in fictrac_import_path.iterdir():
         # Rename this file because it needs to be consistent for snake_brainsss to work
         if '.dat' in current_file.name:
-            current_target_path = pathlib.Path(current_file.parent, 'fictrac_behavior_data.dat')
+            current_target_path = pathlib.Path(fictrac_target_path, 'fictrac_behavior_data.dat')
             shutil.copyfile(current_file, current_target_path)
         else:
             # Copy the rest of the content as well
-            current_target_path = pathlib.Path(target_folder.parent, current_file.name)
+            current_target_path = pathlib.Path(fictrac_target_path, current_file.name)
             shutil.copyfile(current_file, current_target_path)
 
-    relative_path = pathlib.Path(fictrac_target_path.name, 'stimpack/loco/fictrac_behavior_data.dat')
+    relative_path = pathlib.Path(target_folder.name, 'stimpack/loco/fictrac_behavior_data.dat')
     fly_dirs_dict[import_folder.name + " Fictrac "] = relative_path.as_posix() # Check if this correct!
 
     # Add more stuff if needed such as renaming visual data!
@@ -1003,8 +1003,11 @@ def add_fly_to_csv(import_folder, fly_folder, current_import_imaging_folder,
             dict_for_csv[json_key] = fly_data[json_key]
 
     for json_key in scan_json:
-        if json_key not in csv_file.columns:
-            dict_for_csv[json_key] = scan_json[json_key]
+        # we already have date and time but because of capitalized/not capitalized would
+        # make a new column. Hence explicitely exclude!
+        if not json_key == 'date' and not json_key == 'time':
+            if json_key not in csv_file.columns:
+                dict_for_csv[json_key] = scan_json[json_key]
     # This of course has the slight downside that users have to be careful to
     # not slightly change their json file (i.e. from Genotype to genotype).
     # Upside is that the json file becomes very flexible in combination with this
