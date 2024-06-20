@@ -144,6 +144,7 @@ for key in fly_dirs_dict:
     elif 'Fictrac' in key:
         fictrac_file_paths.append(fly_dirs_dict[key][1::])
         # This yields for example 'func1/fictrac/fictrac_behavior_data.dat'
+        # With automatic stimpack transfer it'll return "/func0/stimpack/loco/fictrac_behavior_data.dat"
 
 #######
 # Data path on OAK
@@ -181,6 +182,7 @@ def create_file_paths(path_to_fly_folder, imaging_file_paths, filename, func_onl
 
 FICTRAC_PATHS = []
 for current_path in fictrac_file_paths:
+    print(current_path)
     FICTRAC_PATHS.append(current_path.split('/fictrac_behavior_data.dat')[0])
 
 # For wildcards we need lists of elements of the path for each folder.
