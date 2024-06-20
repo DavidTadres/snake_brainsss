@@ -542,12 +542,15 @@ def automatic_copy_stimpack(import_folder, target_folder, fly_dirs_dict):
         # Rename this file because it needs to be consistent for snake_brainsss to work
         if '.dat' in current_file.name:
             current_target_path = pathlib.Path(fictrac_target_path, 'fictrac_behavior_data.dat')
-            shutil.copyfile(current_file, current_target_path)
         else:
             # Copy the rest of the content as well
             current_target_path = pathlib.Path(fictrac_target_path, current_file.name)
-            shutil.copyfile(current_file, current_target_path)
+        # Make folder structure if not existing yet
+        current_target_path.parent.mkdir(exist_ok=True, parents=True)
+        # Copy file
+        shutil.copyfile(current_file, current_target_path)
 
+    # To keep track of where files are, ass to fly_dirs_dict
     relative_path = pathlib.Path(target_folder.name, 'stimpack/loco/fictrac_behavior_data.dat')
     fly_dirs_dict[import_folder.name + " Fictrac "] = relative_path.as_posix() # Check if this correct!
 
