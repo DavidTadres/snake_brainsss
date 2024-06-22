@@ -288,7 +288,7 @@ def copy_fly(import_dir,
                         printlog('\n')
 
                 # Manual fictrac assignment
-                if fictrac_folder is not None and not autotransferred_stimpack:
+                elif fictrac_folder is not None:
                     try:
                         fly_dirs_dict = manual_copy_fictrac(
                             current_dataset_folder,
