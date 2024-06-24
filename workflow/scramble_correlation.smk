@@ -17,7 +17,7 @@ import pathlib
 import os
 import json
 from scripts import snake_utils
-from scripts import utils
+from brainsss import utils
 from analysis_scripts import scramble_correlation
 
 scripts_path = workflow.basedir # Exposes path to this file
