@@ -71,7 +71,7 @@ def search_for_corr(folder, FUNCTIONAL_CHANNELS):
                             sys.exit(1)
                 return
             else:
-                search_for_corr(current_folder)
+                search_for_corr(current_folder, FUNCTIONAL_CHANNELS)
 
 for current_folder in directory.iterdir():
     if current_folder.is_dir():
