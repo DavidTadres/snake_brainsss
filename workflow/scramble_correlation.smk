@@ -90,6 +90,9 @@ print(list_of_corr_paths)
 print("FUNCTIONAL_CHANNELS")
 print(FUNCTIONAL_CHANNELS)
 
+print("corr_behaviors")
+print(corr_behaviors)
+
 # ******
 rule all:
     """
