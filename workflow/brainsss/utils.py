@@ -159,7 +159,7 @@ def create_logfile(fly_folder, function_name):
     # Problem: Snakemake runs twice. Seems to be a bug: https://github.com/snakemake/snakemake/issues/2350
     # Only print title and fly if logfile doesn't yet exist
     #width = 120  # can go into a config file as well.
-    print_function_start(logfile, function_name)
+    print_function_start(logfile, width, function_name)
     return logfile
 
 
