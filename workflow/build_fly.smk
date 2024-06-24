@@ -54,7 +54,13 @@ fictrac_folder = settings.get('fictrac_path', None)
 if fictrac_folder is not None:
     fictrac_folder = pathlib.Path(fictrac_folder)
 # .get here is cool because if the entry doesn't exist, it'll just return False
-autotransferred_stimpack = settings.get('autotransferred_stimpack',False)
+autotransferred_stimpack = bool(settings.get('autotransferred_stimpack',False))
+print('autotransferred_stimpack' + repr(autotransferred_stimpack))
+
+if autotransferred_stimpack:
+    print('autotransfered True')
+else:
+    print('autotransfered False')
 
 all_imports_paths = []
 all_fly_dataset_paths = []
