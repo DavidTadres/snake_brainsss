@@ -86,6 +86,10 @@ for current_folder in directory.iterdir():
 # can now be used to create rules!
 print('list of found folders')
 print(list_of_corr_paths)
+
+print("FUNCTIONAL_CHANNELS")
+print(FUNCTIONAL_CHANNELS)
+
 # ******
 rule all:
     """
