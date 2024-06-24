@@ -93,6 +93,14 @@ print(FUNCTIONAL_CHANNELS)
 print("corr_behaviors")
 print(corr_behaviors)
 
+# For some reason we get a list which contains: ["['channel_2']"]
+# which seems to throw False when tested for 'channel_2.
+# Flatten the list in the for loop below
+temp_func = []
+for i in FUNCTIONAL_CHANNELS:
+    temp_func.append(i.split("['")[-1].split("']")[0])
+FUNCTIONAL_CHANNELS = temp_func
+
 # ******
 rule all:
     """
