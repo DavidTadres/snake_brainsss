@@ -20,12 +20,13 @@ import traceback
 import natsort
 import pathlib
 
-# only imports on linux, which is fine since only needed for sherlock
+
 try:
+    # only imports on linux
     import fcntl
     FCNTL_EXISTS = True
 except ImportError:
-    # import windows analog
+    # import windows analog to being able to lock a file!
     FCNTL_EXISTS = False
     import threading
 
@@ -205,26 +206,43 @@ class Printlog:
     def __init__(self, logfile):
         self.logfile = logfile
 
+        if not FCNTL_EXISTS:
+            self.lock = threading.Lock()
+
+    def write_to_win_file(self, message):
+        """
+        Small re-write of the commented parts below for readability (and
+        less def function and class calls!
+        To be tested!
+        """
+        with self.lock:
+            with open(self.logfile, "a+") as file:
+                file.write(message)
+                file.write('\n')
+
     def print_to_log(self, message):
+        # Linux/Mac
         if FCNTL_EXISTS:
-            # Linux
+
             with open(self.logfile, "a+") as f:
                 fcntl.flock(f, fcntl.LOCK_EX)
                 f.write(message)
                 f.write("\n")
                 fcntl.flock(f, fcntl.LOCK_UN)
+        # Windows
         else:
-            # Windows stuff
-            lock = threading.Lock()
-            def write_to_file():
-                with lock:
-                    with open(self.logfile, "a+") as file:
-                        file.write(message)
-                        file.write("\n")
+            # The commented stuff works!
+            #lock = threading.Lock()
+            #def write_to_file():
+            #    with lock:
+            #        with open(self.logfile, "a+") as file:
+            #            file.write(message)
+            #            file.write("\n")
 
-            write_to_file()
-            print(message)
-            print('\n')
+            #write_to_file()
+            #print(message)
+            #print('\n')
+            self.write_to_win_file(message)
 
 def sbatch(
     jobname,
