@@ -229,15 +229,15 @@ if len(list_of_paths_struct) > 1:
     list_of_paths_struct = natsort.natsorted(list_of_paths_struct[0])
 print('list_of_paths_struct' + repr(list_of_paths_struct))
 
-list_of_channels = []
-if CH1_EXISTS:
-    list_of_channels.append("1")
-if CH2_EXISTS:
-    list_of_channels.append("2")
-if CH3_EXISTS:
-    list_of_channels.append("3")
+list_of_channels_func = []
+if CH1_EXISTS_FUNC:
+    list_of_channels_func.append("1")
+if CH2_EXISTS_FUNC:
+    list_of_channels_func.append("2")
+if CH3_EXISTS_FUNC:
+    list_of_channels_func.append("3")
 
-print("list_of_channels" + repr(list_of_channels))
+print("list_of_channels_func" + repr(list_of_channels_func))
 
 # Behaviors to correlate with neural activity
 corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
@@ -370,7 +370,7 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
             meanbr_imaging_paths=list_of_paths,
-            meanbr_ch=list_of_channels),
+            meanbr_ch=list_of_channels_func),
 
         ###
         # Motion correction output
@@ -379,13 +379,13 @@ rule all:
                + "/{moco_imaging_paths}/moco/motcorr_params.npy",
                moco_imaging_paths=list_of_paths),
         expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else [],
+               + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS_FUNC else [],
                moco_imaging_paths=list_of_paths),
         expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else [],
+               + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS_FUNC else [],
                moco_imaging_paths=list_of_paths),
         expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
+               + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS_FUNC else [],
                moco_imaging_paths=list_of_paths),
 
         ###
@@ -394,7 +394,7 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii",
                moco_meanbr_imaging_paths=list_of_paths,
-               meanbr_moco_ch=list_of_channels),
+               meanbr_moco_ch=list_of_channels_func),
 
         ####
         # Z-score
@@ -442,7 +442,7 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
             clean_anatomy_paths=list_of_paths_struct,
-            clean_anat_ch=list_of_channels),
+            clean_anat_ch=list_of_channels_func),
 
         ##
         # make supervoxels
@@ -616,17 +616,17 @@ rule motion_correction_parallel_processing_rule:
     input:
         # Only use the Channels that exists - this organizes the anatomy and functional paths inside the motion correction
         # module.
-        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
-        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
-        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
+        brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS_FUNC else [],
+        brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS_FUNC else [],
+        brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS_FUNC else [],
 
-        mean_brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS else [],
-        mean_brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS else [],
-        mean_brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS else []
+        mean_brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_1_mean.nii" if CH1_EXISTS_FUNC else [],
+        mean_brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_2_mean.nii" if CH2_EXISTS_FUNC else [],
+        mean_brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/imaging/channel_3_mean.nii" if CH3_EXISTS_FUNC else []
     output:
-        moco_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS else[],
-        moco_path_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS else [],
-        moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
+        moco_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS_FUNC else[],
+        moco_path_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS_FUNC else [],
+        moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS_FUNC else [],
         par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
 
     shell: "python3 " + scripts_path + "/scripts/moco_parallel.py "
