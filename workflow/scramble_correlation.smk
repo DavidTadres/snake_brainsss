@@ -114,7 +114,7 @@ print("\n")
 #           - imaging
 # Get parent folder of 'corr' which points to 'fly_001
 if len(list_of_corr_paths)>0:
-    fly_log_folder = pathlib.Path(list_of_corr_paths[0]).parent.parent
+    fly_log_folder = pathlib.Path(list_of_corr_paths[0]).parent
     print(fly_log_folder)
 rule all:
     """
