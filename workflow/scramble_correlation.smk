@@ -106,7 +106,8 @@ rule all:
         ###
         # Scramble correlation with fictrac behavior
         ###
-        list_of_corr_paths[0] + 'corr/channel_1_corr_SCRAMBLED.nii"'
+        expand('{corr_imaging_paths}/corr/channel_1_corr_SCRAMBLED.nii',
+            corr_imaging_paths=list_of_corr_paths )
 
 
 rule scramble_correlation_rule:
