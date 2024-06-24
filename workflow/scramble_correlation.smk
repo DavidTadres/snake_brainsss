@@ -16,6 +16,8 @@ already exists!
 import pathlib
 import os
 import json
+from scripts import snake_utils
+from analysis_scripts import scramble_correlation
 
 scripts_path = workflow.basedir # Exposes path to this file
 
@@ -28,6 +30,7 @@ corr_behaviors = ['dRotLabZneg'
                   ,'dRotLabZpos'
                   #,'dRotLabY'
                   ]
+fictrac_fps = 100 # TO BE CHANGED TO A DYNAMIC VERSION THAT READS ACTUAL FPS!!!
 
 directory = pathlib.Path(os.getcwd())
 # TESTING
