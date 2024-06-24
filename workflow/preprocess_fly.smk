@@ -356,6 +356,7 @@ rule all:
     input:
         ###
         # Bleaching QC
+        # Since func and struct can have different channels, seperate the two
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{bleaching_imaging_paths}/imaging/bleaching_func.png",
@@ -365,6 +366,110 @@ rule all:
                + "/{bleaching_imaging_paths}/imaging/bleaching_struct.png",
             bleaching_imaging_paths=list_of_paths_struct),
 
+        ###
+        # Fictrac QC
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
+            fictrac_paths=FICTRAC_PATHS),
+        # data in fly_dirs.json!
+
+        ###
+        # Meanbrain
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_func}_mean_func.nii",
+            meanbr_imaging_paths=list_of_paths_func,
+            meanbr_ch_func=list_of_channels_func),
+        ##
+        expand(str(fly_folder_to_process_oak)
+               + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_struct}_mean_struct.nii",
+            meanbr_imaging_paths=list_of_paths_struct,
+            meanbr_ch_struct=list_of_channels_struct),
+
+        ###
+        # Motion correction output
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/motcorr_params.npy",
+               moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_1_moco.nii" if CH1_EXISTS_FUNC else [],
+               moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_2_moco.nii" if CH2_EXISTS_FUNC else [],
+               moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS_FUNC else [],
+               moco_imaging_paths=list_of_paths),
+
+        ###
+        # Meanbrain of moco brain
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii",
+               moco_meanbr_imaging_paths=list_of_paths,
+               meanbr_moco_ch=list_of_channels_func),
+
+        ####
+        # Z-score
+        ####
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_1_moco_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+               zscore_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_2_moco_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+               zscore_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+               zscore_imaging_paths=list_of_paths_func),
+
+        ###
+        # temporal high-pass filter
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{temp_HP_filter_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+               temp_HP_filter_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{temp_HP_filter_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+               temp_HP_filter_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+               temp_HP_filter_imaging_paths=list_of_paths_func),
+
+        ###
+        # correlation with fictrac behavior
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}.nii" if 'channel_1' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS) > 0 else [],
+               corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
+        expand(str(fly_folder_to_process_oak)
+               + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}.nii" if 'channel_2' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS) > 0 else [],
+               corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
+        expand(str(fly_folder_to_process_oak)
+               + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS) > 0 else [],
+               corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
+
+
+        ###
+        # Clean anatomy
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
+            clean_anatomy_paths=list_of_paths_struct,
+            clean_anat_ch=list_of_channels_func),
+
+        ##
+        # make supervoxels
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy",
+               supervoxel_paths=list_of_paths_func,
+               supervoxel_ch=func_channels),
+        expand(str(fly_folder_to_process_oak)
+               + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",
+               supervoxel_paths=list_of_paths_func,
+               supervoxel_ch=func_channels),
 
 
 rule fictrac_qc_rule:
@@ -442,7 +547,8 @@ rule bleaching_qc_rule_struct:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack)
             print('Error with bleaching_qc' )
-rule make_mean_brain_rule:
+
+rule make_mean_brain_rule_func:
     """
     Here it should be possible to parallelize quite easily as each input file creates
     one output file!
@@ -468,9 +574,9 @@ rule make_mean_brain_rule:
         mem_mb=snake_utils.mem_mb_less_times_input,  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
         runtime='10m' # should be enough
     input:
-            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}.nii"
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_func}.nii"
     output:
-            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii"
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_func}_mean_func.nii"
     run:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
@@ -483,6 +589,28 @@ rule make_mean_brain_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack)
 
+rule make_mean_brain_rule_struct:
+    """
+    """
+    threads: snake_utils.threads_per_memory_less
+    resources:
+        mem_mb=snake_utils.mem_mb_less_times_input,  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
+        runtime='10m' # should be enough
+    input:
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_struct}.nii"
+    output:
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_struct}_mean_struct.nii"
+    run:
+        try:
+            preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
+                meanbrain_n_frames=meanbrain_n_frames,
+                path_to_read=input,
+                path_to_save=output,
+                rule_name='make_mean_brain_rule')
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_mean_brain')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack)
 rule motion_correction_parallel_processing_rule:
     """
     OOM using an anat folder! :
