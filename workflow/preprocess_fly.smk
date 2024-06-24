@@ -99,7 +99,19 @@ def ch_exists_func(channel):
     :param channel:
     :return:
     """
-    if 'channel_' + str(channel) in STRUCTURAL_CHANNEL or 'channel_' + str(channel) in FUNCTIONAL_CHANNELS:
+    if 'channel_' + str(channel) in FUNCTIONAL_CHANNELS:
+        ch_exists = True
+    else:
+        ch_exists = False
+    return(ch_exists)
+
+def ch_exists_struct(channel):
+    """
+    Check if a given channel exists in global variables STRUCTURAL_CHANNEL and FUNCTIONAL_CHANNELS
+    :param channel:
+    :return:
+    """
+    if 'channel_' + str(channel) in STRUCTURAL_CHANNEL:
         ch_exists = True
     else:
         ch_exists = False
@@ -109,9 +121,13 @@ def ch_exists_func(channel):
 # IMPORTANT: One FLY must have the same channels per recording. This
 # makes sense: If we have e.g. GCaMP and tdTomato we would always
 # record from both the green and red channel, right?
-CH1_EXISTS = ch_exists_func("1")
-CH2_EXISTS = ch_exists_func("2")
-CH3_EXISTS = ch_exists_func("3")
+CH1_EXISTS_FUNC = ch_exists_func("1")
+CH2_EXISTS_FUNC = ch_exists_func("2")
+CH3_EXISTS_FUNC = ch_exists_func("3")
+
+CH1_EXISTS_STRUCT = ch_exists_struct("1")
+CH2_EXISTS_STRUCT = ch_exists_struct("2")
+CH3_EXISTS_STRUCT = ch_exists_struct("3")
 
 ####
 # Load fly_dir.json
@@ -201,17 +217,17 @@ for current_path in imaging_file_paths:
     if 'func' in current_path:
         list_of_paths_func.append(current_path.split('/imaging')[0])
 
-list_of_paths_anat = []
+list_of_paths_struct = []
 for current_path in imaging_file_paths:
     if 'anat' in current_path:
-        list_of_paths_anat.append(current_path.split('/imaging')[0])
-if len(list_of_paths_anat) > 1:
+        list_of_paths_struct.append(current_path.split('/imaging')[0])
+if len(list_of_paths_struct) > 1:
     print('!!!WARNING!!!')
     print('The following folders have the "anat" keyword:')
-    print(list_of_paths_anat)
-    print('The folder ' + repr(natsort.natsorted(list_of_paths_anat[0])) + ' will be treated as the "main" anat folder.')
-    list_of_paths_anat = natsort.natsorted(list_of_paths_anat[0])
-print('list_of_paths_anat' + repr(list_of_paths_anat))
+    print(list_of_paths_struct)
+    print('The folder ' + repr(natsort.natsorted(list_of_paths_struct[0])) + ' will be treated as the "main" anat folder.')
+    list_of_paths_struct = natsort.natsorted(list_of_paths_struct[0])
+print('list_of_paths_struct' + repr(list_of_paths_struct))
 
 list_of_channels = []
 if CH1_EXISTS:
@@ -330,10 +346,14 @@ rule all:
     input:
         ###
         # Bleaching QC
+        # Seperate
         ###
         expand(str(fly_folder_to_process_oak)
-               + "/{bleaching_imaging_paths}/imaging/bleaching.png",
-            bleaching_imaging_paths=list_of_paths),
+               + "/{bleaching_imaging_paths}/imaging/bleaching_func.png",
+            bleaching_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{bleaching_imaging_paths}/imaging/bleaching_struct.png",
+               bleaching_imaging_paths=list_of_paths_struct),
 
         ###
         # Fictrac QC
@@ -366,6 +386,14 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths}/moco/channel_3_moco.nii" if CH3_EXISTS else [],
                moco_imaging_paths=list_of_paths),
+
+        ###
+        # Meanbrain of moco brain
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii",
+               moco_meanbr_imaging_paths=list_of_paths,
+               meanbr_moco_ch=list_of_channels),
 
         ####
         # Z-score
@@ -406,20 +434,13 @@ rule all:
                + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS) > 0 else [],
                corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
 
-        ###
-        # Meanbrain of moco brain
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_meanbr_imaging_paths}/moco/channel_{meanbr_moco_ch}_moco_mean.nii",
-               moco_meanbr_imaging_paths=list_of_paths,
-               meanbr_moco_ch=list_of_channels),
 
         ###
         # Clean anatomy
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
-            clean_anatomy_paths=list_of_paths_anat,
+            clean_anatomy_paths=list_of_paths_struct,
             clean_anat_ch=list_of_channels),
 
         ##
@@ -457,7 +478,7 @@ rule fictrac_qc_rule:
             utils.write_error(logfile=logfile,
                                  error_stack=error_stack)
 
-rule bleaching_qc_rule:
+rule bleaching_qc_rule_func:
     """
     """
     threads: snake_utils.threads_per_memory_less
@@ -465,11 +486,39 @@ rule bleaching_qc_rule:
         mem_mb=snake_utils.mem_mb_less_times_input, # This is probably overkill todo decrease!
         runtime='10m' # In my test cases it was never more than 5 minutes!
     input:
-        brains_paths_ch1=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS else [],
-        brains_paths_ch2=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS else [],
-        brains_paths_ch3=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS else [],
+        brains_paths_ch1=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS_FUNC else [],
+        brains_paths_ch2=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS_FUNC else [],
+        brains_paths_ch3=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS_FUNC else [],
     output:
-        str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching.png"
+        str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching_func.png"
+    run:
+        try:
+            preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
+                                        path_to_read=[input.brains_paths_ch1, input.brains_paths_ch2, input.brains_paths_ch3], #imaging_paths_by_folder_scratch, # {input} didn't work, I think because it destroyed the list of list we expect to see here #imaging_paths_by_folder_scratch,
+                                        path_to_save=output, # can't use output, messes things up here! #imaging_paths_by_folder_oak
+                                        #print_output = output
+            )
+            print('Done with bleaching_qc_func')
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_bleaching_qc_rule')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack)
+            print('Error with bleaching_qc' )
+
+rule bleaching_qc_rule_struct:
+    """
+    """
+    threads: snake_utils.threads_per_memory_less
+    resources:
+        mem_mb=snake_utils.mem_mb_less_times_input, # This is probably overkill todo decrease!
+        runtime='10m' # In my test cases it was never more than 5 minutes!
+    input:
+
+        brains_paths_ch1=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS_STRUCT else [],
+        brains_paths_ch2=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS_STRUCT else [],
+        brains_paths_ch3=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS_STRUCT else [],
+    output:
+        str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching_struct.png"
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
@@ -483,7 +532,6 @@ rule bleaching_qc_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack)
             print('Error with bleaching_qc' )
-
 rule make_mean_brain_rule:
     """
     Here it should be possible to parallelize quite easily as each input file creates
@@ -959,7 +1007,7 @@ rule func_to_anat_rule:
         mem_mb=snake_utils.mem_mb_more_times_input,
         runtime='10m' # should be enough, is super quick already
     input:
-        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(list_of_paths_anat) + '/moco/{func2anat_fixed}_moco_mean.nii',
+        path_to_read_fixed=str(fly_folder_to_process_oak) + "/" + str(list_of_paths_struct) + '/moco/{func2anat_fixed}_moco_mean.nii',
         path_to_read_moving=str(fly_folder_to_process_oak) + "/{func2anat_paths}/moco/{func2anat_moving}_moco_mean.nii"
     output: str(fly_folder_to_process_oak) + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii"
 
