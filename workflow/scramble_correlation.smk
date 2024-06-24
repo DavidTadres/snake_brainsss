@@ -24,9 +24,9 @@ scripts_path = workflow.basedir # Exposes path to this file
 print(os.getcwd()) # the user defined --directory
 
 # Behaviors to correlate with neural activity
-corr_behaviors = ['dRotLabZneg',
-                  'dRotLabZpos'
-                  #'dRotLabY'
+corr_behaviors = ['dRotLabZneg'
+                  ,'dRotLabZpos'
+                  #,'dRotLabY'
                   ]
 
 directory = pathlib.Path(os.getcwd())
@@ -82,6 +82,13 @@ for current_folder in directory.iterdir():
 print('list of found folders')
 print(list_of_corr_paths)
 
+"""
+        expand("{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+               corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
+        expand("{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+               corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
+"""
+
 rule all:
     """
     See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
@@ -98,26 +105,23 @@ rule all:
         ###
         expand("{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
                corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
-        expand("{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-               corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
-        expand("{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
-               corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
+
 
 rule scramble_correlation_rule:
     threads: snake_utils.threads_per_memory_less
     resources:
         runtime='60m' # vectorization made this super fast
     input:
-        corr_path_ch1=str(list_of_corr_paths) + "/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-        corr_path_ch2=str(list_of_corr_paths) + "/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-        corr_path_ch3=str(list_of_corr_paths) + "/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
-        fictrac_path=str(list_of_corr_paths) + "/stimpack/loco/fictrac_behavior_data.dat",
-        metadata_path=str(list_of_corr_paths) + "/imaging/recording_metadata.xml"
+        corr_path_ch1="{corr_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        corr_path_ch2="{corr_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        corr_path_ch3="{corr_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+        fictrac_path="{corr_imaging_paths}/stimpack/loco/fictrac_behavior_data.dat",
+        metadata_path="{corr_imaging_paths}/imaging/recording_metadata.xml"
 
     output:
-        savepath_ch1=str(list_of_corr_paths) + "/corr/channel_1_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-        savepath_ch2=str(list_of_corr_paths) + "/corr/channel_2_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-        savepath_ch3=str(list_of_corr_paths) + "/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[]
+        savepath_ch1="{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        savepath_ch2="{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        savepath_ch3="{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[]
     run:
         scramble_correlation.calculate_scrambled_correlation(
             fictrac_path=input.fictrac_path,
