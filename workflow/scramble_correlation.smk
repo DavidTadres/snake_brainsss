@@ -106,7 +106,7 @@ rule all:
         ###
         # Scramble correlation with fictrac behavior
         ###
-        expand('{corr_imaging_paths}/corr/channel_1_corr_SCRAMBLED.nii',
+        expand('{corr_imaging_paths}/corr/channel_1_corr_SCRAMBLED.nii' if 'channel_1' in FUNCTIONAL_CHANNELS else[],
             corr_imaging_paths=list_of_corr_paths )
 
 
