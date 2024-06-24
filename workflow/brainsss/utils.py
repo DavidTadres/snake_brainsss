@@ -20,7 +20,7 @@ import traceback
 import natsort
 import pathlib
 # For logfile
-width = 120 # can go into a config file as well.
+WIDTH = 120 # can go into a config file as well.
 
 try:
     # only imports on linux
@@ -672,7 +672,7 @@ def print_function_done(logfile, width, function_name):
     )
 
 
-def print_function_start(logfile, function_name):
+def print_function_start(logfile, width, function_name):
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
