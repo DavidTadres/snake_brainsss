@@ -30,10 +30,10 @@ corr_behaviors = ['dRotLabZneg',
                   #'dRotLabY'
                   ]
 
-#directory = pathlib.Path(os.getcwd())
+directory = pathlib.Path(os.getcwd())
 # TESTING
 # Works for both a genotype and a fly.
-directory = pathlib.Path('//Volumes//trc//data//David//Bruker//preprocessed//FS152_x_FS69')
+# directory = pathlib.Path('//Volumes//trc//data//David//Bruker//preprocessed//FS152_x_FS69')
 
 list_of_corr_paths = []
 # This is analog to the variable 'list_of_paths_func' variable in preprocess_fly.smk
