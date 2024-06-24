@@ -109,7 +109,7 @@ def get_new_fly_number(
     return new_fly_number
 
 
-def write_error(logfile, error_stack, width=width):
+def write_error(logfile, error_stack, width=WIDTH):
     with open(logfile, "a+") as file:
         file.write(f"\n{'     ERROR     ':!^{width}}")
         file.write("\nTraceback (most recent call last): " + str(error_stack) + "\n\n")
@@ -276,7 +276,7 @@ def sbatch(
     #width = 120
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     script_name = os.path.basename(os.path.normpath(script))
-    print_big_header(logfile, script_name, width)
+    print_big_header(logfile, script_name, WIDTH)
 
     if global_resources:
         sbatch_command = "sbatch -J {} -o ./com/%j.out -e {} -t {}:00:00 --nice={} {}--open-mode=append --cpus-per-task={} --begin={} --wrap='{}' {}".format(
@@ -289,7 +289,7 @@ def sbatch(
     sbatch_response = subprocess.getoutput(sbatch_command)
 
     if not silence_print:
-        printlog(f"{sbatch_response}{jobname:.>{width-28}}")
+        printlog(f"{sbatch_response}{jobname:.>{WIDTH-28}}")
     job_id = sbatch_response.split(" ")[-1].strip()
     return job_id
 
@@ -331,11 +331,11 @@ def get_job_status(job_id, logfile, should_print=False):
             percent_mem = f"{percent_mem:0.1f}"
 
             #width = 120
-            pretty = "+" + "-" * (width - 2) + "+"
+            pretty = "+" + "-" * (WIDTH - 2) + "+"
             sep = " | "
             printlog(
                 f"{pretty}\n"
-                f"{'| SLURM | '+jobname+sep+job_id+sep+status+sep+duration+sep+str(num_cores)+' cores'+sep+memory_to_print+' (' + percent_mem + '%)':{width-1}}|\n"
+                f"{'| SLURM | '+jobname+sep+job_id+sep+status+sep+duration+sep+str(num_cores)+' cores'+sep+memory_to_print+' (' + percent_mem + '%)':{WIDTH-1}}|\n"
                 f"{pretty}"
             )
         else:
@@ -380,7 +380,7 @@ def print_progress_table(
     # printlog("{}, {}".format(total_vol_sum, complete_vol_sum))
     fraction_complete = complete_vol_sum / total_vol_sum
     num_columns = len(fly_print)
-    column_width = int((120 - 20) / num_columns)
+    column_width = int((WIDTH - 20) / num_columns)
     if column_width < 9:
         column_width = 9
 
@@ -627,7 +627,7 @@ def load_timestamps(path_to_metadata):
     return timestamps
 
 
-def print_big_header(logfile, message, width):
+def print_big_header(logfile, message, width=WIDTH):
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     message_and_space = "   " + message.upper() + "   "
     printlog("\n")
@@ -637,23 +637,29 @@ def print_big_header(logfile, message, width):
     print_datetime(logfile, width)
 
 
-def print_title(logfile, width, fly_id=False):
+def print_title(logfile, width=WIDTH, fly_id=False):
+    """
+    Currently not being used
+    """
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
-    title = pyfiglet.figlet_format("snake-Brainsss", font="doom")
+    title = pyfiglet.figlet_format("snake-brainsss", font="doom")
     title_shifted = ("\n").join([" " * 35 + line for line in title.split("\n")][:-2])
     printlog("\n")
     printlog(title_shifted)
     # print_datetime(logfile, width)
 
 
-def print_datetime(logfile, width):
+def print_datetime(logfile, width=WIDTH):
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
     printlog(f"{day_now+' | '+time_now:^{width}}")
 
 
-def print_footer(logfile, width):
+def print_footer(logfile, width=WIDTH):
+    """
+    Currently not being used
+    """
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     sleep(3)  # to allow any final printing
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
@@ -662,7 +668,10 @@ def print_footer(logfile, width):
     printlog(f"{day_now+' | '+time_now:^{width}}")
 
 
-def print_function_done(logfile, width, function_name):
+def print_function_done(logfile, function_name, width=WIDTH, ):
+    """
+    Currently not in use
+    """
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
@@ -672,13 +681,13 @@ def print_function_done(logfile, width, function_name):
     )
 
 
-def print_function_start(logfile, width, function_name):
+def print_function_start(logfile, function_name):
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
     day_time = str(day_now) + " | " + str(time_now)
     printlog(
-        f"\n{'   ' + str(function_name) + ' called at:  ' + str(day_time) + '   ':=^{width}}"
+        f"\n{'   ' + str(function_name) + ' called at:  ' + str(day_time) + '   ':=^{WIDTH}}"
     )
 
 
