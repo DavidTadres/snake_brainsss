@@ -351,9 +351,10 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{bleaching_imaging_paths}/imaging/bleaching_func.png",
             bleaching_imaging_paths=list_of_paths_func),
+        ##
         expand(str(fly_folder_to_process_oak)
                + "/{bleaching_imaging_paths}/imaging/bleaching_struct.png",
-               bleaching_imaging_paths=list_of_paths_struct),
+            bleaching_imaging_paths=list_of_paths_struct),
 
         ###
         # Fictrac QC
@@ -513,7 +514,6 @@ rule bleaching_qc_rule_struct:
         mem_mb=snake_utils.mem_mb_less_times_input, # This is probably overkill todo decrease!
         runtime='10m' # In my test cases it was never more than 5 minutes!
     input:
-
         brains_paths_ch1=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS_STRUCT else [],
         brains_paths_ch2=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS_STRUCT else [],
         brains_paths_ch3=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS_STRUCT else [],
