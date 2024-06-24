@@ -39,8 +39,8 @@ list_of_corr_paths = []
 
 # Currently we can only do a whole genotype if the IDENTICAL functional
 # channels are used throughout. Else, call script on each experiment individually.
-FUNCTIONAL_CHANNELS = []
-def search_for_corr(folder):
+FUNCTIONAL_CHANNELS = None
+def search_for_corr(folder, FUNCTIONAL_CHANNELS):
     print(folder.name)
     for current_folder in folder.iterdir():
         if current_folder.is_dir():
@@ -55,7 +55,7 @@ def search_for_corr(folder):
                 # Note: Good place to let user know to check folder and exit!
                 with open(pathlib.Path(current_folder.parent.parent,'fly.json'),'r') as file:
                     fly_json = json.load(file)
-                    if len(FUNCTIONAL_CHANNELS) == 0:
+                    if FUNCTIONAL_CHANNELS is None:
                         # This needs to come from some sort of json file the experimenter
                         # creates while running the experiment. Same as genotype.
                         FUNCTIONAL_CHANNELS = fly_json['functional_channel']
@@ -75,7 +75,7 @@ def search_for_corr(folder):
 
 for current_folder in directory.iterdir():
     if current_folder.is_dir():
-        search_for_corr(current_folder)
+        search_for_corr(current_folder,FUNCTIONAL_CHANNELS)
 
 # Now we have a list with all folder that have a correlation folder which
 # can now be used to create rules!
