@@ -22,16 +22,12 @@ import natsort
 # ml python/3.9.0
 # source .env_snakemake/bin/activate
 # cd snake_brainsss/workflow
-# snakemake -s preprocess_fly.smk --profile profiles/sherlock
-# OR
-# snakemake -s preprocess_fly.smk --profile profiles/simple_slurm
+# snakemake --config user=dtadres --profile profiles/simple_slurm -s preprocess_fly.smk --directory /oak/stanford/groups/trc/data/David/Bruker/preprocessed/FS144_x_FS69/fly_008
+# The 'user' points to the user file in 'users' folder. **Change to your name! **
+# The profile ot the config.yaml in the profiles/simple_slurm folder. Doesn't need to be changed
+# The -s indicates the script to be run (this one, so 'preprocess_fly.smk')
+# --directory is the fly you want to point to!
 ########################################################
-### CHANGE THIS TO POINT TO THE FOLDER TO PREPROCESS ###
-########################################################
-#fly_folder_to_process = 'SS84990_DNa03_x_GCaMP6f/fly_007' # folder to be processed
-# ONLY ONE FLY PER RUN for now. The path must be relative to
-# what you set in your 'user/username.json' file under 'dataset_path'
-# in my case, it's 'user/dtadres.json and it says "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
 
 #>>>>
 fictrac_fps = 100 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE FUTURE!!!!
