@@ -9,6 +9,12 @@ sys.path.insert(0, parent_path)
 from brainsss import fictrac_utils
 from brainsss import utils
 
+# The original brainsss usually saved everything in float32 but some
+# calculations were done with float64 (e.g. np.mean w/o defining dtype).
+# To be more explicit, I define here two global variables.
+# Dtype is what was mostly called when saving and loading data
+DTYPE = np.float32
+
 def calculate_scrambled_correlation(fictrac_path,
                                     fictrac_fps,
                                     metadata_path,
@@ -38,8 +44,25 @@ def calculate_scrambled_correlation(fictrac_path,
     :param save_path:
     :return:
     """
+    #####################
+    ### SETUP LOGGING ###
+    #####################
+    # Here I need to make an assumption:
+    # The folder structure must be
+    # -genotype
+    #   - fly_001
+    #       - logs
+    #       - func0
+    #           - corr
+    #           - imaging
+    # Get parent folder of 'corr' which points to 'fly_001
+    fly_log_folder = pathlib.Path(input.metadata_path).parent.parent
+    logfile = utils.create_logfile(fly_log_folder, function_name="scramble_correlation")
+    printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
+    utils.print_function_start(logfile, "correlation")
 
-    DTYPE = np.float32
+    #
+
 
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
@@ -47,8 +70,8 @@ def calculate_scrambled_correlation(fictrac_path,
     moco_zscore_highpass_path = utils.convert_list_of_string_to_posix_path(moco_zscore_highpass_path)
     save_path = utils.convert_list_of_string_to_posix_path(save_path)
 
-    print('Will use ' + repr(moco_zscore_highpass_path) + ' for input.')
-    print('Will save as ' + repr(save_path))
+    printlog('Will use ' + repr(moco_zscore_highpass_path) + ' for input.')
+    printlog('Will save as ' + repr(save_path))
     # Then extract the desired behavior. Since there's only one output per run, the list
     # has length 1.
     behavior = save_path[0].name.split("corr_")[-1].split("_SCRAMBLED.nii")[0]
@@ -64,20 +87,20 @@ def calculate_scrambled_correlation(fictrac_path,
     fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(
         fictrac_raw, fictrac_fps, fictrac_resolution, expt_len, behavior, timestamps=neural_timestamps
     )
-    print('Loaded fictrac data')
+    printlog('Loaded fictrac data')
     # It seems easier to scramble the behavior timestamps instead of the brain timestamps!
     # Use np.shuffle to scramble the timepoints!
     fictrac_interp_shuffled = fictrac_interp.copy()  # Ensure we copy and not just view the array!
     for current_z in range(fictrac_interp_shuffled.shape[1]):
         np.random.shuffle(fictrac_interp_shuffled[:, current_z])
-    print('Shuffled fictrac data')
+    printlog('Shuffled fictrac data')
     for current_moco_zscore_highpass_path, current_savepath in zip(moco_zscore_highpass_path,save_path):
         # Next, load brain!
         #brain_proxy = nib.load(moco_zscore_highpass_path)
         brain_proxy = nib.load(current_moco_zscore_highpass_path)
         brain = np.asarray(brain_proxy.dataobj, dtype=DTYPE)
-        print('loaded brain file, starting correlation now')
-        print('will do ' + repr(brain.shape[2]) + ' z-slices')
+        printlog('loaded brain file, starting correlation now')
+        printlog('will do ' + repr(brain.shape[2]) + ' z-slices')
 
         # Correlation - copy paste from snake-brainsss (vectorized correlation, fast!)
         # Preallocate an array filled with zeros
@@ -126,5 +149,5 @@ def calculate_scrambled_correlation(fictrac_path,
         aff = np.eye(4)
         object_to_save = nib.Nifti1Image(scrambled_corr_brain, aff)
         # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
-        print('Saving file to ' + repr(current_savepath))
+        printlog('Saving file to ' + repr(current_savepath))
         object_to_save.to_filename(current_savepath)

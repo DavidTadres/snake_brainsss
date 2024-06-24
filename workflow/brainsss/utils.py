@@ -158,7 +158,7 @@ def create_logfile(fly_folder, function_name):
     sys.stdout = LoggerRedirect(logfile)
     # Problem: Snakemake runs twice. Seems to be a bug: https://github.com/snakemake/snakemake/issues/2350
     # Only print title and fly if logfile doesn't yet exist
-    width = 120  # can go into a config file as well.
+    #width = 120  # can go into a config file as well.
     print_function_start(logfile, width, function_name)
     return logfile
 
@@ -273,7 +273,7 @@ def sbatch(
     else:
         node_cmd = ""
 
-    width = 120
+    #width = 120
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     script_name = os.path.basename(os.path.normpath(script))
     print_big_header(logfile, script_name, width)
@@ -330,7 +330,7 @@ def get_job_status(job_id, logfile, should_print=False):
             percent_mem = memory_used / (core_memory * num_cores) * 100
             percent_mem = f"{percent_mem:0.1f}"
 
-            width = 120
+            #width = 120
             pretty = "+" + "-" * (width - 2) + "+"
             sep = " | "
             printlog(

@@ -17,6 +17,7 @@ import pathlib
 import os
 import json
 from scripts import snake_utils
+from scripts import utils
 from analysis_scripts import scramble_correlation
 
 scripts_path = workflow.basedir # Exposes path to this file
@@ -82,17 +83,6 @@ for current_folder in directory.iterdir():
     if current_folder.is_dir():
         search_for_corr(current_folder, FUNCTIONAL_CHANNELS)
 
-# Now we have a list with all folder that have a correlation folder which
-# can now be used to create rules!
-print('list of found folders')
-print(list_of_corr_paths)
-
-print("FUNCTIONAL_CHANNELS")
-print(FUNCTIONAL_CHANNELS)
-
-print("corr_behaviors")
-print(corr_behaviors)
-
 # For some reason we get a list which contains: ["['channel_2']"]
 # which seems to throw False when tested for 'channel_2.
 # Flatten the list in the for loop below
@@ -101,7 +91,19 @@ for i in FUNCTIONAL_CHANNELS:
     temp_func.append(i.split("['")[-1].split("']")[0])
 FUNCTIONAL_CHANNELS = temp_func
 
-# ******
+
+# Now we have a list with all folder that have a correlation folder which
+# can now be used to create rules!
+print('list of found folders')
+print(list_of_corr_paths)
+# Helps with debugging
+print("\nFUNCTIONAL_CHANNELS")
+print(FUNCTIONAL_CHANNELS)
+
+print("\ncorr_behaviors")
+print(corr_behaviors)
+print("\n")
+
 rule all:
     """
     See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
@@ -127,7 +129,8 @@ rule all:
 rule scramble_correlation_rule:
     threads: snake_utils.threads_per_memory_less
     resources:
-        runtime='60m' # vectorization made this super fast
+        mem_mb = snake_utils.mem_mb_less_times_input,
+        runtime='20m' # vectorization made this super fast
     input:
         corr_path_ch1="{corr_imaging_paths}/channel_1_moco_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
         corr_path_ch2="{corr_imaging_paths}/channel_2_moco_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
@@ -140,10 +143,25 @@ rule scramble_correlation_rule:
         savepath_ch2="{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
         savepath_ch3="{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[]
     run:
-        scramble_correlation.calculate_scrambled_correlation(
-            fictrac_path=input.fictrac_path,
-            fictrac_fps=fictrac_fps,
-            metadata_path=input.metadata_path,
-            moco_zscore_highpass_path=[input.corr_path_ch1, input.corr_path_ch2, input.corr_path_ch3],
-            save_path=[output.savepath_ch1, output.savepath_ch2, output.savepath_ch3]
-        )
+        try:
+            scramble_correlation.calculate_scrambled_correlation(
+                fictrac_path=input.fictrac_path,
+                fictrac_fps=fictrac_fps,
+                metadata_path=input.metadata_path,
+                moco_zscore_highpass_path=[input.corr_path_ch1, input.corr_path_ch2, input.corr_path_ch3],
+                save_path=[output.savepath_ch1, output.savepath_ch2, output.savepath_ch3]
+            )
+        except Exception as error_stack:
+            # Here I need to make an assumption:
+            # The folder structure must be
+            # -genotype
+            #   - fly_001
+            #       - logs
+            #       - func0
+            #           - corr
+            #           - imaging
+            # Get parent folder of 'corr' which points to 'fly_001
+            fly_log_folder = pathlib.Path(input.metadata_path).parent.parent
+            logfile = utils.create_logfile(fly_log_folder,function_name='ERROR_scramble_correlation')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack)
