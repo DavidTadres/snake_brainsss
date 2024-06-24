@@ -89,8 +89,9 @@ print(list_of_corr_paths)
         expand("{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
                corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
 """
-
-corr_behaviors = ['/oak/stanford/groups/trc/data/David/Bruker/preprocessed/FS144_x_FS69/fly_007/func0']
+# FOR DEBUGGING ONLY!!!
+list_of_corr_paths = ['/oak/stanford/groups/trc/data/David/Bruker/preprocessed/FS144_x_FS69/fly_007/func0']
+# ******
 rule all:
     """
     See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
@@ -105,8 +106,7 @@ rule all:
         ###
         # Scramble correlation with fictrac behavior
         ###
-        expand("/corr/channel_1_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-               corr_behavior=corr_behaviors),
+        print('hello')
 
 
 rule scramble_correlation_rule:
