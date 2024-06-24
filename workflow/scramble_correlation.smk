@@ -39,6 +39,8 @@ list_of_corr_paths = []
 
 # Currently we can only do a whole genotype if the IDENTICAL functional
 # channels are used throughout. Else, call script on each experiment individually.
+# To do this we use a 'trick' in python to keep track of a variable in a recursive
+# function without 'return': we use a global list and append to it.
 FUNCTIONAL_CHANNELS = []
 def search_for_corr(folder, FUNCTIONAL_CHANNELS):
     #print(folder.name)
@@ -82,12 +84,7 @@ for current_folder in directory.iterdir():
 print('list of found folders')
 print(list_of_corr_paths)
 
-"""        expand("/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-               corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
-        expand("{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-               corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
-        expand("{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
-               corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
+"""        
 """
 # FOR DEBUGGING ONLY!!!
 list_of_corr_paths = ['/oak/stanford/groups/trc/data/David/Bruker/preprocessed/FS144_x_FS69/fly_007/func0']
@@ -106,8 +103,12 @@ rule all:
         ###
         # Scramble correlation with fictrac behavior
         ###
-        expand('{corr_imaging_paths}/corr/channel_1_corr_SCRAMBLED.nii' if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-            corr_imaging_paths=list_of_corr_paths )
+        expand("/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+            corr_imaging_paths=list_of_corr_paths,corr_behavior=corr_behaviors),
+        expand("{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+            corr_imaging_paths=list_of_corr_paths,corr_behavior=corr_behaviors),
+        expand("{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+            corr_imaging_paths=list_of_corr_paths,corr_behavior=corr_behaviors),
 
 
 rule scramble_correlation_rule:
