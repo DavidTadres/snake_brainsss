@@ -38,8 +38,6 @@ fictrac_fps = 100 # AUTOMATE THIS!!!! ELSE FOR SURE A MISTAKE WILL HAPPEN IN THE
 # First n frames to average over when computing mean/fixed brain | Default None
 # (average over all frames).
 meanbrain_n_frames =  None
-# For logfile
-width = 120 # can go into a config file as well.
 
 ##########################################################
 import pathlib
@@ -457,8 +455,7 @@ rule fictrac_qc_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_fictrac_qc_rule')
             utils.write_error(logfile=logfile,
-                                 error_stack=error_stack,
-                                 width=width)
+                                 error_stack=error_stack)
 
 rule bleaching_qc_rule:
     """
@@ -484,8 +481,7 @@ rule bleaching_qc_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_bleaching_qc_rule')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
             print('Error with bleaching_qc' )
 
 rule make_mean_brain_rule:
@@ -527,8 +523,7 @@ rule make_mean_brain_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_mean_brain')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 rule motion_correction_parallel_processing_rule:
     """
@@ -701,8 +696,7 @@ rule zscore_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_zscore')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 rule temporal_high_pass_filter_rule:
     """
@@ -824,8 +818,7 @@ rule temporal_high_pass_filter_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_temporal_high_pass_filter')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 rule correlation_rule:
     """
@@ -860,8 +853,7 @@ fictrac_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/fictrac/fic
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_correlation')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 '''           
 rule STA_rule:
     """TODO"""'''
@@ -887,8 +879,7 @@ rule moco_mean_brain_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_moco_mean_brain')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 rule clean_anatomy_rule:
     """
@@ -907,8 +898,7 @@ rule clean_anatomy_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_clean_anatomy')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 rule make_supervoxels_rule:
     """
@@ -957,8 +947,7 @@ rule make_supervoxels_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_supervoxels')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 # Probably Bifrost does it better.
 rule func_to_anat_rule:
@@ -1000,8 +989,7 @@ rule func_to_anat_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_func2anat')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 rule anat_to_atlas:
     """
@@ -1043,8 +1031,7 @@ rule anat_to_atlas:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_anat2atlas')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 rule apply_transforms_rule:
     """
@@ -1076,8 +1063,7 @@ rule apply_transforms_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_apply_transforms')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 
 '''
@@ -1382,7 +1368,6 @@ rule motion_correction_rule:
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_motion_correction')
             utils.write_error(logfile=logfile,
-                error_stack=error_stack,
-                width=width)
+                error_stack=error_stack)
 
 '''

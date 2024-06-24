@@ -19,7 +19,8 @@ import subprocess
 import traceback
 import natsort
 import pathlib
-
+# For logfile
+width = 120 # can go into a config file as well.
 
 try:
     # only imports on linux
@@ -108,7 +109,7 @@ def get_new_fly_number(
     return new_fly_number
 
 
-def write_error(logfile, error_stack, width):
+def write_error(logfile, error_stack, width=width):
     with open(logfile, "a+") as file:
         file.write(f"\n{'     ERROR     ':!^{width}}")
         file.write("\nTraceback (most recent call last): " + str(error_stack) + "\n\n")
