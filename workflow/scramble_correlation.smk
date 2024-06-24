@@ -41,14 +41,14 @@ list_of_corr_paths = []
 # channels are used throughout. Else, call script on each experiment individually.
 FUNCTIONAL_CHANNELS = None
 def search_for_corr(folder, FUNCTIONAL_CHANNELS):
-    print(folder.name)
+    #print(folder.name)
     for current_folder in folder.iterdir():
         if current_folder.is_dir():
             if 'corr' in current_folder.name:
                 # If we find a folder named 'corr' we want the
                 # **parent** folder **as a string**
                 list_of_corr_paths.append(current_folder.parent.as_posix())
-                print("all_corr_paths" + repr(list_of_corr_paths))
+                #print("all_corr_paths" + repr(list_of_corr_paths))
 
                 # Read channel information from fly.json file
                 # If fails here, means the folder specified doesn't exist. Check name.
@@ -79,6 +79,8 @@ for current_folder in directory.iterdir():
 
 # Now we have a list with all folder that have a correlation folder which
 # can now be used to create rules!
+print('list of found folders')
+print(list_of_corr_paths)
 
 rule all:
     """
@@ -94,13 +96,11 @@ rule all:
         ###
         # Scramble correlation with fictrac behavior
         ###
-        expand("/{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        expand("{corr_imaging_paths}/corr/channel_1_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
                corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
-        expand(str(list_of_corr_paths)
-               + "/{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        expand("{corr_imaging_paths}/corr/channel_2_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
                corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
-        expand(str(list_of_corr_paths)
-               + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+        expand("{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}_SCRAMBLED.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
                corr_imaging_paths=list_of_corr_paths, corr_behavior=corr_behaviors),
 
 rule scramble_correlation_rule:
