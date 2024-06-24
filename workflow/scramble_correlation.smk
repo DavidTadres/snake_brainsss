@@ -165,6 +165,8 @@ rule scramble_correlation_rule:
                 save_path=[output.savepath_ch1, output.savepath_ch2, output.savepath_ch3]
             )
         except Exception as error_stack:
+            print('error: ')
+            print(error_stack)
             logfile = utils.create_logfile(fly_log_folder,function_name='ERROR_scramble_correlation')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack)

@@ -51,7 +51,6 @@ def calculate_scrambled_correlation(fly_log_folder,
     logfile = utils.create_logfile(fly_log_folder, function_name="scramble_correlation")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     utils.print_function_start(logfile, function_name="correlation")
-
     #
 
 
