@@ -86,11 +86,6 @@ for current_folder in directory.iterdir():
 # can now be used to create rules!
 print('list of found folders')
 print(list_of_corr_paths)
-
-"""        
-"""
-# FOR DEBUGGING ONLY!!!
-list_of_corr_paths = ['/oak/stanford/groups/trc/data/David/Bruker/preprocessed/FS144_x_FS69/fly_007/func0']
 # ******
 rule all:
     """
