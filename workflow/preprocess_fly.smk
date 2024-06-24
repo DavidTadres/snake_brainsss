@@ -604,6 +604,7 @@ rule motion_correction_parallel_processing_rule:
         "--moco_path_ch2 {output.moco_path_ch2} "
         "--moco_path_ch3 {output.moco_path_ch3} "
         "--par_output {output.par_output} "
+
 rule zscore_rule:
     """
     David func0
