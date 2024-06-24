@@ -106,7 +106,7 @@ rule all:
         ###
         # Scramble correlation with fictrac behavior
         ###
-        print('hello')
+        list_of_corr_paths[0] + 'corr/channel_1_corr_SCRAMBLED.nii"'
 
 
 rule scramble_correlation_rule:
