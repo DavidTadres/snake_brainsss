@@ -15,7 +15,8 @@ from brainsss import utils
 # Dtype is what was mostly called when saving and loading data
 DTYPE = np.float32
 
-def calculate_scrambled_correlation(fictrac_path,
+def calculate_scrambled_correlation(fly_log_folder,
+                                    fictrac_path,
                                     fictrac_fps,
                                     metadata_path,
                                     moco_zscore_highpass_path,
@@ -47,16 +48,6 @@ def calculate_scrambled_correlation(fictrac_path,
     #####################
     ### SETUP LOGGING ###
     #####################
-    # Here I need to make an assumption:
-    # The folder structure must be
-    # -genotype
-    #   - fly_001
-    #       - logs
-    #       - func0
-    #           - corr
-    #           - imaging
-    # Get parent folder of 'corr' which points to 'fly_001
-    fly_log_folder = pathlib.Path(input.metadata_path).parent.parent
     logfile = utils.create_logfile(fly_log_folder, function_name="scramble_correlation")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     utils.print_function_start(logfile, "correlation")

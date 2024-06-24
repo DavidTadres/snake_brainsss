@@ -104,6 +104,17 @@ print("\ncorr_behaviors")
 print(corr_behaviors)
 print("\n")
 
+# Here I need to make an assumption:
+# The folder structure must be
+# -genotype
+#   - fly_001
+#       - logs
+#       - func0
+#           - corr
+#           - imaging
+# Get parent folder of 'corr' which points to 'fly_001
+fly_log_folder = pathlib.Path(list_of_corr_paths[0]).parent.parent
+
 rule all:
     """
     See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
@@ -145,6 +156,7 @@ rule scramble_correlation_rule:
     run:
         try:
             scramble_correlation.calculate_scrambled_correlation(
+                fly_log_folder=fly_log_folder,
                 fictrac_path=input.fictrac_path,
                 fictrac_fps=fictrac_fps,
                 metadata_path=input.metadata_path,
@@ -152,16 +164,6 @@ rule scramble_correlation_rule:
                 save_path=[output.savepath_ch1, output.savepath_ch2, output.savepath_ch3]
             )
         except Exception as error_stack:
-            # Here I need to make an assumption:
-            # The folder structure must be
-            # -genotype
-            #   - fly_001
-            #       - logs
-            #       - func0
-            #           - corr
-            #           - imaging
-            # Get parent folder of 'corr' which points to 'fly_001
-            fly_log_folder = pathlib.Path(input.metadata_path).parent.parent
             logfile = utils.create_logfile(fly_log_folder,function_name='ERROR_scramble_correlation')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack)
