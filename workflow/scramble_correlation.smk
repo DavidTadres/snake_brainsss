@@ -25,7 +25,7 @@ print(os.getcwd()) # the user defined --directory
 
 # Behaviors to correlate with neural activity
 corr_behaviors = ['dRotLabZneg',
-                  'dRotLabZpos',
+                  'dRotLabZpos'
                   #'dRotLabY'
                   ]
 
