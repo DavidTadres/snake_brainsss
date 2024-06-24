@@ -18,7 +18,6 @@ import os
 import json
 
 scripts_path = workflow.basedir # Exposes path to this file
-from analysis_scripts import utils
 
 # the user needs to of course define the --directory which
 # then puts this file into that path
