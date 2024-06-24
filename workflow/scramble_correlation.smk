@@ -114,7 +114,7 @@ print("\n")
 #           - imaging
 # Get parent folder of 'corr' which points to 'fly_001
 fly_log_folder = pathlib.Path(list_of_corr_paths[0]).parent.parent
-
+print(fly_log_folder)
 rule all:
     """
     See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
