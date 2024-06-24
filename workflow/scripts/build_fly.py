@@ -52,7 +52,7 @@ def fly_builder(autotransferred_stimpack,
                 current_dataset_dir, function_name="fly_builder"
             )
             printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-            utils.print_function_start(logfile, "fly_builder")
+            #utils.print_function_start(logfile, "fly_builder")
             printlog(f"Building flies from: {str(current_import_dir):.>{WIDTH - 22}}")
 
             printlog(
