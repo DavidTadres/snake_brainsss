@@ -700,6 +700,7 @@ rule motion_correction_parallel_processing_rule_func:
 
     shell: shell_python_command + " " + scripts_path + "/scripts/moco_parallel.py "
         "--fly_directory {fly_folder_to_process_oak} "
+        "--dataset_path {dataset_path}"
         "--brain_paths_ch1 {input.brain_paths_ch1} "
         "--brain_paths_ch2 {input.brain_paths_ch2} "
         "--brain_paths_ch3 {input.brain_paths_ch3} "
@@ -739,6 +740,7 @@ rule motion_correction_parallel_processing_rule_struct:
 
     shell: shell_python_command + " " + scripts_path + "/scripts/moco_parallel.py "
                                        "--fly_directory {fly_folder_to_process_oak} "
+                                       "--dataset_path {dataset_path}"
                                        "--brain_paths_ch1 {input.brain_paths_ch1} "
                                        "--brain_paths_ch2 {input.brain_paths_ch2} "
                                        "--brain_paths_ch3 {input.brain_paths_ch3} "

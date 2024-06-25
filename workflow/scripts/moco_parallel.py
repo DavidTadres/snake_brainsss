@@ -472,6 +472,7 @@ if __name__ == '__main__':
     ############################
     parser = argparse.ArgumentParser()
     parser.add_argument("--fly_directory", help="Folder of fly to save log")
+    parser.add_argument("--dataset_path", nargs="?", help="Folder pointing 'preprocessed'")
 
     parser.add_argument("--brain_paths_ch1", nargs="?", help="Path to ch1 file, if it exists")
     parser.add_argument("--brain_paths_ch2", nargs="?", help="Path to ch2 file, if it exists")
@@ -599,13 +600,16 @@ if __name__ == '__main__':
     # It is important that it's different for each run.
     # We can just put in on scratch
     # This will only work if we have a folder called trc and data is in /data, of course
-    relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
+    #relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
+    dataset_path = pathlib.Path(args.dataset_path)
+    relevant_temp_save_path_part = moving_path.as_posix().split(dataset_path)[-1]
 
     ###################
     # DON'T CHANGE THIS-if this points to your actual experimental folder, the shutil.rmtree
     # below will DELETE YOUR DATA. THIS MUST BE A TEMPORARY PATH
     #temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
     temp_save_path = pathlib.Path(args.moco_temp_folder, relevant_temp_save_path_part).parent
+    print(temp_save_path)
     ##################
 
     if TESTING:
