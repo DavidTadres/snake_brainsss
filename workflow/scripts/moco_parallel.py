@@ -612,7 +612,7 @@ if __name__ == '__main__':
     #temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
     print('args.moco_temp_folder ' + repr(args.moco_temp_folder))
     temp_save_path = pathlib.Path(args.moco_temp_folder, relevant_temp_save_path_part).parent
-    print("temp_save_path " + temp_save_path)
+    print("temp_save_path " + repr(temp_save_path))
     ##################
 
     if TESTING:
