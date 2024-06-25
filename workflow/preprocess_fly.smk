@@ -325,38 +325,6 @@ if len(struct_channel)>1:
 """
 
         ###
-        # Motion correction output
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/motcorr_params_func.npy",
-               moco_imaging_paths=list_of_paths),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_1_moco_func.nii" if CH1_EXISTS_FUNC else [],
-               moco_imaging_paths=list_of_paths),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_2_moco_func.nii" if CH2_EXISTS_FUNC else [],
-               moco_imaging_paths=list_of_paths),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_3_moco_func.nii" if CH3_EXISTS_FUNC else [],
-               moco_imaging_paths=list_of_paths),
-
-        ###
-        # Motion correction output
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/motcorr_params_struct.npy",
-               moco_imaging_paths=list_of_paths),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_1_moco_struct.nii" if CH1_EXISTS_STRUCT else [],
-               moco_imaging_paths=list_of_paths),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_2_moco_struct.nii" if CH2_EXISTS_STRUCT else [],
-               moco_imaging_paths=list_of_paths),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/channel_3_moco_struct.nii" if CH3_EXISTS_STRUCT else [],
-               moco_imaging_paths=list_of_paths),
-
-        ###
         # Meanbrain of moco brain
         ###
         expand(str(fly_folder_to_process_oak)
@@ -498,6 +466,38 @@ rule all:
             meanbr_imaging_paths_struct=list_of_paths_struct,
             meanbr_ch_struct=list_of_channels_struct),
 
+
+        ###
+        # Motion correction output
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/motcorr_params_func.npy",
+            moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_1_moco_func.nii" if CH1_EXISTS_FUNC else [],
+            moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_2_moco_func.nii" if CH2_EXISTS_FUNC else [],
+            moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_3_moco_func.nii" if CH3_EXISTS_FUNC else [],
+            moco_imaging_paths=list_of_paths),
+
+        ###
+        # Motion correction output
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/motcorr_params_struct.npy",
+            moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_1_moco_struct.nii" if CH1_EXISTS_STRUCT else [],
+            moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_2_moco_struct.nii" if CH2_EXISTS_STRUCT else [],
+            moco_imaging_paths=list_of_paths),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths}/moco/channel_3_moco_struct.nii" if CH3_EXISTS_STRUCT else [],
+            moco_imaging_paths=list_of_paths),
 
 rule fictrac_qc_rule:
     """
