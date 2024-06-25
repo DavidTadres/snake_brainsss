@@ -530,21 +530,21 @@ if __name__ == '__main__':
         if 'channel_1' in args.FUNCTIONAL_CHANNELS:
             # It possible to record i.e. anat scan with ONLY the structural
             # marker. Hence, check here if the functional channel exists.
-            if pathlib.Path(args.brain_paths_ch1).exists():
+            if hasattr(args, 'brain_paths_ch1'):
                 functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
             else:
                 print('Information: Channel 1 in func channel, but this channel does not exist: ')
                 print(args.brain_paths_ch1)
         if 'channel_2' in args.FUNCTIONAL_CHANNELS:
-            if pathlib.Path(args.brain_path_ch2).exists():
+            if hasattr(args, 'brain_paths_ch2'):
                 functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
             else:
                 print('Information: Channel 2 in func channel, but this channel does not exist: ')
                 print(args.brain_paths_ch2)
         if 'channel_3' in args.FUNCTIONAL_CHANNELS:
-            if pathlib.Path(args.brain_path_ch3).exists():
+            if hasattr(args, 'brain_paths_ch3'):
                 functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
             else:

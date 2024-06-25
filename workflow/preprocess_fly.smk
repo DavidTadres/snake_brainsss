@@ -67,7 +67,7 @@ dataset_path = pathlib.Path(settings['dataset_path'])
 
 # On sherlock this is usually python3 but on a personal computer can be python
 shell_python_command = str(settings.get('shell_python_command', "python3"))
-moco_temp_folder = str(settings.get('moco_temp_folder'), "/scratch/groups/trc")
+moco_temp_folder = str(settings.get('moco_temp_folder', "/scratch/groups/trc"))
 
 # Define path to imports to find fly.json!
 #fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
