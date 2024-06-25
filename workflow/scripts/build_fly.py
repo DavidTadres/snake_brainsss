@@ -22,7 +22,7 @@ from brainsss import utils
 WIDTH = 120  # This is used in all logging files
 
 def fly_builder(autotransferred_stimpack,
-                fictrac_folder,
+                fictrac_folder_path,
                 import_dirs,
                 dataset_dirs):
     """
@@ -91,7 +91,7 @@ def fly_builder(autotransferred_stimpack,
             fly_dirs_dict = copy_fly(
                 current_import_dir, current_dataset_dir, printlog,
                 autotransferred_stimpack,
-                fictrac_folder,
+                fictrac_folder_path,
                 fly_dirs_dict
             )
             ###
@@ -182,7 +182,7 @@ def copy_fly(import_dir,
              dataset_dir,
              printlog,
              autotransferred_stimpack,
-             fictrac_folder,
+             fictrac_folder_path,
              fly_dirs_dict,
              ):
     """
@@ -288,12 +288,12 @@ def copy_fly(import_dir,
                         printlog('\n')
 
                 # Manual fictrac assignment
-                elif fictrac_folder is not None:
+                elif fictrac_folder_path is not None:
                     try:
                         fly_dirs_dict = manual_copy_fictrac(
                             current_dataset_folder,
                             printlog,
-                            fictrac_folder,
+                            fictrac_folder_path,
                             current_import_imaging_folder,
                             fly_dirs_dict,
                         )

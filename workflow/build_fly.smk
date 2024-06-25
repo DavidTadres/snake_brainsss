@@ -50,12 +50,12 @@ dataset_path = pathlib.Path(settings['dataset_path'])
 # data! Code below will either set the variable to None if not defined, or
 #
 # fictrac_folder = pathlib.Path(settings['fictrac_path'])
-fictrac_folder = settings.get('fictrac_path', None)
-if fictrac_folder is not None:
-    fictrac_folder = pathlib.Path(fictrac_folder)
+fictrac_folder_path = settings.get('fictrac_path', None)
+if fictrac_folder_path is not None:
+    fictrac_folder_path = pathlib.Path(fictrac_folder_path)
 # .get here is cool because if the entry doesn't exist, it'll just return False
 autotransferred_stimpack = bool(settings.get('autotransferred_stimpack',False))
-
+print("autotransferred_stimpack" + repr(autotransferred_stimpack))
 
 
 all_imports_paths = []
@@ -140,7 +140,7 @@ rule fly_builder_rule:
     run:
         build_fly.fly_builder(
             autotransferred_stimpack=autotransferred_stimpack,
-            fictrac_folder=fictrac_folder,
+            fictrac_folder_path=fictrac_folder_path,
             import_dirs= all_imports_paths,
             dataset_dirs = all_fly_dataset_paths
                                                  )
