@@ -607,7 +607,12 @@ def manual_copy_fictrac(destination_region, printlog, fictrac_folder, source_fly
             current_fly_dir_dict = str(target_path).split(
                 fictrac_destination.parents[1].name
             )[-1]
-            fly_dirs_dict[destination_region.name + " Fictrac "] = current_fly_dir_dict.as_posix()
+            fly_dirs_dict[destination_region.name + " Fictrac "] = pathlib.Path(current_fly_dir_dict).as_posix()
+            shutil.copyfile(dat_path, target_path)
+        else:
+            # Copy rest of files such as videos and logs
+            shutil.copyfile(current_file, pathlib.Path(fictrac_destination, current_file.name))
+
 
     """# OLD
     # Different users have different rule on what to do with the data
@@ -790,7 +795,7 @@ def manual_copy_fictrac(destination_region, printlog, fictrac_folder, source_fly
             # printlog('Transfering {}'.format(target_path))
             ##sys.stdout.flush()
     """
-    shutil.copyfile(dat_path, target_path)
+
 
     ### Create empty xml file.
     # Update this later
