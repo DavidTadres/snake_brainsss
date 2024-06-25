@@ -233,7 +233,7 @@ def copy_fly(import_dir,
                 # utils.append_json(path=fly_dirs_dict_path, key=json_key, value=current_fly_dir_dict)
                 fly_dirs_dict[
                     current_import_imaging_folder.name + " Imaging"
-                ] = current_fly_dir_dict
+                ] = current_fly_dir_dict.as_posix()
 
                 ###
                 # write anat info to csv file
@@ -269,7 +269,7 @@ def copy_fly(import_dir,
                 # utils.append_json(path=fly_dirs_dict_path, key=json_key, value=current_fly_dir_dict)
                 fly_dirs_dict[
                     current_import_imaging_folder.name + " Imaging"
-                ] = current_fly_dir_dict
+                ] = current_fly_dir_dict.as_posix()
                 # Copy fictrac data
                 # Automatic fictrac assignment (done on davidtadres/brukerbridge) where
                 # each func folder would have a folder with stimpack/#/loco/*.dat
@@ -607,7 +607,7 @@ def manual_copy_fictrac(destination_region, printlog, fictrac_folder, source_fly
             current_fly_dir_dict = str(target_path).split(
                 fictrac_destination.parents[1].name
             )[-1]
-            fly_dirs_dict[destination_region.name + " Fictrac "] = current_fly_dir_dict
+            fly_dirs_dict[destination_region.name + " Fictrac "] = current_fly_dir_dict.as_posix()
 
     """# OLD
     # Different users have different rule on what to do with the data
