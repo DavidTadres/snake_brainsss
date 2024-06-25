@@ -714,7 +714,7 @@ rule motion_correction_parallel_processing_rule_func:
         "--moco_path_ch3 {output.moco_path_ch3} "
         "--par_output {output.par_output} "
         "--moco_temp_folder {moco_temp_folder} "
-        "--dataset_path {dataset_path}"
+        "--dataset_path {dataset_path} "
 
 rule motion_correction_parallel_processing_rule_struct:
     """
@@ -754,7 +754,7 @@ rule motion_correction_parallel_processing_rule_struct:
                                        "--moco_path_ch3 {output.moco_path_ch3} "
                                        "--par_output {output.par_output} "
                                        "--moco_temp_folder {moco_temp_folder} "
-                                       "--dataset_path {dataset_path}"
+                                       "--dataset_path {dataset_path} "
 
 rule moco_mean_brain_rule_func:
     """
