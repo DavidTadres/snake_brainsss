@@ -1,5 +1,7 @@
 {
     "autotransferred_stimpack" : "True",
     "fictrac_path": "/oak/stanford/groups/trc/data/David/Bruker/Fictrac",
-    "dataset_path": "/oak/stanford/groups/trc/data/David/Bruker/preprocessed"
+    "dataset_path": "/oak/stanford/groups/trc/data/David/Bruker/preprocessed",
+    "shell_python_command": "python3",
+    "moco_temp_folder": "/scratch/groups/trc"
 }

@@ -490,7 +490,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--par_output", nargs="?", help="Path to parameter output")
 
-    parser.add_argument("--type", nargs="?", help="Either func or struct")
+    parser.add_argument("--moco_temp_folder", nargs="?", help="Where to save the temp file")
 
     args = parser.parse_args()
 
@@ -604,7 +604,8 @@ if __name__ == '__main__':
     ###################
     # DON'T CHANGE THIS-if this points to your actual experimental folder, the shutil.rmtree
     # below will DELETE YOUR DATA. THIS MUST BE A TEMPORARY PATH
-    temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
+    #temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
+    temp_save_path = pathlib.Path(args.moco_temp_folder, relevant_temp_save_path_part).parent
     ##################
 
     if TESTING:

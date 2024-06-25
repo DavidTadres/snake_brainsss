@@ -65,6 +65,10 @@ current_user = config['user'] # this is whatever is entered when calling snakema
 settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
 
+# On sherlock this is usually python3 but on a personal computer can be python
+shell_python_command = str(settings.get('shell_python_command', "python3"))
+moco_temp_folder = str(settings.get('moco_temp_folder'), "/scratch/groups/trc")
+
 # Define path to imports to find fly.json!
 #fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
 fly_folder_to_process_oak = pathlib.Path(os.getcwd())
@@ -694,7 +698,7 @@ rule motion_correction_parallel_processing_rule_func:
         moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/moco/channel_3_moco_func.nii" if CH3_EXISTS_FUNC else [],
         par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/moco/motcorr_params_func.npy"
 
-    shell: "python3 " + scripts_path + "/scripts/moco_parallel.py "
+    shell: shell_python_command + " " + scripts_path + "/scripts/moco_parallel.py "
         "--fly_directory {fly_folder_to_process_oak} "
         "--brain_paths_ch1 {input.brain_paths_ch1} "
         "--brain_paths_ch2 {input.brain_paths_ch2} "
@@ -708,6 +712,7 @@ rule motion_correction_parallel_processing_rule_func:
         "--moco_path_ch2 {output.moco_path_ch2} "
         "--moco_path_ch3 {output.moco_path_ch3} "
         "--par_output {output.par_output} "
+        "--moco_temp_folder {moco_temp_folder} "
 
 rule motion_correction_parallel_processing_rule_struct:
     """
@@ -732,7 +737,7 @@ rule motion_correction_parallel_processing_rule_struct:
         moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_struct}/moco/channel_3_moco_struct.nii" if CH3_EXISTS_STRUCT else [],
         par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_struct}/moco/motcorr_params_struct.npy"
 
-    shell: "python3 " + scripts_path + "/scripts/moco_parallel.py "
+    shell: shell_python_command + " " + scripts_path + "/scripts/moco_parallel.py "
                                        "--fly_directory {fly_folder_to_process_oak} "
                                        "--brain_paths_ch1 {input.brain_paths_ch1} "
                                        "--brain_paths_ch2 {input.brain_paths_ch2} "
@@ -746,6 +751,7 @@ rule motion_correction_parallel_processing_rule_struct:
                                        "--moco_path_ch2 {output.moco_path_ch2} "
                                        "--moco_path_ch3 {output.moco_path_ch3} "
                                        "--par_output {output.par_output} "
+                                       "--moco_temp_folder {moco_temp_folder} "
 
 rule moco_mean_brain_rule_func:
     """
