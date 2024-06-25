@@ -458,13 +458,13 @@ rule all:
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths_func}/moco/motcorr_params_func.npy",
-            moco_imaging_paths=list_of_paths),
+            moco_imaging_paths_func=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths_func}/moco/channel_1_moco_func.nii" if CH1_EXISTS_FUNC else [],
-            moco_imaging_paths=list_of_paths),
+            moco_imaging_paths_func=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths_func}/moco/channel_2_moco_func.nii" if CH2_EXISTS_FUNC else [],
-            moco_imaging_paths=list_of_paths),
+            moco_imaging_paths_func=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths_func}/moco/channel_3_moco_func.nii" if CH3_EXISTS_FUNC else [],
             moco_imaging_paths_func=list_of_paths_func),
@@ -474,13 +474,13 @@ rule all:
         ###
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths_struct}/moco/motcorr_params_struct.npy",
-            moco_imaging_paths=list_of_paths),
+            moco_imaging_paths_struct=list_of_paths_struct),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths_struct}/moco/channel_1_moco_struct.nii" if CH1_EXISTS_STRUCT else [],
-            moco_imaging_paths=list_of_paths),
+            moco_imaging_paths_struct=list_of_paths_struct),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths_struct}/moco/channel_2_moco_struct.nii" if CH2_EXISTS_STRUCT else [],
-            moco_imaging_paths=list_of_paths),
+            moco_imaging_paths_struct=list_of_paths_struct),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths_struct}/moco/channel_3_moco_struct.nii" if CH3_EXISTS_STRUCT else [],
             moco_imaging_paths_struct=list_of_paths_struct),
