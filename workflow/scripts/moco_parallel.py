@@ -603,13 +603,16 @@ if __name__ == '__main__':
     #relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
     dataset_path = pathlib.Path(args.dataset_path)
     relevant_temp_save_path_part = moving_path.as_posix().split(dataset_path.as_posix())[-1]
-
+    print("relevant_temp_save_path_part " + relevant_temp_save_path_part)
+    relevant_temp_save_path_part=relevant_temp_save_path_part[1::] # remove first forward slash
+    print("relevant_temp_save_path_part " + relevant_temp_save_path_part)
     ###################
     # DON'T CHANGE THIS-if this points to your actual experimental folder, the shutil.rmtree
     # below will DELETE YOUR DATA. THIS MUST BE A TEMPORARY PATH
     #temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
+    print('args.moco_temp_folder ' + repr(args.moco_temp_folder))
     temp_save_path = pathlib.Path(args.moco_temp_folder, relevant_temp_save_path_part).parent
-    print(temp_save_path)
+    print("temp_save_path " + temp_save_path)
     ##################
 
     if TESTING:
