@@ -472,7 +472,6 @@ if __name__ == '__main__':
     ############################
     parser = argparse.ArgumentParser()
     parser.add_argument("--fly_directory", help="Folder of fly to save log")
-    parser.add_argument("--dataset_path", nargs="?", help="Folder pointing 'preprocessed'")
 
     parser.add_argument("--brain_paths_ch1", nargs="?", help="Path to ch1 file, if it exists")
     parser.add_argument("--brain_paths_ch2", nargs="?", help="Path to ch2 file, if it exists")
@@ -492,6 +491,8 @@ if __name__ == '__main__':
     parser.add_argument("--par_output", nargs="?", help="Path to parameter output")
 
     parser.add_argument("--moco_temp_folder", nargs="?", help="Where to save the temp file")
+
+    parser.add_argument("--dataset_path", nargs="?", help="Folder pointing 'preprocessed'")
 
     args = parser.parse_args()
 
