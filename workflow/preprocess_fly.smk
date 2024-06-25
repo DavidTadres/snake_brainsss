@@ -322,73 +322,7 @@ if len(struct_channel)>1:
 #elif 'channel_3' in ANATOMY_CHANNEL:
 #    file_path_anat2atlas_moving.append('channel_3')
 
-
-
 """
-
-        # Below might be Bifrost territory - ignore for now.
-        ###
-        # func2anat
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
-               func2anat_paths=list_of_paths_func,
-               func2anat_moving=struct_channel,  # This is the channel which is designated as STRUCTURAL_CHANNEL
-               func2anat_fixed=struct_channel),
-
-        ##
-        # anat2atlas
-        ##
-        expand(str(fly_folder_to_process_oak)
-               + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
-               anat2atlas_paths=list_of_paths_anat,
-               anat2atlas_moving=struct_channel),
-"""
-
-
-rule all:
-    """
-    See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
-        By default snakemake executes the first rule in the snakefile. This gives rise to pseudo-rules at the beginning 
-        of the file that can be used to define build-targets similar to GNU Make
-    Or in other words: Here we define which file we want at the end. Snakemake checks which one is there and which 
-    one is missing. It then uses the other rules to see how it can produce the missing files.
-    """
-    threads: 1 # should be sufficent
-    resources: mem_mb=1000 # should be sufficient
-    input:
-        ###
-        # Bleaching QC
-        # Since func and struct can have different channels, seperate the two
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{bleaching_imaging_paths}/imaging/bleaching_func.png",
-            bleaching_imaging_paths=list_of_paths_func),
-        ##
-        expand(str(fly_folder_to_process_oak)
-               + "/{bleaching_imaging_paths}/imaging/bleaching_struct.png",
-            bleaching_imaging_paths=list_of_paths_struct),
-
-        ###
-        # Fictrac QC
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
-            fictrac_paths=FICTRAC_PATHS),
-        # data in fly_dirs.json!
-
-        ###
-        # Meanbrain
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch_func}_mean_func.nii",
-            meanbr_imaging_paths_func=list_of_paths_func,
-            meanbr_ch_func=list_of_channels_func),
-        ##
-        expand(str(fly_folder_to_process_oak)
-               + "/{meanbr_imaging_paths_struct}/imaging/channel_{meanbr_ch_struct}_mean_struct.nii",
-            meanbr_imaging_paths_struct=list_of_paths_struct,
-            meanbr_ch_struct=list_of_channels_struct),
 
         ###
         # Motion correction output
@@ -494,6 +428,75 @@ rule all:
                + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",
                supervoxel_paths=list_of_paths_func,
                supervoxel_ch=func_channels),
+
+
+"""
+
+"""
+
+        # Below might be Bifrost territory - ignore for now.
+        ###
+        # func2anat
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{func2anat_paths}/warp/{func2anat_moving}_func-to-{func2anat_fixed}_anat.nii",
+               func2anat_paths=list_of_paths_func,
+               func2anat_moving=struct_channel,  # This is the channel which is designated as STRUCTURAL_CHANNEL
+               func2anat_fixed=struct_channel),
+
+        ##
+        # anat2atlas
+        ##
+        expand(str(fly_folder_to_process_oak)
+               + "/{anat2atlas_paths}/warp/{anat2atlas_moving}_-to-atlas.nii",
+               anat2atlas_paths=list_of_paths_anat,
+               anat2atlas_moving=struct_channel),
+"""
+
+
+rule all:
+    """
+    See: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html
+        By default snakemake executes the first rule in the snakefile. This gives rise to pseudo-rules at the beginning 
+        of the file that can be used to define build-targets similar to GNU Make
+    Or in other words: Here we define which file we want at the end. Snakemake checks which one is there and which 
+    one is missing. It then uses the other rules to see how it can produce the missing files.
+    """
+    threads: 1 # should be sufficent
+    resources: mem_mb=1000 # should be sufficient
+    input:
+        ###
+        # Bleaching QC
+        # Since func and struct can have different channels, seperate the two
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{bleaching_imaging_paths}/imaging/bleaching_func.png",
+            bleaching_imaging_paths=list_of_paths_func),
+        ##
+        expand(str(fly_folder_to_process_oak)
+               + "/{bleaching_imaging_paths}/imaging/bleaching_struct.png",
+            bleaching_imaging_paths=list_of_paths_struct),
+
+        ###
+        # Fictrac QC
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
+            fictrac_paths=FICTRAC_PATHS),
+        # data in fly_dirs.json!
+
+        ###
+        # Meanbrain
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch_func}_mean_func.nii",
+            meanbr_imaging_paths_func=list_of_paths_func,
+            meanbr_ch_func=list_of_channels_func),
+        ##
+        expand(str(fly_folder_to_process_oak)
+               + "/{meanbr_imaging_paths_struct}/imaging/channel_{meanbr_ch_struct}_mean_struct.nii",
+            meanbr_imaging_paths_struct=list_of_paths_struct,
+            meanbr_ch_struct=list_of_channels_struct),
 
 
 rule fictrac_qc_rule:
