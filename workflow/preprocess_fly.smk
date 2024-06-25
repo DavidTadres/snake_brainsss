@@ -391,7 +391,7 @@ rule all:
         # Motion correction output
         ###
         expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/motcorr_params.npy",
+               + "/{moco_imaging_paths}/moco/motcorr_params_func.npy",
                moco_imaging_paths=list_of_paths),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths}/moco/channel_1_moco_func.nii" if CH1_EXISTS_FUNC else [],
@@ -407,7 +407,7 @@ rule all:
         # Motion correction output
         ###
         expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths}/moco/motcorr_params.npy",
+               + "/{moco_imaging_paths}/moco/motcorr_params_struct.npy",
                moco_imaging_paths=list_of_paths),
         expand(str(fly_folder_to_process_oak)
                + "/{moco_imaging_paths}/moco/channel_1_moco_struct.nii" if CH1_EXISTS_STRUCT else [],
@@ -686,7 +686,7 @@ rule motion_correction_parallel_processing_rule_func:
         moco_path_ch1 = str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco_func.nii" if CH1_EXISTS_FUNC else[],
         moco_path_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco_func.nii" if CH2_EXISTS_FUNC else [],
         moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco_func.nii" if CH3_EXISTS_FUNC else [],
-        par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
+        par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params_func.npy"
 
     shell: "python3 " + scripts_path + "/scripts/moco_parallel.py "
         "--fly_directory {fly_folder_to_process_oak} "
@@ -724,7 +724,7 @@ rule motion_correction_parallel_processing_rule_struct:
         moco_path_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_1_moco_struct.nii" if CH1_EXISTS_STRUCT else [],
         moco_path_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_2_moco_struct.nii" if CH2_EXISTS_STRUCT else [],
         moco_path_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/channel_3_moco_struct.nii" if CH3_EXISTS_STRUCT else [],
-        par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params.npy"
+        par_output=str(fly_folder_to_process_oak) + "/{moco_imaging_paths}/moco/motcorr_params_struct.npy"
 
     shell: "python3 " + scripts_path + "/scripts/moco_parallel.py "
                                        "--fly_directory {fly_folder_to_process_oak} "
