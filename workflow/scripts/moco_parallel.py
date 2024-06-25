@@ -535,22 +535,19 @@ if __name__ == '__main__':
                 functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
             else:
-                print('Information: Channel 1 in func channel, but this channel does not exist: ')
-                print(args.brain_paths_ch1)
+                print('Information: Channel 1 in func channel, but this channel does not exist')
         if 'channel_2' in args.FUNCTIONAL_CHANNELS:
             if hasattr(args, 'brain_paths_ch2'):
                 functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
             else:
-                print('Information: Channel 2 in func channel, but this channel does not exist: ')
-                print(args.brain_paths_ch2)
+                print('Information: Channel 2 in func channel, but this channel does not exist')
         if 'channel_3' in args.FUNCTIONAL_CHANNELS:
             if hasattr(args, 'brain_paths_ch3'):
                 functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
             else:
                 print('Information: Channel 3 in func channel, but this channel does not exist: ')
-                print(args.brain_paths_ch3)
         #else:
         # If no functional path has been found, length of list == 0 and set both to None
         # to explictly state that no functional path has been defined
@@ -603,16 +600,12 @@ if __name__ == '__main__':
     #relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
     dataset_path = pathlib.Path(args.dataset_path)
     relevant_temp_save_path_part = moving_path.as_posix().split(dataset_path.as_posix())[-1]
-    print("relevant_temp_save_path_part " + relevant_temp_save_path_part)
     relevant_temp_save_path_part=relevant_temp_save_path_part[1::] # remove first forward slash
-    print("relevant_temp_save_path_part " + relevant_temp_save_path_part)
     ###################
     # DON'T CHANGE THIS-if this points to your actual experimental folder, the shutil.rmtree
     # below will DELETE YOUR DATA. THIS MUST BE A TEMPORARY PATH
     #temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
-    print('args.moco_temp_folder ' + repr(args.moco_temp_folder))
     temp_save_path = pathlib.Path(args.moco_temp_folder, relevant_temp_save_path_part).parent
-    print("temp_save_path " + repr(temp_save_path))
     ##################
 
     if TESTING:
