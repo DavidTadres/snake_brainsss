@@ -217,6 +217,9 @@ for current_path in imaging_file_paths:
     if 'func' in current_path:
         list_of_paths_func.append(current_path.split('/imaging')[0])
 
+print("list_of_paths_func" + repr(list_of_paths_func))
+
+
 list_of_paths_struct = []
 for current_path in imaging_file_paths:
     if 'anat' in current_path:
