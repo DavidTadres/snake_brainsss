@@ -381,12 +381,12 @@ rule all:
         # Meanbrain
         ###
         expand(str(fly_folder_to_process_oak)
-               + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_func}_mean_func.nii",
+               + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch_func}_mean_func.nii",
             meanbr_imaging_paths=list_of_paths_func,
             meanbr_ch_func=list_of_channels_func),
         ##
         expand(str(fly_folder_to_process_oak)
-               + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_struct}_mean_struct.nii",
+               + "/{meanbr_imaging_paths_struct}/imaging/channel_{meanbr_ch_struct}_mean_struct.nii",
             meanbr_imaging_paths=list_of_paths_struct,
             meanbr_ch_struct=list_of_channels_struct),
 
@@ -598,9 +598,9 @@ rule make_mean_brain_rule_func:
         mem_mb=snake_utils.mem_mb_less_times_input,  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
         runtime='10m' # should be enough
     input:
-            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_func}.nii"
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch_func}.nii"
     output:
-            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_func}_mean_func.nii"
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch_func}_mean_func.nii"
     run:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
@@ -621,9 +621,9 @@ rule make_mean_brain_rule_struct:
         mem_mb=snake_utils.mem_mb_less_times_input,  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
         runtime='10m' # should be enough
     input:
-            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_struct}.nii"
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths_struct}/imaging/channel_{meanbr_ch_struct}.nii"
     output:
-            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch_struct}_mean_struct.nii"
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths_struct}/imaging/channel_{meanbr_ch_struct}_mean_struct.nii"
     run:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
