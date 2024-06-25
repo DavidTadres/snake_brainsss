@@ -110,7 +110,7 @@ def motion_correction(index,
 
     # Save warped image in temp_save_path with index in filename.
     np.save(pathlib.Path(temp_save_path, moving_path.name + 'index_'
-                         + repr(index)),
+                         + str(index)),
             moco["warpedmovout"].numpy())
 
     #t0 = time.time()
@@ -146,7 +146,7 @@ def motion_correction(index,
         #moco_functional_one[:, :, :, counter] = moving_frame_one_ants.numpy()
         #print('apply transforms took ' + repr(time.time() - t0) + 's')
         np.save(pathlib.Path(temp_save_path, functional_path_one.name + 'index_'
-                             + repr(index)),
+                             + str(index)),
                 moving_frame_one_ants.numpy())
 
         if functional_path_two is not None:
@@ -155,7 +155,7 @@ def motion_correction(index,
             moco_functional_two = ants.apply_transforms(fixed_ants, moving_frame_two_ants, transformlist)
             #moco_functional_two[:,:,:, counter] = moco_functional_two.numpy()
             np.save(pathlib.Path(temp_save_path, functional_path_two.name + 'index_'
-                                 + repr(index)),
+                                 + str(index)),
                     moco_functional_two.numpy())
 
     #t0=time.time()
@@ -168,13 +168,13 @@ def motion_correction(index,
             temp = ants.read_transform(x)
             #transform_matrix[counter, :] = temp.parameters
             param_savename = pathlib.Path(temp_save_path, "motcorr_params" + 'index_'
-                                          + repr(index))
+                                          + str(index))
             np.save(param_savename, temp.parameters) # that's the transform_matrix in brainsss
 
         # lets' delete all files created by ants - else we quickly create thousands of files!
         pathlib.Path(x).unlink()
     print('Motion correction for ' + moving_path.as_posix()
-          + ' at index ' + repr(index) + ' took : '
+          + ' at index ' + str(index) + ' took : '
           + repr(round(time.time() - t_function_start, 1))
           + 's\n')
 
@@ -279,7 +279,7 @@ def find_missing_temp_files(fixed_path,
         # Call motion_correction function on index of missing files
         # THIS IS SLOW AS IT'S NOT PARALLELIZED. Hopefully this only is used
         # in very rare circumstances.
-        print('Missing index currently working on: ' + repr(current_index))
+        print('Missing index currently working on: ' + str(current_index))
         motion_correction(current_index,
                           fixed_path,
                           moving_path,
@@ -335,8 +335,8 @@ def combine_temp_files(moving_path,
             # Just a sanity check! E.g. for first image we expect '0'
             if index_tracker != index:
                 print('There seems to be a problem with the temp files for: ' + repr(current_file))
-                print('Previous index was ' + repr(index_tracker - 1))
-                print('Next index (based on filename) was ' + repr(index))
+                print('Previous index was ' + str(index_tracker - 1))
+                print('Next index (based on filename) was ' + str(index))
 
             index_tracker += 1
 
@@ -401,9 +401,9 @@ def combine_temp_files(moving_path,
                     stitched_functional_one[:,:,:,index] = np.load(current_file)
                     # Just a sanity check! E.g. for first image we expect '0'
                     if index_tracker != index:
-                        print('There seems to be a problem with the temp files for: ' + repr(current_file))
-                        print('Previous index was ' + repr(index_tracker - 1))
-                        print('Next index (based on filename) was ' + repr(index))
+                        print('There seems to be a problem with the temp files for: ' + str(current_file))
+                        print('Previous index was ' + str(index_tracker - 1))
+                        print('Next index (based on filename) was ' + str(index))
                     index_tracker += 1
 
         #savepath_func_one = pathlib.Path(savepath_root, functional_path_one.stem + '_moco.nii')
@@ -431,9 +431,9 @@ def combine_temp_files(moving_path,
                     stitched_functional_two[:, :, :, index] = np.load(current_file)
                     # Just a sanity check! E.g. for first image we expect '0'
                     if index_tracker != index:
-                        print('There seems to be a problem with the temp files for: ' + repr(current_file))
-                        print('Previous index was ' + repr(index_tracker - 1))
-                        print('Next index (based on filename) was ' + repr(index))
+                        print('There seems to be a problem with the temp files for: ' + str(current_file))
+                        print('Previous index was ' + str(index_tracker - 1))
+                        print('Next index (based on filename) was ' + str(index))
                     index_tracker += 1
             # Save the nifty file
             # stitched_functional_two_nifty = nib.Nifti1Image(stitched_functional_two, aff)
