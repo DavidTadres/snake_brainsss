@@ -330,27 +330,6 @@ if len(struct_channel)>1:
 """
 
 
-
-        ###
-        # Clean anatomy
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
-            clean_anatomy_paths=list_of_paths_struct,
-            clean_anat_ch=list_of_channels_struct),
-
-        ##
-        # make supervoxels
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy",
-            supervoxel_paths=list_of_paths_func,
-            supervoxel_ch=func_channels),
-        expand(str(fly_folder_to_process_oak)
-               + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",
-            supervoxel_paths=list_of_paths_func,
-            supervoxel_ch=func_channels),
-
 """
 
 """
@@ -503,6 +482,26 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{corr_imaging_paths}/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS) > 0 else [],
                corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
+
+        ###
+        # Clean anatomy
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{clean_anatomy_paths}/moco/channel_{clean_anat_ch}_moco_mean_clean.nii",
+               clean_anatomy_paths=list_of_paths_struct,
+               clean_anat_ch=list_of_channels_struct),
+
+        ##
+        # make supervoxels
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_labels.npy",
+               supervoxel_paths=list_of_paths_func,
+               supervoxel_ch=func_channels),
+        expand(str(fly_folder_to_process_oak)
+               + "/{supervoxel_paths}/clustering/channel_{supervoxel_ch}_cluster_signals.npy",
+               supervoxel_paths=list_of_paths_func,
+               supervoxel_ch=func_channels),
 
 rule fictrac_qc_rule:
     """
