@@ -399,22 +399,6 @@ rule all:
             meanbr_ch_struct=list_of_channels_struct),
 
         ###
-        # Motion correction output STRUCT
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths_struct}/moco/motcorr_params_struct.npy",
-            moco_imaging_paths_struct=list_of_paths_struct),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths_struct}/moco/channel_1_moco_struct.nii" if CH1_EXISTS_STRUCT else [],
-            moco_imaging_paths_struct=list_of_paths_struct),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths_struct}/moco/channel_2_moco_struct.nii" if CH2_EXISTS_STRUCT else [],
-            moco_imaging_paths_struct=list_of_paths_struct),
-        expand(str(fly_folder_to_process_oak)
-               + "/{moco_imaging_paths_struct}/moco/channel_3_moco_struct.nii" if CH3_EXISTS_STRUCT else [],
-            moco_imaging_paths_struct=list_of_paths_struct),
-
-        ###
         # Motion correction output FUNC
         ###
         expand(str(fly_folder_to_process_oak)
@@ -432,6 +416,22 @@ rule all:
             moco_imaging_paths_func=list_of_paths_func),
 
         ###
+        # Motion correction output STRUCT
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths_struct}/moco/motcorr_params_struct.npy",
+               moco_imaging_paths_struct=list_of_paths_struct),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths_struct}/moco/channel_1_moco_struct.nii" if CH1_EXISTS_STRUCT else [],
+               moco_imaging_paths_struct=list_of_paths_struct),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths_struct}/moco/channel_2_moco_struct.nii" if CH2_EXISTS_STRUCT else [],
+               moco_imaging_paths_struct=list_of_paths_struct),
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_imaging_paths_struct}/moco/channel_3_moco_struct.nii" if CH3_EXISTS_STRUCT else [],
+               moco_imaging_paths_struct=list_of_paths_struct),
+
+        ###
         # Meanbrain of moco brain
         ###
         expand(str(fly_folder_to_process_oak)
@@ -440,9 +440,9 @@ rule all:
             meanbr_moco_ch_func=list_of_channels_func),
         #
         expand(str(fly_folder_to_process_oak)
-               + "/{moco_meanbr_imaging_paths_struct}/moco/channel_{meanbr_moco_ch_struct}_moco_mean_struct.nii",
+               + "/{moco_meanbr_imaging_paths_struct}/moco/channel_{meanbr_ch_struct}_moco_mean_struct.nii",
             moco_meanbr_imaging_paths_struct=list_of_paths_struct,
-            meanbr_moco_ch_struct=list_of_channels_struct),
+            meanbr_ch_struct=list_of_channels_struct),
 
         ####
         # Z-score
@@ -784,9 +784,9 @@ rule moco_mean_brain_rule_struct:
         mem_mb=snake_utils.mem_mb_times_input,
         runtime='10m'# should be enough
     input:
-        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths_struct}/moco/channel_{meanbr_moco_ch_struct}_moco_struct.nii"
+        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths_struct}/moco/channel_{meanbr_ch_struct}_moco_struct.nii"
     output:
-        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths_struct}/moco/channel_{meanbr_moco_ch_struct}_moco_mean_struct.nii"
+        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths_struct}/moco/channel_{meanbr_ch_struct}_moco_mean_struct.nii"
     run:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
