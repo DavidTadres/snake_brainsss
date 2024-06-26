@@ -14,3 +14,6 @@ if __name__ == '__main__':
         print(args.fly_directory)
     else:
         print('didnt work')
+
+    if args.fly_directory is not None:
+        print('asfd')
