@@ -224,7 +224,6 @@ for current_path in imaging_file_paths:
 
 print("list_of_paths_func" + repr(list_of_paths_func))
 
-
 list_of_paths_struct = []
 for current_path in imaging_file_paths:
     if 'anat' in current_path:
@@ -234,9 +233,15 @@ if len(list_of_paths_struct) > 1:
     print('!!!WARNING!!!')
     print('The following folders have the "anat" keyword:')
     print(list_of_paths_struct)
-    print('The folder ' + repr(natsort.natsorted(list_of_paths_struct[0])) + ' will be treated as the "main" anat folder.')
-    list_of_paths_struct = natsort.natsorted(list_of_paths_struct[0])
+    print('The folder ' + repr(natsort.natsorted(list_of_paths_struct)[0]) + ' will be treated as the "main" anat folder.')
+    list_of_paths_struct = natsort.natsorted(list_of_paths_struct)[0]
 print('list_of_paths_struct' + repr(list_of_paths_struct))
+
+list_of_paths_misc_imaging = []
+for current_path in imaging_file_paths:
+    if 'misc_imaging' in current_path:
+        list_of_paths_misc_imaging.append(current_path)
+print('list_of_paths_misc_imaging ' + repr(list_of_paths_misc_imaging))
 
 list_of_channels_func = []
 if CH1_EXISTS_FUNC:
