@@ -218,7 +218,7 @@ print('list_of_paths_struct' + repr(list_of_paths_struct))
 # Folders with this keyword are run through the pipeline up to moco_mean
 list_of_paths_misc_imaging = []
 for current_path in imaging_file_paths:
-    if 'misc_imaging' in current_path:
+    if 'misc' in current_path:
         list_of_paths_misc_imaging.append(current_path)
 print('list_of_paths_misc_imaging ' + repr(list_of_paths_misc_imaging))
 
