@@ -1,3 +1,19 @@
+# snakebrainsss
+
+Rewrite of parts of Bella Brezovec's brainsss code (https://github.com/ClandininLab/brainsss).
+
+It uses snakemake to schedule tasks which builds a list of output files that are needed and dynamically
+schedules jobs to create each of the output files.
+
+The advantage of snakemake is a great increase in running the pipeline.
+
+The best way to enjoy snake_brainsss is to use stimpack to write experimental metadata on the 
+Bruker imaging PC and to collect fictrac behavioral data on the fictrac PC. 
+
+Currently, no visual stimulus presentation has been implemented.
+
+Todo: Implement a median z-score (instead of mean z-score)
+
 # Installation on Sherlock
 https://github.com/pimentel/sherlock-notes/blob/master/README.md (maybe useful info)
 
@@ -42,14 +58,30 @@ In your favorite folder on sherlock type:
 Before the code works as expected, a config file with you name needs to be prepared. It can be
 arbitrarily named, just remember the name.
 
-The config file is in the folder 'users' and contains two lines:
+The config file is in the folder 'users' and contains several lines (see dtadres.json for example):
 
-1) The first line points to the fictrac data path.
+1) One line is called 'datatset_path' defines the root path where all the preprocessed data lives.
 
-2) The second line defines the root path where all the preprocessed data lives. 
+2) Another line is called 'autotransferred_stimpack'. If you use David's fork of Brukerbridge and 
+   stimpack to create metadata (including fictrac tracking) you can set this to True to automate
+   fly building (i.e. no need to manually copy anything).
+
+3) One line called 'fictrac_path' points the fly_builder to where to collect fictrac '.dat' files. 
+   This line is optional and will be ignored if 'autotransferred_stimpack' is set to True.
+
+4) The 'shell_python_command' should be set to 'python3' on sherlock. If you use your own PC it might 
+   need to be set to 'python': Open a terminal, enter the snakebrainsss environment and type 'python3'.
+   If you get an error, use 'python'
+
+5) The 'moco_temp_folder' should be '/scratch/groups/trc' on sherlock. Only change this to another path
+   if you use snake_brainsss on your own PC.
 
 See an existing file, i.e. 'dtadres.json' for an example.
 
+If you are (successfully) using autransferred_stimpack: True the below does not apply! 
+
+
+******************
 Before building your first fly, please read this part carefully to make sure it'll run as expected:
 
 1) fictrac: Your fictrac data must be in the folder define in the 'user.json' file. It must have the 
@@ -93,7 +125,7 @@ Before building your first fly, please read this part carefully to make sure it'
    "['channel_1', 'channel_2']" (exactly like this!). Note that this hasn't been tested yet.
 
 Now you are ready to build a fly. 
- 
+************
 ### Example: 
 
 to build flies in this folder'/oak/stanford/groups/trc/data/David/Bruker/imports/20240326' 
