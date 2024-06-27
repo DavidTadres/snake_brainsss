@@ -283,7 +283,7 @@ corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
 # This would be a list like this ['1', '2']
 """
 atlas_path = pathlib.Path("brain_atlases/jfrc_atlas_from_brainsss.nii") #luke.nii"
-
+"""
 struct_channel=[]
 if 'channel_1' in STRUCTURAL_CHANNEL:
     struct_channel.append('channel_1')
@@ -297,7 +297,7 @@ if len(struct_channel)>1:
     print(struct_channel)
     print('There should only be a single anatomy channel for the pipeline to work as expected.')
 
-"""
+
 ####
 # probably not relevant - I think this is what bifrost does (better)
 ##
