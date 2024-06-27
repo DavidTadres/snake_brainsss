@@ -219,7 +219,7 @@ print('list_of_paths_struct' + repr(list_of_paths_struct))
 list_of_paths_misc_imaging = []
 for current_path in imaging_file_paths:
     if 'misc' in current_path:
-        list_of_paths_misc_imaging.append(current_path)
+        list_of_paths_misc_imaging.append(current_path.split('/imaging')[0])
 print('list_of_paths_misc_imaging ' + repr(list_of_paths_misc_imaging))
 
 list_of_channels_func = []
@@ -246,7 +246,7 @@ list_of_channels_misc = []
 list_of_misc_channels = []
 for counter, current_misc_folder in enumerate(list_of_paths_misc_imaging):
     temp = []
-    for current_file in pathlib.Path(fly_folder_to_process_oak, current_misc_folder).iterdir():
+    for current_file in pathlib.Path(fly_folder_to_process_oak, current_misc_folder, 'imaging').iterdir():
         if 'channel' in current_file.name:
             temp.append(current_file.name.split('.nii')[0].split('channel_')[-1])
     if counter == 0:
