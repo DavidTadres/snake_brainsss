@@ -636,6 +636,7 @@ def load_timestamps(path_to_metadata):
                         counter +=1
                     except IndexError:
                         break
+            timestamps = temp
     else:
         timestamps = np.reshape(timestamps, (len(frames), len(sequences)))
 
