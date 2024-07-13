@@ -841,11 +841,7 @@ def correlation(
             except ValueError:
                 print('Likely aborted scan.')
                 print('Attempting to run correlation')
-                print('brain_mean_m: ' + repr(brain_mean_m.shape))
-                print('normbrain[:, :, None]: ' + repr(normbrain[:, :, None].shape))
-                print('fictrac_mean_m: ' + repr(fictrac_mean_m.shape))
-                print('normfictrac: ' + repr(normfictrac))
-                #brain_mean_m = brain_mean_m[:,:,:, brain_mean_m.shape[-1]-1]
+                # Remove the last timepoint
                 fictrac_mean_m = fictrac_mean_m[0:fictrac_mean_m.shape[0]-1]
                 # Calculate correlation
 
