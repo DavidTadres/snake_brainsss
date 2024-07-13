@@ -833,12 +833,20 @@ def correlation(
                 brain_mean_m, axis=-1
             )  # Make a copy, but since there's no time dimension it's quite small
             normfictrac = np.linalg.norm(fictrac_mean_m)
-
-            # Calculate correlation
-            corr_brain[:, :, z] = np.dot(
-                brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
-            )
-
+            try:
+                # Calculate correlation
+                corr_brain[:, :, z] = np.dot(
+                    brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
+                )
+            except ValueError:
+                print('Likely aborted scan.')
+                print('Attempting to run correlation')
+                #brain_mean_m = brain_mean_m[:,:,:, brain_mean_m.shape[-1]-1]
+                fictrac_mean_m = fictrac_mean_m[0:fictrac_mean.shape[0]-1]
+                # Calculate correlation
+                corr_brain[:, :, z] = np.dot(
+                    brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
+                )
         ### SAVE ###
         current_save_path.parent.mkdir(exist_ok=True, parents=True)
         '''# if 'warp' in full_load_path:
