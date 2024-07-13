@@ -844,6 +844,10 @@ def correlation(
                 #brain_mean_m = brain_mean_m[:,:,:, brain_mean_m.shape[-1]-1]
                 fictrac_mean_m = fictrac_mean_m[0:fictrac_mean.shape[0]-1]
                 # Calculate correlation
+                print('brain_mean_m: ' + repr(brain_mean_m.shape))
+                print('normbrain[:, :, None]: ' + repr(normbrain[:, :, None].shape))
+                print('fictrac_mean_m: ' + repr(fictrac_mean_m.shape))
+                print('normfictrac: ' + repr(normfictrac))
                 corr_brain[:, :, z] = np.dot(
                     brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
                 )
