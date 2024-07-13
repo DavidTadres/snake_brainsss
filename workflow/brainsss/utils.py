@@ -604,9 +604,15 @@ def load_timestamps(path_to_metadata):
     tree = ET.parse(path_to_metadata)
     root = tree.getroot()
     timestamps = []
+    # In case of an aborted scan, 'frames' would return the
+    # wrong number of z-slices. Keep track of initial z-slices
+    # with this variable
+    initial_frames = None
 
     sequences = root.findall("Sequence")
     for sequence in sequences:
+        if initial_frames is None:
+            initial_frames = sequence.findall("Frame")
         frames = sequence.findall("Frame")
         for frame in frames:
             # filename = frame.findall('File')[0].get('filename')
@@ -615,7 +621,21 @@ def load_timestamps(path_to_metadata):
     timestamps = np.multiply(timestamps, 1000)
 
     if len(sequences) > 1:
-        timestamps = np.reshape(timestamps, (len(sequences), len(frames)))
+        try:
+            timestamps = np.reshape(timestamps, (len(sequences), len(frames)))
+        except ValueError:
+            print('This might be an aborted scan because the timestamps can be assigned')
+            print('Attempting to create partial timestamps (slower)')
+            temp = np.zeros((len(sequences), len(initial_frames)))
+            temp.fill(np.nan)
+            counter = 0
+            for seq in len(sequences):
+                for fr in len(initial_frames):
+                    try:
+                        temp[seq,fr] = timestamps[counter]
+                        counter +=1
+                    except IndexError:
+                        break
     else:
         timestamps = np.reshape(timestamps, (len(frames), len(sequences)))
 
