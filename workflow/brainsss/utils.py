@@ -629,8 +629,8 @@ def load_timestamps(path_to_metadata):
             temp = np.zeros((len(sequences), len(initial_frames)))
             temp.fill(np.nan)
             counter = 0
-            for seq in len(sequences):
-                for fr in len(initial_frames):
+            for seq in range(len(sequences)):
+                for fr in range(len(initial_frames)):
                     try:
                         temp[seq,fr] = timestamps[counter]
                         counter +=1
