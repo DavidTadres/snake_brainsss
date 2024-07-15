@@ -1,13 +1,10 @@
 from xml.etree import ElementTree as ET
 from lxml import etree, objectify
-from openpyxl import load_workbook
 import json
-import natsort
 import sys
 import pathlib
 import traceback
 import shutil
-import numpy as np
 import pandas as pd
 
 # To import files (or 'modules') from the brainsss folder, define path to scripts!
@@ -24,14 +21,20 @@ from brainsss import utils
 ####################
 WIDTH = 120  # This is used in all logging files
 
-def fly_builder(fictrac_folder, import_dirs, dataset_dirs):
+def fly_builder(autotransferred_stimpack,
+                fictrac_folder_path,
+                import_dirs,
+                dataset_dirs):
     """
     Move folders from imports to fly dataset - need to restructure folders.
     This is based on Bella's 'fly_builder.py' script
 
     # Note: I removed the discrepancy between 'anat' and 'func' folders. All files
     are now just called 'channel_1.nii' or 'channel_2.nii' as it makes handling filenames
-    much, much simpler, especially when going through snakemake
+    much, much simpler, especially when going through snakemake.
+
+    In addition, channel # is conserved and does reflect the channel # assigned by the
+    Bruker software!
 
     :param logfile: logfile to be used for all errors (stderr) and console outputs (stdout)
     :param user: your SUnet ID as a string
@@ -49,7 +52,7 @@ def fly_builder(fictrac_folder, import_dirs, dataset_dirs):
                 current_dataset_dir, function_name="fly_builder"
             )
             printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-            utils.print_function_start(logfile, WIDTH, "fly_builder")
+            #utils.print_function_start(logfile, "fly_builder")
             printlog(f"Building flies from: {str(current_import_dir):.>{WIDTH - 22}}")
 
             printlog(
@@ -86,17 +89,17 @@ def fly_builder(fictrac_folder, import_dirs, dataset_dirs):
             # Copy fly data
             ####
             fly_dirs_dict = copy_fly(
-                current_import_dir, current_dataset_dir, printlog, fictrac_folder, fly_dirs_dict
+                current_import_dir, current_dataset_dir, printlog,
+                autotransferred_stimpack,
+                fictrac_folder_path,
+                fly_dirs_dict
             )
-
+            ###
+            # Done copying fly data!
+            ###
 
             # Save json file with all relevant paths
-            with open(
-                pathlib.Path(
-                    current_dataset_dir, current_dataset_dir.name + "_dirs.json"
-                ),
-                "w",
-            ) as outfile:
+            with open(pathlib.Path(current_dataset_dir, current_dataset_dir.name + "_dirs.json"), "w", ) as outfile:
                 json.dump(fly_dirs_dict, outfile, indent=4)
 
             # If we are here it should mean that everything above has been copied as expected.
@@ -175,15 +178,14 @@ def add_date_to_fly(fly_folder):
         )
 
 
-def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
+def copy_fly(import_dir,
+             dataset_dir,
+             printlog,
+             autotransferred_stimpack,
+             fictrac_folder_path,
+             fly_dirs_dict,
+             ):
     """
-    #####
-    # Todo - make sure the scratch folder is empty!!!!!
-    #####
-    Otherwise it's easy to imagine a situation where a user creates ../fly002/
-    deletes it and records another fly which is then called fly002. All analysis
-    would then be done on the initial fly002!
-
     There will be two types of folders in a fly folder.
     1) func_x folder
     2) anat_x folder
@@ -202,6 +204,7 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                 current_import_file_or_folder.name
             )
         )
+
         # Handle folders
         if current_import_file_or_folder.is_dir():
             # Call this folder source expt folder
@@ -230,7 +233,7 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                 # utils.append_json(path=fly_dirs_dict_path, key=json_key, value=current_fly_dir_dict)
                 fly_dirs_dict[
                     current_import_imaging_folder.name + " Imaging"
-                ] = current_fly_dir_dict
+                ] = pathlib.Path(current_fly_dir_dict).as_posix()
 
                 ###
                 # write anat info to csv file
@@ -266,21 +269,39 @@ def copy_fly(import_dir, dataset_dir, printlog, fictrac_folder, fly_dirs_dict):
                 # utils.append_json(path=fly_dirs_dict_path, key=json_key, value=current_fly_dir_dict)
                 fly_dirs_dict[
                     current_import_imaging_folder.name + " Imaging"
-                ] = current_fly_dir_dict
-                # Copy fictrac data based on timestamps
-                try:
-                    fly_dirs_dict = copy_fictrac(
-                        current_dataset_folder,
-                        printlog,
-                        fictrac_folder,
-                        current_import_imaging_folder,
-                        fly_dirs_dict,
-                    )
-                    # printlog('Fictrac data copied')
-                except Exception as e:
-                    printlog("Could not copy fictrac data because of error:")
-                    printlog(str(e))
-                    printlog(traceback.format_exc())
+                ] = pathlib.Path(current_fly_dir_dict).as_posix()
+                # Copy fictrac data
+                # Automatic fictrac assignment (done on davidtadres/brukerbridge) where
+                # each func folder would have a folder with stimpack/#/loco/*.dat
+                print('autotransferred_stimpack: ' + repr(autotransferred_stimpack))
+                if autotransferred_stimpack:
+                    try:
+                        # while data is PROBABLY TEST automatically transferred, the name
+                        # of the *.dat file needs to be changed for downstream analysis!
+                        automatic_copy_stimpack(import_folder=current_import_imaging_folder,
+                                                target_folder=current_dataset_folder,
+                                                fly_dirs_dict=fly_dirs_dict,
+                                               )
+                    except Exception as error:
+                        printlog('***** ERROR *****')
+                        printlog(str(error))
+                        printlog('\n')
+
+                # Manual fictrac assignment
+                elif fictrac_folder_path is not None:
+                    try:
+                        fly_dirs_dict = manual_copy_fictrac(
+                            current_dataset_folder,
+                            printlog,
+                            fictrac_folder_path,
+                            current_import_imaging_folder,
+                            fly_dirs_dict,
+                        )
+                        # printlog('Fictrac data copied')
+                    except Exception as e:
+                        printlog("Could not copy fictrac data because of error:")
+                        printlog(str(e))
+                        printlog(traceback.format_exc())
                 # Copy visual data based on timestamps, and create visual.json
                 try:
                     copy_visual(current_dataset_folder, printlog)
@@ -411,27 +432,12 @@ def copy_bruker_data(source, destination, folder_type, printlog, fly_dirs_dict=N
             elif ".xml" in source_path.name and "Voltage" not in source_path.name:
                 target_name = "recording_metadata.xml"
                 target_path = pathlib.Path(destination, target_name)
-                if folder_type == "func":
-                    copy_file_func(source_path, target_path, printlog)
-                    # Create json file
-                    create_imaging_json(target_path, printlog)
-                    continue
-            # Rename to anatomy.xml if appropriate
-            # if '.xml' in source_path.name and folder_type == 'anat' and \
-            #        'Voltage' not in source_path.name:
-            #    target_name = 'anatomy.xml'
-            #    target_path = pathlib.Path(destination, target_name)
+                copy_file_func(source_path, target_path, printlog)
+                # Create json file
+                create_imaging_json(target_path, printlog)
+                #if folder_type == "func":
+                continue
 
-            # Rename to functional.xml if appropriate, copy immediately, then make scan.json
-            # if ('.xml' in source_path.name and folder_type == 'func' and
-            #        'Voltage' not in source_path.name):
-            #    # TOdo: rename to something like 'microscope.xml'. Similar to ch, keep filenames consistent!
-            #    target_path = pathlib.Path(destination, 'functional.xml')
-            #    #target_item = os.path.join(destination, item)
-            #    copy_file(source_path, target_path, printlog)
-            #    # Create json file
-            #    create_imaging_json(target_path, printlog)
-            #    continue
             elif ".xml" in source_path.name and "VoltageOutput" in source_path.name:
                 target_path = pathlib.Path(destination, "voltage_output.xml")
 
@@ -453,7 +459,7 @@ def copy_file_func(source, target, printlog):
 
 
 def copy_visual(destination_region, printlog):
-    print("copy_visual NOT IMPLEMENTED YET")
+    printlog("copy_visual NOT IMPLEMENTED YET")
     """width = 120
     printlog(F"Copying visual stimulus data{'':.^{width - 28}}")
     visual_folder = '/oak/stanford/groups/trc/data/Brezovec/2P_Imaging/imports/visual'
@@ -521,8 +527,51 @@ def copy_visual(destination_region, printlog):
     with open(os.path.join(visual_destination, 'visual.json'), 'w') as f:
         json.dump(unique_stimuli, f, indent=4)"""
 
+def automatic_copy_stimpack(import_folder, target_folder, fly_dirs_dict):
+    """
+    When using stimpack to trigger fictrac, davidtadres/brukerbridge has the option
+    to automatically assign a given fictrac dataset to the corresponding imaging series.
 
-def copy_fictrac(destination_region, printlog, fictrac_folder, source_fly, fly_dirs_dict):
+    This function makes sure data is copied as expected
+
+    :param import_folder: current_dataset_folder, pathlib object pointing to i.e. \\oak-smb-trc.stanford.edu\groups\trc\data\David\Bruker\imports\20240619\fly1\func0
+    :param target_folder: pathlib object pointing to i.e. \\oak-smb-trc.stanford.edu\groups\trc\data\David\Bruker\preprocessed\FS144_x_FS61\fly_001\func0
+    :param fly_dirs_dict: dict with relative path used by snakemake
+    """
+
+    # Check if fictrac data exists:
+    fictrac_import_path = pathlib.Path(import_folder, 'stimpack/loco')
+    fictrac_target_path = pathlib.Path(target_folder, 'stimpack/loco')
+    # Go through import folder
+    for current_file in fictrac_import_path.iterdir():
+        # Rename this file because it needs to be consistent for snake_brainsss to work
+        if '.dat' in current_file.name:
+            current_target_path = pathlib.Path(fictrac_target_path, 'fictrac_behavior_data.dat')
+        else:
+            # Copy the rest of the content as well
+            current_target_path = pathlib.Path(fictrac_target_path, current_file.name)
+        # Make folder structure if not existing yet
+        current_target_path.parent.mkdir(exist_ok=True, parents=True)
+        # Copy file
+        shutil.copyfile(current_file, current_target_path)
+
+    # To keep track of where files are, ass to fly_dirs_dict
+    relative_path = pathlib.Path('/' + target_folder.name, 'stimpack/loco/fictrac_behavior_data.dat')
+    fly_dirs_dict[import_folder.name + " Fictrac "] = relative_path.as_posix() # Check if this correct!
+
+    # Add more stuff if needed such as renaming visual data!
+
+def manual_copy_fictrac(destination_region, printlog, fictrac_folder, source_fly, fly_dirs_dict):
+    """
+    Attempt to get correct fictrac data into the corresponding 'func' folder.
+    This is called 'manual' because for each experiment (i.e. each TSeries) the
+    user has to prepare a folder containing the .dat file for fictrac based on
+    'fictrac_path' in user.json (i.e. david.json)
+    For example for fly 20231201\fly2\func1 imaging data, fictrac data must
+    be in the folder 20231201_fly2_func1. There must only be a single dat file in that folder!
+
+    Consider using the stimpack autotransfer option.
+    """
     # The target file will be called 'fictrac_behavior_data.dat' because it makes
     # handling files much easier in the snakefile.
     # Make fictrac folder
@@ -558,7 +607,12 @@ def copy_fictrac(destination_region, printlog, fictrac_folder, source_fly, fly_d
             current_fly_dir_dict = str(target_path).split(
                 fictrac_destination.parents[1].name
             )[-1]
-            fly_dirs_dict[destination_region.name + " Fictrac "] = current_fly_dir_dict
+            fly_dirs_dict[destination_region.name + " Fictrac "] = pathlib.Path(current_fly_dir_dict).as_posix()
+            shutil.copyfile(dat_path, target_path)
+        else:
+            # Copy rest of files such as videos and logs
+            shutil.copyfile(current_file, pathlib.Path(fictrac_destination, current_file.name))
+
 
     """# OLD
     # Different users have different rule on what to do with the data
@@ -741,7 +795,7 @@ def copy_fictrac(destination_region, printlog, fictrac_folder, source_fly, fly_d
             # printlog('Transfering {}'.format(target_path))
             ##sys.stdout.flush()
     """
-    shutil.copyfile(dat_path, target_path)
+
 
     ### Create empty xml file.
     # Update this later
@@ -791,18 +845,26 @@ def create_imaging_json(xml_source_file, printlog):
                 elif axis == "ZAxis":
                     source_data["z_voxel_size"] = float(index.get("value"))
         if key == "laserPower":
-            # I think this is the maximum power if set to vary by z depth - WRONG
+            # This is not great - this is just the first pockels value
             indices = statevalue.findall("IndexedValue")
             laser_power_overall = int(float(indices[0].get("value")))
             source_data["laser_power"] = laser_power_overall
+        if key == "laserWavelength":
+            index = statevalue.findall("IndexedValue")
+            laser_wavelength = int(float(index[0].get("value")))
+            source_data["laser_wavelength"] = laser_wavelength
         if key == "pmtGain":
             indices = statevalue.findall("IndexedValue")
             for index in indices:
                 index_num = index.get("index")
+                # I changed this from 'red' and 'green' to the actual description used by the
+                # microscope itself! Since we now have 2 Brukers, this seems safer!
                 if index_num == "0":
-                    source_data["PMT_red"] = int(float(index.get("value")))
+                    source_data[index.get("description")] = int(float(index.get("value")))
                 if index_num == "1":
-                    source_data["PMT_green"] = int(float(index.get("value")))
+                    source_data[index.get("description")] = int(float(index.get("value")))
+                if index_num == "2":
+                    source_data[index.get("description")] = int(float(index.get("value")))
         if key == "pixelsPerLine":
             source_data["x_dim"] = int(float(statevalue.get("value")))
         if key == "linesPerFrame":
@@ -811,47 +873,10 @@ def create_imaging_json(xml_source_file, printlog):
     last_frame = sequence.findall("Frame")[-1]
     source_data["z_dim"] = int(last_frame.get("index"))
 
-    # Need this try block since sometimes first 1 or 2 frames don't have laser info...
-    # try:
-    #     # Get laser power of first and last frames
-    #     last_frame = sequence.findall('Frame')[-1]
-    #     source_data['laser_power'] = int(last_frame.findall('PVStateShard')[0].findall('PVStateValue')[1].findall('IndexedValue')[0].get('value'))
-    #     #first_frame = sequence.findall('Frame')[0]
-    #     #source_data['laser_power_min'] = int(first_frame.findall('PVStateShard')[0].findall('PVStateValue')[1].findall('IndexedValue')[0].get('value'))
-    # except:
-    #     source_data['laser_power_min'] = laser_power_overall
-    #     source_data['laser_power_max'] = laser_power_overall
-    #     #printlog('Used overall laser power.')
-    #     # try:
-    #     #     first_frame = sequence.findall('Frame')[2]
-    #     #     source_data['laser_power_min'] = int(first_frame.findall('PVStateShard')[0].findall('PVStateValue')[1].findall('IndexedValue')[0].get('value'))
-    #     #     printlog('Took min laser data from frame 3, not frame 1, due to bruker metadata error.')
-    #     # # Apparently sometimes the metadata will only include the
-    #     # # laser value at the very beginning
-    #     # except:
-    #     #     source_data['laser_power_min'] = laser_power_overall
-    #     #     source_data['laser_power_max'] = laser_power_overall
-    #     #     printlog('Used overall laser power.')
-
     # Save data
     # with open(os.path.join(os.path.split(xml_source_file)[0], 'scan.json'), 'w') as f:
     with open(pathlib.Path(xml_source_file.parent, "scan.json"), "w") as f:
         json.dump(source_data, f, indent=4)
-
-
-def get_expt_time(directory):
-    """Finds time of experiment based on functional.xml"""
-    xml_file = pathlib.Path(directory, "functional.xml")
-    # xml_file = os.path.join(directory, 'functional.xml')
-    _, _, datetime_dict = get_datetime_from_xml(xml_file)
-    true_ymd = datetime_dict["year"] + datetime_dict["month"] + datetime_dict["day"]
-    true_total_seconds = (
-        int(datetime_dict["hour"]) * 60 * 60
-        + int(datetime_dict["minute"]) * 60
-        + int(datetime_dict["second"])
-    )
-
-    return true_ymd, true_total_seconds
 
 def get_datetime_from_xml(xml_file):
     ##print('Getting datetime from {}'.format(xml_file))
@@ -918,7 +943,7 @@ def load_xml(file):
     root = tree.getroot()
     return root
 
-def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
+def add_fly_to_csv(import_folder, fly_folder, current_import_imaging_folder,
                    current_date, current_time, printlog):
     """
     brainsss originally had a xlsx file. However, it seemed to be a bit sensitive to slight
@@ -929,26 +954,35 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
 
     try:
         csv_path = pathlib.Path(fly_folder.parent, 'master_2P.csv')
+        # Read csv, explicity state that first column is index
         csv_file = pd.read_csv(csv_path, index_col=0)
         printlog('Successfully opened master_2P log')
     except FileNotFoundError:
         try:
             # This should work if I don't move it out of that folder
             csv_path = pathlib.Path(fly_folder.parent, 'master_2P.csv')
+            # Todo, could also have it pulled from github
             empty_csv_path = pathlib.Path('/oak/stanford/groups/trc/data/David/shared_files/master_2P.csv')
             shutil.copyfile(empty_csv_path, csv_path)
+            # Read csv, explicity state that first column is index
             csv_file = pd.read_csv(csv_path, index_col=0)
             printlog('Successfully opened master_2P log')
         except Exception as e:
+            # Better to create it from scratch!
             printlog('Error while trying to move or open the csv file:')
             print(e)
+
+    # Load scan.json with the scanning parameters
+    scan_json_path = pathlib.Path(fly_folder, current_import_imaging_folder.name,  "imaging/scan.json")
+    scan_json = load_json(scan_json_path)
+    printlog("Successfully loaded scan.json file")
 
     # Load fly.json.
     # At the moment this file is essential else snakebrainsss just doens't work.
     # So no need to wrap in try...except
     fly_json_path = pathlib.Path(fly_folder, "fly.json")
     fly_data = load_json(fly_json_path)
-    printlog("Successfully loaded fly.json")
+    printlog("Successfully loaded fly.json file")
 
     # Prepare dict for csv
     dict_for_csv = {}
@@ -967,12 +1001,27 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
         elif column == 'Time':
             dict_for_csv[column] = current_time
         else:
-            dict_for_csv[column] = fly_data.get(column)
+            # Some data is in 'fly_data'
+            if column in fly_data:
+                dict_for_csv[column] = fly_data.get(column)
+            # And other data is in 'scan_json'
+            elif column in scan_json:
+                dict_for_csv[column] = scan_json.get(column)
+            else:
+                printlog("master.csv file contains column: " + column + " which couldn't be assigned.")
+
     # It would be grand to do this also the other way around: If there are
     # fields in the json that do not have a column, create a column!
     for json_key in fly_data:
         if json_key not in csv_file.columns:
             dict_for_csv[json_key] = fly_data[json_key]
+
+    for json_key in scan_json:
+        # we already have date and time but because of capitalized/not capitalized would
+        # make a new column. Hence explicitely exclude!
+        if not json_key == 'date' and not json_key == 'time':
+            if json_key not in csv_file.columns:
+                dict_for_csv[json_key] = scan_json[json_key]
     # This of course has the slight downside that users have to be careful to
     # not slightly change their json file (i.e. from Genotype to genotype).
     # Upside is that the json file becomes very flexible in combination with this
@@ -980,8 +1029,8 @@ def add_fly_to_csv(import_folder,fly_folder, current_import_imaging_folder,
     # or 'circle' or whatever for easy sorting in the csv later on
 
     csv_file = pd.concat([csv_file, pd.DataFrame([dict_for_csv])], ignore_index=True)
-
-    csv_file.to_csv(csv_path)#, index='False')
+    # Include an index as the first column!
+    csv_file.to_csv(csv_path)
 """
 def add_fly_to_xlsx(fly_folder, printlog):
     printlog("Adding fly to master_2P excel log")

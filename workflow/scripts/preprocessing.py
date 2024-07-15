@@ -72,7 +72,7 @@ def make_supervoxels(
 
     logfile = utils.create_logfile(fly_directory, function_name="make_supervoxels")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "make_supervoxels")
+    #utils.print_function_start(logfile, "make_supervoxels")
 
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
@@ -213,7 +213,7 @@ def apply_transforms(
     ###
     logfile = utils.create_logfile(fly_directory, function_name="func2anat")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "func2anat")
+    #utils.print_function_start(logfile, "func2anat")
 
     # logfile = args['logfile']
     # save_directory = args['save_directory']
@@ -358,7 +358,7 @@ def align_anat(
     ####
     logfile = utils.create_logfile(fly_directory, function_name=rule_name)
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, rule_name)
+    #utils.print_function_start(logfile, rule_name)
 
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
@@ -534,7 +534,7 @@ def clean_anatomy(fly_directory, path_to_read, save_path):
 
     logfile = utils.create_logfile(fly_directory, function_name="clean_anatomy")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "clean_anatomy")
+    #utils.print_function_start(logfile, "clean_anatomy")
 
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
@@ -721,7 +721,7 @@ def correlation(
 
     logfile = utils.create_logfile(fly_directory, function_name="correlation")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "correlation")
+    #utils.print_function_start(logfile, "correlation")
 
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
@@ -833,12 +833,21 @@ def correlation(
                 brain_mean_m, axis=-1
             )  # Make a copy, but since there's no time dimension it's quite small
             normfictrac = np.linalg.norm(fictrac_mean_m)
+            try:
+                # Calculate correlation
+                corr_brain[:, :, z] = np.dot(
+                    brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
+                )
+            except ValueError:
+                print('Likely aborted scan.')
+                print('Attempting to run correlation')
+                # Remove the last timepoint
+                fictrac_mean_m = fictrac_mean_m[0:fictrac_mean_m.shape[0]-1]
+                # Calculate correlation
 
-            # Calculate correlation
-            corr_brain[:, :, z] = np.dot(
-                brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
-            )
-
+                corr_brain[:, :, z] = np.dot(
+                    brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
+                )
         ### SAVE ###
         current_save_path.parent.mkdir(exist_ok=True, parents=True)
         '''# if 'warp' in full_load_path:
@@ -924,7 +933,7 @@ def temporal_high_pass_filter(
         fly_directory, function_name="temporal_high_pass_filter"
     )
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "temporal_high_pass_filter")
+    #utils.print_function_start(logfile, "temporal_high_pass_filter")
 
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
@@ -935,11 +944,17 @@ def temporal_high_pass_filter(
     )
 
     printlog("Beginning high pass")
+
     # dataset_path might be a list of 2 channels (or a list with one channel only)
     for current_dataset_path, current_temporal_high_pass_filtered_path in zip(
         dataset_path, temporal_high_pass_filtered_path
     ):
         printlog("Working on " + repr(current_dataset_path.name))
+
+        # Dynamically define sigma for filtering! This was recently introduced to brainsss
+        timestamps = utils.load_timestamps(pathlib.Path(current_dataset_path.parent, 'imaging', 'recording_metadata.xml'))
+        hz = (1 / np.diff(timestamps[:, 0])[0]) * 1000 # This is volumes per second!
+        sigma = int(hz / 0.01)  # gets a sigma of ~100 second
 
         if '.nii' in current_dataset_path.name:
             # this doesn't actually LOAD the data - it is just a proxy
@@ -950,13 +965,9 @@ def temporal_high_pass_filter(
 
             # Calculate mean
             data_mean = np.mean(data, axis=-1)
-            # Using filter to smoothen data. This gets rid of
-            # high frequency noise.
-            # Note: sigma: standard deviation for Gaussian kernel
-            # This needs to be made dynamic else we'll filter differently
-            # at different
+            # Using filter to smoothen data. This gets rid of high frequency noise.
             smoothed_data = ndimage.gaussian_filter1d(
-                data, sigma=200, axis=-1, truncate=1
+                data, sigma=sigma, axis=-1, truncate=1
             )  # This for sure makes a copy of
             # the array, doubling memory requirements
 
@@ -1047,7 +1058,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
     ##############
     logfile = utils.create_logfile(fly_directory, function_name="zscore")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "zscore")
+    #utils.print_function_start(logfile, "zscore")
 
     ##########
     ### Convert list of (sometimes empty) strings to pathlib.Path objects
@@ -1116,7 +1127,7 @@ def make_mean_brain(
     ####
     logfile = utils.create_logfile(fly_directory, function_name=rule_name)
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, rule_name)
+    #utils.print_function_start(logfile, rule_name)
 
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
@@ -1199,7 +1210,7 @@ def bleaching_qc(
     ####
     logfile = utils.create_logfile(fly_directory, function_name="bleaching_qc")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "bleaching_qc")
+    #utils.print_function_start(logfile, "bleaching_qc")
 
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
@@ -1303,7 +1314,7 @@ def fictrac_qc(fly_directory, fictrac_file_path, fictrac_fps):
     ####
     logfile = utils.create_logfile(fly_directory, function_name="fictrac_qc")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "fictrac_qc")
+    #utils.print_function_start(logfile, "fictrac_qc")
 
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
@@ -1367,7 +1378,7 @@ def copy_to_scratch(fly_directory, paths_on_oak, paths_on_scratch):
     # printlog = getattr(brainsss.Printlog(logfile=logfile), 'print_to_log')
     logfile = utils.create_logfile(fly_directory, function_name="copy_to_scratch")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "copy_to_scratch")
+    #utils.print_function_start(logfile, "copy_to_scratch")
 
     for current_file_src, current_file_dst in zip(paths_on_oak, paths_on_scratch):
         # make folder if not exist

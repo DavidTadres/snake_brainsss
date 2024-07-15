@@ -15,6 +15,7 @@ width=120
 ##########################################################
 import pathlib
 import json
+import sys
 import datetime
 # path of workflow i.e. /Users/dtadres/snake_brainsss/workflow
 #scripts_path = pathlib.Path(__file__).resolve()
@@ -43,16 +44,41 @@ with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
     fly_json = json.load(file)
 # This needs to come from some sort of json file the experimenter
 # creates while running the experiment. Same as genotype.
-ANATOMY_CHANNEL = fly_json['anatomy_channel']
 FUNCTIONAL_CHANNELS = fly_json['functional_channel']
+# It is probably necessary to forcibly define STRUCTURAL_CHANNEL if not defined
+# Would be better to have an error to be explicit!
+
+# Throw an error if missing! User must provide this!
+STRUCTURAL_CHANNEL = fly_json['structural_channel']
+if STRUCTURAL_CHANNEL != 'channel_1' and \
+    STRUCTURAL_CHANNEL != 'channel_2' and \
+        STRUCTURAL_CHANNEL != 'channel_3':
+    print('!!! ERROR !!!')
+    print('You must provide "structural_channel" in the "fly.json" file for snake_brainsss to run!')
+    sys.exit()
+    # This would be a implicit fix. Not great as it'll
+    # hide potential bugs. Better explicit
+    #STRUCTURAL_CHANNEL = FUNCTIONAL_CHANNELS[0]
+
+def ch_exists_func(channel):
+    """
+    Check if a given channel exists in global variables STRUCTURAL_CHANNEL and FUNCTIONAL_CHANNELS
+    :param channel:
+    :return:
+    """
+    if 'channel_' + str(channel) in STRUCTURAL_CHANNEL or 'channel_' + str(channel) in FUNCTIONAL_CHANNELS:
+        ch_exists = True
+    else:
+        ch_exists = False
+    return(ch_exists)
 
 # Bool for which channel exists in this particular recording.
 # IMPORTANT: One FLY must have the same channels per recording. This
 # makes sense: If we have e.g. GCaMP and tdTomato we would always
 # record from both the green and red channel, right?
-CH1_EXISTS = snake_utils.ch_exists_func("1", ANATOMY_CHANNEL, FUNCTIONAL_CHANNELS)
-CH2_EXISTS = snake_utils.ch_exists_func("2", ANATOMY_CHANNEL, FUNCTIONAL_CHANNELS)
-CH3_EXISTS = snake_utils.ch_exists_func("3", ANATOMY_CHANNEL, FUNCTIONAL_CHANNELS)
+CH1_EXISTS = ch_exists_func("1")
+CH2_EXISTS = ch_exists_func("2")
+CH3_EXISTS = ch_exists_func("3")
 
 ####
 # Load fly_dir.json
@@ -124,6 +150,23 @@ for current_path in imaging_file_paths:
     if 'func' in current_path:
         list_of_paths_func.append(current_path.split('/imaging')[0])
 
+list_of_channels = []
+if CH1_EXISTS:
+    list_of_channels.append("1")
+if CH2_EXISTS:
+    list_of_channels.append("2")
+if CH3_EXISTS:
+    list_of_channels.append("3")
+
+print("list_of_channels" + repr(list_of_channels))
+
+# For wildcards we need lists of elements of the path for each folder.
+list_of_paths = []
+for current_path in imaging_file_paths:
+    list_of_paths.append(current_path.split('/imaging')[0])
+# This is a list of all imaging paths so something like this
+# ['anat0', 'func0', 'func1']
+print('list_of_paths ' +repr(list_of_paths) )
 
 # Behaviors to correlate with neural activity
 corr_behaviors = ['dRotLabZneg', 'dRotLabZpos', 'dRotLabY']
@@ -139,6 +182,13 @@ rule all:
     threads: 1 # should be sufficent
     resources: mem_mb=1000 # should be sufficient
     input:
+        ###
+        # Meanbrain
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii",
+            meanbr_imaging_paths=list_of_paths,
+            meanbr_ch=list_of_channels),
         ####
         # Z-score
         ####
@@ -175,6 +225,48 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{corr_imaging_paths}/NO_MOCO/corr/channel_3_corr_{corr_behavior}.nii" if 'channel_3' in FUNCTIONAL_CHANNELS and len(FICTRAC_PATHS) > 0 else [],
                corr_imaging_paths=list_of_paths_func, corr_behavior=corr_behaviors),
+
+rule make_mean_brain_rule:
+    """
+    Here it should be possible to parallelize quite easily as each input file creates
+    one output file!
+
+    input would be something like
+    paths_to_use = ['../fly_004/func0/imaging/functional_channel_1', '../fly_004/func1/imaging/functional_channel_2']
+
+    rule all would request the 'mean' brain of each of those
+    expand("{imaging_path}_mean.nii", imaging_path=paths_to_use)
+
+    rule make_mean_brain_rule:
+        input: "{imaging_path}.nii"
+        output: "{imaging_path}_mean.nii"
+        run: function(imaging_path)
+
+    which will do:
+        brain = read(input)
+        mean_brain = mean(brain)
+        save.mean_brain(output)
+    """
+    threads: snake_utils.threads_per_memory_less
+    resources:
+        mem_mb=snake_utils.mem_mb_less_times_input,  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
+        runtime='10m' # should be enough
+    input:
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}.nii"
+    output:
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths}/imaging/channel_{meanbr_ch}_mean.nii"
+    run:
+        try:
+            preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
+                meanbrain_n_frames=meanbrain_n_frames,
+                path_to_read=input,
+                path_to_save=output,
+                rule_name='make_mean_brain_rule')
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_mean_brain')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack,
+                width=width)
 
 rule zscore_rule:
     """

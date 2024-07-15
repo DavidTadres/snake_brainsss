@@ -110,7 +110,7 @@ def motion_correction(index,
 
     # Save warped image in temp_save_path with index in filename.
     np.save(pathlib.Path(temp_save_path, moving_path.name + 'index_'
-                         + repr(index)),
+                         + str(index)),
             moco["warpedmovout"].numpy())
 
     #t0 = time.time()
@@ -146,7 +146,7 @@ def motion_correction(index,
         #moco_functional_one[:, :, :, counter] = moving_frame_one_ants.numpy()
         #print('apply transforms took ' + repr(time.time() - t0) + 's')
         np.save(pathlib.Path(temp_save_path, functional_path_one.name + 'index_'
-                             + repr(index)),
+                             + str(index)),
                 moving_frame_one_ants.numpy())
 
         if functional_path_two is not None:
@@ -155,7 +155,7 @@ def motion_correction(index,
             moco_functional_two = ants.apply_transforms(fixed_ants, moving_frame_two_ants, transformlist)
             #moco_functional_two[:,:,:, counter] = moco_functional_two.numpy()
             np.save(pathlib.Path(temp_save_path, functional_path_two.name + 'index_'
-                                 + repr(index)),
+                                 + str(index)),
                     moco_functional_two.numpy())
 
     #t0=time.time()
@@ -168,13 +168,13 @@ def motion_correction(index,
             temp = ants.read_transform(x)
             #transform_matrix[counter, :] = temp.parameters
             param_savename = pathlib.Path(temp_save_path, "motcorr_params" + 'index_'
-                                          + repr(index))
+                                          + str(index))
             np.save(param_savename, temp.parameters) # that's the transform_matrix in brainsss
 
         # lets' delete all files created by ants - else we quickly create thousands of files!
         pathlib.Path(x).unlink()
     print('Motion correction for ' + moving_path.as_posix()
-          + ' at index ' + repr(index) + ' took : '
+          + ' at index ' + str(index) + ' took : '
           + repr(round(time.time() - t_function_start, 1))
           + 's\n')
 
@@ -279,7 +279,7 @@ def find_missing_temp_files(fixed_path,
         # Call motion_correction function on index of missing files
         # THIS IS SLOW AS IT'S NOT PARALLELIZED. Hopefully this only is used
         # in very rare circumstances.
-        print('Missing index currently working on: ' + repr(current_index))
+        print('Missing index currently working on: ' + str(current_index))
         motion_correction(current_index,
                           fixed_path,
                           moving_path,
@@ -310,7 +310,7 @@ def combine_temp_files(moving_path,
     """
     time_start = time.time()
     ####
-    # STITCH ANATOMY
+    # STITCH STRUCTURAL_CHANNEL
     ####
     # Put moving anatomy image into a proxy for nibabel
     moving_proxy = nib.load(moving_path)
@@ -335,8 +335,8 @@ def combine_temp_files(moving_path,
             # Just a sanity check! E.g. for first image we expect '0'
             if index_tracker != index:
                 print('There seems to be a problem with the temp files for: ' + repr(current_file))
-                print('Previous index was ' + repr(index_tracker - 1))
-                print('Next index (based on filename) was ' + repr(index))
+                print('Previous index was ' + str(index_tracker - 1))
+                print('Next index (based on filename) was ' + str(index))
 
             index_tracker += 1
 
@@ -401,9 +401,9 @@ def combine_temp_files(moving_path,
                     stitched_functional_one[:,:,:,index] = np.load(current_file)
                     # Just a sanity check! E.g. for first image we expect '0'
                     if index_tracker != index:
-                        print('There seems to be a problem with the temp files for: ' + repr(current_file))
-                        print('Previous index was ' + repr(index_tracker - 1))
-                        print('Next index (based on filename) was ' + repr(index))
+                        print('There seems to be a problem with the temp files for: ' + str(current_file))
+                        print('Previous index was ' + str(index_tracker - 1))
+                        print('Next index (based on filename) was ' + str(index))
                     index_tracker += 1
 
         #savepath_func_one = pathlib.Path(savepath_root, functional_path_one.stem + '_moco.nii')
@@ -431,9 +431,9 @@ def combine_temp_files(moving_path,
                     stitched_functional_two[:, :, :, index] = np.load(current_file)
                     # Just a sanity check! E.g. for first image we expect '0'
                     if index_tracker != index:
-                        print('There seems to be a problem with the temp files for: ' + repr(current_file))
-                        print('Previous index was ' + repr(index_tracker - 1))
-                        print('Next index (based on filename) was ' + repr(index))
+                        print('There seems to be a problem with the temp files for: ' + str(current_file))
+                        print('Previous index was ' + str(index_tracker - 1))
+                        print('Next index (based on filename) was ' + str(index))
                     index_tracker += 1
             # Save the nifty file
             # stitched_functional_two_nifty = nib.Nifti1Image(stitched_functional_two, aff)
@@ -472,6 +472,7 @@ if __name__ == '__main__':
     ############################
     parser = argparse.ArgumentParser()
     parser.add_argument("--fly_directory", help="Folder of fly to save log")
+    parser.add_argument("--dataset_path", nargs="?", help="Folder pointing 'preprocessed'")
 
     parser.add_argument("--brain_paths_ch1", nargs="?", help="Path to ch1 file, if it exists")
     parser.add_argument("--brain_paths_ch2", nargs="?", help="Path to ch2 file, if it exists")
@@ -481,14 +482,16 @@ if __name__ == '__main__':
     parser.add_argument("--mean_brain_paths_ch2", nargs="?", help="Path to ch2 meanbrain file, if it exists")
     parser.add_argument("--mean_brain_paths_ch3", nargs="?", help="Path to ch3 meanbrain file, if it exists")
 
-    parser.add_argument("--ANATOMY_CHANNEL", nargs="?", help="variable with string containing the anatomy channel")
-    parser.add_argument("--FUNCTIONAL_CHANNELS", nargs="?", help="list with strings containing the anatomy channel")
+    parser.add_argument("--STRUCTURAL_CHANNEL", nargs="?", help="variable with string containing the structural channel")
+    parser.add_argument("--FUNCTIONAL_CHANNELS", nargs="?", help="list with strings containing the functional channel")
 
     parser.add_argument("--moco_path_ch1", nargs="?", help="Path to ch1 moco corrected file, if Ch1 exists")
     parser.add_argument("--moco_path_ch2", nargs="?", help="Path to ch2 moco corrected file, if Ch2 exists")
     parser.add_argument("--moco_path_ch3", nargs="?", help="Path to ch3 moco corrected file, if Ch3 exists")
 
     parser.add_argument("--par_output", nargs="?", help="Path to parameter output")
+
+    parser.add_argument("--moco_temp_folder", nargs="?", help="Where to save the temp file")
 
     args = parser.parse_args()
 
@@ -498,45 +501,66 @@ if __name__ == '__main__':
     fly_directory = pathlib.Path(args.fly_directory)
     logfile = utils.create_logfile(fly_directory, function_name="moco_parallel")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "moco_parallel")
+    #utils.print_function_start(logfile, "moco_parallel")
 
     ####################################
     ### Identify the anatomy channel ###
     ####################################
     # Normally, we would have one anatomy channel
-    if args.ANATOMY_CHANNEL is not None:
-        if 'channel_1' == args.ANATOMY_CHANNEL:
+    if args.STRUCTURAL_CHANNEL is not None:
+        if 'channel_1' == args.STRUCTURAL_CHANNEL:
             moving_path = pathlib.Path(args.brain_paths_ch1)
             fixed_path = pathlib.Path(args.mean_brain_paths_ch1)
             moving_output_path = pathlib.Path(args.moco_path_ch1)
-        elif 'channel_2' ==  args.ANATOMY_CHANNEL:
+        elif 'channel_2' ==  args.STRUCTURAL_CHANNEL:
             moving_path = pathlib.Path(args.brain_paths_ch2)
             fixed_path = pathlib.Path(args.mean_brain_paths_ch2)
             moving_output_path = pathlib.Path(args.moco_path_ch2)
-        elif 'channel_3' ==  args.ANATOMY_CHANNEL:
+        elif 'channel_3' ==  args.STRUCTURAL_CHANNEL:
             moving_path = pathlib.Path(args.brain_paths_ch3)
             fixed_path = pathlib.Path(args.mean_brain_paths_ch3)
-            moving_output_path = pathlib.Path(args.moco_path_ch2)
+            moving_output_path = pathlib.Path(args.moco_path_ch3)
         # If we have an antomy channel, we can use the parameters to
         # motion correct the (generally) less clearly visible functional channel(s)
-        if args.FUNCTIONAL_CHANNELS is not None:
-            # Convert the string represenation of a list to a list - it's either
-            # ['channel_1',] or ['channel_1','channel_2'] or similar
-            # if
-            functional_channel_paths = []
-            functional_channel_output_paths = []
-            if 'channel_1' in args.FUNCTIONAL_CHANNELS:
+        #if args.FUNCTIONAL_CHANNELS != ['']:
+        # Convert the string represenation of a list to a list - it's either
+        # ['channel_1',] or ['channel_1','channel_2'] or similar
+        # if
+        functional_channel_paths = []
+        functional_channel_output_paths = []
+        if 'channel_1' in args.FUNCTIONAL_CHANNELS:
+            # It possible to record i.e. anat scan with ONLY the structural
+            # marker. Hence, check here if the functional channel exists.
+            if args.brain_paths_ch1 is not None:
                 functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
-            if 'channel_2' in args.FUNCTIONAL_CHANNELS:
+            else:
+                print('Information: Channel 1 in func channel, but this channel does not exist')
+        if 'channel_2' in args.FUNCTIONAL_CHANNELS:
+            if args.brain_paths_ch2 is not None:
                 functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
-            if 'channel_3' in args.FUNCTIONAL_CHANNELS:
+            else:
+                print('Information: Channel 2 in func channel, but this channel does not exist')
+        if 'channel_3' in args.FUNCTIONAL_CHANNELS:
+            if args.brain_paths_ch3 is not None:
                 functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
                 functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
-        else:
+            else:
+                print('Information: Channel 3 in func channel, but this channel does not exist: ')
+        #else:
+        # If no functional path has been found, length of list == 0 and set both to None
+        # to explictly state that no functional path has been defined
+        if len(functional_channel_paths) == 0:
             functional_channel_paths = None
             functional_channel_output_paths = None
+            print('No functional channel defined!')
+    else:
+        printlog('"structural_channel" NOT DEFINED!!! \n'
+                 'You must define the "structural_channel" in the "fly.json" file!')
+    """
+    # With the 'STRUCTURAL_CHANNEL' we are now enforcing that the user must define
+    # the channel to be used as the structural channel (previously 'anatomy_channel')
     else:
         # However, sometimes, we don't have an anatomy channel (e.g.
         # when we only have GCAMP expressed and not anatomical marker)
@@ -558,6 +582,11 @@ if __name__ == '__main__':
             moving_output_path = pathlib.Path(args.moco_path_ch2)
         functional_channel_paths = None
         functional_channel_output_paths = None
+    """
+
+    print("moving_path" + repr(moving_path))
+    print("fixed_path" + repr(fixed_path))
+    print("moving_output_path" + repr(moving_output_path))
 
     param_output_path = args.par_output
 
@@ -568,10 +597,17 @@ if __name__ == '__main__':
     # It is important that it's different for each run.
     # We can just put in on scratch
     # This will only work if we have a folder called trc and data is in /data, of course
-    relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
+    #relevant_temp_save_path_part = moving_path.as_posix().split('trc/data/')[-1]
+    dataset_path = pathlib.Path(args.dataset_path)
+    relevant_temp_save_path_part = moving_path.as_posix().split(dataset_path.as_posix())[-1]
+    relevant_temp_save_path_part=relevant_temp_save_path_part[1::] # remove first forward slash
+    ###################
     # DON'T CHANGE THIS-if this points to your actual experimental folder, the shutil.rmtree
     # below will DELETE YOUR DATA. THIS MUST BE A TEMPORARY PATH
-    temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
+    #temp_save_path = pathlib.Path('/scratch/groups/trc', relevant_temp_save_path_part).parent
+    temp_save_path = pathlib.Path(args.moco_temp_folder, relevant_temp_save_path_part).parent
+    ##################
+
     if TESTING:
         temp_save_path = pathlib.Path('/Users/dtadres/Documents/test_folder')
         if temp_save_path.is_dir():

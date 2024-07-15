@@ -234,7 +234,7 @@ def load_timestamps(path_to_metadata):
     # with h5py.File(os.path.join(directory, 'timestamps.h5'), 'w') as hf:
     #    hf.create_dataset("timestamps", data=timestamps)
 
-    print("Success.")
+    print("Success loading timestamps.")
     return timestamps
 
 def load_fda_meanbrain():

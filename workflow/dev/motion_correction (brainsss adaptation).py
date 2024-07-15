@@ -44,7 +44,7 @@ def motion_correction(
 
     logfile = utils.create_logfile(fly_directory, function_name="motion_correction")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "motion_correction")
+    #utils.print_function_start(logfile, "motion_correction")
 
     print("dataset_path" + repr(dataset_path))
 

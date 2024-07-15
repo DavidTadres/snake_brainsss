@@ -19,15 +19,17 @@ import subprocess
 import traceback
 import natsort
 import pathlib
+# For logfile
+WIDTH = 120 # can go into a config file as well.
 
-# only imports on linux, which is fine since only needed for sherlock
 try:
+    # only imports on linux
     import fcntl
+    FCNTL_EXISTS = True
 except ImportError:
-    pass
-
-
-
+    # import windows analog to being able to lock a file!
+    FCNTL_EXISTS = False
+    import threading
 
 def convert_list_of_string_to_posix_path(list_of_strings):
     """
@@ -107,7 +109,7 @@ def get_new_fly_number(
     return new_fly_number
 
 
-def write_error(logfile, error_stack, width):
+def write_error(logfile, error_stack, width=WIDTH):
     with open(logfile, "a+") as file:
         file.write(f"\n{'     ERROR     ':!^{width}}")
         file.write("\nTraceback (most recent call last): " + str(error_stack) + "\n\n")
@@ -148,7 +150,6 @@ def create_logfile(fly_folder, function_name):
     logfile = (
         str(fly_folder) + "/logs/" + function_name + "_" + fly_folder.name + ".txt"
     )
-
     # Not sure what this does exactly, from Bella's code
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     # Pipe all errors to the logfile
@@ -157,8 +158,8 @@ def create_logfile(fly_folder, function_name):
     sys.stdout = LoggerRedirect(logfile)
     # Problem: Snakemake runs twice. Seems to be a bug: https://github.com/snakemake/snakemake/issues/2350
     # Only print title and fly if logfile doesn't yet exist
-    width = 120  # can go into a config file as well.
-    print_function_start(logfile, width, function_name)
+    #width = 120  # can go into a config file as well.
+    print_function_start(logfile, function_name)
     return logfile
 
 
@@ -206,13 +207,43 @@ class Printlog:
     def __init__(self, logfile):
         self.logfile = logfile
 
-    def print_to_log(self, message):
-        with open(self.logfile, "a+") as f:
-            fcntl.flock(f, fcntl.LOCK_EX)
-            f.write(message)
-            f.write("\n")
-            fcntl.flock(f, fcntl.LOCK_UN)
+        if not FCNTL_EXISTS:
+            self.lock = threading.Lock()
 
+    def write_to_win_file(self, message):
+        """
+        Small re-write of the commented parts below for readability (and
+        less def function and class calls!
+        To be tested!
+        """
+        with self.lock:
+            with open(self.logfile, "a+") as file:
+                file.write(message)
+                file.write('\n')
+
+    def print_to_log(self, message):
+        # Linux/Mac
+        if FCNTL_EXISTS:
+
+            with open(self.logfile, "a+") as f:
+                fcntl.flock(f, fcntl.LOCK_EX)
+                f.write(message)
+                f.write("\n")
+                fcntl.flock(f, fcntl.LOCK_UN)
+        # Windows
+        else:
+            # The commented stuff works!
+            #lock = threading.Lock()
+            #def write_to_file():
+            #    with lock:
+            #        with open(self.logfile, "a+") as file:
+            #            file.write(message)
+            #            file.write("\n")
+
+            #write_to_file()
+            #print(message)
+            #print('\n')
+            self.write_to_win_file(message)
 
 def sbatch(
     jobname,
@@ -242,10 +273,10 @@ def sbatch(
     else:
         node_cmd = ""
 
-    width = 120
+    #width = 120
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     script_name = os.path.basename(os.path.normpath(script))
-    print_big_header(logfile, script_name, width)
+    print_big_header(logfile, script_name, WIDTH)
 
     if global_resources:
         sbatch_command = "sbatch -J {} -o ./com/%j.out -e {} -t {}:00:00 --nice={} {}--open-mode=append --cpus-per-task={} --begin={} --wrap='{}' {}".format(
@@ -258,7 +289,7 @@ def sbatch(
     sbatch_response = subprocess.getoutput(sbatch_command)
 
     if not silence_print:
-        printlog(f"{sbatch_response}{jobname:.>{width-28}}")
+        printlog(f"{sbatch_response}{jobname:.>{WIDTH-28}}")
     job_id = sbatch_response.split(" ")[-1].strip()
     return job_id
 
@@ -299,12 +330,12 @@ def get_job_status(job_id, logfile, should_print=False):
             percent_mem = memory_used / (core_memory * num_cores) * 100
             percent_mem = f"{percent_mem:0.1f}"
 
-            width = 120
-            pretty = "+" + "-" * (width - 2) + "+"
+            #width = 120
+            pretty = "+" + "-" * (WIDTH - 2) + "+"
             sep = " | "
             printlog(
                 f"{pretty}\n"
-                f"{'| SLURM | '+jobname+sep+job_id+sep+status+sep+duration+sep+str(num_cores)+' cores'+sep+memory_to_print+' (' + percent_mem + '%)':{width-1}}|\n"
+                f"{'| SLURM | '+jobname+sep+job_id+sep+status+sep+duration+sep+str(num_cores)+' cores'+sep+memory_to_print+' (' + percent_mem + '%)':{WIDTH-1}}|\n"
                 f"{pretty}"
             )
         else:
@@ -349,7 +380,7 @@ def print_progress_table(
     # printlog("{}, {}".format(total_vol_sum, complete_vol_sum))
     fraction_complete = complete_vol_sum / total_vol_sum
     num_columns = len(fly_print)
-    column_width = int((120 - 20) / num_columns)
+    column_width = int((WIDTH - 20) / num_columns)
     if column_width < 9:
         column_width = 9
 
@@ -573,9 +604,15 @@ def load_timestamps(path_to_metadata):
     tree = ET.parse(path_to_metadata)
     root = tree.getroot()
     timestamps = []
+    # In case of an aborted scan, 'frames' would return the
+    # wrong number of z-slices. Keep track of initial z-slices
+    # with this variable
+    initial_frames = None
 
     sequences = root.findall("Sequence")
     for sequence in sequences:
+        if initial_frames is None:
+            initial_frames = sequence.findall("Frame")
         frames = sequence.findall("Frame")
         for frame in frames:
             # filename = frame.findall('File')[0].get('filename')
@@ -584,7 +621,22 @@ def load_timestamps(path_to_metadata):
     timestamps = np.multiply(timestamps, 1000)
 
     if len(sequences) > 1:
-        timestamps = np.reshape(timestamps, (len(sequences), len(frames)))
+        try:
+            timestamps = np.reshape(timestamps, (len(sequences), len(frames)))
+        except ValueError:
+            print('This might be an aborted scan because the timestamps can be assigned')
+            print('Attempting to create partial timestamps (slower)')
+            temp = np.zeros((len(sequences), len(initial_frames)))
+            temp.fill(np.nan)
+            counter = 0
+            for seq in range(len(sequences)):
+                for fr in range(len(initial_frames)):
+                    try:
+                        temp[seq,fr] = timestamps[counter]
+                        counter +=1
+                    except IndexError:
+                        break
+            timestamps = temp
     else:
         timestamps = np.reshape(timestamps, (len(frames), len(sequences)))
 
@@ -592,11 +644,11 @@ def load_timestamps(path_to_metadata):
     # with h5py.File(os.path.join(directory, 'timestamps.h5'), 'w') as hf:
     #    hf.create_dataset("timestamps", data=timestamps)
 
-    print("Success.")
+    print("Success loading timestamps.")
     return timestamps
 
 
-def print_big_header(logfile, message, width):
+def print_big_header(logfile, message, width=WIDTH):
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     message_and_space = "   " + message.upper() + "   "
     printlog("\n")
@@ -606,23 +658,29 @@ def print_big_header(logfile, message, width):
     print_datetime(logfile, width)
 
 
-def print_title(logfile, width, fly_id=False):
+def print_title(logfile, width=WIDTH, fly_id=False):
+    """
+    Currently not being used
+    """
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
-    title = pyfiglet.figlet_format("snake-Brainsss", font="doom")
+    title = pyfiglet.figlet_format("snake-brainsss", font="doom")
     title_shifted = ("\n").join([" " * 35 + line for line in title.split("\n")][:-2])
     printlog("\n")
     printlog(title_shifted)
     # print_datetime(logfile, width)
 
 
-def print_datetime(logfile, width):
+def print_datetime(logfile, width=WIDTH):
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
     printlog(f"{day_now+' | '+time_now:^{width}}")
 
 
-def print_footer(logfile, width):
+def print_footer(logfile, width=WIDTH):
+    """
+    Currently not being used
+    """
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     sleep(3)  # to allow any final printing
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
@@ -631,7 +689,10 @@ def print_footer(logfile, width):
     printlog(f"{day_now+' | '+time_now:^{width}}")
 
 
-def print_function_done(logfile, width, function_name):
+def print_function_done(logfile, function_name, width=WIDTH, ):
+    """
+    Currently not in use
+    """
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
@@ -641,13 +702,13 @@ def print_function_done(logfile, width, function_name):
     )
 
 
-def print_function_start(logfile, width, function_name):
+def print_function_start(logfile, function_name):
     printlog = getattr(Printlog(logfile=logfile), "print_to_log")
     day_now = datetime.datetime.now().strftime("%B %d, %Y")
     time_now = datetime.datetime.now().strftime("%I:%M:%S %p")
     day_time = str(day_now) + " | " + str(time_now)
     printlog(
-        f"\n{'   ' + str(function_name) + ' called at:  ' + str(day_time) + '   ':=^{width}}"
+        f"\n{'   ' + str(function_name) + ' called at:  ' + str(day_time) + '   ':=^{WIDTH}}"
     )
 
 

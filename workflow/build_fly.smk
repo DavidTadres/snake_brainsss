@@ -46,7 +46,17 @@ current_user = config['user'] # this is whatever is entered when calling snakema
 # yield 'jcsimon' here
 settings = utils.load_user_settings(current_user)
 dataset_path = pathlib.Path(settings['dataset_path'])
-fictrac_folder = pathlib.Path(settings['fictrac_path'])
+# fictrac_path is no longer necessary if one used 'autotransferred_stimpack'
+# data! Code below will either set the variable to None if not defined, or
+#
+# fictrac_folder = pathlib.Path(settings['fictrac_path'])
+fictrac_folder_path = settings.get('fictrac_path', None)
+if fictrac_folder_path is not None:
+    fictrac_folder_path = pathlib.Path(fictrac_folder_path)
+# .get here is cool because if the entry doesn't exist, it'll just return False
+autotransferred_stimpack = bool(settings.get('autotransferred_stimpack',False))
+print("autotransferred_stimpack" + repr(autotransferred_stimpack))
+
 
 all_imports_paths = []
 all_fly_dataset_paths = []
@@ -128,7 +138,9 @@ rule fly_builder_rule:
                 runtime='10m' # should generally be sufficient
 
     run:
-        build_fly.fly_builder(fictrac_folder=fictrac_folder,
+        build_fly.fly_builder(
+            autotransferred_stimpack=autotransferred_stimpack,
+            fictrac_folder_path=fictrac_folder_path,
             import_dirs= all_imports_paths,
             dataset_dirs = all_fly_dataset_paths
                                                  )

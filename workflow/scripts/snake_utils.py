@@ -4,17 +4,19 @@ import nibabel as nib
 import pathlib
 
 
-def ch_exists_func(channel, ANATOMY_CHANNEL, FUNCTIONAL_CHANNELS):
+
+def ch_exists(channel, CHANNELS):
     """
-    Check if a given channel exists in global variables ANATOMY_CHANNEL and FUNCTIONAL_CHANNELS
+    Check if a given channel exists in global variables STRUCTURAL_CHANNEL and FUNCTIONAL_CHANNELS
     :param channel:
     :return:
     """
-    if 'channel_' + str(channel) in ANATOMY_CHANNEL or 'channel_' + str(channel) in FUNCTIONAL_CHANNELS:
+    if 'channel_' + str(channel) in CHANNELS:
         ch_exists = True
     else:
         ch_exists = False
     return(ch_exists)
+
 
 def mem_mb_times_threads(wildcards, threads):
     """
@@ -169,10 +171,10 @@ def mb_for_moco_input(wildcards, input):
         brain_dims = brain_proxy.header.get_data_shape()
     # If channel_1 doesn't exist, try 2. All channels should have the same
     # dimension, so checking one is sufficient.
-    elif input.brains_path_ch2 !=[]:
+    elif input.brain_paths_ch2 !=[]:
         brain_proxy = nib.load(input.brain_paths_ch2)
         brain_dims = brain_proxy.header.get_data_shape()
-    elif input.brains_path_ch2 !=[]:
+    elif input.brain_paths_ch3 !=[]:
         brain_proxy = nib.load(input.brain_paths_ch2)
         brain_dims = brain_proxy.header.get_data_shape()
     # This is the size of the brain volume at one 'timepoint', meaning

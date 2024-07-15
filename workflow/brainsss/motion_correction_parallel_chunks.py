@@ -351,7 +351,7 @@ if __name__ == '__main__':
     fly_directory = pathlib.Path(args.fly_directory)
     logfile = utils.create_logfile(fly_directory, function_name="motion_correction_parallel")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
-    utils.print_function_start(logfile, WIDTH, "motion_correction_parallel")
+    #utils.print_function_start(logfile, "motion_correction_parallel")
 
     ####################################
     ### Identify the anatomy channel ###
