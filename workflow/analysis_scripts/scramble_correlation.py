@@ -130,11 +130,21 @@ def calculate_scrambled_correlation(fly_log_folder,
             )  # Make a copy, but since there's no time dimension it's quite small
             normfictrac_shuffled = np.linalg.norm(fictrac_shuffled_mean_m)
 
-            # Calculate correlation
-            scrambled_corr_brain[:, :, z] = np.dot(
-                brain_mean_m / normbrain[:, :, None], fictrac_shuffled_mean_m / normfictrac_shuffled
-            )
+            try:
+                # Calculate correlation
+                scrambled_corr_brain[:, :, z] = np.dot(
+                    brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac_shuffled
+                )
+            except ValueError:
+                print('Likely aborted scan.')
+                print('Attempting to run correlation')
+                # Remove the last timepoint
+                fictrac_mean_m = fictrac_mean_m[0:fictrac_mean_m.shape[0]-1]
+                # Calculate correlation
 
+                scrambled_corr_brain[:, :, z] = np.dot(
+                    brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac_shuffled
+                )
         # Prepare Nifti file for saving
         aff = np.eye(4)
         object_to_save = nib.Nifti1Image(scrambled_corr_brain, aff)
