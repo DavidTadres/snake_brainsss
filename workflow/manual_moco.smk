@@ -24,6 +24,8 @@ moco_temp_folder = str(settings.get('moco_temp_folder', "/scratch/groups/trc"))
 main_channel = config['main_channel']
 mirror_channel = config['mirror_channel']
 
+print('main channel: ' + repr(main_channel))
+
 # Define path to imports to find fly.json!
 #fly_folder_to_process_oak = pathlib.Path(dataset_path,fly_folder_to_process)
 fly_folder_to_process_oak = pathlib.Path(os.getcwd())
