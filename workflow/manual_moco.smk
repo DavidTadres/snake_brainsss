@@ -21,6 +21,7 @@ current_user = config['user'] # this is whatever is entered when calling snakema
 # snakemake --profile profiles/simple_slurm -s snaketest.smk --config user=jcsimon would
 # yield 'jcsimon' here
 settings = utils.load_user_settings(current_user)
+dataset_path = pathlib.Path(settings['dataset_path'])
 
 # On sherlock this is usually python3 but on a personal computer can be python
 shell_python_command = str(settings.get('shell_python_command', "python3"))
