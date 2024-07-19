@@ -72,7 +72,7 @@ rule all:
     resources: mem_mb=1000 # should be sufficient
     input:
         expand(str(fly_folder_to_process_oak)
-               + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch}_mean_func.nii",
+               + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch}_mean.nii",
             meanbr_imaging_paths_func=list_of_paths_func,
             meanbr_ch=all_channels),
 
@@ -102,9 +102,9 @@ rule make_mean_brain_rule:
         mem_mb=snake_utils.mem_mb_less_times_input,  #snake_utils.mem_mb_times_input #mem_mb=snake_utils.mem_mb_more_times_input
         runtime='10m' # should be enough
     input:
-            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch_func}.nii"
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch}.nii"
     output:
-            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch_func}_mean.nii"
+            str(fly_folder_to_process_oak) + "/{meanbr_imaging_paths_func}/imaging/channel_{meanbr_ch}_mean.nii"
     run:
         try:
             preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
