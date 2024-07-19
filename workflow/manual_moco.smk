@@ -54,13 +54,13 @@ mirror_channel = config['mirror_channel']
 
 # Make sanity check for correct input:
 if 'channel_1' in main_channel or 'channel_2' in main_channel or 'channel_3' in main_channel:
-    all_channels=[main_channel]
+    all_channels=[main_channel.split('channel_')[-1]]
 if 'channel_1' in mirror_channel and 'channel_1' not in main_channel:
-    all_channels.append('channel_1')
+    all_channels.append('1')
 if 'channel_2' in mirror_channel and 'channel_2' not in main_channel:
-    all_channels.append('channel_2')
+    all_channels.append('2')
 if 'channel_3' in mirror_channel and 'channel_3' not in main_channel:
-    all_channels.append('channel_3')
+    all_channels.append('3')
 
 
 # First n frames to average over when computing mean/fixed brain | Default None
