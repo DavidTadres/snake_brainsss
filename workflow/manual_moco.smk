@@ -112,6 +112,14 @@ rule all:
                + "/{moco_imaging_paths_func}/moco/channel_3_moco_manual.nii" if CH3_EXISTS else [],
                moco_imaging_paths_func=list_of_paths_func),
 
+        ###
+        # Meanbrain of moco brain
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{moco_meanbr_imaging_paths_func}/moco/channel_{meanbr_moco_ch_func}_moco_mean_manual.nii",
+               moco_meanbr_imaging_paths_func=list_of_paths_func,
+               meanbr_moco_ch_func=all_channels),
+
 rule make_mean_brain_rule:
     """
     Here it should be possible to parallelize quite easily as each input file creates
@@ -225,3 +233,26 @@ rule motion_correction_parallel_processing_rule_func:
                                                        "--moco_path_ch3 {output.moco_path_ch3} "
                                                        "--par_output {output.par_output} "
                                                        "--moco_temp_folder {moco_temp_folder} "
+
+rule moco_mean_brain_rule_func:
+    """
+    """
+    threads: snake_utils.threads_per_memory
+    resources:
+        mem_mb=snake_utils.mem_mb_times_input,
+        runtime='10m'# should be enough
+    input:
+        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths_func}/moco/channel_{meanbr_moco_ch_func}_moco_manual.nii"
+    output:
+        str(fly_folder_to_process_oak) + "/{moco_meanbr_imaging_paths_func}/moco/channel_{meanbr_moco_ch_func}_moco_mean_manual.nii"
+    run:
+        try:
+            preprocessing.make_mean_brain(fly_directory=fly_folder_to_process_oak,
+                                            meanbrain_n_frames=meanbrain_n_frames,
+                                            path_to_read=input,
+                                            path_to_save=output,
+                                            rule_name='moco_mean_brain_rule',)
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_make_moco_mean_brain')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack)
