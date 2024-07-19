@@ -199,9 +199,9 @@ rule motion_correction_parallel_processing_rule_func:
         brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/imaging/channel_2.nii" if CH2_EXISTS else [],
         brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/imaging/channel_3.nii" if CH3_EXISTS else [],
 
-        mean_brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/imaging/channel_1_mean_func.nii" if CH1_EXISTS else [],
-        mean_brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/imaging/channel_2_mean_func.nii" if CH2_EXISTS else [],
-        mean_brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/imaging/channel_3_mean_func.nii" if CH3_EXISTS else []
+        mean_brain_paths_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/imaging/channel_1_mean_manual.nii" if CH1_EXISTS else [],
+        mean_brain_paths_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/imaging/channel_2_mean_manual.nii" if CH2_EXISTS else [],
+        mean_brain_paths_ch3=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/imaging/channel_3_mean_manual.nii" if CH3_EXISTS else []
     output:
         moco_path_ch1=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/moco/channel_1_moco_manual.nii" if CH1_EXISTS else [],
         moco_path_ch2=str(fly_folder_to_process_oak) + "/{moco_imaging_paths_func}/moco/channel_2_moco_manual.nii" if CH2_EXISTS else [],
