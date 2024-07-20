@@ -136,6 +136,14 @@ def calc_sac_trig_activity(fictrac_path, brain_path, metadata_path, savepath):
     metadata_path = utils.convert_list_of_string_to_posix_path(metadata_path)
     savepath = utils.convert_list_of_string_to_posix_path(savepath)
 
+
+    print("fictrac_path: " + repr(fictrac_path))
+    print("brain_path: " + repr(brain_path))
+    print("metadata_path: " + repr(metadata_path))
+    print("savepath: " + repr(savepath))
+
+    print('fictrac_path[0]' + repr(fictrac_path[0]))
+
     # Find Saccades
     turns = find_saccades(fictrac_path[0])
 
