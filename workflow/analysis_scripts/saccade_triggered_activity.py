@@ -138,10 +138,10 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
     #####
-    fictrac_path = utils.convert_list_of_string_to_posix_path(fictrac_path)
-    brain_path = utils.convert_list_of_string_to_posix_path(brain_path)
-    metadata_path = utils.convert_list_of_string_to_posix_path(metadata_path)
-    savepath = utils.convert_list_of_string_to_posix_path(savepath)
+    #fictrac_path = utils.convert_list_of_string_to_posix_path(fictrac_path)
+    #brain_path = utils.convert_list_of_string_to_posix_path(brain_path)
+    #metadata_path = utils.convert_list_of_string_to_posix_path(metadata_path)
+    #savepath = utils.convert_list_of_string_to_posix_path(savepath)
 
 
     printlog("fictrac_path: " + repr(fictrac_path))
