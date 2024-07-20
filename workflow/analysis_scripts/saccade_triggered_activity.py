@@ -137,15 +137,15 @@ def calc_sac_trig_activity(fictrac_path, brain_path, metadata_path, savepath):
     savepath = utils.convert_list_of_string_to_posix_path(savepath)
 
     # Find Saccades
-    turns = find_saccades(fictrac_path)
+    turns = find_saccades(fictrac_path[0])
 
     # Extract neural timestamps
-    neural_timestamps = utils.load_timestamps(metadata_path)
+    neural_timestamps = utils.load_timestamps(metadata_path[0])
     # Load brain data
-    brain_data = nib.load(brain_path)
+    brain_data = nib.load(brain_path[0])
     brain_data = np.array(brain_data.dataobj)
 
-    side_to_analyze = str(savepath).str('_sac_trig_act.nii')[0][-1]
+    side_to_analyze = str(savepath[0]).str('_sac_trig_act.nii')[0][-1]
     print("side_to_analyze: " + repr(side_to_analyze))
 
     brain_activity_left_turns = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
