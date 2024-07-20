@@ -94,6 +94,7 @@ rule sac_trig_activity:
     run:
         try:
             saccade_triggered_activity.calc_sac_trig_activity(
+                fly_folder_to_process_oak = fly_folder_to_process_oak,
                 fictrac_path = input.fictrac_path,
                 brain_path = input.brain_path,
                 metadata_path = input.metadata_path,

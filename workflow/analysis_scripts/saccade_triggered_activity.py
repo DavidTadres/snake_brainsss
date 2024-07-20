@@ -57,13 +57,17 @@ def find_saccades(fictrac_path):
     return (peaks)
 
 
-def extract_saccade_triggered_neural_activity(imaging_data,
+def extract_saccade_triggered_neural_activity(fly_folder_to_process_oak,
+                                              imaging_data,
                                               neural_timestamps,
                                               turns,
                                               turn_side='L'):
     """
 
     """
+    logfile = utils.create_logfile(fly_folder_to_process_oak, function_name="scramble_correlation")
+    printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
+
     time_before_saccade = 0.5  # seconds
     time_after_saccade = 0.5  # seconds
 
