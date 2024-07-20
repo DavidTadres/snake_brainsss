@@ -72,7 +72,7 @@ rule sac_trig_activity:
         brain_path = str(fly_folder_to_process_oak) + "/{saccade_imaging_paths}/imaging/channel_{func_ch}.nii",
         metadata_path=str(fly_folder_to_process_oak) + "/{saccade_imaging_paths}/imaging/recording_metadata.xml"
     output:
-        savepath = str(fly_folder_to_process_oak) + "/{saccade_imaging_paths}/sac_trig_activity/channel_{func_ch}_{turn_side}_sac_trig_act.nii
+        savepath = str(fly_folder_to_process_oak) + "/{saccade_imaging_paths}/sac_trig_activity/channel_{func_ch}_{turn_side}_sac_trig_act.nii"
     run:
         try:
             saccade_triggered_activity.calc_sac_trig_activity(
