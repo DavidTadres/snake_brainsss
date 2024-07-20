@@ -57,16 +57,13 @@ def find_saccades(fictrac_path):
     return (peaks)
 
 
-def extract_saccade_triggered_neural_activity(fly_folder_to_process_oak,
-                                              imaging_data,
+def extract_saccade_triggered_neural_activity(imaging_data,
                                               neural_timestamps,
                                               turns,
                                               turn_side='L'):
     """
 
     """
-    logfile = utils.create_logfile(fly_folder_to_process_oak, function_name="scramble_correlation")
-    printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
 
     time_before_saccade = 0.5  # seconds
     time_after_saccade = 0.5  # seconds
@@ -127,10 +124,16 @@ def extract_saccade_triggered_neural_activity(fly_folder_to_process_oak,
     return (brain_activity_turns)
 
 # Run the actual code:
-def calc_sac_trig_activity(fictrac_path, brain_path, metadata_path, savepath):
+def calc_sac_trig_activity(fly_folder_to_process_oak,
+                           fictrac_path,
+                           brain_path,
+                           metadata_path,
+                           savepath):
     """
 
     """
+    logfile = utils.create_logfile(fly_folder_to_process_oak, function_name="scramble_correlation")
+    printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
 
     #####
     # CONVERT PATHS TO PATHLIB.PATH OBJECTS
@@ -141,12 +144,12 @@ def calc_sac_trig_activity(fictrac_path, brain_path, metadata_path, savepath):
     savepath = utils.convert_list_of_string_to_posix_path(savepath)
 
 
-    print("fictrac_path: " + repr(fictrac_path))
-    print("brain_path: " + repr(brain_path))
-    print("metadata_path: " + repr(metadata_path))
-    print("savepath: " + repr(savepath))
+    printlog("fictrac_path: " + repr(fictrac_path))
+    printlog("brain_path: " + repr(brain_path))
+    printlog("metadata_path: " + repr(metadata_path))
+    printlog("savepath: " + repr(savepath))
 
-    print('fictrac_path[0]' + repr(fictrac_path[0]))
+    printlog('fictrac_path[0]' + repr(fictrac_path[0]))
 
     # Find Saccades
     turns = find_saccades(fictrac_path[0])
@@ -158,7 +161,7 @@ def calc_sac_trig_activity(fictrac_path, brain_path, metadata_path, savepath):
     brain_data = np.array(brain_data.dataobj)
 
     side_to_analyze = str(savepath[0]).str('_sac_trig_act.nii')[0][-1]
-    print("side_to_analyze: " + repr(side_to_analyze))
+    printlog("side_to_analyze: " + repr(side_to_analyze))
 
     brain_activity_left_turns = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
     # Calculate mean of the extracted neural activity:
