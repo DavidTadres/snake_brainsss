@@ -149,15 +149,14 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     printlog("metadata_path: " + repr(metadata_path))
     printlog("savepath: " + repr(savepath))
 
-    printlog('fictrac_path[0]' + repr(fictrac_path[0]))
 
     # Find Saccades
-    turns = find_saccades(fictrac_path[0])
+    turns = find_saccades(fictrac_path)
 
     # Extract neural timestamps
-    neural_timestamps = utils.load_timestamps(metadata_path[0])
+    neural_timestamps = utils.load_timestamps(metadata_path)
     # Load brain data
-    brain_data = nib.load(brain_path[0])
+    brain_data = nib.load(brain_path)
     brain_data = np.array(brain_data.dataobj)
 
     side_to_analyze = str(savepath[0]).str('_sac_trig_act.nii')[0][-1]
