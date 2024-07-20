@@ -69,7 +69,7 @@ def extract_saccade_triggered_neural_activity(imaging_data,
     time_after_saccade = 0.5  # seconds
 
     # But 3 full stacks should be enough
-    max_number_of_stacks_per_saccade = 3
+    max_number_of_stacks_per_saccade = 4
 
     # Get brain size
     x_dim = imaging_data.shape[0]
@@ -108,11 +108,12 @@ def extract_saccade_triggered_neural_activity(imaging_data,
         t_volume_counter_saccade_data = 0
 
         print("brain_activity_turns.shape: " + repr(brain_activity_turns.shape))
+        print('will collect ' + repr(flat_last_index_to_find - flat_first_index_to_find) + ' z-slices')
 
         for i in range(flat_last_index_to_find - flat_first_index_to_find):
             # Grab the imaging data
 
-            print("t_volume_counter_saccade_data: " + repr(t_volume_counter_saccade_data))
+            #print("t_volume_counter_saccade_data: " + repr(t_volume_counter_saccade_data))
 
             brain_activity_turns[:, :, z_slice_counter_img_data, t_volume_counter_saccade_data, turn_counter] = \
                 imaging_data[:, :, z_slice_counter_img_data, t_volume_counter_img_data]
