@@ -132,7 +132,7 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     """
 
     """
-    logfile = utils.create_logfile(fly_folder_to_process_oak, function_name="scramble_correlation")
+    logfile = utils.create_logfile(fly_folder_to_process_oak, function_name="saccade_triggered_activity")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
 
     #####
