@@ -14,6 +14,7 @@ parent_path = str(pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent.
 sys.path.insert(0, parent_path)
 # This just imports '*.py' files from the folder 'brainsss'.
 from brainsss import utils
+from brainsss import fictrac_utils
 
 def find_saccades(fictrac_path):
     """
@@ -27,7 +28,7 @@ def find_saccades(fictrac_path):
     fictrac_fps = 100
     turn_thresh = 200
 
-    fictrac_raw = utils.load_fictrac(fictrac_path)
+    fictrac_raw = fictrac_utils.load_fictrac(fictrac_path)
     fictrac_smoothed = scipy.signal.savgol_filter(np.asarray(fictrac_raw[behavior]), 25, 3)
     fictrac_smoothed = fictrac_smoothed * 180 / np.pi * fictrac_fps  # now in deg/sec
     fictrac_timestamps = np.arange(0, fictrac_smoothed.shape[0] / fictrac_fps,
