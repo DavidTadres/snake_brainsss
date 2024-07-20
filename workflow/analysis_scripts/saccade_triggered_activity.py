@@ -159,7 +159,7 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     brain_data = nib.load(brain_path)
     brain_data = np.array(brain_data.dataobj)
 
-    side_to_analyze = str(savepath[0]).str('_sac_trig_act.nii')[0][-1]
+    side_to_analyze = str(savepath).str('_sac_trig_act.nii')[0][-1]
     printlog("side_to_analyze: " + repr(side_to_analyze))
 
     brain_activity_left_turns = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
