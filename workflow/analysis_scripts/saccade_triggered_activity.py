@@ -107,8 +107,13 @@ def extract_saccade_triggered_neural_activity(imaging_data,
 
         t_volume_counter_saccade_data = 0
 
+        print("brain_activity_turns.shape: " + repr(brain_activity_turns.shape))
+
         for i in range(flat_last_index_to_find - flat_first_index_to_find):
             # Grab the imaging data
+
+            print("t_volume_counter_saccade_data: " + repr(t_volume_counter_saccade_data))
+
             brain_activity_turns[:, :, z_slice_counter_img_data, t_volume_counter_saccade_data, turn_counter] = \
                 imaging_data[:, :, z_slice_counter_img_data, t_volume_counter_img_data]
 
