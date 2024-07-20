@@ -77,7 +77,7 @@ def extract_saccade_triggered_neural_activity(imaging_data,
     z_dim = imaging_data.shape[2]
 
     brain_activity_turns = np.zeros((x_dim, y_dim, z_dim, max_number_of_stacks_per_saccade, len(turns[turn_side])),
-                                    dtype=np.float32sac)
+                                    dtype=np.float32)
     brain_activity_turns.fill(np.nan)
     # Need to flatten the neural timestamps array as searchsorted only works on 1D array
     flat_neural_timestamps = neural_timestamps.flatten()
@@ -150,6 +150,9 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     printlog("savepath: " + repr(savepath))
 
 
+    side_to_analyze = str(savepath).split('_sac_trig_act.nii')[0][-1]
+    printlog("side_to_analyze: " + repr(side_to_analyze))
+
     # Find Saccades
     turns = find_saccades(fictrac_path)
 
@@ -158,9 +161,6 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     # Load brain data
     brain_data = nib.load(brain_path)
     brain_data = np.array(brain_data.dataobj)
-
-    side_to_analyze = str(savepath).split('_sac_trig_act.nii')[0][-1]
-    printlog("side_to_analyze: " + repr(side_to_analyze))
 
     brain_activity_left_turns = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
     # Calculate mean of the extracted neural activity:
