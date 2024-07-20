@@ -22,6 +22,15 @@ with open(pathlib.Path(fly_folder_to_process_oak, 'fly.json'), 'r') as file:
 # creates while running the experiment. Same as genotype.
 FUNCTIONAL_CHANNELS = fly_json['functional_channel']
 
+CH1_FUNC = False
+CH2_FUNC = False
+CH3_FUNC = False
+if 'channel_1' in FUNCTIONAL_CHANNELS:
+    CH1_FUNC=True
+if 'channel_2' in FUNCTIONAL_CHANNELS:
+    CH2_FUNC=True
+if 'channel_3' in FUNCTIONAL_CHANNELS:
+    CH3_FUNC = True
 #####
 # Snakemake runs acyclical, meaning it checks which input depends on the output of which rule
 # in order to parallelize a given snakefile.
@@ -56,10 +65,19 @@ rule all:
     resources: mem_mb=1000 # should be sufficient
     input:
         expand(str(fly_folder_to_process_oak)
-        + "/{saccade_imaging_paths}/sac_trig_activity/channel_{func_ch}_{turn_side}_sac_trig_act.nii",
+        + "/{saccade_imaging_paths}/sac_trig_activity/channel_1_{turn_side}_sac_trig_act.nii" if CH1_FUNC else [],
         saccade_imaging_paths=list_of_paths_func,
-        func_ch=FUNCTIONAL_CHANNELS,
-        turn_side=['L', 'R'])
+        turn_side=['L', 'R']),
+
+        expand(str(fly_folder_to_process_oak)
+               + "/{saccade_imaging_paths}/sac_trig_activity/channel_2_{turn_side}_sac_trig_act.nii" if CH2_FUNC else [],
+               saccade_imaging_paths=list_of_paths_func,
+               turn_side=['L', 'R']),
+
+        expand(str(fly_folder_to_process_oak)
+               + "/{saccade_imaging_paths}/sac_trig_activity/channel_3_{turn_side}_sac_trig_act.nii" if CH3_FUNC else [],
+               saccade_imaging_paths=list_of_paths_func,
+               turn_side=['L', 'R'])
 
 
 rule sac_trig_activity:
