@@ -416,6 +416,9 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
             fictrac_paths=FICTRAC_PATHS),
+        expand(str(fly_folder_to_process_oak)
+               + "/{fictrac_paths}/fictrac_timestamp_QC.png",
+               fictrac_paths=FICTRAC_PATHS),
         # data in fly_dirs.json!
 
         ###
@@ -571,7 +574,10 @@ rule fictrac_qc_rule:
     input:
         str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_behavior_data.dat"
     output:
-        str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png"
+        str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
+        str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_timestamp_QC.png"
+
+
     run:
         try:
             preprocessing.fictrac_qc(fly_folder_to_process_oak,
