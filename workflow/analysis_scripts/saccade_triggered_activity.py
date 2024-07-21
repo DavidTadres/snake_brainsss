@@ -79,7 +79,7 @@ def extract_saccade_triggered_neural_activity(imaging_data,
 
     # How many stacks can we maximally collect in the total time?
     # Should be this: i.e. 1s/0.53s/V = 1.8V so.
-    max_number_of_stacks_per_saccade = int(np.ceil((time_before_saccade+time_after_saccade)/first_volume_time))
+    max_number_of_stacks_per_saccade = int(1 + np.ceil((time_before_saccade+time_after_saccade)/first_volume_time))
     print('first_volume_time: ' + repr(first_volume_time))
     print('max_number_of_stacks_per_saccade: ' + repr(max_number_of_stacks_per_saccade))
 
@@ -162,7 +162,6 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     printlog("metadata_path: " + repr(metadata_path))
     printlog("savepath: " + repr(savepath))
 
-
     side_to_analyze = str(savepath).split('_sac_trig_act.nii')[0][-1]
     printlog("side_to_analyze: " + repr(side_to_analyze))
 
@@ -175,11 +174,11 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     brain_data = nib.load(brain_path)
     brain_data = np.array(brain_data.dataobj)
 
-    brain_activity_left_turns = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
+    saccade_triggered_brain_activity = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
     # Calculate mean of the extracted neural activity:
-    median_brain_activity_left_turns = np.nanmean(brain_activity_left_turns,axis=(3,4))
+    median_saccade_triggered_brain_activity = np.nanmean(saccade_triggered_brain_activity,axis=(3,4))
 
     aff = np.eye(4)
-    object_to_save = nib.Nifti1Image(median_brain_activity_left_turns, aff)
+    object_to_save = nib.Nifti1Image(median_saccade_triggered_brain_activity, aff)
     # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
     object_to_save.to_filename(savepath)
