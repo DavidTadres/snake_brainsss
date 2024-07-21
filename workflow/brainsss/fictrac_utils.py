@@ -28,7 +28,8 @@ def load_fictrac(fictrac_file_path):
 
         # Name columns
         df = df.rename(
-            index=str,
+            # Unclear why Bella decided to explicitly define this as str.
+            # index=str,
             columns={
                 0: "frameCounter",
                 1: "dRotCamX",
@@ -256,6 +257,35 @@ def make_2d_hist(fictrac, fictrac_path, full_id,  fixed_crop=True):
         ax.set_xlim(-10, 15)
         name = "fictrac_2d_hist_fixed.png"
     # Savename
+    fname = pathlib.Path(pathlib.Path(fictrac_path).parent, name)
+    print(fname)
+    fig.savefig(fname, dpi=100, bbox_inches="tight")
+
+def fictrac_timestamps_QC(fictrac,
+                          fictrac_path,
+                          full_id
+                          ):
+    # New QC: Make sure timestamps make sense for the duration of the experiment!
+    # Difference between timestamps - this is QC for how variable the timestamps are
+    timestamp_delta = (fictrac['timeStamp'].diff()) / 1e9
+    timestamps_from_start = (fictrac['timeStamp'] - fictrac['timeStamp'].iloc[0]) / 1e9
+    # fictrac continues to run even if no frames are coming in. However, timestamps don't
+    # change at that point! Hence, as soon as delta between timestamps is 0, we are in a regime
+    # where fictrac isn't working on new frames anymore!
+    relevant_indeces = np.where(timestamp_delta > 0)[0]
+
+    # Plot delta timestamps - this should help us to quickly spot skipped frames!
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(timestamps_from_start.iloc[relevant_indeces], timestamp_delta[relevant_indeces])
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(ymin - ymin * .001, ymax + ymax * .001)
+    ax.set_ylabel('Delta between timestamps [s]')
+    ax.set_xlabel('Time [s]')
+    ax.set_title("Behavior 2D hist {}".format(full_id))
+    fig.tight_layout()
+
+    name = "fictrac_timestamp_QC.png"
     fname = pathlib.Path(pathlib.Path(fictrac_path).parent, name)
     print(fname)
     fig.savefig(fname, dpi=100, bbox_inches="tight")

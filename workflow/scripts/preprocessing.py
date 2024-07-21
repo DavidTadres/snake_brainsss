@@ -1356,7 +1356,8 @@ def fictrac_qc(fly_directory, fictrac_file_path, fictrac_fps):
     fictrac_utils.make_velocity_trace(
         fictrac, fictrac_file_path, full_id, time_for_plotting,
     )
-
+    fictrac_utils.fictrac_timestamps_QC(
+        fictrac_raw,fictrac_file_path, full_id)
     ###
     # LOG SUCCESS
     ###
