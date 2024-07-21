@@ -176,8 +176,9 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     # Load brain data
     brain_data = nib.load(brain_path)
     brain_data = np.array(brain_data.dataobj)
-
+    print('before saccade_triggered_brain_activity')
     saccade_triggered_brain_activity = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
+    print('after saccade_triggered_brain_activity')
     # Calculate mean of the extracted neural activity:
     median_saccade_triggered_brain_activity = np.nanmean(saccade_triggered_brain_activity,axis=(3,4))
 
