@@ -96,43 +96,46 @@ def extract_saccade_triggered_neural_activity(imaging_data,
         time_after_current_saccade = current_turn + time_after_saccade
         time_after_current_saccade *= 1000  # turn to ms which is what neural_timestamps is in
 
-        # Find first index to use in flat array
-        flat_first_index_to_find = np.searchsorted(flat_neural_timestamps, time_before_current_saccade)
-        # Then in 2D array
-        first_index_in_neural_timstamps = np.where(
-            neural_timestamps == flat_neural_timestamps[flat_first_index_to_find])
+        try:
+            # Find first index to use in flat array
+            flat_first_index_to_find = np.searchsorted(flat_neural_timestamps, time_before_current_saccade)
+            # Then in 2D array
+            first_index_in_neural_timstamps = np.where(
+                neural_timestamps == flat_neural_timestamps[flat_first_index_to_find])
 
-        flat_last_index_to_find = np.searchsorted(flat_neural_timestamps, time_after_current_saccade)
-        # Then in 2D array
-        last_index_in_neural_timstamps = np.where(neural_timestamps == flat_neural_timestamps[flat_last_index_to_find])
+            flat_last_index_to_find = np.searchsorted(flat_neural_timestamps, time_after_current_saccade)
+            # Then in 2D array
+            last_index_in_neural_timstamps = np.where(neural_timestamps == flat_neural_timestamps[flat_last_index_to_find])
 
-        # Define index for for loop start!
-        # This is the first index of the imaging_data z_slice for the current saccade
-        z_slice_counter_img_data = first_index_in_neural_timstamps[1][0]
-        # This is the first index of the imaging_data t_slice for the current sacced
-        t_volume_counter_img_data = first_index_in_neural_timstamps[0][0]
+            # Define index for for loop start!
+            # This is the first index of the imaging_data z_slice for the current saccade
+            z_slice_counter_img_data = first_index_in_neural_timstamps[1][0]
+            # This is the first index of the imaging_data t_slice for the current sacced
+            t_volume_counter_img_data = first_index_in_neural_timstamps[0][0]
 
-        t_volume_counter_saccade_data = 0
+            t_volume_counter_saccade_data = 0
 
-        print("brain_activity_turns.shape: " + repr(brain_activity_turns.shape))
-        print('will collect ' + repr(flat_last_index_to_find - flat_first_index_to_find) + ' z-slices')
+            print("brain_activity_turns.shape: " + repr(brain_activity_turns.shape))
+            print('will collect ' + repr(flat_last_index_to_find - flat_first_index_to_find) + ' z-slices')
 
-        for i in range(flat_last_index_to_find - flat_first_index_to_find):
-            # Grab the imaging data
+            for i in range(flat_last_index_to_find - flat_first_index_to_find):
+                # Grab the imaging data
 
-            #print("t_volume_counter_saccade_data: " + repr(t_volume_counter_saccade_data))
+                #print("t_volume_counter_saccade_data: " + repr(t_volume_counter_saccade_data))
 
-            brain_activity_turns[:, :, z_slice_counter_img_data, t_volume_counter_saccade_data, turn_counter] = \
-                imaging_data[:, :, z_slice_counter_img_data, t_volume_counter_img_data]
+                brain_activity_turns[:, :, z_slice_counter_img_data, t_volume_counter_saccade_data, turn_counter] = \
+                    imaging_data[:, :, z_slice_counter_img_data, t_volume_counter_img_data]
 
-            # Go to next z_slice
-            z_slice_counter_img_data += 1
+                # Go to next z_slice
+                z_slice_counter_img_data += 1
 
-            # If z_slice done, set back to zero and go to next t_volume_counter
-            if z_slice_counter_img_data == z_dim:
-                z_slice_counter_img_data = 0
-                t_volume_counter_img_data += 1
-                t_volume_counter_saccade_data += 1
+                # If z_slice done, set back to zero and go to next t_volume_counter
+                if z_slice_counter_img_data == z_dim:
+                    z_slice_counter_img_data = 0
+                    t_volume_counter_img_data += 1
+                    t_volume_counter_saccade_data += 1
+        except IndexError as e:
+            print(e)
 
     return (brain_activity_turns)
 
