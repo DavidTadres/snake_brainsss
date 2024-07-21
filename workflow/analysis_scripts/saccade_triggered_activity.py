@@ -65,16 +65,21 @@ def extract_saccade_triggered_neural_activity(imaging_data,
 
     """
 
+    # Whhile it seems that Bruker is not super consistent with timestamps, the first
+    # volume should be the slowest. Hence, this should be conservative and always work.
+    first_volume_time = (neural_timestamps[1,0] - neural_timestamps[0,0])/1e3
+
     time_before_saccade = 0.5  # seconds
     time_after_saccade = 0.5  # seconds
-
-    # But 3 full stacks should be enough
-    max_number_of_stacks_per_saccade = 4
 
     # Get brain size
     x_dim = imaging_data.shape[0]
     y_dim = imaging_data.shape[1]
     z_dim = imaging_data.shape[2]
+
+    # How many stacks can we maximally collect in the total time?
+    # Should be this: i.e. 1s/0.53s/V = 1.8V so.
+    max_number_of_stacks_per_saccade = int(np.ceil(first_volume_time/(time_before_saccade+time_after_saccade)))
 
     brain_activity_turns = np.zeros((x_dim, y_dim, z_dim, max_number_of_stacks_per_saccade, len(turns[turn_side])),
                                     dtype=np.float32)
