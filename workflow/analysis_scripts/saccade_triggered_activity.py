@@ -80,6 +80,8 @@ def extract_saccade_triggered_neural_activity(imaging_data,
     # How many stacks can we maximally collect in the total time?
     # Should be this: i.e. 1s/0.53s/V = 1.8V so.
     max_number_of_stacks_per_saccade = int(np.ceil((time_before_saccade+time_after_saccade))/first_volume_time)
+    print('first_volume_time: ' + repr(first_volume_time))
+    print('max_number_of_stacks_per_saccade: ' + repr(max_number_of_stacks_per_saccade))
 
     brain_activity_turns = np.zeros((x_dim, y_dim, z_dim, max_number_of_stacks_per_saccade, len(turns[turn_side])),
                                     dtype=np.float32)
