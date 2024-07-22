@@ -83,6 +83,7 @@ rule all:
 rule sac_trig_activity:
     threads: snake_utils.threads_per_memory_more
     resources:
+        mem_mb = snake_utils.mem_mb_much_more_times_input,
         runtime='60m'
     input:
         fictrac_path = str(fly_folder_to_process_oak) + "/{saccade_imaging_paths}/stimpack/loco/fictrac_behavior_data.dat",
