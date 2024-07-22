@@ -121,7 +121,9 @@ def threads_per_memory_much_more(wildcards, input):
     :return:
     """
     calculated_memory = max(input.size_mb * 5.5, 10000)
+    print('calculated_memory: ' + repr(calculated_memory))
     cores = int(np.ceil(calculated_memory/8000))
+    print('cores: ' + repr(cores))
     return(cores)
 
 def threads_8x_more_input(wildcards, input):
