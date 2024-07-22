@@ -8,6 +8,7 @@ import numpy as np
 import nibabel as nib
 import pathlib
 import scipy
+import time
 
 import sys
 parent_path = str(pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent.absolute())
@@ -181,12 +182,14 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     print('after saccade_triggered_brain_activity')
 
     mean_input_brain = np.nanmean(brain_data, axis=-1)
-    brain_data = None
+    del(brain_data) # release memory
+    time.sleep(1)
 
     # Calculate mean of the extracted neural activity:
     print('saccade_triggered_brain_activity.shape ' + repr(saccade_triggered_brain_activity.shape))
     mean_saccade_triggered_brain_activity = np.nanmean(saccade_triggered_brain_activity,axis=(3,4),dtype=np.float32)
-    saccade_triggered_brain_activity = None # to clear memory
+    del(saccade_triggered_brain_activity) # to clear memory
+    time.sleep(1)
 
     diff = mean_saccade_triggered_brain_activity - mean_input_brain
 
