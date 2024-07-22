@@ -179,11 +179,14 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     print('before saccade_triggered_brain_activity')
     saccade_triggered_brain_activity = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
     print('after saccade_triggered_brain_activity')
+
+    mean_input_brain = np.nanmean(brain_data, axis=-1)
+    brain_data = None
+
     # Calculate mean of the extracted neural activity:
     print('saccade_triggered_brain_activity.shape ' + repr(saccade_triggered_brain_activity.shape))
     mean_saccade_triggered_brain_activity = np.nanmean(saccade_triggered_brain_activity,axis=(3,4),dtype=np.float32)
-
-    mean_input_brain = np.nanmean(brain_data, axis=-1)
+    saccade_triggered_brain_activity = None # to clear memory
 
     diff = mean_saccade_triggered_brain_activity - mean_input_brain
 
