@@ -180,11 +180,11 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     saccade_triggered_brain_activity = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
     print('after saccade_triggered_brain_activity')
     # Calculate mean of the extracted neural activity:
-    median_saccade_triggered_brain_activity = np.nanmean(saccade_triggered_brain_activity,axis=(3,4))
+    mean_saccade_triggered_brain_activity = np.nanmean(saccade_triggered_brain_activity,axis=(3,4),dtype=np.float32)
 
     aff = np.eye(4)
     print('about to save')
-    object_to_save = nib.Nifti1Image(median_saccade_triggered_brain_activity, aff)
+    object_to_save = nib.Nifti1Image(mean_saccade_triggered_brain_activity, aff)
     # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
     pathlib.Path(savepath).parent.mkdir(parents=True, exist_ok=True)
     object_to_save.to_filename(savepath)
