@@ -115,8 +115,8 @@ def extract_saccade_triggered_neural_activity(imaging_data,
 
             t_volume_counter_saccade_data = 0
 
-            print("brain_activity_turns.shape: " + repr(brain_activity_turns.shape))
-            print('will collect ' + repr(flat_last_index_to_find - flat_first_index_to_find) + ' z-slices')
+            #print("brain_activity_turns.shape: " + repr(brain_activity_turns.shape))
+            #print('will collect ' + repr(flat_last_index_to_find - flat_first_index_to_find) + ' z-slices')
 
             for i in range(flat_last_index_to_find - flat_first_index_to_find):
                 # Grab the imaging data
@@ -180,11 +180,16 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     saccade_triggered_brain_activity = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
     print('after saccade_triggered_brain_activity')
     # Calculate mean of the extracted neural activity:
+    print('saccade_triggered_brain_activity.shape ' + repr(saccade_triggered_brain_activity.shape))
     mean_saccade_triggered_brain_activity = np.nanmean(saccade_triggered_brain_activity,axis=(3,4),dtype=np.float32)
+
+    mean_input_brain = np.nanmean(brain_data, axis=-1)
+
+    diff = mean_saccade_triggered_brain_activity - mean_input_brain
 
     aff = np.eye(4)
     print('about to save')
-    object_to_save = nib.Nifti1Image(mean_saccade_triggered_brain_activity, aff)
+    object_to_save = nib.Nifti1Image(diff, aff)
     # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
     pathlib.Path(savepath).parent.mkdir(parents=True, exist_ok=True)
     object_to_save.to_filename(savepath)
