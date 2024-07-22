@@ -66,7 +66,7 @@ def extract_saccade_triggered_neural_activity(imaging_data,
 
     """
 
-    # Whhile it seems that Bruker is not super consistent with timestamps, the first
+    # While it seems that Bruker is not super consistent with timestamps, the first
     # volume should be the slowest. Hence, this should be conservative and always work.
     first_volume_time = (neural_timestamps[1,0] - neural_timestamps[0,0])/1e3
 
@@ -89,6 +89,10 @@ def extract_saccade_triggered_neural_activity(imaging_data,
     brain_activity_turns.fill(np.nan)
     # Need to flatten the neural timestamps array as searchsorted only works on 1D array
     flat_neural_timestamps = neural_timestamps.flatten()
+
+    brain_activity_no_turns = imaging_data.copy() # Expensive...lots of RAM!
+
+
     for turn_counter, current_turn in enumerate(turns[turn_side]):
         print('turn counter: ' + repr(turn_counter))
         time_before_current_saccade = current_turn - time_before_saccade
@@ -121,12 +125,12 @@ def extract_saccade_triggered_neural_activity(imaging_data,
 
             for i in range(flat_last_index_to_find - flat_first_index_to_find):
                 # Grab the imaging data
-
-                #print("t_volume_counter_saccade_data: " + repr(t_volume_counter_saccade_data))
-
                 brain_activity_turns[:, :, z_slice_counter_img_data, t_volume_counter_saccade_data, turn_counter] = \
                     imaging_data[:, :, z_slice_counter_img_data, t_volume_counter_img_data]
 
+                # Set the data that we are copying out to 'nan' in the copied array in order to
+                # get array with neural data W/O saccades!
+                brain_activity_no_turns[:, :, z_slice_counter_img_data, t_volume_counter_img_data] = np.nan
                 # Go to next z_slice
                 z_slice_counter_img_data += 1
 
@@ -138,7 +142,8 @@ def extract_saccade_triggered_neural_activity(imaging_data,
         except IndexError as e:
             print(e)
 
-    return (brain_activity_turns)
+
+    return(brain_activity_turns, brain_activity_no_turns)
 
 # Run the actual code:
 def calc_sac_trig_activity(fly_folder_to_process_oak,
@@ -177,26 +182,27 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     # Load brain data
     brain_data = nib.load(brain_path)
     brain_data = np.array(brain_data.dataobj)
-    print('before saccade_triggered_brain_activity')
-    saccade_triggered_brain_activity = extract_saccade_triggered_neural_activity(brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
-    print('after saccade_triggered_brain_activity')
+    saccade_triggered_brain_activity, brain_activity_no_saccade = extract_saccade_triggered_neural_activity(
+        brain_data, neural_timestamps,turns, turn_side = side_to_analyze)
 
-    mean_input_brain = np.nanmean(brain_data, axis=-1)
-    del(brain_data) # release memory
+    # Release memory
+    del(brain_data)
+    time.sleep(1)
+
+    mean_brain_activity_no_saccade = np.nanmean(brain_activity_no_saccade, axis=-1, dtype=np.float32)
+    del(mean_brain_activity_no_saccade) # release memory
     time.sleep(1)
 
     # Calculate mean of the extracted neural activity:
-    print('saccade_triggered_brain_activity.shape ' + repr(saccade_triggered_brain_activity.shape))
     mean_saccade_triggered_brain_activity = np.nanmean(saccade_triggered_brain_activity,axis=(3,4),dtype=np.float32)
     del(saccade_triggered_brain_activity) # to clear memory
     time.sleep(1)
 
-    diff = mean_saccade_triggered_brain_activity - mean_input_brain
+    diff = mean_saccade_triggered_brain_activity - mean_brain_activity_no_saccade
 
     aff = np.eye(4)
-    print('about to save')
     object_to_save = nib.Nifti1Image(diff, aff)
     # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
     pathlib.Path(savepath).parent.mkdir(parents=True, exist_ok=True)
     object_to_save.to_filename(savepath)
-    print('Successfully saved file')
+    print('Successfully saved ' + savepath.name)
