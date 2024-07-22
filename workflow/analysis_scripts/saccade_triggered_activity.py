@@ -130,7 +130,12 @@ def extract_saccade_triggered_neural_activity(imaging_data,
 
                 # Set the data that we are copying out to 'nan' in the copied array in order to
                 # get array with neural data W/O saccades!
-                brain_activity_no_turns[:, :, z_slice_counter_img_data, t_volume_counter_img_data] = np.nan
+                try:
+                    brain_activity_no_turns[:, :, z_slice_counter_img_data, t_volume_counter_img_data] = np.nan
+                except Exception as e:
+                    print('z_slice_counter_img_data: ' + repr(z_slice_counter_img_data))
+                    print('t_volume_counter_img_data: ' + repr(t_volume_counter_img_data))
+                    print(e)
                 # Go to next z_slice
                 z_slice_counter_img_data += 1
 
