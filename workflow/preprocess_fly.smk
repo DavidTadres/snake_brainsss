@@ -187,7 +187,9 @@ if len(FICTRAC_PATHS) > 0:
     # Then put the parts back together
     fictrac_rel_path_correlation = pathlib.Path(*rel_path_parts)
 else:
-    fictrac_rel_path_correlation = ''
+    # If there's no fictrac data, set this to something so it exists.
+    # It won't be called.
+    fictrac_rel_path_correlation = None
 
 # For wildcards we need lists of elements of the path for each folder.
 list_of_paths = []
