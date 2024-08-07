@@ -177,7 +177,7 @@ def mb_for_moco_input(wildcards, input):
         brain_proxy = nib.load(input.brain_paths_ch2)
         brain_dims = brain_proxy.header.get_data_shape()
     elif input.brain_paths_ch3 !=[]:
-        brain_proxy = nib.load(input.brain_paths_ch2)
+        brain_proxy = nib.load(input.brain_paths_ch3)
         brain_dims = brain_proxy.header.get_data_shape()
     # This is the size of the brain volume at one 'timepoint', meaning
     # for x,y and z but NOT t(ime)
