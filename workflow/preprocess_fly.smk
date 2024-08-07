@@ -244,7 +244,7 @@ if CH2_EXISTS_FUNC or CH2_EXISTS_STRUCT:
     list_of_channels_for_func_moco.append("2")
 if CH3_EXISTS_FUNC or CH3_EXISTS_STRUCT:
     CH3_EXISTS_FUNC_MOCO = True
-    list_of_channels_for_func_moco.append("2")
+    list_of_channels_for_func_moco.append("3")
 
 list_of_channels_struct = []
 if CH1_EXISTS_STRUCT:
