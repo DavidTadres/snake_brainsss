@@ -858,6 +858,7 @@ def create_imaging_json(xml_source_file, printlog):
                     #index = statevalue.findall("IndexedValue")
                     for wavelength in level2:
                         laser_wavelength = int(float(wavelength.get('value')))
+                        # This is true for Bruker Sr
                         source_data["Spectra-Physics laser wavelength"] = laser_wavelength
 
                 if level2.get('key') == "pmtGain":
