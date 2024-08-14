@@ -828,55 +828,120 @@ def create_imaging_json(xml_source_file, printlog):
     source_data["date"] = str(date)
     source_data["time"] = str(time)
 
-    # Get rest of data
-    tree = objectify.parse(xml_source_file)
-    source = tree.getroot()
-    statevalues = source.findall("PVStateShard")[0].findall("PVStateValue")
-    for statevalue in statevalues:
-        key = statevalue.get("key")
-        if key == "micronsPerPixel":
-            indices = statevalue.findall("IndexedValue")
-            for index in indices:
-                axis = index.get("index")
-                if axis == "XAxis":
-                    source_data["x_voxel_size"] = float(index.get("value"))
-                elif axis == "YAxis":
-                    source_data["y_voxel_size"] = float(index.get("value"))
-                elif axis == "ZAxis":
-                    source_data["z_voxel_size"] = float(index.get("value"))
-        if key == "laserPower":
-            # This is not great - this is just the first pockels value
-            indices = statevalue.findall("IndexedValue")
-            laser_power_overall = int(float(indices[0].get("value")))
-            source_data["laser_power"] = laser_power_overall
-        if key == "laserWavelength":
-            index = statevalue.findall("IndexedValue")
-            laser_wavelength = int(float(index[0].get("value")))
-            source_data["laser_wavelength"] = laser_wavelength
-        if key == "pmtGain":
-            indices = statevalue.findall("IndexedValue")
-            for index in indices:
-                index_num = index.get("index")
-                # I changed this from 'red' and 'green' to the actual description used by the
-                # microscope itself! Since we now have 2 Brukers, this seems safer!
-                if index_num == "0":
-                    source_data[index.get("description")] = int(float(index.get("value")))
-                if index_num == "1":
-                    source_data[index.get("description")] = int(float(index.get("value")))
-                if index_num == "2":
-                    source_data[index.get("description")] = int(float(index.get("value")))
-        if key == "pixelsPerLine":
-            source_data["x_dim"] = int(float(statevalue.get("value")))
-        if key == "linesPerFrame":
-            source_data["y_dim"] = int(float(statevalue.get("value")))
-    sequence = source.findall("Sequence")[0]
-    last_frame = sequence.findall("Frame")[-1]
-    source_data["z_dim"] = int(last_frame.get("index"))
+    # Remove dependency on 'objectify' library!
+    tree = ET.parse(xml_source_file)
+    root = tree.getroot()
+
+    for level1 in root:
+        if 'PVStateShard' in level1.tag:
+            for level2 in level1:
+                if level2.get('key') == 'micronsPerPixel':
+                    #indices = statevalue.findall("IndexedValue")
+                    for index in level2:
+                        axis = index.get("index")
+                        if axis == "XAxis":
+                            source_data["x_voxel_size"] = float(index.get("value"))
+                        elif axis == "YAxis":
+                            source_data["y_voxel_size"] = float(index.get("value"))
+                        elif axis == "ZAxis":
+                            source_data["z_voxel_size"] = float(index.get("value"))
+
+                if level2.get('key') == 'laserPower':
+                    # Grab laser power using function
+                    laser_names, laser_powers = xml_laser_functions(level2)
+                    # Place laser power into dict with appropriate name
+                    for current_laser_name, current_laser_power in zip(laser_names, laser_powers):
+                        source_data[current_laser_name] = current_laser_power
+
+
+                if level2.get('key')  == "laserWavelength":
+                    #index = statevalue.findall("IndexedValue")
+                    for wavelength in level2:
+                        laser_wavelength = int(float(wavelength.get('value')))
+                        source_data["Spectra-Physics Laser"] = laser_wavelength
+
+                if level2.get('key') == "pmtGain":
+                    for pmt in level2:
+                        # I changed this from 'red' and 'green' to the actual description used by the
+                        # microscope itself! Since we now have 2 Brukers, this seems safer!
+                        source_data[pmt.get("description")] = int(float(pmt.get("value")))
+                        source_data[pmt.get("description")] = int(float(pmt.get("value")))
+                        source_data[pmt.get("description")] = int(float(pmt.get("value")))
+
+                if level2.get('key') == "pixelsPerLine":
+                        source_data["x_dim"] = int(float(level2.get("value")))
+                if level2.get('key') == "linesPerFrame":
+                        source_data["y_dim"] = int(float(level2.get("value")))
+    for level1 in root: # Remove this later!
+        if ('Sequence' in level1.tag and
+                level1.get('cycle') == "1"): # Only run through one cycle!
+            '''
+            sequence = source.findall("Sequence")[0]
+            last_frame = sequence.findall("Frame")[-1]
+            source_data["z_dim"] = int(last_frame.get("index"))
+            '''
+
+            z_slices = []
+            for level2 in level1:
+                if level2.get('index') != None:
+                    z_slices.append(int(level2.get('index')))
+            source_data["z_dim"] = int(z_slices[-1])
+
+            """
+            # MISSING DATA IN XML??? Wrote Kevin
+            all_laser_power = []
+
+
+            for level2 in level1:
+                if level2.get('index') != None:
+                    z_slices.append(int(level2.get('index')))
+                    for level3 in level2:
+                        for level4 in level3:
+                            if level4.get('key') == 'laserPower':
+                                # Grab laser power using function
+                                laser_names, laser_powers = xml_laser_functions(level4)
+                                all_laser_power.append(laser_powers)
+            """
 
     # Save data
     # with open(os.path.join(os.path.split(xml_source_file)[0], 'scan.json'), 'w') as f:
     with open(pathlib.Path(xml_source_file.parent, "scan.json"), "w") as f:
         json.dump(source_data, f, indent=4)
+
+def xml_laser_functions(current_xml_level):
+    """
+    This is called twice, once for the scan.json
+    and once for creating a z-stack laser power table.
+    Using a function makes sure everything stays consistent.
+    """
+    laser_names = []
+    laser_powers = []
+
+    for current_laser in current_xml_level:
+        current_laser_power = int(float(current_laser.get("value")))
+        current_laser_name = str(current_laser.get("description"))
+
+        # This is specific to Bruker Sr and might break!!!
+        if current_laser_name == 'Pockels':
+            current_laser_name = 'Spectra-Physics Laser'
+            #source_data[current_laser_name] = current_laser_power
+            laser_names.append(current_laser_name)
+            laser_powers.append(current_laser_power)
+
+        elif current_laser_name == '1040':
+            current_laser_name = 'Fidelity Laser'
+            #source_data[current_laser_name] = current_laser_power
+            laser_names.append(current_laser_name)
+            laser_powers.append(current_laser_power)
+        # elif current_laser_name == '640':
+        # Ignore the 640 laser as it seems to only be used for uncaging
+        # not for imaging!
+
+        # Add elif for Jr or if Bruker config is changed!
+
+    return(laser_names, laser_powers)
+
+
 
 def get_datetime_from_xml(xml_file):
     ##print('Getting datetime from {}'.format(xml_file))
@@ -936,12 +1001,6 @@ def load_json(file):
     with open(file, "r") as f:
         data = json.load(f)
     return data
-
-
-def load_xml(file):
-    tree = objectify.parse(file)
-    root = tree.getroot()
-    return root
 
 def add_fly_to_csv(import_folder, fly_folder, current_import_imaging_folder,
                    current_date, current_time, printlog):
