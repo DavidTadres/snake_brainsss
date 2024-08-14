@@ -858,7 +858,7 @@ def create_imaging_json(xml_source_file, printlog):
                     #index = statevalue.findall("IndexedValue")
                     for wavelength in level2:
                         laser_wavelength = int(float(wavelength.get('value')))
-                        source_data["Spectra-Physics Laser"] = laser_wavelength
+                        source_data["Spectra-Physics laser wavelength"] = laser_wavelength
 
                 if level2.get('key') == "pmtGain":
                     for pmt in level2:
