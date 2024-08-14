@@ -528,26 +528,27 @@ if __name__ == '__main__':
         # if
         functional_channel_paths = []
         functional_channel_output_paths = []
-        if 'channel_1' in args.FUNCTIONAL_CHANNELS:
-            # It possible to record i.e. anat scan with ONLY the structural
-            # marker. Hence, check here if the functional channel exists.
-            if args.brain_paths_ch1 is not None:
-                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
-                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
-            else:
-                print('Information: Channel 1 in func channel, but this channel does not exist')
-        if 'channel_2' in args.FUNCTIONAL_CHANNELS:
-            if args.brain_paths_ch2 is not None:
-                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
-                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
-            else:
-                print('Information: Channel 2 in func channel, but this channel does not exist')
-        if 'channel_3' in args.FUNCTIONAL_CHANNELS:
-            if args.brain_paths_ch3 is not None:
-                functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
-                functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
-            else:
-                print('Information: Channel 3 in func channel, but this channel does not exist: ')
+        if args.FUNCTIONAL_CHANNELS is not None:
+            if 'channel_1' in args.FUNCTIONAL_CHANNELS:
+                # It possible to record i.e. anat scan with ONLY the structural
+                # marker. Hence, check here if the functional channel exists.
+                if args.brain_paths_ch1 is not None:
+                    functional_channel_paths.append(pathlib.Path(args.brain_paths_ch1))
+                    functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch1))
+                else:
+                    print('Information: Channel 1 in func channel, but this channel does not exist')
+            if 'channel_2' in args.FUNCTIONAL_CHANNELS:
+                if args.brain_paths_ch2 is not None:
+                    functional_channel_paths.append(pathlib.Path(args.brain_paths_ch2))
+                    functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch2))
+                else:
+                    print('Information: Channel 2 in func channel, but this channel does not exist')
+            if 'channel_3' in args.FUNCTIONAL_CHANNELS:
+                if args.brain_paths_ch3 is not None:
+                    functional_channel_paths.append(pathlib.Path(args.brain_paths_ch3))
+                    functional_channel_output_paths.append(pathlib.Path(args.moco_path_ch3))
+                else:
+                    print('Information: Channel 3 in func channel, but this channel does not exist: ')
         #else:
         # If no functional path has been found, length of list == 0 and set both to None
         # to explictly state that no functional path has been defined
