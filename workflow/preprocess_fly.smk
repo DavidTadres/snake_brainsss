@@ -499,7 +499,7 @@ rule all:
         expand(str(fly_folder_to_process_oak)
                + "/{moco_meanbr_imaging_paths_func}/moco/channel_{meanbr_moco_ch_func}_moco_mean_func.nii",
             moco_meanbr_imaging_paths_func=list_of_paths_func,
-            meanbr_moco_ch_func=list_of_channels_func),
+            meanbr_moco_ch_func=list_of_channels_for_func_moco),
         #
         expand(str(fly_folder_to_process_oak)
                + "/{moco_meanbr_imaging_paths_struct}/moco/channel_{meanbr_moco_ch_struct}_moco_mean_struct.nii",
