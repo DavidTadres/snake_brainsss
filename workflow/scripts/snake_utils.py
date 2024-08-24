@@ -273,6 +273,7 @@ def time_for_moco_input(wildcards, input):
     # https: // snakemake.readthedocs.io / en / stable / snakefiles / rules.html
     # If we want minutes we just add a 'm' after the number
     string_to_return = str(time_in_minutes) + "m"
+    print('requested moco runtime: ' + string_to_return)
     return(string_to_return)
 def OLDtime_for_moco_input(wildcards, input):
     """
