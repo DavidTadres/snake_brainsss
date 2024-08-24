@@ -237,7 +237,9 @@ def time_for_moco_input(wildcards, input):
     Returns time in minutes based on input. Use this with the multiprocessing motion
     correction code.
     We needs about 5 minutes for 1 Gb of for two channels. Double it to be on the safe
-    side for now
+    side for now.
+    24/8/24: We need about 40 mins for func and ~1:40 for anat for 1 channel!
+    Currently getting 180min for anat and 103min for func.
 
     :param wildcards: Snakemake requirement
     :param input: intput from snakefile. Needed to access filesize
@@ -261,7 +263,8 @@ def time_for_moco_input(wildcards, input):
         time_in_minutes = (input.size_mb / 1000) * 5 # /1000 to get Gb, then *minutes
     else:
         # only one channel is provided:
-        time_in_minutes = (input.size_mb / 1000) * 10  # /1000 to get Gb, then *minutes
+        #time_in_minutes = (input.size_mb / 1000) * 10  # /1000 to get Gb, then *minutes
+        time_in_minutes = (input.size_mb / 1000)  * 7 # 24/8/24
 
     # hours = int(np.floor(time_in_minutes / 60))
     # minutes = int(np.ceil(time_in_minutes % 60))
