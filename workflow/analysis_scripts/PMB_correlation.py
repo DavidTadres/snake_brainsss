@@ -51,7 +51,7 @@ def PMB_correlation(
     ### SETUP LOGGING ###
     #####################
 
-    logfile = utils.create_logfile(fly_log_folder, function_name="correlation")
+    logfile = utils.create_logfile(fly_log_folder, function_name="PMB_correlation")
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     # utils.print_function_start(logfile, "correlation")
 
