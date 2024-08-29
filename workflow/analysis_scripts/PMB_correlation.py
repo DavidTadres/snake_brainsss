@@ -57,50 +57,6 @@ def PMB_correlation(
 
     printlog('Will use ' + repr(moco_zscore_highpass_path) + ' for input.')
     printlog('Will save as ' + repr(save_path))
-    # Then extract the desired behavior. Since there's only one output per run, the list
-    # has length 1.
-    behavior = save_path[0].name.split("corr_")[-1].split("_PMB.nii")[0]
-    time_before_turn = int(save_path[0].name.split("PMB_")[-1].split('s_no_turn.nii')[0])
-
-    turn_indeces = analysis_functions.extract_turn_bouts(moco_zscore_highpass_path.parent,
-                                                         minimal_time_between_turns=0.5, turn_thresh=200)
-    cleaned_up_turns = {}
-    cleaned_up_turns['L']=analysis_functions.extract_isolated_turns(direction=turn_indeces['L'],
-                                                 other_direction=turn_indeces['R'],
-                                                 time_before_turn=time_before_turn)
-
-    cleaned_up_turns['R'] = analysis_functions.extract_isolated_turns(direction=turn_indeces['R'],
-                                                   other_direction=turn_indeces['L'],
-                                                   time_before_turn=time_before_turn)
-
-    # only take the time before and during turn for correlation...
-    #neural_timestamps = utils.load_timestamps(pathlib.Path(dataset_path, 'imaging\\recording_metadata.xml'))
-    neural_timestamps = utils.load_timestamps(metadata_path)
-    # search for relevant timestamps - treat volume as one timepoint (which is incorrect of course but might be ok here)
-    neural_timestamps_seconds = neural_timestamps/1000
-
-    indeces_to_take = []
-
-
-    indeces_to_take= analysis_functions.get_time_index_neural_data(cleaned_up_turns['R'],
-                                                                   neural_timestamps_seconds,
-                                                                   indeces_to_take,
-                                                                   time_before_turn)
-
-    indeces_to_take= analysis_functions.get_time_index_neural_data(cleaned_up_turns['L'],
-                                                                   neural_timestamps_seconds,
-                                                                   indeces_to_take,
-                                                                   time_before_turn)
-    # Sort index
-    indeces_to_take = np.array(sorted(indeces_to_take))
-    # Make sure each index only exists once
-    indeces_to_take = np.unique(indeces_to_take)
-
-    #neural_data = nib.load(pathlib.Path(dataset_path, 'channel_2_moco_zscore_highpass.nii'))
-    neural_data = nib.load(moco_zscore_highpass_path)
-
-    x_dim, y_dim, z_dim, t_dim = neural_data.shape
-    neural_data = np.asarray(neural_data.dataobj)
 
     #fictrac_raw = fictrac_utils.load_fictrac(pathlib.Path(dataset_path, 'stimpack\\loco\\fictrac_behavior_data.dat'))
     fictrac_raw = fictrac_utils.load_fictrac(fictrac_path)
@@ -111,92 +67,139 @@ def PMB_correlation(
     # all from the same experiment, so all will have the same 'recording_metadata.xml' data
     # neural_timestamps = utils.load_timestamps(pathlib.Path(dataset_path, 'imaging\\recording_metadata.xml'))
     neural_timestamps = utils.load_timestamps(metadata_path)
-    corr_brain = np.zeros((x_dim, y_dim, z_dim))
 
-    fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(
-        fictrac_raw, fictrac_fps, resolution, expt_len, behavior, timestamps=neural_timestamps
+
+    for current_moco_z_score_highpass_path, current_savepath in zip(moco_zscore_highpass_path, save_path):
+        # Then extract the desired behavior. Since there's only one output per run, the list
+        # has length 1.
+        behavior = current_savepath[0].name.split("corr_")[-1].split("_PMB.nii")[0]
+        time_before_turn = int(current_savepath[0].name.split("PMB_")[-1].split('s_no_turn.nii')[0])
+
+        turn_indeces = analysis_functions.extract_turn_bouts(moco_zscore_highpass_path.parent,
+                                                             minimal_time_between_turns=0.5, turn_thresh=200)
+        cleaned_up_turns = {}
+        cleaned_up_turns['L']=analysis_functions.extract_isolated_turns(direction=turn_indeces['L'],
+                                                     other_direction=turn_indeces['R'],
+                                                     time_before_turn=time_before_turn)
+
+        cleaned_up_turns['R'] = analysis_functions.extract_isolated_turns(direction=turn_indeces['R'],
+                                                       other_direction=turn_indeces['L'],
+                                                       time_before_turn=time_before_turn)
+
+        # only take the time before and during turn for correlation...
+        #neural_timestamps = utils.load_timestamps(pathlib.Path(dataset_path, 'imaging\\recording_metadata.xml'))
+        neural_timestamps = utils.load_timestamps(metadata_path)
+        # search for relevant timestamps - treat volume as one timepoint (which is incorrect of course but might be ok here)
+        neural_timestamps_seconds = neural_timestamps/1000
+
+        indeces_to_take = []
+
+
+        indeces_to_take= analysis_functions.get_time_index_neural_data(cleaned_up_turns['R'],
+                                                                       neural_timestamps_seconds,
+                                                                       indeces_to_take,
+                                                                       time_before_turn)
+
+        indeces_to_take= analysis_functions.get_time_index_neural_data(cleaned_up_turns['L'],
+                                                                       neural_timestamps_seconds,
+                                                                       indeces_to_take,
+                                                                       time_before_turn)
+        # Sort index
+        indeces_to_take = np.array(sorted(indeces_to_take))
+        # Make sure each index only exists once
+        indeces_to_take = np.unique(indeces_to_take)
+
+        # Grab fictrac
+        fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(
+            fictrac_raw, fictrac_fps, resolution, expt_len, behavior, timestamps=neural_timestamps
         )
-    # do correlation only with
-    for z in range(z_dim):
 
-        '''
-        ### interpolate fictrac to match the timestamps of this slice
-        print(F"{z}")
-        fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw,
-                                                                 fps,
-                                                                 resolution,
-                                                                 expt_len,
-                                                                 behavior,
-                                                                 timestamps=neural_timestamps,
-                                                                 z=z)
-    
-        for x in range(x_dim):
-            for y in range(y_dim):
-                # nan to num should be taken care of in zscore, but checking here for some already processed brains
-                #if np.any(np.isnan(brain[i, j, z, :])):
-                    #printlog(F'warning found nan at x = {i}; y = {j}; z = {z}')
-                #    corr_brain[i, j, z] = 0
-                if len(np.unique(neural_data[x, y, z, :])) == 1:
-                    #     if np.unique(brain[i,j,z,:]) != 0:
-                    print(F'warning found non-zero constant value at x = {x}; y = {y}; z = {z}')
-                    corr_brain[x, y, z] = 0
-                else:
-                    # idx_to_use can be used to select a subset of timepoints
-                    corr_brain[x, y, z] = scipy.stats.pearsonr(fictrac_interp[idx_to_use], neural_data[x, y, z, idx_to_use])[0]
-                    '''
+        #neural_data = nib.load(pathlib.Path(dataset_path, 'channel_2_moco_zscore_highpass.nii'))
+        neural_data = nib.load(current_moco_z_score_highpass_path)
+        x_dim, y_dim, z_dim, t_dim = neural_data.shape
+        neural_data = np.asarray(neural_data.dataobj)
+        corr_brain = np.zeros((x_dim, y_dim, z_dim))
+        # do correlation only with
+        for z in range(z_dim):
 
-        # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
-        # The formula is:
-        # r = (sum(x-m_x)*(y-m_y) / sqrt(sum((x-m_x)^2)*sum((y-m_y)^2)
-        brain_mean = neural_data[:, :, z, indeces_to_take].mean(axis=-1)  # , dtype=np.float64)
+            '''
+            ### interpolate fictrac to match the timestamps of this slice
+            print(F"{z}")
+            fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(fictrac_raw,
+                                                                     fps,
+                                                                     resolution,
+                                                                     expt_len,
+                                                                     behavior,
+                                                                     timestamps=neural_timestamps,
+                                                                     z=z)
+        
+            for x in range(x_dim):
+                for y in range(y_dim):
+                    # nan to num should be taken care of in zscore, but checking here for some already processed brains
+                    #if np.any(np.isnan(brain[i, j, z, :])):
+                        #printlog(F'warning found nan at x = {i}; y = {j}; z = {z}')
+                    #    corr_brain[i, j, z] = 0
+                    if len(np.unique(neural_data[x, y, z, :])) == 1:
+                        #     if np.unique(brain[i,j,z,:]) != 0:
+                        print(F'warning found non-zero constant value at x = {x}; y = {y}; z = {z}')
+                        corr_brain[x, y, z] = 0
+                    else:
+                        # idx_to_use can be used to select a subset of timepoints
+                        corr_brain[x, y, z] = scipy.stats.pearsonr(fictrac_interp[idx_to_use], neural_data[x, y, z, idx_to_use])[0]
+                        '''
 
-        # When I plot the data plt.plot(fictrac_interp) and plt.plot(fictrac_interp.astype(np.float32) I
-        # can't see a difference. Should be ok to do this as float.
-        # This is advantagous because we have to do the dot product with the brain. np.dot will
-        # default to higher precision leading to making a copy of brain data which costs a lot of memory
-        # Unfortunately fictrac_interp comes in [time, z] as opposed to brain that comes in [x,y,z,t]
-        fictrac_mean = fictrac_interp[indeces_to_take, z].mean(dtype=DTYPE)
+            # Vectorized correlation - see 'dev/pearson_correlation.py' for development and timing info
+            # The formula is:
+            # r = (sum(x-m_x)*(y-m_y) / sqrt(sum((x-m_x)^2)*sum((y-m_y)^2)
+            brain_mean = neural_data[:, :, z, indeces_to_take].mean(axis=-1)  # , dtype=np.float64)
 
-        # >> Typical values for z scored brain seem to be between -25 and + 25.
-        # It shouldn't be necessary to cast as float64. This then allows us
-        # to do in-place operation!
-        brain_mean_m = neural_data[:, :, z, indeces_to_take] - brain_mean[:, :, None]
+            # When I plot the data plt.plot(fictrac_interp) and plt.plot(fictrac_interp.astype(np.float32) I
+            # can't see a difference. Should be ok to do this as float.
+            # This is advantagous because we have to do the dot product with the brain. np.dot will
+            # default to higher precision leading to making a copy of brain data which costs a lot of memory
+            # Unfortunately fictrac_interp comes in [time, z] as opposed to brain that comes in [x,y,z,t]
+            fictrac_mean = fictrac_interp[indeces_to_take, z].mean(dtype=DTYPE)
 
-        # fictrac data is small, so working with float64 shouldn't cost much memory!
-        # Correction - if we cast as float64 and do dot product with brain, we'll copy the
-        # brain to float64 array, balloning the memory requirement
-        fictrac_mean_m = fictrac_interp[indeces_to_take, z].astype(DTYPE) - fictrac_mean
+            # >> Typical values for z scored brain seem to be between -25 and + 25.
+            # It shouldn't be necessary to cast as float64. This then allows us
+            # to do in-place operation!
+            brain_mean_m = neural_data[:, :, z, indeces_to_take] - brain_mean[:, :, None]
 
-        # Note from scipy pearson docs: This can overflow if brain_mean_m is, for example [-5e210, 5e210, 3e200, -3e200]
-        # I doubt we'll ever get close to numbers like this.
-        normbrain = np.linalg.norm(
-            brain_mean_m, axis=-1
-        )  # Make a copy, but since there's no time dimension it's quite small
-        normfictrac = np.linalg.norm(fictrac_mean_m)
+            # fictrac data is small, so working with float64 shouldn't cost much memory!
+            # Correction - if we cast as float64 and do dot product with brain, we'll copy the
+            # brain to float64 array, balloning the memory requirement
+            fictrac_mean_m = fictrac_interp[indeces_to_take, z].astype(DTYPE) - fictrac_mean
 
-        try:
-            # Calculate correlation
-            corr_brain[:, :, z] = np.dot(
-                brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
-            )
-        except ValueError:
-            print('Likely aborted scan.')
-            print('Attempting to run correlation')
-            # Remove the last timepoint
-            fictrac_mean_m = fictrac_mean_m[0:fictrac_mean_m.shape[0] - 1]
-            # Calculate correlation
+            # Note from scipy pearson docs: This can overflow if brain_mean_m is, for example [-5e210, 5e210, 3e200, -3e200]
+            # I doubt we'll ever get close to numbers like this.
+            normbrain = np.linalg.norm(
+                brain_mean_m, axis=-1
+            )  # Make a copy, but since there's no time dimension it's quite small
+            normfictrac = np.linalg.norm(fictrac_mean_m)
 
-            corr_brain[:, :, z] = np.dot(
-                brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
-            )
+            try:
+                # Calculate correlation
+                corr_brain[:, :, z] = np.dot(
+                    brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
+                )
+            except ValueError:
+                print('Likely aborted scan.')
+                print('Attempting to run correlation')
+                # Remove the last timepoint
+                fictrac_mean_m = fictrac_mean_m[0:fictrac_mean_m.shape[0] - 1]
+                # Calculate correlation
 
-    save_path.parent.mkdir(parents=True, exist_ok=True)
+                corr_brain[:, :, z] = np.dot(
+                    brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
+                )
 
-    # Prepare Nifti file for saving
-    aff = np.eye(4)
-    object_to_save = nib.Nifti1Image(corr_brain, aff)
-    # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
-    object_to_save.to_filename(save_path)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Prepare Nifti file for saving
+        aff = np.eye(4)
+        object_to_save = nib.Nifti1Image(corr_brain, aff)
+        # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
+        object_to_save.to_filename(save_path)
 
 '''       
 def PMB_correlation(
