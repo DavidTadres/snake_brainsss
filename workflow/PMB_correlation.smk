@@ -32,11 +32,13 @@ corr_behaviors = ['dRotLabZneg',
                   #,'dRotLabY'
                   ]
 fictrac_fps = 100 # TO BE CHANGED TO A DYNAMIC VERSION THAT READS ACTUAL FPS!!!
-TIME_BEFORE_TURN = [#1,
+TIME_BEFORE_TURN = [1,
                     #2,
-                    #3,
-                    4,
-                    5
+                    3,
+                    #4,
+                    5,
+                    7,
+                    10
                     ] # seconds
 
 directory = pathlib.Path(os.getcwd())
