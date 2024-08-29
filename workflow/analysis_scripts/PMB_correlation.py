@@ -63,11 +63,6 @@ def PMB_correlation(
 
     expt_len = fictrac_raw.shape[0] / fictrac_fps * 1000 # experiment length in ms
 
-    # We will have a list of functional channels here but
-    # all from the same experiment, so all will have the same 'recording_metadata.xml' data
-    # neural_timestamps = utils.load_timestamps(pathlib.Path(dataset_path, 'imaging\\recording_metadata.xml'))
-    neural_timestamps = utils.load_timestamps(metadata_path)
-
 
     for current_moco_z_score_highpass_path, current_savepath in zip(moco_zscore_highpass_path, save_path):
         # Then extract the desired behavior. Since there's only one output per run, the list
