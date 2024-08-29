@@ -122,7 +122,7 @@ def PMB_correlation(
         corr_brain = np.zeros((x_dim, y_dim, z_dim))
         # do correlation only with
         for z in range(z_dim):
-
+            print('current z-slice: ' + repr(z))
             '''
             ### interpolate fictrac to match the timestamps of this slice
             print(F"{z}")
@@ -194,13 +194,13 @@ def PMB_correlation(
                     brain_mean_m / normbrain[:, :, None], fictrac_mean_m / normfictrac
                 )
 
-        save_path.parent.mkdir(parents=True, exist_ok=True)
+        current_savepath.parent.mkdir(parents=True, exist_ok=True)
 
         # Prepare Nifti file for saving
         aff = np.eye(4)
         object_to_save = nib.Nifti1Image(corr_brain, aff)
         # nib.Nifti1Image(corr_brain, np.eye(4)).to_filename(save_file)
-        object_to_save.to_filename(save_path)
+        object_to_save.to_filename(current_savepath)
 
 '''       
 def PMB_correlation(

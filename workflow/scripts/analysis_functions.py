@@ -101,7 +101,7 @@ def extract_isolated_turns(direction, other_direction, time_before_turn=3):
                         # ignore these turns
                         interesting_turn = False
                 if interesting_turn:
-                    print('current turn: ' + repr(direction[counter]))
+                    #print('current turn: ' + repr(direction[counter]))
                     turns.append(direction[counter])
 
     return (np.array(turns))
