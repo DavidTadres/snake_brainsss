@@ -55,6 +55,12 @@ def PMB_correlation(
     printlog = getattr(utils.Printlog(logfile=logfile), "print_to_log")
     # utils.print_function_start(logfile, "correlation")
 
+    ##########
+    ### Convert list of (sometimes empty) strings to pathlib.Path objects
+    ##########
+    moco_zscore_highpass_path = utils.convert_list_of_string_to_posix_path(moco_zscore_highpass_path)
+    save_path = utils.convert_list_of_string_to_posix_path(save_path)
+
     printlog('Will use ' + repr(moco_zscore_highpass_path) + ' for input.')
     printlog('Will save as ' + repr(save_path))
 
