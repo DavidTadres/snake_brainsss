@@ -73,8 +73,8 @@ def PMB_correlation(
     for current_moco_z_score_highpass_path, current_savepath in zip(moco_zscore_highpass_path, save_path):
         # Then extract the desired behavior. Since there's only one output per run, the list
         # has length 1.
-        behavior = current_savepath[0].name.split("corr_")[-1].split("_PMB.nii")[0]
-        time_before_turn = int(current_savepath[0].name.split("PMB_")[-1].split('s_no_turn.nii')[0])
+        behavior = current_savepath.name.split("corr_")[-1].split("_PMB.nii")[0]
+        time_before_turn = int(current_savepath.name.split("PMB_")[-1].split('s_no_turn.nii')[0])
 
         turn_indeces = analysis_functions.extract_turn_bouts(moco_zscore_highpass_path.parent,
                                                              minimal_time_between_turns=0.5, turn_thresh=200)
