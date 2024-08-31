@@ -195,13 +195,13 @@ def calc_sac_trig_activity(fly_folder_to_process_oak,
     time.sleep(1)
 
     mean_brain_activity_no_saccade = np.nanmean(brain_activity_no_saccade, axis=-1, dtype=np.float32)
-    del(mean_brain_activity_no_saccade) # release memory
-    time.sleep(1)
+    #del(mean_brain_activity_no_saccade) # release memory
+    #time.sleep(1)
 
     # Calculate mean of the extracted neural activity:
     mean_saccade_triggered_brain_activity = np.nanmean(saccade_triggered_brain_activity,axis=(3,4),dtype=np.float32)
-    del(saccade_triggered_brain_activity) # to clear memory
-    time.sleep(1)
+    #del(saccade_triggered_brain_activity) # to clear memory
+    #time.sleep(1)
 
     diff = mean_saccade_triggered_brain_activity - mean_brain_activity_no_saccade
 
