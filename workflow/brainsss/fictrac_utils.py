@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 import pathlib
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.pyplot as plt
+from scipy import signal
 import matplotlib as mpl
 
 mpl.use(
@@ -72,7 +72,7 @@ def load_fictrac(fictrac_file_path):
         )
     return fictrac_data
 
-
+'''
 def interpolate_fictrac(
     fictrac, timestamps, fps, dur, behavior="speed", sigma=3, sign=None
 ):
@@ -139,11 +139,17 @@ def interpolate_fictrac(
     # Replace Nans with zeros (for later code)
     np.nan_to_num(fictrac_interp, copy=False)
 
-    return fictrac_interp
+    return fictrac_interp'''
 
 
 def smooth_and_interp_fictrac(
-    fictrac, fps, resolution, expt_len, behavior, timestamps=None, z=None
+        fictrac_data,
+        fictrac_fps,
+        expt_len,
+        behavior,
+        resolution=None,
+        neural_timestamps=None,
+        z_slice=None
 ):  # , smoothing=25, z=None):
     if behavior == "dRotLabZpos":
         behavior = "dRotLabZ"
@@ -155,26 +161,24 @@ def smooth_and_interp_fictrac(
         clip = None
 
     ### get orginal timestamps ###
-    camera_rate = 1 / fps * 1000  # camera frame rate in ms
-    x_original = np.arange(
-        0, expt_len, camera_rate
-    )  # same shape as fictrac (e.g. 20980)
+    #camera_rate = 1 / fictrac_fps * 1000  # camera frame rate in ms
+    #original_fictrac_timestamps = np.arange(
+    #    0, expt_len, camera_rate
+    #)  # same shape as fictrac (e.g. 20980)
+    # Better way to get timestamps:
+    # MIGHT ONLY WORK WITH REAL-TIME FICTRAC TRACKING!!!!!
+    # Comes in nanoseconds. Want milliseconds!
+    original_fictrac_timestamps=(fictrac_data['timeStamp'] - fictrac_data['timeStamp'].iloc[0])/1e6
 
     ### smooth ###
-    # >>> DANGEROUS - the filter length of the following function is not normalized by the fps
-    # e.g. Bella recorded at 100 fps and if we do fictrac_smooth with window length 25 we get
-    # filtered data over 10ms * 25 = 250ms.
-    # If I record at 50fps each frame is only 20ms. We still filter over 25 points so now we
-    # filter over 25*20 = 500ms
-    # <<<<
     # I remove the smoothing input from this function and make it dependent on the fps
     smoothing = int(
-        np.ceil(0.25 / (1 / fps))
+        np.ceil(0.25 / (1 / fictrac_fps))
     )  # This will always yield 250 ms (or the next closest
     # possible number, e.g. if we have 50fps we would get a smotthing window of 12.5 which we can't
     # index of course. We always round up so with 50 fps we'd get 13 = 260 ms
     fictrac_smoothed = scipy.signal.savgol_filter(
-        np.asarray(fictrac[behavior]), smoothing, 3
+        np.asarray(fictrac_data[behavior]), smoothing, 3
     )
     # Identical shape in output as input, e.g. 20980
 
@@ -190,20 +194,21 @@ def smooth_and_interp_fictrac(
 
     ### interpolate ###
     # This function probably just returns everything from an input array
+    # Here we do use the original fictrac timestamps and assign them to the
     fictrac_interp_temp = interp1d(
-        x_original, fictrac_smoothed, bounds_error=False
+        original_fictrac_timestamps, fictrac_smoothed, bounds_error=False
     )  # yields a function
-    xnew = np.arange(0, expt_len, resolution)  # 0 to last time at subsample res
     # ## different number, e.g. 41960, or just 2x shape before.
     # This is probably because resolution is set to 10. If framerate is 50 we have a frame every 20 ms.
-    if timestamps is None:
-        fictrac_interp = fictrac_interp_temp(xnew)
-    elif z is not None:  # For testing only!
-        fictrac_interp = fictrac_interp_temp(timestamps[:, z])
+    if neural_timestamps is None:
+        new_timestamps = np.arange(0, expt_len, resolution)  # 0 to last time at subsample res
+        fictrac_interp = fictrac_interp_temp(new_timestamps)
+    elif z_slice is not None:  # For testing only! Used for correlation I think
+        fictrac_interp = fictrac_interp_temp(neural_timestamps[:, z_slice])
     else:
-        # So we only select which timestamps here.
+        # This is how we map fictrac timestamps on neural data
         # fictrac_interp = fictrac_interp_temp(timestamps[:,z]) # This would return ALL timestamps per z slice
-        fictrac_interp = fictrac_interp_temp(timestamps)
+        fictrac_interp = fictrac_interp_temp(neural_timestamps)
 
     ### convert units for common cases ###
     sphere_radius = 4.5e-3  # in m
@@ -213,22 +218,34 @@ def smooth_and_interp_fictrac(
         * fps; now in m/sec
         * 1000; now in mm/sec"""
 
-        fictrac_interp = fictrac_interp * sphere_radius * fps * 1000  # now in mm/sec
+        fictrac_interp = fictrac_interp * sphere_radius * fictrac_fps * 1000  # now in mm/sec
 
     if behavior in ["dRotLabZ"]:
         """starts with units of rad/frame
         * 180 / np.pi; now in deg/frame
         * fps; now in deg/sec"""
 
-        fictrac_interp = fictrac_interp * 180 / np.pi * fps
+        fictrac_interp = fictrac_interp * 180 / np.pi * fictrac_fps
 
     # Replace Nans with zeros (for later code)
     np.nan_to_num(fictrac_interp, copy=False)
 
-    return fictrac_interp
+    return(fictrac_interp)
+
+def get_fictrac_fps(fictrac_data):
+    """
+    This might only work on life tracked fictrac data! TEST
+    Failure mode: If more than 50% of timestamps is incorrect.
+    """
+    fictrac_fps=int(np.nanmedian(round(1 / ((fictrac_data['timeStamp'].diff()) / 1e9))))
+    print('Fictrac fps identifed as: ' + repr(fictrac_fps))
+    return(fictrac_fps)
 
 
-def make_2d_hist(fictrac, fictrac_path, full_id,  fixed_crop=True):
+def make_2d_hist(ax,fictrac,
+                 fictrac_path,
+                 #full_id,
+                 fixed_crop=True):
     """
     Plot a 2D histogram of rotational and forward speed as reported by fictrac.
     :param fictrac: A dictionary with two keys, "Y" and "Z" with values produced by :func:`fictrac_utils.smooth_and_interp_fictrac`
@@ -237,19 +254,19 @@ def make_2d_hist(fictrac, fictrac_path, full_id,  fixed_crop=True):
     :param fixed_crop: Boolean, zoom into relevant behavioral space if True
     """
     # Prepare figure
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(111)
+    #fig = plt.figure(figsize=(10, 10))
+    #ax = fig.add_subplot(111)
     # Prepare normalization for hist2d
     norm = mpl.colors.LogNorm()
     # Plot rotational and forward velocity for the whole experiment.
     hist_plot = ax.hist2d(fictrac["Y"], fictrac["Z"], bins=100, cmap="Blues", norm=norm)
-    ax.set_ylabel("Rotation, deg/sec")
-    ax.set_xlabel("Forward, mm/sec")
-    ax.set_title("Behavior 2D hist {}".format(full_id))
+    ax.set_ylabel("Rotation, [deg/sec]")
+    ax.set_xlabel("Forward, [mm/sec]")
+    #ax.set_title("Behavior 2D hist {}".format(full_id))
     # For colorbar - get coordinates of ax to set it to the right
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.05)
-    fig.colorbar(hist_plot[3], cax=cax, orientation="vertical")
+    #divider = make_axes_locatable(ax)
+    #cax = divider.append_axes("right", size="5%", pad=0.05)
+    #fig.colorbar(hist_plot[3], cax=cax, orientation="vertical")
     name = "fictrac_2d_hist.png"
     # Zoom into relevant behavioral space
     if fixed_crop:
@@ -258,12 +275,10 @@ def make_2d_hist(fictrac, fictrac_path, full_id,  fixed_crop=True):
         name = "fictrac_2d_hist_fixed.png"
     # Savename
     fname = pathlib.Path(pathlib.Path(fictrac_path).parent, name)
-    print(fname)
-    fig.savefig(fname, dpi=100, bbox_inches="tight")
 
-def fictrac_timestamps_QC(fictrac,
-                          fictrac_path,
-                          full_id
+def fictrac_timestamps_QC(ax,
+                          fictrac,
+                          fictrac_path
                           ):
     # New QC: Make sure timestamps make sense for the duration of the experiment!
     # Difference between timestamps - this is QC for how variable the timestamps are
@@ -275,23 +290,26 @@ def fictrac_timestamps_QC(fictrac,
     relevant_indeces = np.where(timestamp_delta > 0)[0]
 
     # Plot delta timestamps - this should help us to quickly spot skipped frames!
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    #fig = plt.figure()
+    #ax = fig.add_subplot(111)
     ax.plot(timestamps_from_start.iloc[relevant_indeces], timestamp_delta[relevant_indeces])
     ymin, ymax = ax.get_ylim()
     ax.set_ylim(ymin - ymin * .001, ymax + ymax * .001)
-    ax.set_ylabel('Delta between timestamps [s]')
+    ax.set_ylabel('Delta between\ntimestamps [s]')
     ax.set_xlabel('Time [s]')
-    ax.set_title("Behavior 2D hist {}".format(full_id))
-    fig.tight_layout()
+    #ax.set_title("Behavior 2D hist {}".format(full_id))
+    ax.set_title('Timestamps QC')
+    #fig.tight_layout()
 
     name = "fictrac_timestamp_QC.png"
     fname = pathlib.Path(pathlib.Path(fictrac_path).parent, name)
     print(fname)
-    fig.savefig(fname, dpi=100, bbox_inches="tight")
+    #fig.savefig(fname, dpi=100, bbox_inches="tight")
 
 
-def make_velocity_trace(fictrac, fictrac_path, full_id, time_for_plotting):
+def make_velocity_trace(ax,
+                        fictrac,
+                        time_for_plotting_ms):
     """
     Velocity trace with the duration of the experiment on the x-axis
     :param fictrac: A dictionary with two keys, "Y" and "Z" with values produced by :func:`fictrac_utils.smooth_and_interp_fictrac`
@@ -302,12 +320,105 @@ def make_velocity_trace(fictrac, fictrac_path, full_id, time_for_plotting):
     :return:
     """
     # Prepare figure
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(111)
+    #fig = plt.figure(figsize=(10, 10))
+    #ax = fig.add_subplot(111)
     # Plot speed (fictrac["Y"]) for the duration of the experiment
-    ax.plot(time_for_plotting / 1000, fictrac["Y"], color="xkcd:dusk")
-    ax.set_ylabel("forward velocity mm/sec")
-    ax.set_xlabel("time, sec")
-    ax.set_title(full_id)
-    savename = pathlib.Path(pathlib.Path(fictrac_path).parent, "velocity_trace.png")
-    fig.savefig(savename, dpi=100, bbox_inches="tight")
+    ax.plot(time_for_plotting_ms/1e3, fictrac["Y"], color="xkcd:dusk")
+    ax.set_ylabel("forward velocity\n[mm/sec]")
+    ax.set_xlabel("Time [s]")
+    #ax.set_title(full_id)
+    #savename = pathlib.Path(pathlib.Path(fictrac_path).parent, "velocity_trace.png")
+    #fig.savefig(savename, dpi=100, bbox_inches="tight")
+
+def plot_saccades(ax,
+                  fictrac,
+                  fictrac_fps,
+                  fictrac_timestamps_ms):
+    """
+    As a QC, plot saccades!
+    This might have different
+    """
+    # Show turns on dRotZ
+    #fictrac_smoothed = signal.savgol_filter(np.asarray(fictrac_data['dRotLabZ']), 25, 3)
+    # We don't always plot the whole series, this is define with min_time and max_time
+    turn_indeces = extract_turn_bouts(fictrac_z=fictrac['Z'], fictrac_fps=fictrac_fps,
+                                      fictrac_timestamps=fictrac_timestamps_ms/1e3,
+                                      minimal_time_between_turns=0.25, turn_thresh=200)
+
+    #fictrac_smoothed = fictrac_smoothed * 180 / np.pi * fictrac_fps  # now in deg/sec
+    #fictrac_timestamps = np.arange(0, fictrac_smoothed.shape[0] / fictrac_fps, 1 / fictrac_fps)
+    ax.plot(fictrac_timestamps_ms/1e3, fictrac['Z'], alpha=0.5)
+
+    for counter, L in enumerate(turn_indeces['L']):
+        ax.scatter([L, L],
+                    [fictrac['Z'][int(round(L * fictrac_fps))], fictrac['Z'][int(round(L * fictrac_fps))]],
+                    c='g',  # label='Left turns',
+                    alpha=1)
+    for counter, R in enumerate(turn_indeces['R']):
+        ax.scatter([R, R],
+                    [fictrac['Z'][int(round(R * fictrac_fps))], fictrac['Z'][int(round(R * fictrac_fps))]],
+                    c='r',  # label='Right turns',
+                    alpha=1)
+
+    ax.set_ylabel('rot velocity [deg/s]')
+    ax.set_xlabel("Time [s]")
+    #ax.set_title(full_id)
+
+
+def extract_turn_bouts(fictrac_z,
+                       fictrac_fps,
+                       fictrac_timestamps,
+                       minimal_time_between_turns,
+                       turn_thresh=200):
+    """
+    From https://github.com/ClandininLab/brezovec_volition_2023/blob/main/predict_turn_direction.py
+    """
+
+    minimal_time_between_turns = minimal_time_between_turns * fictrac_fps # convert from seconds to fps!
+
+    ###########################
+    ### Identify turn bouts ###
+    ###########################
+
+    peaks = {'L': [], 'R': []}
+    heights = {'L': [], 'R': []}
+
+    for turn, scalar in zip(['L', 'R'], [1, -1]):
+        # identify positive peaks (with 1) or negative peaks (with -1)!
+        found_peaks = signal.find_peaks(fictrac_z * scalar, height=turn_thresh,
+                                        distance=minimal_time_between_turns)
+        pks = found_peaks[0]
+        pk_height = found_peaks[1]['peak_heights']
+
+        # convert index to time in seconds!
+        peaks[turn] = fictrac_timestamps[pks]
+        heights[turn] = pk_height
+
+    return(peaks)
+
+def inter_turn_interval(ax,
+                        fictrac,
+                        fictrac_fps,
+                        fictrac_timestamps_ms):
+    """
+
+    """
+    # Identify index where turn happens
+    turn_indeces = extract_turn_bouts(fictrac_z=fictrac['Z'], fictrac_fps=fictrac_fps,
+                                      fictrac_timestamps=fictrac_timestamps_ms / 1e3,
+                                      minimal_time_between_turns=0.25, turn_thresh=200)
+
+    # Combine all turns in one array
+    all_turns = []
+    for current_turn_indeces in turn_indeces:
+        for current_turn in turn_indeces[current_turn_indeces]:
+            all_turns.append(current_turn)
+    all_turns = np.array(sorted(all_turns))
+
+    # Plotting
+    counts, edges = np.histogram(np.diff(all_turns), bins=50)
+    ax.stairs(counts, edges, fill=True)
+    ax.set_yscale('log')
+    ax.set_xlabel('Time [s]')
+    ax.set_ylabel('Log scale')
+    ax.set_title('Inter turn interval')

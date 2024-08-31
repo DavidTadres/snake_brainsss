@@ -49,9 +49,15 @@ scripts_path = workflow.basedir # Exposes path to this file
 from brainsss import utils
 from scripts import preprocessing
 from scripts import snake_utils
+from preprocess import fictrac_QC
 import os
 import sys
 print(os.getcwd())
+
+####################
+# GLOBAL VARIABLES #
+####################
+WIDTH = 120  # This is used in all logging files
 
 #### KEEP for future
 # SCRATCH_DIR
@@ -419,11 +425,11 @@ rule all:
         # Fictrac QC
         ###
         expand(str(fly_folder_to_process_oak)
-               + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
+               + "/{fictrac_paths}/fictracQC.png",
             fictrac_paths=FICTRAC_PATHS),
-        expand(str(fly_folder_to_process_oak)
-               + "/{fictrac_paths}/fictrac_timestamp_QC.png",
-               fictrac_paths=FICTRAC_PATHS),
+        #expand(str(fly_folder_to_process_oak)
+        #       + "/{fictrac_paths}/fictrac_timestamp_QC.png",
+        #       fictrac_paths=FICTRAC_PATHS),
         # data in fly_dirs.json!
 
         ###
@@ -579,15 +585,14 @@ rule fictrac_qc_rule:
     input:
         str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_behavior_data.dat"
     output:
-        str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_2d_hist_fixed.png",
-        str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_timestamp_QC.png"
+        str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictracQC.png",
 
 
     run:
         try:
-            preprocessing.fictrac_qc(fly_folder_to_process_oak,
+            fictrac_QC.fictrac_qc(fly_folder_to_process_oak,
                                     fictrac_file_path= input,
-                                    fictrac_fps=fictrac_fps # AUTOMATE THIS!!!! ELSE BUG PRONE!!!!
+                                    WIDTH=WIDTH
                                     )
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_fictrac_qc_rule')
@@ -1185,7 +1190,7 @@ rule temporal_high_pass_filter_rule:
 
 rule correlation_rule:
     """
-fictrac_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/fictrac/fictrac_behavior_data.dat",
+    fictrac_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/fictrac/fictrac_behavior_data.dat",
         
     """
     threads: snake_utils.threads_per_memory_less

@@ -601,51 +601,58 @@ def load_timestamps(path_to_metadata):
     # xml_file = os.path.join(directory, file)
     # xml_file = pathlib.Path(directory, file)
 
-    tree = ET.parse(path_to_metadata)
-    root = tree.getroot()
-    timestamps = []
-    # In case of an aborted scan, 'frames' would return the
-    # wrong number of z-slices. Keep track of initial z-slices
-    # with this variable
-    initial_frames = None
+    try:
+        timestamps = np.load(pathlib.Path(path_to_metadata.parent, 'neural_timestamps.npy'))
+        print("Loaded neural_timestamps.npy")
+    except FileNotFoundError:
 
-    sequences = root.findall("Sequence")
-    for sequence in sequences:
-        if initial_frames is None:
-            initial_frames = sequence.findall("Frame")
-        frames = sequence.findall("Frame")
-        for frame in frames:
-            # filename = frame.findall('File')[0].get('filename')
-            time = float(frame.get("relativeTime"))
-            timestamps.append(time)
-    timestamps = np.multiply(timestamps, 1000)
+        tree = ET.parse(path_to_metadata)
+        root = tree.getroot()
+        timestamps = []
+        # In case of an aborted scan, 'frames' would return the
+        # wrong number of z-slices. Keep track of initial z-slices
+        # with this variable
+        initial_frames = None
 
-    if len(sequences) > 1:
-        try:
-            timestamps = np.reshape(timestamps, (len(sequences), len(frames)))
-        except ValueError:
-            print('This might be an aborted scan because the timestamps can be assigned')
-            print('Attempting to create partial timestamps (slower)')
-            temp = np.zeros((len(sequences), len(initial_frames)))
-            temp.fill(np.nan)
-            counter = 0
-            for seq in range(len(sequences)):
-                for fr in range(len(initial_frames)):
-                    try:
-                        temp[seq,fr] = timestamps[counter]
-                        counter +=1
-                    except IndexError:
-                        break
-            timestamps = temp
-    else:
-        timestamps = np.reshape(timestamps, (len(frames), len(sequences)))
+        sequences = root.findall("Sequence")
+        for sequence in sequences:
+            if initial_frames is None:
+                initial_frames = sequence.findall("Frame")
+            frames = sequence.findall("Frame")
+            for frame in frames:
+                # filename = frame.findall('File')[0].get('filename')
+                time = float(frame.get("relativeTime"))
+                timestamps.append(time)
+        timestamps = np.multiply(timestamps, 1000)
 
-    ### Save h5py file ###
-    # with h5py.File(os.path.join(directory, 'timestamps.h5'), 'w') as hf:
-    #    hf.create_dataset("timestamps", data=timestamps)
+        if len(sequences) > 1:
+            try:
+                timestamps = np.reshape(timestamps, (len(sequences), len(frames)))
+            except ValueError:
+                print('This might be an aborted scan because the timestamps can be assigned')
+                print('Attempting to create partial timestamps (slower)')
+                temp = np.zeros((len(sequences), len(initial_frames)))
+                temp.fill(np.nan)
+                counter = 0
+                for seq in range(len(sequences)):
+                    for fr in range(len(initial_frames)):
+                        try:
+                            temp[seq,fr] = timestamps[counter]
+                            counter +=1
+                        except IndexError:
+                            break
+                timestamps = temp
+        else:
+            timestamps = np.reshape(timestamps, (len(frames), len(sequences)))
 
-    print("Success loading timestamps.")
-    return timestamps
+        ### Save h5py file ###
+        # with h5py.File(os.path.join(directory, 'timestamps.h5'), 'w') as hf:
+        #    hf.create_dataset("timestamps", data=timestamps)
+
+        np.save(pathlib.Path(path_to_metadata.parent, 'neural_timestamps.npy'), timestamps)
+
+        print("Success reading timestamps from xml.")
+    return(timestamps)
 
 
 def print_big_header(logfile, message, width=WIDTH):
