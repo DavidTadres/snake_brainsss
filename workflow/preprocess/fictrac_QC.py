@@ -50,17 +50,17 @@ def fictrac_qc(fly_directory,
     # This should yield something like 'fly_001/func0/fictrac
     full_id = ", ".join(fictrac_file_path.parts[-4:-2])
 
-    printlog('TRying to find: ' + repr(pathlib.Path(fictrac_file_path.parents[2], 'imaging\\recording_metadata.xml')))
+    printlog('TRying to find: ' + repr(pathlib.Path(fictrac_file_path.parents[2], 'imaging/recording_metadata.xml')))
 
     # Real experiment length as defined by Bruker! This should
     # then plot only the fictrac data where we DO have neuronal data!
     # try to guess path_to_metadata:
     # Either is in func0\stimpack\loco\behavior.dat
-    if pathlib.Path(fictrac_file_path.parents[2], 'imaging\\recording_metadata.xml').exists():
-        path_to_metadata = pathlib.Path(fictrac_file_path.parents[2], 'imaging\\recording_metadata.xml')
+    if pathlib.Path(fictrac_file_path.parents[2], 'imaging/recording_metadata.xml').exists():
+        path_to_metadata = pathlib.Path(fictrac_file_path.parents[2], 'imaging/recording_metadata.xml')
     # else if func0\fictrac\behavior.dat
-    elif pathlib.Path(fictrac_file_path.parents[1], 'imaging\\recording_metadata.xml').exists():
-        path_to_metadata = pathlib.Path(fictrac_file_path.parents[1], 'imaging\\recording_metadata.xml')
+    elif pathlib.Path(fictrac_file_path.parents[1], 'imaging/recording_metadata.xml').exists():
+        path_to_metadata = pathlib.Path(fictrac_file_path.parents[1], 'imaging/recording_metadata.xml')
     neural_timestamps = utils.load_timestamps(path_to_metadata)
     expt_len = neural_timestamps[-1,-1]
     #fictrac_raw.shape[0] / fictrac_fps * 1000 # in ms
