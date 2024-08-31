@@ -50,8 +50,6 @@ def fictrac_qc(fly_directory,
     # This should yield something like 'fly_001/func0/fictrac
     full_id = ", ".join(fictrac_file_path.parts[-4:-2])
 
-    printlog('TRying to find: ' + repr(pathlib.Path(fictrac_file_path.parents[2], 'imaging/recording_metadata.xml')))
-
     # Real experiment length as defined by Bruker! This should
     # then plot only the fictrac data where we DO have neuronal data!
     # try to guess path_to_metadata:

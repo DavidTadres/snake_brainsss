@@ -602,7 +602,7 @@ def load_timestamps(path_to_metadata):
     # xml_file = pathlib.Path(directory, file)
 
     try:
-        timestamps = np.load(pathlib.Path(path_to_metadata.parent, 'neural_timestamps.npy'))
+        timestamps = np.load(pathlib.Path(pathlib.Path(path_to_metadata).parent, 'neural_timestamps.npy'))
         print("Loaded neural_timestamps.npy")
     except FileNotFoundError:
 

@@ -581,7 +581,7 @@ rule fictrac_qc_rule:
     threads: snake_utils.threads_per_memory
     resources:
         mem_mb=snake_utils.mem_mb_times_threads,
-        runtime='10m'
+        runtime='5m'
     input:
         str(fly_folder_to_process_oak) + "/{fictrac_paths}/fictrac_behavior_data.dat"
     output:

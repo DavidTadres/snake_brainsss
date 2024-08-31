@@ -10,7 +10,8 @@ import matplotlib as mpl
 
 mpl.use(
     "agg"
-)  # Agg, is a non-interactive backend that can only write to files. Necessary to avoid error: Starting a Matplotlib GUI outside of the main thread will likely fail.
+)  # Agg, is a non-interactive backend that can only write to files. Necessary to avoid error:
+# Starting a Matplotlib GUI outside of the main thread will likely fail.
 
 
 def load_fictrac(fictrac_file_path):
