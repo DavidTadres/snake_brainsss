@@ -75,7 +75,12 @@ def calculate_scrambled_correlation(fly_log_folder,
     neural_timestamps = utils.load_timestamps(metadata_path)
     # interpolate fictrac to match the timestamps from the microscope!
     fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(
-        fictrac_raw, fictrac_fps, fictrac_resolution, expt_len, behavior, timestamps=neural_timestamps
+        fictrac_data=fictrac_raw,
+        fictrac_fps=fictrac_fps,
+        expt_len=expt_len,
+        resolution=fictrac_resolution,
+        behavior=behavior,
+        neural_timestamps=neural_timestamps
     )
     printlog('Loaded fictrac data')
     # It seems easier to scramble the behavior timestamps instead of the brain timestamps!
