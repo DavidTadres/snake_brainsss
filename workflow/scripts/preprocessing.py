@@ -772,7 +772,12 @@ def correlation(
     fictrac_resolution = (1/fictrac_fps) * 1000 # in ms
     ### interpolate fictrac to match the timestamps from the microscope!
     fictrac_interp = fictrac_utils.smooth_and_interp_fictrac(
-        fictrac_raw, fictrac_fps, fictrac_resolution, expt_len, behavior, timestamps=timestamps
+        fictrac_data=fictrac_raw,
+        fictrac_fps=fictrac_fps,
+        expt_len=expt_len,
+        behavior=behavior,
+        neural_timestamps=timestamps,
+        z_slice=None
     )
     # Originally, there was a z parameter which was used as timestamps[:,z] to return the fictrac
     # data for a given z slice. We're not using it in the vectorized verison
@@ -1342,7 +1347,10 @@ def fictrac_qc(fly_directory, fictrac_file_path, fictrac_fps):
         elif behavior == "dRotLabZ":
             short = "Z"
         fictrac[short] = fictrac_utils.smooth_and_interp_fictrac(
-            fictrac_raw, fictrac_fps, resolution, expt_len, behavior
+            fictrac_data=fictrac_raw,
+            fictrac_fps=fictrac_fps,
+            expt_len=expt_len,
+            behavior=behavior
         )
     time_for_plotting = np.arange(0, expt_len, resolution) # comes in ms
 

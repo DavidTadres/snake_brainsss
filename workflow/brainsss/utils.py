@@ -560,6 +560,79 @@ def get_resolution(xml_file):
                     print("Error")
     return x, y, z
 
+def searchsorted_deep_array(a, v):
+    """
+    np.searchsorted doesn't work on deep arrays.
+    This function does. Might be slow.
+    !!! Make sure the flattened array is really sorted, i.e. by doing:
+    plt.plot(a.flatten()) before you use this function.
+    If a.flatten() does not yield a sorted array, the result will be wrong!
+
+    a: Input array.
+    v: Values to insert into a
+    """
+    flat_index = np.searchsorted(a.flatten(), v)
+    return(np.where(a.flatten()[flat_index] == a))
+
+
+
+
+def number_of_timepoints(neural_timestamps, earlier_index, later_index):
+    """
+    given the neural_timestamps array which has two dimensions:
+    [0] = number of volumes
+    [1] = z-slice
+    how many (flay) timepoints do we have between two points.
+
+    For example, we want to know how many timepoints (z-slices) we have
+    between t[5,30] and t[6,30] if t.shape[1] == 30. It's 30 of course
+
+    neural_timestamps: 2D array with t in [0] and z in [1]
+    lower_index = output of utils.searchsorted_deep_array with index of earlier timepoint
+    higher_index = output of utils.searchsorted_deep_array with index of later timepoint
+    """
+    z_dim = neural_timestamps.shape[1]
+
+    return ((z_dim - earlier_index[1]) + later_index[1] + (((later_index[0] - earlier_index[0]) - 1) * z_dim))
+
+
+
+
+def create_list_to_iterate_over_neural_timestamps(earlier_index, later_index, z_dim):
+    """
+    Use with neural_timestamps to create a list of indeces
+    used to iterate over neural timestamps (a 2D array)
+    earlier_index: output from searchsorted_deep_array
+    later_index: output from searchsorted_deep_array
+    returns: list with [z-slice ,t-slice]
+    """
+    t_slices_to_iterate_over = []
+    z_slices_to_iterate_over = []
+    if earlier_index[0] == later_index[0]:
+        # Easy case where we are only looking at one volume
+        z_slices_to_iterate_over.extend(range(earlier_index[1][0], later_index[1][0]))
+        t_slices_to_iterate_over.extend([earlier_index[0][0]]*int(later_index[1][0]-earlier_index[1][0]))
+    else:
+        z_slices_to_iterate_over = []
+        # Combine three conditions:
+        # 1) finish the first volume
+        finish_first_volume = range(earlier_index[1][0], z_dim)
+        z_slices_to_iterate_over.extend(finish_first_volume)
+        t_slices_to_iterate_over.extend([earlier_index[0][0]]*(int(z_dim-earlier_index[1][0])))
+        # 2) create full volumes
+        # Check how many full volumes we need to take
+        no_of_full_volumes = (later_index[0] - earlier_index[0]) - 1
+        # Create full volumes
+        for current_volume in range(no_of_full_volumes[0]):
+            z_slices_to_iterate_over.extend(range(z_dim))
+            t_slices_to_iterate_over.extend([earlier_index[0][0]+current_volume+1]*(z_dim))
+        # 3) finish_last_volume
+        finish_last_volume = range(0, later_index[1][0])
+        z_slices_to_iterate_over.extend(finish_last_volume)
+        t_slices_to_iterate_over.extend([later_index[0][0]]*later_index[1][0])
+
+    return (z_slices_to_iterate_over, t_slices_to_iterate_over)
+
 
 # def load_timestamps(directory, file='recording_metadata'): # file='functional.xml'):
 def load_timestamps(path_to_metadata):

@@ -169,7 +169,8 @@ def smooth_and_interp_fictrac(
     # Better way to get timestamps:
     # MIGHT ONLY WORK WITH REAL-TIME FICTRAC TRACKING!!!!!
     # Comes in nanoseconds. Want milliseconds!
-    original_fictrac_timestamps=(fictrac_data['timeStamp'] - fictrac_data['timeStamp'].iloc[0])/1e6
+    original_fictrac_timestamps=(fictrac_data['timeStamp'] - \
+                                 fictrac_data['timeStamp'].iloc[0])/1e6
 
     ### smooth ###
     # I remove the smoothing input from this function and make it dependent on the fps
