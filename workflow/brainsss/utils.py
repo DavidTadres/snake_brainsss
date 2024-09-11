@@ -62,7 +62,7 @@ def get_new_fly_number(
     if target_path.is_dir():
         # loop through target path and collect all files and folders that contain 'fly'
         fly_folders = [
-            s for s in (target_path).iterdir() if "fly" in s.name and s.is_dir()
+            s for s in (target_path).iterdir() if ("fly" in s.name or "larva" in s.name) and s.is_dir()
         ]
         # fly folders should then be sorted like this: ['fly_999', 'fly_998',.., 'fly_001']
         sorted_fly_folder = natsort.natsorted(fly_folders, reverse=True)

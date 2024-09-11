@@ -333,7 +333,7 @@ def align_anat(
     the channel and yields something like 'channel_1_func-to-channel_1_anat.nii'
 
 
-    :param fly_directory:a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :param fly_directory:a pathlib.Path object to a 'fly' (or 'larva') folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
     :param rule_name: string, name of the log file
     :param fixed_fly: string, used for logging
     :param moving_fly: string, used for logging
@@ -1044,7 +1044,7 @@ def zscore(fly_directory, dataset_path, zscore_path):
     aid(data)
     >10737418240
 
-    :param fly_directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :param fly_directory: a pathlib.Path object to a 'fly' (or 'larva') folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
     :param dataset_path: Full path as a list of pathlib.Path objects to the nii to be read
     :param zscore_path: Full path as a list of pathlib.Path objects to the nii to be saved
     """
@@ -1115,7 +1115,7 @@ def make_mean_brain(
     """
     Function to calculate meanbrain.
     This is based on Bella's meanbrain script.
-    :param fly_directory: pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :param fly_directory: pathlib.Path object to a 'fly' (or 'larva') folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
     :param meanbrain_n_frames: First n frames to average over when computing mean/fixed brain | Default None (average over all frames).
     :param path_to_read: Full path as a list of pathlib.Path objects to the nii to be read
     :param path_to_save: Full path as a list of pathlib.Path objects to the nii to be saved
@@ -1199,7 +1199,7 @@ def bleaching_qc(
     Input are all nii files per folder (e.g. channel_1.nii and channel_2.nii) and output is single 'bleaching.png' file.
     Bleaching is defined as overall decrease of fluorescence in a given nii file.
 
-    :param fly_directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :param fly_directory: a pathlib.Path object to a 'fly' (or 'larva') folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
     :param path_to_read: list of paths to images to read, can be more than one
     :param path_to_save: list of paths to the 'bleaching.png' file
     :param functional_channel_list: list with channels marked as functional channels by experimenter
@@ -1305,7 +1305,7 @@ def fictrac_qc(fly_directory, fictrac_file_path, fictrac_fps):
     """
     Perform fictrac quality control.
     This is based on Bella's fictrac_qc.py  script.
-    :param fly_directory: a pathlib.Path object to a 'fly' folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
+    :param fly_directory: a pathlib.Path object to a 'fly' (or 'larva') folder such as '/oak/stanford/groups/trc/data/David/Bruker/preprocessed/fly_001'
     :param fictrac_file_paths: a list of paths as pathlib.Path objects
     :param fictrac_fps: frames per second of the videocamera recording the fictrac data, an integer
     """
