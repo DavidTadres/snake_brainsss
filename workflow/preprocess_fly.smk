@@ -272,18 +272,30 @@ list_of_channels_misc = []
 list_of_misc_channels = []
 for counter, current_misc_folder in enumerate(list_of_paths_misc_imaging):
     temp = []
-    for current_file in pathlib.Path(fly_folder_to_process_oak, current_misc_folder, 'imaging').iterdir():
+    for current_file in sorted(pathlib.Path(fly_folder_to_process_oak, current_misc_folder, 'imaging').iterdir()):
         if 'channel' in current_file.name:
             temp.append(current_file.name.split('.nii')[0].split('channel_')[-1])
     if counter == 0:
         list_of_misc_channels = temp
     else:
-        if list_of_misc_channels != temp:
+        error = False
+        for current_channel in temp:
+            if current_channel in list_of_misc_channels:
+                pass
+            else:
+                error = True
+        for current_channel in list_of_misc_channels:
+            if current_channel in temp:
+                pass
+            else:
+                error = True
+
+        if error:
             import sys
             print('!!!!!!!!!!!!ERROR!!!!!!!!!!!')
             print('Your misc_imaging channels have different channel settings:')
             print('The current misc folder: ' + repr(current_misc_folder) + ' has these channels: ' + repr(temp))
-            print('The previous misco folder has: ' + repr(list_of_misc_channels))
+            print('The previous misc folder has: ' + repr(list_of_misc_channels))
             print('snakemake can not currently handle mixture of channels for misc.')
             print('Exiting')
             sys.exit(1)
