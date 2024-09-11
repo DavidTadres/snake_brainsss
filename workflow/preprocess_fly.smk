@@ -276,11 +276,11 @@ for counter, current_misc_folder in enumerate(list_of_paths_misc_imaging):
     for current_file in sorted(pathlib.Path(fly_folder_to_process_oak, current_misc_folder, 'imaging').iterdir()):
         if 'channel' in current_file.name and 'mean' not in current_file.name:
             temp.append(current_file.name.split('.nii')[0].split('channel_')[-1])
-        if counter == 0: # We only want to grab each channel once.
-            if current_file.name.split('.nii')[0] in STRUCTURAL_CHANNEL:
-                pass
-            else:
-                MISC_CHANNELS.append(current_file.name.split('.nii')[0])
+            if counter == 0: # We only want to grab each channel once.
+                if current_file.name.split('.nii')[0] in STRUCTURAL_CHANNEL:
+                    pass
+                else:
+                    MISC_CHANNELS.append(current_file.name.split('.nii')[0])
     if counter == 0:
         list_of_misc_channels = temp
     else:
