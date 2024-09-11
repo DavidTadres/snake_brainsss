@@ -19,6 +19,7 @@ import subprocess
 import traceback
 import natsort
 import pathlib
+import pandas as pd
 # For logfile
 WIDTH = 120 # can go into a config file as well.
 
@@ -575,120 +576,287 @@ def searchsorted_deep_array(a, v):
     return(np.where(a.flatten()[flat_index] == a))
 
 
-def fluo_before_after_turns_excluding_other_turns(neural_timestamps_s, time_before, time_after, turns,
-                                                  image_data, correlation_mask):
+def fluo_before_after_turns_excluding_other_turns(neural_timestamps_s, time_before, turns,
+                                                  image_data, correlation_mask, turn_direction=None):
     """
-    Idea is to create an array based with z-score data before and after turn only for data WITHOUT another
-    turn having been detected.
-
-    Could in the future implement additional cutoff i.e. at least 1 second away from a detected turn.
-
-    Limitation: The resulting array will
-
-    neural_timestamps_s: output of load_timestamps() in seconds (as the function just returns ms)
-    time_after: how many seconds after turn are taken into account for output
-    time_before: how many seconds before turn are taken into account for output
-    turns: output of shared_functions.extract_turn_bouts()
-    image_data: nii data (x,y,z,t)
-    correlation mask: manually or otherwise defined mask of voxels to use (x,y,z)
+    Initially had a 'time_after' turn arg. Removfed because this leads to double counting of
+    fluo values!
     """
+    time_resolution = 5/1e3 # 5 ms, 1 zslice takes 10 ms so we make the resolution half of that!
+    timebins_to_use = np.linspace(-time_before, 0, int(1 / time_resolution) * time_before)
 
-    total_time = abs(time_before) + abs(time_after)
-
+    # Make a large list of all turns
     all_turns = []
     for turn_dir in turns:
         for current_turn in turns[turn_dir]:
             all_turns.append(current_turn)
     all_turns = np.unique(np.array(sorted(all_turns)))
 
-    # Also: We want to not only stop exactly at the turn: Take data up to the NEXT turn!
-    # But how to keep track of the actual turn if we only use a list? Or better to pre-allocate i.e. 30 seconds before and after and mostly fill
-    # with nan but be able to keep track of turn instance? Sounds better!
-    duration_of_one_volume = neural_timestamps_s[1, 0]
-    all_fluo_around_turns = np.zeros(
-        (int(np.ceil(duration_of_one_volume * total_time * neural_timestamps_s.shape[1])), all_turns.shape[0]))
+    # pre-allocate empty numpy array
+    all_fluo_around_turns = np.zeros((timebins_to_use.shape[0], all_turns.shape[0]))
     all_fluo_around_turns.fill(np.nan)
-    center_index = int(round(duration_of_one_volume * time_before * neural_timestamps_s.shape[1]))
 
+    print('Total number of turns: ' + repr(range(all_turns.shape[0])))
+    for current_turn_index in range(all_turns.shape[0]):
+        use_this_turn_index = False
+        if turn_direction == 'L':
+            if all_turns[current_turn_index] in turns['L']:
+                use_this_turn_index = True
+            # check if current turn is L
+        elif turn_direction == 'R':
+            if all_turns[current_turn_index] in turns['R']:
+                use_this_turn_index = True
+        else:
+            use_this_turn_index = True
+
+        if use_this_turn_index:
+            ###
+            # First, we use the fictrac turn timestamp to find the closest neural timestamp
+            # Potential problems: fictrac data is already interpolated this point! I THINK it's ok
+            # as fictrac should be super oversampled already (at 100fps) but maybe not?
+            ###
+
+            if current_turn_index == 0:
+                start_index = (np.zeros(1, dtype=int), np.zeros(1, dtype=int))
+                turn_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index])
+                # end_index = utils.searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index + 1])
+            # elif current_turn_index == all_turns.shape[0]-1:
+            #    start_index = utils.searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index-1])
+            #    turn_index = utils.searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index])
+            #    end_index = (np.array(neural_timestamps_s.shape[0], dtype=int),
+            #                 np.array(neural_timestamps_s.shape[1],dtype=int))
+            else:
+                try:
+                    start_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index - 1])
+                    turn_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index])
+                    # end_index = utils.searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index + 1])
+                except IndexError as e:
+                    print('current_turn_index: ' + repr(current_turn_index))
+                    print(e)
+                    print('\n')
+                    # Had this error: #IndexError: index 165816 is out of bounds for axis 0 with size 165816
+                    # I *think* it's because the turn index is
+                    use_this_turn_index = False
+
+        if use_this_turn_index:
+
+            ###
+            # BEFORE TURN
+            # Create two lists to keep track of z and t slices
+            z_slice_list, t_slice_list = create_list_to_iterate_over_neural_timestamps(earlier_index=start_index,
+                                                                                             later_index=turn_index,
+                                                                                             z_dim=
+                                                                                             neural_timestamps_s.shape[
+                                                                                                 1])
+            # print('z_slice_list: ' + repr(np.array(z_slice_list)))
+            # print('t_slice_list: ' + repr(np.array(t_slice_list)))
+            # iterate over list of z and t slices
+            for current_z_slice, current_t_slice in zip(z_slice_list, t_slice_list):
+                # where are we relative to the current turn? I.e. we might be -10 seconds
+                time_relative_to_turn = neural_timestamps_s[current_t_slice, current_z_slice] - all_turns[
+                    current_turn_index]
+                # It's possible to have no turn preceding the current turn for longer than what is defined
+                # as 'before'. i.e. if we only care about data 30 seconds before the current turn but the current turn
+                # has no turn for the previous 31 seconds, we need to ignore the datapoint at -31 seconds
+                if time_relative_to_turn > timebins_to_use[0]:
+
+                    # get mean fluoresence for given timepoint
+                    current_fluo = np.nanmean(
+                        image_data[:, :, current_z_slice, current_t_slice][correlation_mask[:, :, current_z_slice]])
+
+                    # Where in the fluo array do we have this timestamp?
+                    array_index_to_use = np.searchsorted(timebins_to_use, time_relative_to_turn)
+                    # print('current_z_slice: ' + repr(current_z_slice))
+                    # print("array_index_to_use" + repr(array_index_to_use))
+                    # print('\n')
+                    # Sanity check - we really don't want to overwrite data at this step
+                    if ~np.isnan(all_fluo_around_turns[array_index_to_use, current_turn_index]):
+                        print('ALARM!!!! Check code, shouldnt be here!')
+                        print('current_z_slice: ' + repr(current_z_slice))
+                        print('current_t_slice: ' + repr(current_t_slice))
+                        print('\n')
+                        # break
+
+                    # put fluo data into array
+                    all_fluo_around_turns[array_index_to_use, current_turn_index] = current_fluo
+                else:
+                    pass
+                    # Ignore datapoints that are outside of the time_before (and time_after) range.
+
+        #else:
+        #    continue
+        #break
+
+
+    """# total_time = abs(time_before) + abs(time_after)
+
+    timebins_to_use = np.arange(-time_before, 0, 1 / 250)  # 1/500 would be 500Hz so every 2ms
+
+    # Make a large list of all turns
+    all_turns = []
+    for turn_dir in turns:
+        for current_turn in turns[turn_dir]:
+            all_turns.append(current_turn)
+    all_turns = np.unique(np.array(sorted(all_turns)))
+
+    # pre-allocate empty numpy array
+    all_fluo_around_turns = np.zeros((timebins_to_use.shape[0], all_turns.shape[0]))
+    all_fluo_around_turns.fill(np.nan)
     # Now, go through the list of turns. Keep track of how many timepoints before the turn we can take into account
     # The -1 ignores the last turn
     print('Total number of turns: ' + repr(range(all_turns.shape[0] - 1)))
     for current_turn_index in range(all_turns.shape[0] - 1):
-        if current_turn_index == 0:
-            start_index = (np.zeros(1, dtype=int), np.zeros(1, dtype=int))
-            turn_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index])
-            end_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index + 1])
-        # elif current_turn_index == all_turns.shape[0]-1:
-        #    start_index = utils.searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index-1])
-        #    turn_index = utils.searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index])
-        #    end_index = (np.array(neural_timestamps_s.shape[0], dtype=int),
-        #                 np.array(neural_timestamps_s.shape[1],dtype=int))
+        use_this_turn_index = False
+        if turn_direction == 'L':
+            if all_turns[current_turn_index] in turns['L']:
+                use_this_turn_index = True
+            # check if current turn is L
+        elif turn_direction == 'R':
+            if all_turns[current_turn_index] in turns['R']:
+                use_this_turn_index = True
         else:
-            start_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index - 1])
-            turn_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index])
-            end_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index + 1])
+            use_this_turn_index = True
 
-        ###
-        # BEFORE TURN
-        time_points_before = number_of_timepoints(neural_timestamps_s, earlier_index=start_index,
-                                                        later_index=turn_index)
+        if use_this_turn_index:
+            ###
+            # First, we use the fictrac turn timestamp to find the closest neural timestamp
+            # Potential problems: fictrac data is already interpolated this point! I THINK it's ok
+            # as fictrac should be super oversampled already (at 100fps) but maybe not?
+            ###
 
-        # print("start_index: " + repr(start_index))
-        # print("turn_index: " + repr(turn_index))
-        # print("time_points_before: " + repr(time_points_before))
-        # For each timepoint, check the z-slice and the ROI of the correlation map.
-        # Need to keep track of to counters: The index of the all_fluo_around_turns and the neural timestamp index.
-        # if time_points_before > center_index:
-        #    print('turn: ' + repr(current_turn_index) + ' had no turn for long time before current turn')
-        # time_points_before = center_index
-        indeces_in_array = range(int(center_index - time_points_before), center_index)
-        z_slice_list, t_slice_list = create_list_to_iterate_over_neural_timestamps(earlier_index=start_index,
-                                                                                         later_index=turn_index,
-                                                                                         z_dim=
-                                                                                         neural_timestamps_s.shape[1])
-        # print('z_slice_list: ' + repr(np.array(z_slice_list)))
-        # print('t_slice_list: ' + repr(np.array(t_slice_list)))
-        for current_index_array, current_z_slice, current_t_slice in zip(indeces_in_array, z_slice_list, t_slice_list):
-            # get mean fluoresence for given timepiont
-            if current_index_array > 0:
-                all_fluo_around_turns[current_index_array, current_turn_index] = np.nanmean(
-                    image_data[:, :, current_z_slice, current_t_slice][correlation_mask[:, :, current_z_slice]])
+            if current_turn_index == 0:
+                start_index = (np.zeros(1, dtype=int), np.zeros(1, dtype=int))
+                turn_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index])
+                end_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index + 1])
+            # elif current_turn_index == all_turns.shape[0]-1:
+            #    start_index = utils.searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index-1])
+            #    turn_index = utils.searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index])
+            #    end_index = (np.array(neural_timestamps_s.shape[0], dtype=int),
+            #                 np.array(neural_timestamps_s.shape[1],dtype=int))
             else:
-                pass
-                # print('Ignoring ' + repr(current_z_slice) +'z, and ' + repr(current_t_slice) + 't')
-        ###
-        # AFTER TURN
-        time_points_after = number_of_timepoints(neural_timestamps_s, earlier_index=turn_index,
-                                                       later_index=end_index)
+                try:
+                    start_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index - 1])
+                    turn_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index])
+                    end_index = searchsorted_deep_array(neural_timestamps_s, all_turns[current_turn_index + 1])
+                except IndexError as e:
+                    print('current_turn_index: ' + repr(current_turn_index))
+                    print(e)
+                    print('\n')
+                    # Had this error: #IndexError: index 165816 is out of bounds for axis 0 with size 165816
+                    # I *think* it's because the turn index is
+                    use_this_turn_index = False
 
-        # print("end_index: " + repr(end_index))
-        # print("time_points_after: " + repr(time_points_after))
-        # print('\n\n')
+        if use_this_turn_index:
 
-        # For each timepoint, check the z-slice and the ROI of the correlation map.
-        # Need to keep track of to counters: The index of the all_fluo_around_turns and the neural timestamp index.
-        # if time_points_after > center_index:
-        #    pass
-        # time_points_after = center_index ## WONT WORK AS WE HAVE OTHER LISTS THAT ARE NOT
-        indeces_in_array = range(center_index, int(center_index + time_points_after))
-        z_slice_list, t_slice_list = create_list_to_iterate_over_neural_timestamps(earlier_index=turn_index,
-                                                                                         later_index=end_index,
-                                                                                         z_dim=
-                                                                                         neural_timestamps_s.shape[1])
-        for current_index_array, current_z_slice, current_t_slice in zip(indeces_in_array, z_slice_list, t_slice_list):
-            # get mean fluoresence for given timepiont
-            if current_index_array < all_fluo_around_turns.shape[0]:
-                all_fluo_around_turns[current_index_array, current_turn_index] = np.nanmean(
-                    image_data[:, :, current_z_slice, current_t_slice][correlation_mask[:, :, current_z_slice]])
-            else:
-                pass
-                # print('Ignoring ' + repr(current_z_slice) +'z, and ' + repr(current_t_slice) + 't')
+            ###
+            # BEFORE TURN
+            # Create two lists to keep track of z and t slices
+            z_slice_list, t_slice_list = create_list_to_iterate_over_neural_timestamps(earlier_index=start_index,
+                                                                                             later_index=turn_index,
+                                                                                             z_dim=
+                                                                                             neural_timestamps_s.shape[
+                                                                                                 1])
+            # print('z_slice_list: ' + repr(np.array(z_slice_list)))
+            # print('t_slice_list: ' + repr(np.array(t_slice_list)))
+            # iterate over list of z and t slices
+            for current_z_slice, current_t_slice in zip(z_slice_list, t_slice_list):
+                # where are we relative to the current turn? I.e. we might be -10 seconds
+                time_relative_to_turn = neural_timestamps_s[current_t_slice, current_z_slice] - all_turns[
+                    current_turn_index]
+                # It's possible to have no turn preceding the current turn for longer than what is defined
+                # as 'before'. i.e. if we only care about data 30 seconds before the current turn but the current turn
+                # has no turn for the previous 31 seconds, we need to ignore the datapoint at -31 seconds
+                if time_relative_to_turn > timebins_to_use[0]:
 
-        # print('\n')
+                    # get mean fluoresence for given timepoint
+                    current_fluo = np.nanmean(
+                        image_data[:, :, current_z_slice, current_t_slice][correlation_mask[:, :, current_z_slice]])
 
-    return (all_fluo_around_turns)
+                    # Where in the fluo array do we have this timestamp?
+                    array_index_to_use = np.searchsorted(timebins_to_use, time_relative_to_turn)
+                    # Sanity check - we really don't want to overwrite data at this step
+                    if ~np.isnan(all_fluo_around_turns[array_index_to_use, current_turn_index]):
+                        print('ALARM!!!! Check code, shouldnt be here!')
+                        print('current_z_slice: ' + repr(current_z_slice))
+                        print('current_t_slice: ' + repr(current_t_slice))
+                        print('\n')
+                    # put fluo data into array
+                    all_fluo_around_turns[array_index_to_use, current_turn_index] = current_fluo
+                else:
+                    pass
+                    # Ignore datapoints that are outside of the time_before (and time_after) range.
 
+            # For each timepoint, check the z-slice and the ROI of the correlation map.
+            # Need to keep track of to counters: The index of the all_fluo_around_turns and the neural timestamp index.
+            z_slice_list, t_slice_list = create_list_to_iterate_over_neural_timestamps(earlier_index=turn_index,
+                                                                                             later_index=end_index,
+                                                                                             z_dim=
+                                                                                             neural_timestamps_s.shape[
+                                                                                                 1])
 
+            '''# iterate over list of z and t slices
+            for current_z_slice, current_t_slice in zip(z_slice_list, t_slice_list):
+                # Time difference to current turn
+                time_relative_to_turn = neural_timestamps_s[current_t_slice, current_z_slice] - all_turns[
+                    current_turn_index]
+                # It's possible to have no turn preceding the current turn for longer than what is defined
+                # as 'before'. i.e. if we only care about data 30 seconds before the current turn but the current turn
+                # has no turn for the previous 31 seconds, we need to ignore the datapoint at -31 seconds
+                if time_relative_to_turn < timebins_to_use[-1]:
+                    current_fluo = np.nanmean(
+                        image_data[:, :, current_z_slice, current_t_slice][correlation_mask[:, :, current_z_slice]])
+                    # Where in the fluo array do we have this timestamp?
+                    array_index_to_use = np.searchsorted(timebins_to_use, time_relative_to_turn)
+                    # Sanity check - we really don't want to overwrite data at this step
+                    if ~np.isnan(all_fluo_around_turns[array_index_to_use, current_turn_index]):
+                        print('ALARM!!!! Check code, shouldnt be here!')
+                        print('current_z_slice: ' + repr(current_z_slice))
+                        print('current_t_slice: ' + repr(current_t_slice))
+                        print('\n')
+                    # put fluo data into array
+                    all_fluo_around_turns[array_index_to_use, current_turn_index] = current_fluo
+                else:
+                    pass
+                    # Ignore datapoints that are outside of the time_before (and time_after) range.'''
+
+        else:
+            pass"""
+
+    # Create index to be called 'turn1', 'turn2' etc
+    index_list = []
+    for i in range(all_fluo_around_turns.shape[1]):
+        index_list.append('turn ' + str(i))
+
+    df_all_fluo_around_turns = pd.DataFrame(data=all_fluo_around_turns,    # values
+                                            index=timebins_to_use,    # timestamps
+                                            columns=index_list)  # Index, turn#
+
+    return (df_all_fluo_around_turns)
+
+def bin_array(array):
+    """
+    Input array is oversampled at i.e. 2ms.
+
+    Next, bin the array such that the resolution goes down to 100ms.
+
+    Take median for each turn over 100ms steps. The output can then be
+    """
+
+    bins = np.arange(array.index[0], array.index[-1], 1 / 10)  # 1/1 would be 10Hz so every 100ms
+    binned_array = np.zeros((len(bins), array.shape[1]))
+    binned_array.fill(np.nan)
+    for counter, current_bin in enumerate(bins):
+        # what's the current index
+        if counter < len(bins)-1:
+            start_index = np.searchsorted(array.index, current_bin)
+            end_index = np.searchsorted(array.index, bins[counter+1])
+            binned_array[counter,:] = np.nanmedian(np.array(array)[start_index:end_index,:],axis=0)
+
+    df_binned_array = pd.DataFrame(binned_array,
+                                   index=bins,    # timestamps
+                                   columns=array.columns)  # turn#)
+
+    return(df_binned_array)
 def number_of_timepoints(neural_timestamps, earlier_index, later_index):
     """
     given the neural_timestamps array which has two dimensions:
