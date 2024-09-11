@@ -69,7 +69,7 @@ all_fly_dataset_paths = []
 #for current_fly in current_day_path.iterdir():
 for current_fly in sorted(provided_working_directory.iterdir()):
     # There should be 'fly' folders in here, i.e. 'fly1' or similar, just needs to have the keyword fly and be a folder
-    if 'fly' in current_fly.name and current_fly.is_dir():
+    if ('fly' in current_fly.name or 'larva' in current_fly.name) and current_fly.is_dir():
         print('Working on fly: ' + repr(current_fly.name))
         # Check if the fly has already been transferred:
         already_transfered = False
