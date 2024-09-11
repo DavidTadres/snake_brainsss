@@ -70,7 +70,11 @@ all_fly_dataset_paths = []
 for current_fly in sorted(provided_working_directory.iterdir()):
     # There should be 'fly' folders in here, i.e. 'fly1' or similar, just needs to have the keyword fly and be a folder
     if ('fly' in current_fly.name or 'larva' in current_fly.name) and current_fly.is_dir():
-        print('Working on fly: ' + repr(current_fly.name))
+        if 'fly' in current_fly.name:
+            folder_naming = 'fly'
+        elif 'larva' in current_fly.name:
+            folder_naming = 'larva'
+        print('Working on ' + folder_naming + ': ' + repr(current_fly.name))
         # Check if the fly has already been transferred:
         already_transfered = False
         for current_file in current_fly.iterdir():
@@ -99,7 +103,7 @@ for current_fly in sorted(provided_working_directory.iterdir()):
                                                       first_fly_with_genotype_this_run = first_fly_with_genotype_this_run,
                                                       already_created_folders=all_fly_dataset_paths)
 
-            current_fly_dataset_folder = pathlib.Path(dataset_path, GENOTYPE, 'fly_' + new_fly_number)
+            current_fly_dataset_folder = pathlib.Path(dataset_path, GENOTYPE, folder_naming + '_' + new_fly_number)
             # Must create new folder here so that in the next loop we get the correct fly_XXX back
             current_fly_dataset_folder.mkdir(exist_ok=True,parents=True)
             # Create a file named 'incomplete' to clearly indicate when fly building has not finished yet.
