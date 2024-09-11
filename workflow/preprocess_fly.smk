@@ -418,7 +418,7 @@ rule all:
             bleaching_imaging_paths=list_of_paths_struct),
 
         expand(str(fly_folder_to_process_oak)
-               + "/{bleaching_imaging_paths}/imaging/bleaching_struct.png",
+               + "/{bleaching_imaging_paths}/imaging/bleaching_misc.png",
                bleaching_imaging_paths=list_of_paths_misc_imaging),
 
         ###
@@ -639,6 +639,33 @@ rule bleaching_qc_rule_struct:
         brains_paths_ch3=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS_STRUCT else [],
     output:
         str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching_struct.png"
+    run:
+        try:
+            preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
+                                        path_to_read=[input.brains_paths_ch1, input.brains_paths_ch2, input.brains_paths_ch3], #imaging_paths_by_folder_scratch, # {input} didn't work, I think because it destroyed the list of list we expect to see here #imaging_paths_by_folder_scratch,
+                                        path_to_save=output, # can't use output, messes things up here! #imaging_paths_by_folder_oak
+                                        #print_output = output
+            )
+            print('Done with bleaching_qc')
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_bleaching_qc_rule')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack)
+            print('Error with bleaching_qc' )
+
+rule bleaching_qc_rule_misc:
+    """
+    """
+    threads: snake_utils.threads_per_memory_less
+    resources:
+        mem_mb=snake_utils.mem_mb_less_times_input, # This is probably overkill todo decrease!
+        runtime='10m' # In my test cases it was never more than 5 minutes!
+    input:
+        brains_paths_ch1=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_1.nii" if CH1_EXISTS_MISC else [],
+        brains_paths_ch2=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_2.nii" if CH2_EXISTS_MISC else [],
+        brains_paths_ch3=str(fly_folder_to_process_oak) + "/{bleaching_imaging_paths}/imaging/channel_3.nii" if CH3_EXISTS_MISC else [],
+    output:
+        str(fly_folder_to_process_oak) +"/{bleaching_imaging_paths}/imaging/bleaching_misc.png"
     run:
         try:
             preprocessing.bleaching_qc(fly_directory=fly_folder_to_process_oak,
