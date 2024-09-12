@@ -531,7 +531,7 @@ rule all:
             meanbr_moco_ch_struct=list_of_channels_struct),
         #
         expand(str(fly_folder_to_process_oak)
-               + "/{moco_meanbr_imaging_paths_misc}/moco/channel_{meanbr_moco_ch_misc}_moco_mean_struct.nii",
+               + "/{moco_meanbr_imaging_paths_misc}/moco/channel_{meanbr_moco_ch_misc}_moco_mean_misc.nii",
                moco_meanbr_imaging_paths_misc=list_of_paths_misc_imaging,
                meanbr_moco_ch_misc=list_of_channels_misc),
         ####
@@ -901,6 +901,7 @@ rule motion_correction_parallel_processing_rule_struct:
 
 rule motion_correction_parallel_processing_rule_misc:
     """
+    had timeout errors...
     """
     threads: 32  # the max that we can do - check with sh_part
     resources:

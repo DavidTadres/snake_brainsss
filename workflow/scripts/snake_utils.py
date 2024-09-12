@@ -260,7 +260,7 @@ def time_for_moco_input(wildcards, input):
         or (input.brain_paths_ch2 != [] and input.brain_paths_ch3 != [])
     ):
         # if only two channels are in use
-        time_in_minutes = (input.size_mb / 1000) * 5 # /1000 to get Gb, then *minutes
+        time_in_minutes = (input.size_mb / 1000) * 7 # changed to 7 from 5 on 24/09/11 # /1000 to get Gb, then *minutes
     else:
         # only one channel is provided:
         #time_in_minutes = (input.size_mb / 1000) * 10  # /1000 to get Gb, then *minutes
