@@ -531,7 +531,7 @@ rule all:
             meanbr_moco_ch_struct=list_of_channels_struct),
         #
         expand(str(fly_folder_to_process_oak)
-               + "/{meanbr_imaging_paths_misc}/imaging/channel_{meanbr_ch_misc}_moco_mean_misc.nii",
+               + "/{moco_meanbr_imaging_paths_misc}/imaging/channel_{meanbr_ch_misc}_moco_mean_misc.nii",
                moco_meanbr_imaging_paths_misc=list_of_paths_misc_imaging,
                meanbr_ch_misc=list_of_misc_channels),
         ####
