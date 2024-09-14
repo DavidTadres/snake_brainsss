@@ -216,7 +216,7 @@ def copy_fly(import_dir,
             # current_dataset_folder.mkdir(parents=True, exist_ok=True)
 
             # Is this folder an anatomy or functional folder?
-            if "anat" in current_import_imaging_folder.name or 'misc' in current_import_imaging_folder:
+            if "anat" in current_import_imaging_folder.name:
                 # If anatomy folder, just copy everything
                 # Make imaging folder and copy
                 # imaging_destination = os.path.join(expt_folder, 'imaging')
