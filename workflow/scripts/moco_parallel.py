@@ -89,7 +89,7 @@ def motion_correction(index,
     # Load data to memory. Dtypes is a bit confusing here: Meanbrain comes as uint16...
     fixed_data = fixed_proxy.dataobj
     # However, ants seems to require float32 (I think)
-    fixed_ants = ants.from_numpy(np.asarray(fixed_data, dtype=np.float32))
+    fixed_ants = ants.from_numpy(np.asarray(fixed_data, dtype=np.float32)) # Todo: test if adding spacing in xyz improves moco!!!!
 
     # Load moving proxy in this process
     moving_proxy = nib.load(moving_path)
