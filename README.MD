@@ -47,6 +47,8 @@ https://github.com/pimentel/sherlock-notes/blob/master/README.md (maybe useful i
 
 `pip install scipy`
 
+`pip install PuLP==2.7.0`
+
 In your favorite folder on sherlock type:
 
 `git clone https://github.com/DavidTadres/snake_brainsss` 
