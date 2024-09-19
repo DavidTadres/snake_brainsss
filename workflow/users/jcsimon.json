@@ -1,4 +1,6 @@
 {
     "fictrac_path": "/oak/stanford/groups/trc/data/Jacob/Fictrac",
-    "dataset_path": "/oak/stanford/groups/trc/data/Jacob/Bruker/brainsss"
+    "dataset_path": "/oak/stanford/groups/trc/data/Jacob/Bruker/brainsss",
+    "shell_python_command": "python",
+    "moco_temp_folder": "C:/Users/jcsimon/.snakemake/temp"
 }
