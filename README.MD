@@ -49,6 +49,8 @@ https://github.com/pimentel/sherlock-notes/blob/master/README.md (maybe useful i
 
 `pip install PuLP==2.7.0`
 
+`pip install urllib3==1.26.6` # Maybe optional?
+
 In your favorite folder on sherlock type:
 
 `git clone https://github.com/DavidTadres/snake_brainsss` 
