@@ -1142,7 +1142,7 @@ rule median_zscore_rule:
         zscore_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_median_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
     run:
         try:
-            median_zscore(
+            median_zscore.median_zscore(
                 fly_directory=fly_folder_to_process_oak,
                 dataset_path=[input.path_ch1, input.path_ch2, input.path_ch3],
                 median_zscore_path=[output.zscore_path_ch1, output.zscore_path_ch2, output.zscore_path_ch3])
