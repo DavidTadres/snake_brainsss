@@ -55,7 +55,7 @@ def median_zscore(fly_directory, dataset_path, median_zscore_path):
             # Calculate median absolute deviation per voxel
             median_absolute_deviation = np.nanmedian(absolute_delta, axis=3)
 
-            modified_zscore = (0.6745*(data-median_brain[:,:,:, np.newaxis]))/median_absolute_deviation
+            modified_zscore = (0.6745*(data-median_brain[:,:,:, np.newaxis]))/median_absolute_deviation[:,:,:, np.newaxis]
 
             aff=np.eye(4)
             zscore_nifty = nib.Nifti1Image(modified_zscore  , aff)
