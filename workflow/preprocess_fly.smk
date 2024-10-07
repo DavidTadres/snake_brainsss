@@ -50,6 +50,7 @@ from brainsss import utils
 from scripts import preprocessing
 from scripts import snake_utils
 from preprocess import fictrac_QC
+from modules_preprocessing import median_zscore
 import os
 import sys
 print(os.getcwd())
@@ -545,6 +546,19 @@ rule all:
                zscore_imaging_paths=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
                + "/{zscore_imaging_paths}/channel_3_moco_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+               zscore_imaging_paths=list_of_paths_func),
+
+        ####
+        # MEDIAN Z-score
+        ####
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_1_moco_median_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+               zscore_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_2_moco_median_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+               zscore_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{zscore_imaging_paths}/channel_3_moco_median_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
                zscore_imaging_paths=list_of_paths_func),
 
         ###
@@ -1109,6 +1123,31 @@ rule zscore_rule:
                                 zscore_path=[output.zscore_path_ch1, output.zscore_path_ch2, output.zscore_path_ch3])
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_zscore')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack)
+
+rule median_zscore_rule:
+    threads: snake_utils.threads_per_memory_much_more
+    resources:
+        mem_mb=snake_utils.mem_mb_much_more_times_input,
+
+    input:
+        path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco_func.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco_func.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco_func.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+
+    output:
+        zscore_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_median_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_median_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_median_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+    run:
+        try:
+            median_zscore(
+                fly_directory=fly_folder_to_process_oak,
+                dataset_path=[input.path_ch1, input.path_ch2, input.path_ch3],
+                median_zscore_path=[output.zscore_path_ch1, output.zscore_path_ch2, output.zscore_path_ch3])
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_median_zscore')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack)
 
