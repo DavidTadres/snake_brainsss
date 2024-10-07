@@ -10,6 +10,9 @@ sys.path.insert(0, parent_path)
 from brainsss import utils
 from modules_preprocessing import constants
 
+# Initialize constant class
+CONSTANTS = constants.Constants()
+
 def median_zscore(fly_directory, dataset_path, median_zscore_path):
     """
     Calulate modified zscore:
@@ -40,17 +43,17 @@ def median_zscore(fly_directory, dataset_path, median_zscore_path):
     for current_dataset_path, current_zscore_path in zip(dataset_path, zscore_path):
         if 'nii' in current_dataset_path.name:
             dataset_proxy = nib.load(current_dataset_path)
-            data = np.asarray(dataset_proxy.dataobj, dtype=constants.Constants.DTYPE)
+            data = np.asarray(dataset_proxy.dataobj, dtype=CONSTANTS.DTYPE)
 
             printlog("Data shape is {}".format(data.shape))
 
             # Expect a 4D array, xyz and the fourth dimension is time!
-            median_brain = np.nanmedian(data, axis=3, dtype=constants.Constants.DTYPE_CACLULATIONS)
+            median_brain = np.nanmedian(data, axis=3, dtype=CONSTANTS.DTYPE_CACLULATIONS)
             printlog('Calculated median of data')
             # Calculate absolute difference between each value and the median (per voxel)
             absolute_delta = np.abs(data - median_brain[:,:,:,np.newaxis])
             # Calculate median absolute deviation per voxel
-            median_absolute_deviation = np.nanmedian(absolute_delta, axis=3, dtype=constants.Constants.DTYPE_CALCULATIONS)
+            median_absolute_deviation = np.nanmedian(absolute_delta, axis=3, dtype=CONSTANTS.DTYPE_CALCULATIONS)
 
             modified_zscore = (0.6745*(data-median_brain[:,:,:, np.newaxis]))/median_absolute_deviation
 
