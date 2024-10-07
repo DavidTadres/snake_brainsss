@@ -2,14 +2,13 @@ import pathlib
 import sys
 import numpy as np
 import nibabel as nib
-import constants
 
 
 parent_path = str(pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent.absolute())
 sys.path.insert(0, parent_path)
 # This just imports '*.py' files from the folder 'brainsss'.
 from brainsss import utils
-
+from modules_preprocessing import constants
 
 def median_zscore(fly_directory, dataset_path, median_zscore_path):
     """
