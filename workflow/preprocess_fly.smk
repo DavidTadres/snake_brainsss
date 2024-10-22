@@ -575,6 +575,19 @@ rule all:
                temp_HP_filter_imaging_paths=list_of_paths_func),
 
         ###
+        # MEDIAN temporal high-pass filter
+        ###
+        expand(str(fly_folder_to_process_oak)
+               + "/{temp_HP_filter_imaging_paths}/channel_1_moco_median_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+               temp_HP_filter_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{temp_HP_filter_imaging_paths}/channel_2_moco_median_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+               temp_HP_filter_imaging_paths=list_of_paths_func),
+        expand(str(fly_folder_to_process_oak)
+               + "/{temp_HP_filter_imaging_paths}/channel_3_moco_median_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+               temp_HP_filter_imaging_paths=list_of_paths_func),
+
+        ###
         # correlation with fictrac behavior
         ###
         expand(str(fly_folder_to_process_oak)
