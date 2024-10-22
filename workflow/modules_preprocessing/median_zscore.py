@@ -48,17 +48,17 @@ def median_zscore(fly_directory, dataset_path, median_zscore_path):
             printlog("Data shape is {}".format(data.shape))
 
             # Expect a 4D array, xyz and the fourth dimension is time!
-            median_brain = np.nanmedian(data, axis=3)
+            median_brain = np.nanmedian(data, axis=-1)
             printlog('Calculated median of data')
             # Calculate absolute difference between each value and the median (per voxel)
             absolute_delta = np.abs(data - median_brain[:,:,:,np.newaxis])
             # Calculate median absolute deviation per voxel
-            median_absolute_deviation = np.nanmedian(absolute_delta, axis=3)
+            median_absolute_deviation = np.nanmedian(absolute_delta, axis=-1)
 
             modified_zscore = (0.6745*(data-median_brain[:,:,:, np.newaxis]))/median_absolute_deviation[:,:,:, np.newaxis]
 
             aff=np.eye(4)
-            zscore_nifty = nib.Nifti1Image(modified_zscore  , aff)
+            zscore_nifty = nib.Nifti1Image(modified_zscore, aff)
             zscore_nifty.to_filename(current_zscore_path)
 
             printlog('Saved median z-score image as ' + current_zscore_path.as_posix())

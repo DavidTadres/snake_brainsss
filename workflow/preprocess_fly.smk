@@ -552,13 +552,13 @@ rule all:
         # MEDIAN Z-score
         ####
         expand(str(fly_folder_to_process_oak)
-               + "/{zscore_imaging_paths}/channel_1_moco_median_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+               + "/{zscore_imaging_paths}/channel_1_moco_highpass_median_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
                zscore_imaging_paths=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
-               + "/{zscore_imaging_paths}/channel_2_moco_median_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+               + "/{zscore_imaging_paths}/channel_2_moco_highpass_median_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
                zscore_imaging_paths=list_of_paths_func),
         expand(str(fly_folder_to_process_oak)
-               + "/{zscore_imaging_paths}/channel_3_moco_median_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+               + "/{zscore_imaging_paths}/channel_3_moco_highpass_median_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
                zscore_imaging_paths=list_of_paths_func),
 
         ###
@@ -574,18 +574,6 @@ rule all:
                + "/{temp_HP_filter_imaging_paths}/channel_3_moco_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
                temp_HP_filter_imaging_paths=list_of_paths_func),
 
-        ###
-        # MEDIAN temporal high-pass filter
-        ###
-        expand(str(fly_folder_to_process_oak)
-               + "/{temp_HP_filter_imaging_paths}/channel_1_moco_median_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-               temp_HP_filter_imaging_paths=list_of_paths_func),
-        expand(str(fly_folder_to_process_oak)
-               + "/{temp_HP_filter_imaging_paths}/channel_2_moco_median_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-               temp_HP_filter_imaging_paths=list_of_paths_func),
-        expand(str(fly_folder_to_process_oak)
-               + "/{temp_HP_filter_imaging_paths}/channel_3_moco_median_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
-               temp_HP_filter_imaging_paths=list_of_paths_func),
 
         ###
         # correlation with fictrac behavior
@@ -1139,30 +1127,6 @@ rule zscore_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack)
 
-rule median_zscore_rule:
-    threads: snake_utils.threads_per_memory_much_more
-    resources:
-        mem_mb=snake_utils.mem_mb_much_more_times_input,
-
-    input:
-        path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco_func.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
-        path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco_func.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
-        path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco_func.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
-
-    output:
-        zscore_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_median_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_median_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_median_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
-    run:
-        try:
-            median_zscore.median_zscore(
-                fly_directory=fly_folder_to_process_oak,
-                dataset_path=[input.path_ch1, input.path_ch2, input.path_ch3],
-                median_zscore_path=[output.zscore_path_ch1, output.zscore_path_ch2, output.zscore_path_ch3])
-        except Exception as error_stack:
-            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_median_zscore')
-            utils.write_error(logfile=logfile,
-                error_stack=error_stack)
 
 rule temporal_high_pass_filter_rule:
     """
@@ -1288,20 +1252,21 @@ rule temporal_high_pass_filter_rule:
 
 rule median_temporal_high_pass_filter_rule:
     """
-
+    I believe this needs to be done BEFORE the z-scoring!!! Else the values become very different from 0 again.
+    Not sure what implementation details one needs to worry about. Check this with Bella & Tom! 
     """
     threads: snake_utils.threads_per_memory_more
     resources:
         mem_mb=snake_utils.mem_mb_more_times_input,
         runtime='90m'  # The call to 1d smooth takes quite a bit of time! Todo< make dynamic for longer recordings!
     input:
-        zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_median_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_median_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-        zscore_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_median_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_func.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_func.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_func.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
     output:
-        temp_HP_filter_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_median_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
-        temp_HP_filter_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_median_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
-        temp_HP_filter_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_median_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
 
     run:
         try:
@@ -1314,6 +1279,31 @@ rule median_temporal_high_pass_filter_rule:
                                                   output.temp_HP_filter_path_ch3])
         except Exception as error_stack:
             logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_temporal_high_pass_filter')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack)
+
+rule median_zscore_rule:
+    threads: snake_utils.threads_per_memory_much_more
+    resources:
+        mem_mb=snake_utils.mem_mb_much_more_times_input,
+
+    input:
+        path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_1_moco_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else[],
+        path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_2_moco_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else[],
+        path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/moco/channel_3_moco_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else[],
+
+    output:
+        zscore_path_ch1 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_1_moco_highpass_median_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch2 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_2_moco_highpass_median_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch3 = str(fly_folder_to_process_oak) + "/{zscore_imaging_paths}/channel_3_moco_highpass_median_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+    run:
+        try:
+            median_zscore.median_zscore(
+                fly_directory=fly_folder_to_process_oak,
+                dataset_path=[input.path_ch1, input.path_ch2, input.path_ch3],
+                median_zscore_path=[output.zscore_path_ch1, output.zscore_path_ch2, output.zscore_path_ch3])
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_median_zscore')
             utils.write_error(logfile=logfile,
                 error_stack=error_stack)
 
