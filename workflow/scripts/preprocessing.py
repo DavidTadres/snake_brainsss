@@ -957,7 +957,14 @@ def temporal_high_pass_filter(
         printlog("Working on " + repr(current_dataset_path.name))
 
         # Dynamically define sigma for filtering! This was recently introduced to brainsss
-        timestamps = utils.load_timestamps(pathlib.Path(current_dataset_path.parent, 'imaging', 'recording_metadata.xml'))
+        try:
+            timestamps = utils.load_timestamps(pathlib.Path(current_dataset_path.parent, 'imaging', 'recording_metadata.xml'))
+        except FileNotFoundError:
+            # I'm in the process of changing the order of z-score and highpass.
+            # If highpass comes before zscore, timestamps are not in parent folder ('moco') but
+            # one folder up
+            timestamps = utils.load_timestamps(
+                pathlib.Path(current_dataset_path.parent.parent, 'imaging', 'recording_metadata.xml'))
         hz = (1 / np.diff(timestamps[:, 0])[0]) * 1000 # This is volumes per second!
         sigma = int(hz / 0.01)  # gets a sigma of ~100 second
 
