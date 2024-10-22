@@ -579,7 +579,7 @@ def searchsorted_deep_array(a, v):
 def fluo_before_after_turns_excluding_other_turns(neural_timestamps_s, time_before, turns,
                                                   image_data, correlation_mask, turn_direction=None):
     """
-    Initially had a 'time_after' turn arg. Removfed because this leads to double counting of
+    Initially had a 'time_after' turn arg. Removeed because this leads to double counting of
     fluo values!
     """
     time_resolution = 5/1e3 # 5 ms, 1 zslice takes 10 ms so we make the resolution half of that!

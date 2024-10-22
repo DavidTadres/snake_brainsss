@@ -1273,6 +1273,37 @@ rule temporal_high_pass_filter_rule:
             utils.write_error(logfile=logfile,
                 error_stack=error_stack)
 
+rule median_temporal_high_pass_filter_rule:
+    """
+
+    """
+    threads: snake_utils.threads_per_memory_more
+    resources:
+        mem_mb=snake_utils.mem_mb_more_times_input,
+        runtime='90m'  # The call to 1d smooth takes quite a bit of time! Todo< make dynamic for longer recordings!
+    input:
+        zscore_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_median_zscore.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_median_zscore.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        zscore_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_median_zscore.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+    output:
+        temp_HP_filter_path_ch1=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_1_moco_median_zscore_highpass.nii" if 'channel_1' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch2=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_2_moco_median_zscore_highpass.nii" if 'channel_2' in FUNCTIONAL_CHANNELS else [],
+        temp_HP_filter_path_ch3=str(fly_folder_to_process_oak) + "/{temp_HP_filter_imaging_paths}/channel_3_moco_median_zscore_highpass.nii" if 'channel_3' in FUNCTIONAL_CHANNELS else [],
+
+    run:
+        try:
+            preprocessing.temporal_high_pass_filter(fly_directory=fly_folder_to_process_oak,
+                dataset_path=[input.zscore_path_ch1,
+                              input.zscore_path_ch2,
+                              input.zscore_path_ch3],
+                temporal_high_pass_filtered_path=[output.temp_HP_filter_path_ch1,
+                                                  output.temp_HP_filter_path_ch2,
+                                                  output.temp_HP_filter_path_ch3])
+        except Exception as error_stack:
+            logfile = utils.create_logfile(fly_folder_to_process_oak,function_name='ERROR_temporal_high_pass_filter')
+            utils.write_error(logfile=logfile,
+                error_stack=error_stack)
+
 rule correlation_rule:
     """
     fictrac_path=str(fly_folder_to_process_oak) + "/{corr_imaging_paths}/fictrac/fictrac_behavior_data.dat",

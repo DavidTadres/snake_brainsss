@@ -179,6 +179,10 @@ def smooth_and_interp_fictrac(
     )  # This will always yield 250 ms (or the next closest
     # possible number, e.g. if we have 50fps we would get a smotthing window of 12.5 which we can't
     # index of course. We always round up so with 50 fps we'd get 13 = 260 ms
+    # !!! POSSIBLE SOURCE OF ERROR IF WE HAVE DROPPED FRAMES !!!
+    # If we have dropped framerate but apply filter based on index, we get
+    # inconsistent window size!
+    # !!! TBD !!!
     fictrac_smoothed = scipy.signal.savgol_filter(
         np.asarray(fictrac_data[behavior]), smoothing, 3
     )
